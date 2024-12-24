@@ -7,13 +7,12 @@
  * need to use are documented accordingly near the end.
  */
 
-import { AllocationInstance, PrismaClient, Role, User } from "@prisma/client";
+import { AllocationInstance, PrismaClient, User } from "@prisma/client";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { z, ZodError } from "zod";
 
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
 import { now } from "@/lib/utils/date/now";
 import { Session } from "@/lib/validations/auth";
 import {
@@ -25,6 +24,8 @@ import { checkAdminPermissions } from "./utils/admin/access";
 import { isSuperAdmin } from "./utils/admin/is-super-admin";
 import { getInstance } from "./utils/instance";
 import { getAllUserRoles, getUserRole } from "./utils/instance/user-role";
+
+import { db, Role } from "@/db";
 
 /**
  * 1. CONTEXT

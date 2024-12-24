@@ -1,4 +1,4 @@
-import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 import { NewSupervisor } from "@/lib/validations/add-users/new-user";
 import { InstanceParams } from "@/lib/validations/params";
@@ -11,7 +11,7 @@ export async function addSupervisorsTx(
   { group, subGroup, instance }: InstanceParams,
 ) {
   return await db.$transaction(async (tx) => {
-    const supervisorData = await tx.supervisorInstanceDetails.findMany({
+    const supervisorData = await tx.supervisorDetails.findMany({
       where: {
         allocationGroupId: group,
         allocationSubGroupId: subGroup,
@@ -31,13 +31,12 @@ export async function addSupervisorsTx(
         allocationGroupId: group,
         allocationSubGroupId: subGroup,
         allocationInstanceId: instance,
-        role: Role.SUPERVISOR,
         userId: institutionId,
       })),
       skipDuplicates: true,
     });
 
-    await tx.supervisorInstanceDetails.createMany({
+    await tx.supervisorDetails.createMany({
       data: validatedNewUsers.map(
         ({ institutionId, projectTarget, projectUpperQuota }) => ({
           allocationGroupId: group,

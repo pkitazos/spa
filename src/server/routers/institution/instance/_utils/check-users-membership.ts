@@ -1,5 +1,6 @@
-import { PrismaTransactionClient } from "@/lib/db";
 import { Err, OK, Result } from "@/lib/utils/general/result";
+
+import { PrismaTransactionClient } from "@/db";
 
 export function checkMembership<T>(
   newUsers: T[],

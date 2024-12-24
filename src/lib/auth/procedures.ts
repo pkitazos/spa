@@ -1,9 +1,9 @@
 import { headers } from "next/headers";
 import { z } from "zod";
 
-import { db } from "@/lib/db";
 import { ShibUser } from "@/lib/validations/auth";
 
+import { db } from "@/db";
 import { env } from "@/env";
 
 export async function getShibUserFromHeaders() {

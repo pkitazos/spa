@@ -1,4 +1,4 @@
-import { AdminLevel, PrismaClient, Stage } from "@prisma/client";
+import { PrismaClient, Stage } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -12,12 +12,18 @@ export const db =
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = db;
 
-export const adminLevelOrd = {
-  [AdminLevel.SUPER]: 3,
-  [AdminLevel.GROUP]: 2,
-  [AdminLevel.SUB_GROUP]: 1,
-  [AdminLevel.NONE]: 0,
+export const Role = {
+  ADMIN: "ADMIN",
+  SUPERVISOR: "SUPERVISOR",
+  READER: "READER",
+  STUDENT: "STUDENT",
 } as const;
+// export const adminLevelOrd = {
+//   [AdminLevel.SUPER]: 3,
+//   [AdminLevel.GROUP]: 2,
+//   [AdminLevel.SUB_GROUP]: 1,
+//   [AdminLevel.NONE]: 0,
+// } as const;
 
 export const stageOrd = {
   [Stage.SETUP]: 1,
