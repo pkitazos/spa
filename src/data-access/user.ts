@@ -6,23 +6,24 @@ import { db } from "@/db";
 // SINGLE
 // // find userInInstance
 // // get userInInstance
-// get userInInstance with [blank]
+// get userInInstance with [blank] // TODO - make one per relation as needed
 // // create userInInstance
 // // update userInInstance
 // // delete userInInstance
 
 // MANY
-// get userInInstances
-// get userInInstances with [blank]
-// create userInInstances
-// update userInInstances (might not be necessary ?)
-// delete userInInstances
+// // get all userInInstances
+// // get userInInstances by Id
+// get userInInstances with [blank] // TODO - make one per relation as needed
+// // create userInInstances
+// update userInInstances (might not be necessary ?) // ? usually done in a transaction
+// // delete userInInstances
 
 export async function findUserInInstance(
   params: InstanceParams,
   userId: string,
 ) {
-  return db.userInInstance.findFirst({
+  return await db.userInInstance.findFirst({
     where: { ...expand(params), userId },
   });
 }
@@ -31,7 +32,7 @@ export async function getUserInInstance(
   params: InstanceParams,
   userId: string,
 ) {
-  return db.userInInstance.findFirstOrThrow({
+  return await db.userInInstance.findFirstOrThrow({
     where: { ...expand(params), userId },
   });
 }
@@ -50,7 +51,7 @@ export async function updateUserInInstance(
   userId: string,
   data: UserInInstanceData,
 ) {
-  return db.userInInstance.update({
+  return await db.userInInstance.update({
     where: { instanceMembership: { ...expand(params), userId } },
     data,
   });
@@ -60,7 +61,44 @@ export async function deleteUserInInstance(
   params: InstanceParams,
   userId: string,
 ) {
-  return db.userInInstance.delete({
+  return await db.userInInstance.delete({
     where: { instanceMembership: { ...expand(params), userId } },
+  });
+}
+
+export async function getAllUsersInInstance(params: InstanceParams) {
+  return db.userInInstance.findMany({
+    where: expand(params),
+  });
+}
+
+export async function getUsersInInstance(
+  params: InstanceParams,
+  userIds: string[],
+) {
+  return await db.userInInstance.findMany({
+    where: { ...expand(params), userId: { in: userIds } },
+  });
+}
+
+export async function createUsersInInstance(
+  params: InstanceParams,
+  userIds: string[],
+) {
+  await db.userInInstance.createMany({
+    data: userIds.map((userId) => ({ ...expand(params), userId })),
+  });
+}
+
+export async function deleteAllUserInInstances(params: InstanceParams) {
+  await db.userInInstance.deleteMany({ where: expand(params) });
+}
+
+export async function deleteUsersInInstance(
+  params: InstanceParams,
+  userIds: string[],
+) {
+  await db.userInInstance.deleteMany({
+    where: { ...expand(params), userId: { in: userIds } },
   });
 }

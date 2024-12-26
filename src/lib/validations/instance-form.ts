@@ -22,6 +22,8 @@ export const updatedInstanceSchema = baseSchema.omit({
   instanceName: true,
 });
 
+export type UpdatedInstance = z.infer<typeof updatedInstanceSchema>;
+
 export type ValidatedInstanceDetails = z.infer<typeof baseSchema>;
 
 export function buildInstanceFormSchema(takenNames: string[]) {

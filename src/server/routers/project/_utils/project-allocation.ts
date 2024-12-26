@@ -1,4 +1,4 @@
-import { PrismaTransactionClient } from "@/lib/db";
+import { PrismaTransactionClient } from "@/db";
 
 type StudentProjectAllocationData = {
   group: string;

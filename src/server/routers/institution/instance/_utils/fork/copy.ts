@@ -1,6 +1,6 @@
 import { PreferenceType, Role } from "@prisma/client";
 
-import { PrismaTransactionClient } from "@/lib/db";
+import { PrismaTransactionClient } from "@/db";
 import { expand } from "@/lib/utils/general/instance-params";
 import { compareTitle } from "@/lib/utils/sorting/by-title";
 import { InstanceParams } from "@/lib/validations/params";

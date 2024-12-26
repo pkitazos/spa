@@ -1,9 +1,7 @@
 import { Stage } from "@prisma/client";
-import { TRPCClientError } from "@trpc/client";
 import { z } from "zod";
 
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
-import { expand } from "@/lib/utils/general/instance-params";
 import { setDiff } from "@/lib/utils/general/set-difference";
 import {
   newStudentSchema,
@@ -14,7 +12,6 @@ import {
   updatedInstanceSchema,
 } from "@/lib/validations/instance-form";
 import { instanceParamsSchema } from "@/lib/validations/params";
-import { studentLevelSchema } from "@/lib/validations/student-level";
 import { getTabs } from "@/lib/validations/tabs/side-panel";
 
 import {
@@ -24,12 +21,12 @@ import {
   multiRoleAwareProcedure,
   protectedProcedure,
 } from "@/server/trpc";
-import { validateEmailGUIDMatch } from "@/server/utils/id-email-check";
 import { getUserRole } from "@/server/utils/instance/user-role";
 
 import { hasSelfDefinedProject } from "../../user/_utils/get-self-defined-project";
 
 import { addStudentsTx } from "./_utils/add-students-transaction";
+import { addSupervisorTx } from "./_utils/add-supervisor-transaction";
 import { addSupervisorsTx } from "./_utils/add-supervisors-transaction";
 import { forkInstanceTransaction } from "./_utils/fork/transaction";
 import { mergeInstanceTrx } from "./_utils/merge/transaction";
@@ -41,24 +38,30 @@ import { preferenceRouter } from "./preference";
 import { projectRouter } from "./project";
 
 import { pages } from "@/content/pages";
-import {
-  createSupervisorDetails,
-  findSupervisorDetails,
-} from "@/data-access/supervisor-details";
-import { createUserInInstance, deleteUserInInstance } from "@/data-access/user";
+import { getStudentDetailsWithUser } from "@/data-access/student-details";
 import { Role } from "@/db";
 import {
-  checkInstanceExists,
-  getEditFormDetails,
-  getFlagTitles,
-  getInstance,
-  getProjectAllocations,
-  getSelectedAlgorithm,
-  getStudents,
-  getSupervisorDetails,
-  getSupervisors,
-  updateStage,
-} from "@/interactors/instance";
+  allStudentsUseCase,
+  checkInstanceExistsUseCase,
+  getEditFormDetailsUseCase,
+  getFlagTitlesUseCase,
+  getInstanceUseCase,
+  getProjectAllocationsUseCase,
+  getSelectedAlgorithmUseCase,
+  getStudentsUseCase,
+  getSupervisorDetailsUseCase,
+  getSupervisorsUseCase,
+  invitedStudentsUseCase,
+  invitedSupervisorsUseCase,
+  removeSupervisorsUseCase,
+  removeSupervisorUseCase,
+  updateStageUseCase,
+} from "@/interactors";
+import { addStudentTx } from "./_utils/add-student-transaction";
+import { removeStudentTx } from "./_utils/remove-student-transaction";
+import { removeStudentsTx } from "./_utils/remove-students-tx";
+import { deleteUsersInInstance } from "@/data-access/user";
+import { editInstanceTx } from "./_utils/edit-instance-tx";
 
 // TODO: add stage checks to stage-specific procedures
 export const instanceRouter = createTRPCRouter({
@@ -71,13 +74,13 @@ export const instanceRouter = createTRPCRouter({
   exists: protectedProcedure
     .input(z.object({ params: instanceParamsSchema }))
     .query(async ({ input: { params } }) => {
-      return checkInstanceExists({ params });
+      return checkInstanceExistsUseCase({ params });
     }),
 
   get: protectedProcedure
     .input(z.object({ params: instanceParamsSchema }))
     .query(async ({ input: { params } }) => {
-      return await getInstance({ params });
+      return await getInstanceUseCase({ params });
     }),
 
   currentStage: instanceProcedure
@@ -94,13 +97,13 @@ export const instanceRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input: { params, stage } }) => {
-      await updateStage({ params, stage });
+      await updateStageUseCase({ params, stage });
     }),
 
   selectedAlgorithm: instanceAdminProcedure
     .input(z.object({ params: instanceParamsSchema }))
     .query(async ({ ctx, input: { params } }) => {
-      return await getSelectedAlgorithm({
+      return await getSelectedAlgorithmUseCase({
         params,
         selectedAlgName: ctx.instance.selectedAlgName,
       });
@@ -109,31 +112,31 @@ export const instanceRouter = createTRPCRouter({
   projectAllocations: instanceAdminProcedure
     .input(z.object({ params: instanceParamsSchema }))
     .query(async ({ input: { params } }) => {
-      return await getProjectAllocations({ params });
+      return await getProjectAllocationsUseCase({ params });
     }),
 
   getEditFormDetails: instanceAdminProcedure
     .input(z.object({ params: instanceParamsSchema }))
     .query(async ({ input: { params } }) => {
-      return await getEditFormDetails({ params });
+      return await getEditFormDetailsUseCase({ params });
     }),
 
   supervisors: instanceProcedure
     .input(z.object({ params: instanceParamsSchema }))
     .query(async ({ input: { params } }) => {
-      return await getSupervisors({ params });
+      return await getSupervisorsUseCase({ params });
     }),
 
   students: instanceProcedure
     .input(z.object({ params: instanceParamsSchema }))
     .query(async ({ input: { params } }) => {
-      return await getStudents({ params });
+      return await allStudentsUseCase({ params });
     }),
 
   getSupervisors: instanceAdminProcedure
     .input(z.object({ params: instanceParamsSchema }))
     .query(async ({ input: { params } }) => {
-      return await getSupervisorDetails({ params });
+      return await getSupervisorDetailsUseCase({ params });
     }),
 
   addSupervisor: instanceAdminProcedure
@@ -143,45 +146,9 @@ export const instanceRouter = createTRPCRouter({
         newSupervisor: newSupervisorSchema,
       }),
     )
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params,
-          newSupervisor: {
-            institutionId,
-            fullName,
-            email,
-            projectTarget,
-            projectUpperQuota,
-          },
-        },
-      }) => {
-        // ! this breaks unless I can pass the Prisma Transaction Client
-        await ctx.db.$transaction(async (tx) => {
-          const exists = await findSupervisorDetails(params, institutionId);
-          if (exists) throw new TRPCClientError("User is already a supervisor");
-
-          await validateEmailGUIDMatch(tx, institutionId, email, fullName);
-
-          await createUserInInstance(params, institutionId);
-
-          await createSupervisorDetails(params, institutionId, {
-            projectAllocationLowerBound: 0,
-            projectAllocationTarget: projectTarget,
-            projectAllocationUpperBound: projectUpperQuota,
-          });
-        });
-
-        return {
-          institutionId,
-          fullName,
-          email,
-          projectTarget,
-          projectUpperQuota,
-        };
-      },
-    ),
+    .mutation(async ({ ctx, input: { params, newSupervisor } }) => {
+      return await addSupervisorTx(ctx.db, newSupervisor, params);
+    }),
 
   addSupervisors: instanceAdminProcedure
     .input(
@@ -197,7 +164,7 @@ export const instanceRouter = createTRPCRouter({
   removeSupervisor: instanceAdminProcedure
     .input(z.object({ params: instanceParamsSchema, supervisorId: z.string() }))
     .mutation(async ({ input: { params, supervisorId } }) => {
-      await deleteUserInInstance(params, supervisorId);
+      await removeSupervisorUseCase({ params, supervisorId });
     }),
 
   removeSupervisors: instanceAdminProcedure
@@ -207,83 +174,30 @@ export const instanceRouter = createTRPCRouter({
         supervisorIds: z.array(z.string()),
       }),
     )
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          supervisorIds,
-        },
-      }) => {
-        await ctx.db.userInInstance.deleteMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            userId: { in: supervisorIds },
-          },
-        });
-      },
-    ),
+    .mutation(async ({ input: { params, supervisorIds } }) => {
+      await removeSupervisorsUseCase(
+        { deleteUsersInInstance },
+        { params, supervisorIds },
+      );
+    }),
 
   invitedSupervisors: instanceAdminProcedure
     .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const invitedUsers = await ctx.db.userInInstance.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          },
-          select: { user: true, joined: true },
-        });
-
-        return {
-          supervisors: invitedUsers.map(({ user, joined }) => ({
-            id: user.id,
-            name: user.name!,
-            email: user.email!,
-            joined,
-          })),
-        };
-      },
-    ),
+    .query(async ({ ctx: { db }, input: { params } }) => {
+      return await invitedSupervisorsUseCase(
+        { db, getStudentDetailsWithUser },
+        { params },
+      );
+    }),
 
   getStudents: instanceAdminProcedure
     .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const students = await ctx.db.studentDetails.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          },
-          select: {
-            userInInstance: { select: { user: true } },
-            studentLevel: true,
-          },
-        });
-
-        return students.map(({ userInInstance: { user }, studentLevel }) => ({
-          institutionId: user.id,
-          fullName: user.name!,
-          email: user.email!,
-          level: studentLevelSchema.parse(studentLevel),
-        }));
-      },
-    ),
+    .query(async ({ ctx: { db }, input: { params } }) => {
+      return await getStudentsUseCase(
+        { db, getStudentDetailsWithUser },
+        { params },
+      );
+    }),
 
   addStudent: instanceAdminProcedure
     .input(
@@ -292,49 +206,9 @@ export const instanceRouter = createTRPCRouter({
         newStudent: newStudentSchema,
       }),
     )
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          newStudent: { institutionId, fullName, email, level },
-        },
-      }) => {
-        await ctx.db.$transaction(async (tx) => {
-          const exists = await tx.studentDetails.findFirst({
-            where: {
-              userId: institutionId,
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-            },
-          });
-          if (exists) throw new TRPCClientError("User is already a student");
-
-          await validateEmailGUIDMatch(tx, institutionId, email, fullName);
-
-          await tx.userInInstance.create({
-            data: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              userId: institutionId,
-            },
-          });
-
-          await tx.studentDetails.create({
-            data: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              userId: institutionId,
-              studentLevel: level,
-            },
-          });
-        });
-        return { institutionId, fullName, email, level };
-      },
-    ),
+    .mutation(async ({ ctx, input: { params, newStudent } }) => {
+      return await addStudentTx(ctx.db, newStudent, params);
+    }),
 
   addStudents: instanceAdminProcedure
     .input(
@@ -350,30 +224,7 @@ export const instanceRouter = createTRPCRouter({
   removeStudent: instanceAdminProcedure
     .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
     .mutation(async ({ ctx, input: { params, studentId } }) => {
-      await ctx.db.$transaction(async (tx) => {
-        const project = await tx.projectInInstance.findFirst({
-          where: {
-            ...expand(params),
-            details: { preAllocatedStudentId: studentId },
-          },
-        });
-
-        if (project) {
-          await tx.projectDetails.update({
-            where: { id: project.projectId },
-            data: { preAllocatedStudentId: null },
-          });
-        }
-
-        await tx.userInInstance.delete({
-          where: {
-            instanceMembership: {
-              ...expand(params),
-              userId: studentId,
-            },
-          },
-        });
-      });
+      await removeStudentTx(ctx.db, studentId, params);
     }),
 
   removeStudents: instanceAdminProcedure
@@ -383,86 +234,18 @@ export const instanceRouter = createTRPCRouter({
         studentIds: z.array(z.string()),
       }),
     )
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          studentIds,
-        },
-      }) => {
-        await ctx.db.$transaction(async (tx) => {
-          const projects = await tx.projectInInstance.findMany({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              details: { preAllocatedStudentId: { in: studentIds } },
-            },
-          });
-
-          if (projects.length > 0) {
-            await tx.projectDetails.updateMany({
-              where: { id: { in: projects.map((p) => p.projectId) } },
-              data: { preAllocatedStudentId: null },
-            });
-          }
-
-          await tx.userInInstance.deleteMany({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              userId: { in: studentIds },
-            },
-          });
-        });
-      },
-    ),
+    .mutation(async ({ ctx, input: { params, studentIds } }) => {
+      await removeStudentsTx(ctx.db, studentIds, params);
+    }),
 
   invitedStudents: instanceAdminProcedure
     .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const invitedStudents = await ctx.db.studentDetails.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          },
-          select: {
-            userInInstance: { include: { user: true } },
-            studentLevel: true,
-          },
-        });
-
-        const preAllocatedStudents = await getPreAllocatedStudents(ctx.db, {
-          group,
-          subGroup,
-          instance,
-        });
-
-        const all = invitedStudents.map(({ userInInstance, studentLevel }) => ({
-          id: userInInstance.user.id,
-          name: userInInstance.user.name,
-          email: userInInstance.user.email,
-          joined: userInInstance.joined,
-          level: studentLevel,
-          preAllocated: preAllocatedStudents.has(userInInstance.user.id),
-        }));
-
-        return {
-          all,
-          incomplete: all.filter((s) => !s.joined && !s.preAllocated),
-          preAllocated: all.filter((s) => s.preAllocated),
-        };
-      },
-    ),
+    .query(async ({ ctx: { db }, input: { params } }) => {
+      return await invitedStudentsUseCase(
+        { db, getStudentDetailsWithUser, getPreAllocatedStudents },
+        { params },
+      );
+    }),
 
   edit: instanceAdminProcedure
     .input(
@@ -471,103 +254,9 @@ export const instanceRouter = createTRPCRouter({
         updatedInstance: updatedInstanceSchema,
       }),
     )
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          updatedInstance: { flags, tags, ...updatedData },
-        },
-      }) => {
-        await ctx.db.$transaction(async (tx) => {
-          await tx.allocationInstance.update({
-            where: {
-              instanceId: {
-                allocationGroupId: group,
-                allocationSubGroupId: subGroup,
-                id: instance,
-              },
-            },
-            data: updatedData,
-          });
-
-          const currentInstanceFlags = await tx.flag.findMany({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-            },
-          });
-
-          const newInstanceFlags = setDiff(
-            flags,
-            currentInstanceFlags,
-            (a) => a.title,
-          );
-          const staleInstanceFlags = setDiff(
-            currentInstanceFlags,
-            flags,
-            (a) => a.title,
-          );
-
-          await tx.flag.deleteMany({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              title: { in: staleInstanceFlags.map((f) => f.title) },
-            },
-          });
-
-          await tx.flag.createMany({
-            data: newInstanceFlags.map((f) => ({
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              title: f.title,
-              description: "",
-            })),
-          });
-
-          const currentInstanceTags = await tx.tag.findMany({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-            },
-          });
-
-          const newInstanceTags = setDiff(
-            tags,
-            currentInstanceTags,
-            (a) => a.title,
-          );
-          const staleInstanceTags = setDiff(
-            currentInstanceTags,
-            tags,
-            (a) => a.title,
-          );
-
-          await tx.tag.deleteMany({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              title: { in: staleInstanceTags.map((t) => t.title) },
-            },
-          });
-
-          await tx.tag.createMany({
-            data: newInstanceTags.map((t) => ({
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              title: t.title,
-            })),
-          });
-        });
-      },
-    ),
+    .mutation(async ({ ctx, input: { params, updatedInstance } }) => {
+      await editInstanceTx(ctx.db, updatedInstance, params);
+    }),
 
   getHeaderTabs: protectedProcedure
     .input(z.object({ params: instanceParamsSchema.partial() }))
@@ -577,7 +266,7 @@ export const instanceRouter = createTRPCRouter({
 
       const params = result.data;
 
-      const instance = await getInstance({ params });
+      const instance = await getInstanceUseCase({ params });
       const role = await getUserRole(ctx.db, params, ctx.session.user.id);
       const instancePath = formatParamsAsPath(params);
 
@@ -655,6 +344,6 @@ export const instanceRouter = createTRPCRouter({
   getFlags: instanceProcedure
     .input(z.object({ params: instanceParamsSchema }))
     .query(async ({ input: { params } }) => {
-      return await getFlagTitles({ params });
+      return await getFlagTitlesUseCase({ params });
     }),
 });

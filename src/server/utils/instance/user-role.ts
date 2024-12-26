@@ -1,9 +1,10 @@
-import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
-import { PrismaTransactionClient } from "@/lib/db";
 import { InstanceParams } from "@/lib/validations/params";
 
 import { checkAdminPermissions } from "../admin/access";
+
+import { PrismaTransactionClient, Role } from "@/db";
 
 export async function getUserRole(
   db: PrismaClient,

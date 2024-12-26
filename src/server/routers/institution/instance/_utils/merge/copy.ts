@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Role } from "@prisma/client";
 
-import { PrismaTransactionClient } from "@/lib/db";
+import { PrismaTransactionClient } from "@/db";
 import { expand } from "@/lib/utils/general/instance-params";
 import { InstanceParams } from "@/lib/validations/params";
 

@@ -1,6 +1,6 @@
 import { Role } from "@prisma/client";
 
-import { PrismaTransactionClient } from "@/lib/db";
+import { PrismaTransactionClient } from "@/db";
 import { expand } from "@/lib/utils/general/instance-params";
 import { relativeComplement } from "@/lib/utils/general/set-difference";
 import { setIntersection } from "@/lib/utils/general/set-intersection";

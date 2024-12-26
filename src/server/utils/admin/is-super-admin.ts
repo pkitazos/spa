@@ -1,6 +1,6 @@
 import { AdminLevel } from "@prisma/client";
 
-import { PrismaTransactionClient } from "@/lib/db";
+import { PrismaTransactionClient } from "@/db";
 
 export async function isSuperAdmin(
   db: PrismaTransactionClient,

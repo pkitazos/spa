@@ -1,4 +1,4 @@
-import { PrismaTransactionClient } from "@/lib/db";
+import { PrismaTransactionClient } from "@/db";
 import { SubGroupParams } from "@/lib/validations/params";
 
 export async function isSubGroupAdmin(

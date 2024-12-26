@@ -19,7 +19,7 @@ import {
   superAdmin_users,
   tags,
   tagsOnProjects,
-} from "@/lib/db/data";
+} from "@/db/data";
 
 const db = new PrismaClient();
 

@@ -18,6 +18,9 @@ export const Role = {
   READER: "READER",
   STUDENT: "STUDENT",
 } as const;
+
+export type Role = typeof Role;
+
 // export const adminLevelOrd = {
 //   [AdminLevel.SUPER]: 3,
 //   [AdminLevel.GROUP]: 2,
@@ -38,3 +41,6 @@ export type PrismaTransactionClient = Omit<
   PrismaClient,
   "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
 >;
+
+export type DB = PrismaClient;
+export type TX = PrismaTransactionClient;

@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-import { PrismaTransactionClient } from "@/lib/db";
+import { PrismaTransactionClient } from "@/db";
 import {
   GroupParams,
   groupParamsSchema,

@@ -1,4 +1,4 @@
-import { PrismaTransactionClient } from "@/lib/db";
+import { PrismaTransactionClient } from "@/db";
 import { InstanceParams } from "@/lib/validations/params";
 
 export async function createProjectFlags(

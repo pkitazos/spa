@@ -1,4 +1,4 @@
-import { PrismaTransactionClient } from "@/lib/db";
+import { PrismaTransactionClient } from "@/db";
 
 import { MappingData } from "./copy";
 import { ForkMarkedProjectDto } from "./mark";
