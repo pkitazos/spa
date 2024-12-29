@@ -48,6 +48,7 @@ function adminOnlyTabs<
     [Stage.ALLOCATION_PUBLICATION]: [
       pages.manageUserAccess,
       pages.allocationOverview,
+      pages.uploadReadings,
       pages.exportToCSV,
       ...branchingTab,
       pages.preferenceStatistics,
@@ -68,7 +69,7 @@ function supervisorOnlyTabs(instance: AllocationInstance) {
     [Stage.PROJECT_SELECTION]: [pages.myProjects, pages.newProject],
     [Stage.PROJECT_ALLOCATION]: [pages.myProjects],
     [Stage.ALLOCATION_ADJUSTMENT]: [pages.myProjects],
-    [Stage.ALLOCATION_PUBLICATION]: [pages.myProjects, ...myAllocationsTab],
+    [Stage.ALLOCATION_PUBLICATION]: [pages.myProjects, pages.myReadings, ...myAllocationsTab],
   };
   return tabs[instance.stage];
 }

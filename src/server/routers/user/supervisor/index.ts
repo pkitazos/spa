@@ -258,6 +258,50 @@ export const supervisorRouter = createTRPCRouter({
       },
     ),
 
+    readings: instanceProcedure
+    .input(z.object({ params: instanceParamsSchema }))
+    .query(
+      async ({
+        ctx,
+        input: {
+          params: { group, subGroup, instance },
+        },
+      }) => {
+        const userId = ctx.session.user.id;
+
+        const allReadings = await ctx.db.projectAllocationReader.findMany({
+          where: {
+            allocationGroupId: group,
+            allocationSubGroupId: subGroup,
+            allocationInstanceId: instance,
+            readerId: userId,
+          }
+        });
+
+        const projectIds = [];
+
+        for (var read of allReadings) {
+          projectIds.push(read.projectId);
+        }
+
+        const projects = await ctx.db.project.findMany({
+          where: {
+            id: { in: projectIds}
+          }
+        });
+
+        for (let i = 0; i < projects.length; i++) {
+          if (projects[i].description.length >= 200) {
+            projects[i].description = projects[i].description.slice(0,100)+"...";
+          }
+        }
+
+        return {
+          projects
+        };
+      },
+    ),
+
   updateInstanceCapacities: instanceAdminProcedure
     .input(
       z.object({
