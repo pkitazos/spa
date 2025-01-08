@@ -8,6 +8,7 @@ const baseSchema = z.object({
   maxPreferencesPerSupervisor: z.number(),
   preferenceSubmissionDeadline: z.date(),
   projectSubmissionDeadline: z.date(),
+  markingSubmissionDeadline: z.date(),
   flags: z.array(
     z.object({ title: z.string().min(3, "Please enter a valid title") }),
   ),
@@ -89,6 +90,15 @@ export function buildInstanceFormSchema(takenNames: string[]) {
       },
     )
     .refine(
+      ({ preferenceSubmissionDeadline, markingSubmissionDeadline }) =>
+        isAfter(markingSubmissionDeadline, preferenceSubmissionDeadline),
+      {
+        message:
+          "Marking Submission deadline can't be before Preference Submission deadline",
+        path: ["markingSubmissionDeadline"],
+      },
+    )
+    .refine(
       ({ flags }) => {
         const flagSet = new Set(flags.map(({ title }) => title));
         return flags.length === flagSet.size;
@@ -104,6 +114,7 @@ const baseForkedSchema = z.object({
   instanceName: z.string().min(1, "Please enter a name"),
   preferenceSubmissionDeadline: z.date(),
   projectSubmissionDeadline: z.date(),
+  markingSubmissionDeadline: z.date(),
 });
 
 export const forkedInstanceSchema = baseForkedSchema;
@@ -131,6 +142,15 @@ export function buildForkedInstanceSchema(takenNames: string[]) {
         message:
           "Preference Submission deadline can't be before Project Upload deadline",
         path: ["preferenceSubmissionDeadline"],
+      },
+    )
+    .refine(
+      ({ preferenceSubmissionDeadline, markingSubmissionDeadline }) =>
+        isAfter(markingSubmissionDeadline, preferenceSubmissionDeadline),
+      {
+        message:
+          "Marking Submission deadline can't be before Preference Submission deadline",
+        path: ["projectSubmissionDeadline"],
       },
     );
 }
