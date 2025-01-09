@@ -58,7 +58,8 @@ export function InstanceForm({
     maxNumPreferences: 1,
     maxNumPerSupervisor: 1,
     preferenceSubmissionDeadline: addDays(new Date(), 2),
-    markingSubmissionDeadline: addDays(new Date(), 3),
+    interimMarkingDeadline: addDays(new Date(), 3),
+    markingSubmissionDeadline: addDays(new Date(), 4),
   };
 
   const formSchema = buildInstanceFormSchema(takenNames);
@@ -468,8 +469,74 @@ export function InstanceForm({
             )}
           />
         </div>
-        <SubHeading className="text-2xl">Marking Restrictions</SubHeading>
+        <Separator className="my-14" />
+        <SubHeading className="text-2xl">Reader Restrictions</SubHeading>
         <div className="grid w-full gap-16 md:grid-cols-1 lg:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="interimMarkingDeadline"
+            render={({ field }) => (
+              <FormItem className="flex flex-col">
+                <FormLabel className="text-base">
+                  Interim Marking Submission deadline
+                </FormLabel>
+                <div className="flex items-center justify-start gap-14">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-[240px] pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground",
+                          )}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP")
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={(val) => {
+                          if (!val) return;
+                          const newDate = updateDateOnly(field.value, val);
+                          field.onChange(newDate);
+                        }}
+                        disabled={(date) => date < subDays(new Date(), 1)}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <TimePicker
+                    currentTime={field.value}
+                    onHourChange={(val) => {
+                      const newHour = parseInt(val, 10);
+                      const newDate = setHours(field.value, newHour);
+                      const zonedDate = toZonedTime(newDate, "Europe/London");
+                      field.onChange(zonedDate);
+                    }}
+                    onMinuteChange={(val) => {
+                      const newMinute = parseInt(val, 10);
+                      const newDate = setMinutes(field.value, newMinute);
+                      const zonedDate = toZonedTime(newDate, "Europe/London");
+                      field.onChange(zonedDate);
+                    }}
+                  />
+                </div>
+                <FormDescription>
+                  The deadline for readers to submit their interim markings.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="markingSubmissionDeadline"
@@ -529,7 +596,7 @@ export function InstanceForm({
                   />
                 </div>
                 <FormDescription>
-                  The deadline for readers to submit their markings list.
+                  The deadline for readers to submit their markings.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
