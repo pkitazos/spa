@@ -290,14 +290,33 @@ export const supervisorRouter = createTRPCRouter({
           }
         });
 
+        const projectsAndStudents = [];
+
         for (let i = 0; i < projects.length; i++) {
           if (projects[i].description.length >= 200) {
             projects[i].description = projects[i].description.slice(0,100)+"...";
           }
+          const student = await ctx.db.projectAllocation.findFirst({
+            where: {
+              projectId: projects[i].id,
+            }
+          })
+          var studentId;
+          if (!student) {
+            studentId = "N/A";
+          } else {
+            studentId = student.userId;
+          }
+          
+          projectsAndStudents.push({id: projects[i].id,
+                                    title: projects[i].title,
+                                    description: projects[i].description,
+                                    studentId: studentId})
         }
 
+
         return {
-          projects
+          projectsAndStudents
         };
       },
     ),

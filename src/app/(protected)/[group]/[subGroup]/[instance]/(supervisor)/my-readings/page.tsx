@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 
 export default async function Page({ params }: { params: InstanceParams }) {
   // Will be : await api.user.reader.projects({ ????
-  const { projects } = await api.user.supervisor.readings({
+  const { projectsAndStudents } = await api.user.supervisor.readings({
     params,
   });
 
@@ -30,7 +30,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
       <Heading>My Readings</Heading>
       <PanelWrapper className="pt-6">
         <AccessControl allowedStages={[Stage.ALLOCATION_PUBLICATION]}>
-          <MyReadingsDataTable projects={projects} />
+          <MyReadingsDataTable projects={projectsAndStudents} />
         </AccessControl>
       </PanelWrapper>
     </>
