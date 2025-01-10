@@ -84,4 +84,12 @@ export class StudentProjectAllocationData {
       }))
       .sort((a, b) => a.supervisor.id.localeCompare(b.supervisor.id));
   }
+
+  public getViews() {
+    return {
+      byStudent: this.toStudentView(),
+      byProject: this.toProjectView(),
+      bySupervisor: this.toSupervisorView(),
+    };
+  }
 }
