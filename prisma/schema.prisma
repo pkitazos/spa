@@ -334,6 +334,7 @@ model ReaderProjectAllocation {
 }
 
 model AssessmentComponent {
+    id                   String             @id @default(uuid())
     flagId               String             @map("flag_id")
     flag                 Flag               @relation(fields: [flagId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [id, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
     title                String
@@ -347,25 +348,27 @@ model AssessmentComponent {
     allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
     componentScores      ComponentScore[]
 
-    @@id(name: "gradeSchemeId", map: "grade_scheme_id", [flagId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("assessment_component")
 }
 
 model ComponentScore {
-    id                   String              @id @default(uuid())
-    markerId             String              @map("marker_id")
-    studentId            String              @map("student_id")
-    grade                Int
-    justification        String
+    id                    String              @id @default(uuid())
+    markerId              String              @map("marker_id")
+    studentId             String              @map("student_id")
+    grade                 Int
+    justification         String
     // ---
-    flagId               String              @map("flag_id")
-    allocationGroupId    String              @map("allocation_group_id")
-    allocationSubGroupId String              @map("allocation_sub_group_id")
-    allocationInstanceId String              @map("allocation_instance_id")
+    flagId                String              @map("flag_id")
+    assessmentComponentId String              @map("assessment_component_id")
+    allocationGroupId     String              @map("allocation_group_id")
+    allocationSubGroupId  String              @map("allocation_sub_group_id")
+    allocationInstanceId  String              @map("allocation_instance_id")
     // ---
-    gradingComponent     AssessmentComponent @relation(fields: [flagId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [flagId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
-    allocationInstance   AllocationInstance  @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+    gradingComponent      AssessmentComponent @relation(fields: [assessmentComponentId], references: [id], onDelete: Cascade)
+    allocationInstance    AllocationInstance  @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
 
-    @@unique([markerId, studentId, flagId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@unique([markerId, studentId, assessmentComponentId])
+    @@map("component_score")
 }
 
 model FinalGrade {
@@ -378,6 +381,9 @@ model FinalGrade {
     allocationInstanceId String             @map("allocation_instance_id")
     // ---
     allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+
+    @@unique([studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("final_grade")
 }
 
 model Flag {
