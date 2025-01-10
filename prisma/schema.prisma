@@ -112,7 +112,7 @@ model AllocationInstance {
     id                                  String
     displayName                         String                      @map("display_name")
     stage                               Stage                       @default(SETUP)
-    selectedAlgName                     String?                     @map("selected_alg_name") // TODO: think about this
+    selectedAlgName                     String?                     @map("selected_alg_name")
     parentInstanceId                    String?                     @map("parent_instance_id")
     // supervisor details
     projectSubmissionDeadline           DateTime                    @map("project_submission_deadline")
