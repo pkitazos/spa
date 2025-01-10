@@ -1,27 +1,17 @@
 import { Stage } from "@prisma/client";
 
-import { expand } from "@/lib/utils/general/instance-params";
+import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { InstanceParams } from "@/lib/validations/params";
 
 import { db } from "@/db";
 
 export function checkAllocationInstanceExists(params: InstanceParams) {
-  return db.allocationInstance.findFirst({
-    where: {
-      allocationGroupId: params.group,
-      allocationSubGroupId: params.subGroup,
-      id: params.instance,
-    },
-  });
+  return db.allocationInstance.findFirst({ where: toInstanceId(params) });
 }
 
 export function getAllocationInstance(params: InstanceParams) {
   return db.allocationInstance.findFirstOrThrow({
-    where: {
-      allocationGroupId: params.group,
-      allocationSubGroupId: params.subGroup,
-      id: params.instance,
-    },
+    where: toInstanceId(params),
   });
 }
 
@@ -30,13 +20,7 @@ export function updateAllocationInstanceStage(
   stage: Stage,
 ) {
   return db.allocationInstance.update({
-    where: {
-      instanceId: {
-        allocationGroupId: params.group,
-        allocationSubGroupId: params.subGroup,
-        id: params.instance,
-      },
-    },
+    where: { instanceId: toInstanceId(params) },
     data: { stage },
   });
 }
@@ -54,11 +38,7 @@ export async function getAllocationInstanceWithFlagsAndTags(
   params: InstanceParams,
 ) {
   return await db.allocationInstance.findFirstOrThrow({
-    where: {
-      allocationGroupId: params.group,
-      allocationSubGroupId: params.subGroup,
-      id: params.instance,
-    },
+    where: toInstanceId(params),
     include: { flags: true, tags: true },
   });
 }

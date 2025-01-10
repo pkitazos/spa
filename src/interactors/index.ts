@@ -18,7 +18,6 @@ import { StudentDetailsWithUser } from "@/data-access/student-details";
 import { deleteUserInInstance } from "@/data-access/user";
 import { StudentProjectAllocationData } from "@/data-objects/student-project-allocation-data";
 import { DB, TX } from "@/db";
-import { get } from "http";
 
 export async function getProjectAllocationsUseCase({
   params,
