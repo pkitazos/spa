@@ -1,15 +1,11 @@
+import { expand } from "@/lib/utils/general/instance-params";
 import { InstanceParams } from "@/lib/validations/params";
 
 import { db } from "@/db";
 
 export async function getAllAllocationData(params: InstanceParams) {
-  const { group, subGroup, instance } = params;
   return await db.studentProjectAllocation.findMany({
-    where: {
-      allocationGroupId: group,
-      allocationSubGroupId: subGroup,
-      allocationInstanceId: instance,
-    },
+    where: expand(params),
     select: {
       project: {
         select: {

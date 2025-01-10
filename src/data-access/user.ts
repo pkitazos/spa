@@ -19,6 +19,7 @@ import { db } from "@/db";
 // update userInInstances (might not be necessary ?) // ? usually done in a transaction
 // // delete userInInstances
 
+// TODO consistency
 export async function findUserInInstance(
   params: InstanceParams,
   userId: string,
@@ -67,9 +68,7 @@ export async function deleteUserInInstance(
 }
 
 export async function getAllUsersInInstance(params: InstanceParams) {
-  return db.userInInstance.findMany({
-    where: expand(params),
-  });
+  return db.userInInstance.findMany({ where: expand(params) });
 }
 
 export async function getUsersInInstance(
@@ -90,7 +89,7 @@ export async function createUsersInInstance(
   });
 }
 
-export async function deleteAllUserInInstances(params: InstanceParams) {
+export async function deleteAllUsersInInstances(params: InstanceParams) {
   await db.userInInstance.deleteMany({ where: expand(params) });
 }
 
