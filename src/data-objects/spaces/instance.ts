@@ -1,17 +1,21 @@
 import { InstanceParams } from "@/lib/validations/params";
 
+import { DataObject } from "../data-object";
+import { StudentProjectAllocationData } from "../student-project-allocation-data";
+
 import { AllocationGroup } from "./group";
-import { StudentProjectAllocationData } from "./student-project-allocation-data";
 import { AllocationSubGroup } from "./subgroup";
 
+import { DAL } from "@/data-access";
 import { checkInstanceExistsUseCase, getInstanceUseCase } from "@/interactors";
 
-export class AllocationInstance {
+export class AllocationInstance extends DataObject {
   public params: InstanceParams;
   private _group: AllocationGroup | undefined;
   private _subgroup: AllocationSubGroup | undefined;
 
-  constructor(params: InstanceParams) {
+  constructor(dal: DAL, params: InstanceParams) {
+    super(dal);
     this.params = params;
   }
 
@@ -28,12 +32,13 @@ export class AllocationInstance {
   }
 
   get group() {
-    if (!this._group) this._group = new AllocationGroup(this.params);
+    if (!this._group) this._group = new AllocationGroup(this.dal, this.params);
     return this._group;
   }
 
   get subGroup() {
-    if (!this._subgroup) this._subgroup = new AllocationSubGroup(this.params);
+    if (!this._subgroup)
+      this._subgroup = new AllocationSubGroup(this.dal, this.params);
     return this._subgroup;
   }
 }
