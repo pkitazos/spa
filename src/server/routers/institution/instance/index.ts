@@ -2,7 +2,6 @@ import { Stage } from "@prisma/client";
 import { z } from "zod";
 
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
-import { setDiff } from "@/lib/utils/general/set-difference";
 import {
   newStudentSchema,
   newSupervisorSchema,
@@ -25,12 +24,16 @@ import { getUserRole } from "@/server/utils/instance/user-role";
 
 import { hasSelfDefinedProject } from "../../user/_utils/get-self-defined-project";
 
+import { addStudentTx } from "./_utils/add-student-transaction";
 import { addStudentsTx } from "./_utils/add-students-transaction";
 import { addSupervisorTx } from "./_utils/add-supervisor-transaction";
 import { addSupervisorsTx } from "./_utils/add-supervisors-transaction";
+import { editInstanceTx } from "./_utils/edit-instance-tx";
 import { forkInstanceTransaction } from "./_utils/fork/transaction";
 import { mergeInstanceTrx } from "./_utils/merge/transaction";
 import { getPreAllocatedStudents } from "./_utils/pre-allocated-students";
+import { removeStudentTx } from "./_utils/remove-student-transaction";
+import { removeStudentsTx } from "./_utils/remove-students-tx";
 import { algorithmRouter } from "./algorithm";
 import { externalSystemRouter } from "./external";
 import { matchingRouter } from "./matching";
@@ -39,6 +42,7 @@ import { projectRouter } from "./project";
 
 import { pages } from "@/content/pages";
 import { getStudentDetailsWithUser } from "@/data-access/student-details";
+import { deleteUsersInInstance } from "@/data-access/user";
 import { Role } from "@/db";
 import {
   allStudentsUseCase,
@@ -57,11 +61,6 @@ import {
   removeSupervisorUseCase,
   updateStageUseCase,
 } from "@/interactors";
-import { addStudentTx } from "./_utils/add-student-transaction";
-import { removeStudentTx } from "./_utils/remove-student-transaction";
-import { removeStudentsTx } from "./_utils/remove-students-tx";
-import { deleteUsersInInstance } from "@/data-access/user";
-import { editInstanceTx } from "./_utils/edit-instance-tx";
 
 // TODO: add stage checks to stage-specific procedures
 export const instanceRouter = createTRPCRouter({
@@ -71,33 +70,32 @@ export const instanceRouter = createTRPCRouter({
   external: externalSystemRouter,
   preference: preferenceRouter,
 
-  exists: protectedProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ input: { params } }) => {
+  exists: instanceProcedure.query(
+    async ({
+      ctx: {
+        instance: { params },
+      },
+    }) => {
       return checkInstanceExistsUseCase({ params });
-    }),
+    },
+  ),
 
-  get: protectedProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ input: { params } }) => {
-      return await getInstanceUseCase({ params });
-    }),
+  get: instanceProcedure.query(async ({ input: { params } }) => {
+    return await getInstanceUseCase({ params });
+  }),
 
-  currentStage: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ ctx }) => {
-      return ctx.instance.stage;
-    }),
+  currentStage: instanceProcedure.query(async ({ ctx }) => {
+    return ctx.instance.stage;
+  }),
 
   setStage: instanceAdminProcedure
     .input(
       z.object({
-        params: instanceParamsSchema,
         stage: z.nativeEnum(Stage),
       }),
     )
-    .mutation(async ({ input: { params, stage } }) => {
-      await updateStageUseCase({ params, stage });
+    .mutation(async ({ input: { stage }, ctx }) => {
+      await updateStageUseCase({ params: ctx.instance.params, stage });
     }),
 
   selectedAlgorithm: instanceAdminProcedure
@@ -109,86 +107,69 @@ export const instanceRouter = createTRPCRouter({
       });
     }),
 
-  projectAllocations: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ input: { params } }) => {
-      return await getProjectAllocationsUseCase({ params });
-    }),
+  projectAllocations: instanceAdminProcedure.query(async ({ ctx }) => {
+    // return await ctx.instance.getAllocationData().getViews();
+    return await getProjectAllocationsUseCase({ params: ctx.instance.params });
+  }),
 
-  getEditFormDetails: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ input: { params } }) => {
-      return await getEditFormDetailsUseCase({ params });
-    }),
+  getEditFormDetails: instanceAdminProcedure.query(async ({ ctx }) => {
+    return await getEditFormDetailsUseCase({ params: ctx.instance.params });
+  }),
 
-  supervisors: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ input: { params } }) => {
-      return await getSupervisorsUseCase({ params });
-    }),
+  supervisors: instanceProcedure.query(async ({ input: { params } }) => {
+    return await getSupervisorsUseCase({ params });
+  }),
 
-  students: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ input: { params } }) => {
-      return await allStudentsUseCase({ params });
-    }),
+  students: instanceProcedure.query(async ({ input: { params } }) => {
+    return await allStudentsUseCase({ params });
+  }),
 
-  getSupervisors: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ input: { params } }) => {
-      return await getSupervisorDetailsUseCase({ params });
-    }),
+  getSupervisors: instanceAdminProcedure.query(async ({ ctx }) => {
+    return await getSupervisorDetailsUseCase({ params: ctx.instance.params });
+  }),
 
   addSupervisor: instanceAdminProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        newSupervisor: newSupervisorSchema,
-      }),
-    )
-    .mutation(async ({ ctx, input: { params, newSupervisor } }) => {
-      return await addSupervisorTx(ctx.db, newSupervisor, params);
+    .input(z.object({ newSupervisor: newSupervisorSchema }))
+    .mutation(async ({ ctx, input: { newSupervisor } }) => {
+      return await addSupervisorTx(ctx.db, newSupervisor, ctx.instance.params);
     }),
 
   addSupervisors: instanceAdminProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        newSupervisors: z.array(newSupervisorSchema),
-      }),
-    )
-    .mutation(async ({ ctx, input: { params, newSupervisors } }) => {
-      return await addSupervisorsTx(ctx.db, newSupervisors, params);
+    .input(z.object({ newSupervisors: z.array(newSupervisorSchema) }))
+    .mutation(async ({ ctx, input: { newSupervisors } }) => {
+      return await addSupervisorsTx(
+        ctx.db,
+        newSupervisors,
+        ctx.instance.params,
+      );
     }),
 
   removeSupervisor: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema, supervisorId: z.string() }))
-    .mutation(async ({ input: { params, supervisorId } }) => {
-      await removeSupervisorUseCase({ params, supervisorId });
+    .input(z.object({ supervisorId: z.string() }))
+    .mutation(async ({ ctx, input: { supervisorId } }) => {
+      await removeSupervisorUseCase({
+        params: ctx.instance.params,
+        supervisorId,
+      });
     }),
 
   removeSupervisors: instanceAdminProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        supervisorIds: z.array(z.string()),
-      }),
-    )
-    .mutation(async ({ input: { params, supervisorIds } }) => {
+    .input(z.object({ supervisorIds: z.array(z.string()) }))
+    .mutation(async ({ ctx, input: { supervisorIds } }) => {
       await removeSupervisorsUseCase(
         { deleteUsersInInstance },
-        { params, supervisorIds },
+        { params: ctx.instance.params, supervisorIds },
       );
     }),
 
-  invitedSupervisors: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ ctx: { db }, input: { params } }) => {
+  invitedSupervisors: instanceAdminProcedure.query(
+    async ({ ctx: { db, instance } }) => {
       return await invitedSupervisorsUseCase(
         { db, getStudentDetailsWithUser },
-        { params },
+        { params: instance.params },
       );
-    }),
+    },
+  ),
 
   getStudents: instanceAdminProcedure
     .input(z.object({ params: instanceParamsSchema }))
@@ -341,9 +322,7 @@ export const instanceRouter = createTRPCRouter({
       await mergeInstanceTrx(ctx.db, params);
     }),
 
-  getFlags: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ input: { params } }) => {
-      return await getFlagTitlesUseCase({ params });
-    }),
+  getFlags: instanceProcedure.query(async ({ input: { params } }) => {
+    return await getFlagTitlesUseCase({ params });
+  }),
 });

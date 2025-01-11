@@ -25,6 +25,7 @@ import { isSuperAdmin } from "./utils/admin/is-super-admin";
 import { getInstance } from "./utils/instance";
 import { getAllUserRoles, getUserRole } from "./utils/instance/user-role";
 
+import { DAL } from "@/data-access";
 import { db, Role } from "@/db";
 
 /**
@@ -53,6 +54,7 @@ export const createTRPCContext = async (opts: {
   return {
     session,
     db,
+    dal: new DAL(db),
   };
 };
 

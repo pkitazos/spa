@@ -25,9 +25,9 @@ import { User } from "@/data-objects/users/user";
 /**
  * @requires a preceding `.input(z.object({ params: groupParamsSchema }))` or better
  */
-const groupMiddleware = t.middleware(async ({ input, next }) => {
+const groupMiddleware = t.middleware(async ({ ctx: { dal }, input, next }) => {
   const { params } = z.object({ params: groupParamsSchema }).parse(input);
-  const group = new AllocationGroup(params);
+  const group = new AllocationGroup(dal, params);
   return next({ ctx: { group } });
 });
 
@@ -64,14 +64,14 @@ const projectMiddleware = t.middleware(async ({ input, next }) => {
 
 // We can use this as follows:
 
-const authedMiddleware = t.middleware(({ ctx: { session }, next }) => {
+const authedMiddleware = t.middleware(({ ctx: { dal, session }, next }) => {
   if (!session || !session.user) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "User is not signed in",
     });
   }
-  const user = new User(session.user);
+  const user = new User(dal, session.user.id);
   return next({ ctx: { user } });
 });
 
@@ -79,14 +79,14 @@ const authedMiddleware = t.middleware(({ ctx: { session }, next }) => {
 
 const SuperAdminMiddleware = authedMiddleware.unstable_pipe(
   ({ ctx: { user }, next }) => {
-    if (!user.isAdmin()) {
+    if (!user.isSuperAdmin()) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
         message: "User is not an admin",
       });
     }
 
-    return next({ ctx: { user: user.toAdmin() } });
+    return next({ ctx: { user: user.toSuperAdmin() } });
   },
 );
 
@@ -135,6 +135,45 @@ const SubGroupAdminMiddleware = authedMiddleware.unstable_pipe(
 );
 
 /**
+ * @requires a preceding `.input(z.object({ params: instanceParamsSchema }))` or better
+ */
+const instanceStudentMiddleware = authedMiddleware.unstable_pipe(
+  ({ ctx: { user }, next, input }) => {
+    const { params } = z.object({ params: instanceParamsSchema }).parse(input);
+
+    if (!user.isInstanceStudent(params)) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "User is not a group admin of group XXX",
+      });
+    }
+
+    return next({
+      ctx: { user: user.toInstanceStudent(params) },
+    });
+  },
+);
+/**
+ * @requires a preceding `.input(z.object({ params: instanceParamsSchema }))` or better
+ */
+const instanceSupervisorMiddleware = authedMiddleware.unstable_pipe(
+  ({ ctx: { user }, next, input }) => {
+    const { params } = z.object({ params: instanceParamsSchema }).parse(input);
+
+    if (!user.isInstanceSupervisor(params)) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "User is not a group admin of group XXX",
+      });
+    }
+
+    return next({
+      ctx: { user: user.toInstanceSupervisor(params) },
+    });
+  },
+);
+
+/**
  * @requires a preceding `.input(z.object({ params: projectParamsSchema }))`
  */
 const projectSupervisorMiddleware = authedMiddleware.unstable_pipe(
@@ -148,7 +187,7 @@ const projectSupervisorMiddleware = authedMiddleware.unstable_pipe(
       });
     }
     return next({
-      ctx: { user: user.toSupervisor(params) },
+      ctx: { user: user.toProjectSupervisor(params) },
     });
   },
 );
@@ -167,7 +206,7 @@ const projectReaderMiddleware = authedMiddleware.unstable_pipe(
       });
     }
     return next({
-      ctx: { user: user.toReader(params) },
+      ctx: { user: user.toProjectReader(params) },
     });
   },
 );
@@ -217,6 +256,8 @@ export const procedure = {
     superAdmin: instanceProcedure.use(SuperAdminMiddleware),
     groupAdmin: instanceProcedure.use(GroupAdminMiddleware),
     subgroupAdmin: instanceProcedure.use(SubGroupAdminMiddleware),
+    student: instanceProcedure.use(instanceStudentMiddleware),
+    supervisor: instanceProcedure.use(instanceSupervisorMiddleware),
   },
 
   project: {
