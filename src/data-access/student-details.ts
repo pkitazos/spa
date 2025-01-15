@@ -1,3 +1,4 @@
+// TODO: deprecated, move functionality to DAL
 import { PrismaClient } from "@prisma/client";
 
 import { expand } from "@/lib/utils/general/instance-params";

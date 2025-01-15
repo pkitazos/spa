@@ -1,6 +1,6 @@
-import { AllocationInstance } from "@prisma/client";
+import { AllocationInstance, Stage } from "@prisma/client";
 
-import { expand } from "@/lib/utils/general/instance-params";
+import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import {
   GroupParams,
   InstanceParams,
@@ -10,6 +10,11 @@ import {
 
 import { DB } from "@/db";
 import { GroupDTO, InstanceDTO, SubGroupDTO, UserDTO } from "@/dto";
+import {
+  Project__AllocatedStudents_Capacities,
+  SupervisionAllocationDto,
+  SupervisorCapacityDetails,
+} from "@/dto/supervisor_router";
 
 export class DAL {
   db: DB;
@@ -53,6 +58,51 @@ export class DAL {
         instance: x.id,
         ...x,
       }));
+    },
+
+    getParentInstanceId: async (
+      params: InstanceParams,
+    ): Promise<string | undefined> => {
+      return await this.db.allocationInstance
+        .findFirstOrThrow({
+          where: toInstanceId(params),
+          select: { parentInstanceId: true },
+        })
+        .then((x) => x.parentInstanceId ?? undefined);
+    },
+
+    isForked: async (params: InstanceParams): Promise<boolean> =>
+      !!(await this.db.allocationInstance.findFirst({
+        where: { ...toInstanceId(params), parentInstanceId: { not: null } },
+      })),
+
+    getStage: async (params: InstanceParams): Promise<Stage> =>
+      await this.db.allocationInstance
+        .findFirstOrThrow({
+          where: toInstanceId(params),
+          select: { stage: true },
+        })
+        .then((x) => x.stage),
+
+    getSupervisorProjectAllocationAccess: async (
+      params: InstanceParams,
+    ): Promise<boolean> =>
+      await this.db.allocationInstance
+        .findFirstOrThrow({
+          where: toInstanceId(params),
+          select: { supervisorAllocationAccess: true },
+        })
+        .then((x) => x.supervisorAllocationAccess),
+
+    setSupervisorProjectAllocationAccess: async (
+      access: boolean,
+      params: InstanceParams,
+    ): Promise<boolean> => {
+      await this.db.allocationInstance.update({
+        where: { instanceId: toInstanceId(params) },
+        data: { supervisorAllocationAccess: access },
+      });
+      return access;
     },
   };
 
@@ -204,6 +254,121 @@ export class DAL {
           details: { preAllocatedStudentId },
         },
       }));
+    },
+  };
+
+  public supervisor = {
+    exists: async (userId: string, params: InstanceParams): Promise<boolean> =>
+      !!(await this.db.supervisorDetails.findFirst({
+        where: { userId, ...expand(params) },
+      })),
+
+    delete: async (userId: string, params: InstanceParams) => {
+      await this.db.supervisorDetails.delete({
+        where: { supervisorDetailsId: { userId, ...expand(params) } },
+      });
+    },
+
+    deleteMany: async (userIds: string[], params: InstanceParams) => {
+      await this.db.supervisorDetails.deleteMany({
+        where: { userId: { in: userIds }, ...expand(params) },
+      });
+    },
+
+    // ! bad name because it includes allocated students
+    getAllProjects: async (
+      userId: string,
+      params: InstanceParams,
+    ): Promise<Project__AllocatedStudents_Capacities[]> => {
+      return await this.db.projectInInstance
+        .findMany({
+          where: { supervisorId: userId, ...expand(params) },
+          select: {
+            projectId: true,
+            supervisorId: true,
+            details: true,
+            studentAllocations: {
+              select: {
+                student: {
+                  select: { userInInstance: { select: { user: true } } },
+                },
+              },
+            },
+          },
+        })
+        .then((data) =>
+          data.map((x) => ({
+            id: x.projectId,
+            title: x.details.title,
+            supervisorId: x.supervisorId,
+            capacityLowerBound: x.details.capacityLowerBound,
+            capacityUpperBound: x.details.capacityUpperBound,
+            preAllocatedStudentId: x.details.preAllocatedStudentId ?? undefined,
+            allocatedStudents: x.studentAllocations.map(
+              (y) => y.student.userInInstance.user,
+            ),
+          })),
+        );
+    },
+
+    getSupervisionAllocations: async (
+      userId: string,
+      params: InstanceParams,
+    ): Promise<SupervisionAllocationDto[]> => {
+      return await this.db.studentProjectAllocation
+        .findMany({
+          where: { project: { supervisorId: userId }, ...expand(params) },
+          select: {
+            studentRanking: true,
+            project: { include: { details: true } },
+            student: {
+              include: { userInInstance: { select: { user: true } } },
+            },
+          },
+        })
+        .then((data) =>
+          data.map(({ project, student, studentRanking: rank }) => ({
+            project: {
+              ...project,
+              ...project.details,
+              preAllocatedStudentId:
+                project.details.preAllocatedStudentId ?? undefined,
+            },
+            student: {
+              ...student.userInInstance.user,
+              rank,
+              level: student.studentLevel,
+            },
+          })),
+        );
+    },
+
+    getCapacityDetails: async (
+      userId: string,
+      params: InstanceParams,
+    ): Promise<SupervisorCapacityDetails> =>
+      await this.db.supervisorDetails
+        .findFirstOrThrow({
+          where: { userId, ...expand(params) },
+        })
+        .then((x) => ({
+          projectTarget: x.projectAllocationTarget,
+          projectUpperQuota: x.projectAllocationUpperBound,
+        })),
+
+    setCapacityDetails: async (
+      userId: string,
+      { projectTarget, projectUpperQuota }: SupervisorCapacityDetails,
+      params: InstanceParams,
+    ): Promise<SupervisorCapacityDetails> => {
+      await this.db.supervisorDetails.update({
+        where: { supervisorDetailsId: { userId, ...expand(params) } },
+        data: {
+          projectAllocationTarget: projectTarget,
+          projectAllocationUpperBound: projectUpperQuota,
+        },
+      });
+      return { projectTarget, projectUpperQuota };
     },
   };
 }

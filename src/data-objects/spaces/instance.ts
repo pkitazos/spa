@@ -28,8 +28,38 @@ export class AllocationInstance extends DataObject {
     return getInstanceUseCase({ params: this.params });
   }
 
-  public getStudentProjectAllocation() {
-    return StudentProjectAllocationData.fromDB(this.params);
+  public async getStudentProjectAllocation() {
+    return await StudentProjectAllocationData.fromDB(this.params);
+  }
+
+  public async getStage() {
+    return await this.dal.instance.getStage(this.params);
+  }
+
+  public async isForked(): Promise<boolean> {
+    return await this.dal.instance.isForked(this.params);
+  }
+
+  public async getParentInstanceId(): Promise<string | undefined> {
+    return await this.dal.instance.getParentInstanceId(this.params);
+  }
+
+  public async getParentInstance(): Promise<AllocationInstance> {
+    const parentInstanceId = await this.dal.instance.getParentInstanceId(
+      this.params,
+    );
+    if (!parentInstanceId) {
+      throw new Error("No parent instance found");
+    }
+
+    return new AllocationInstance(this.dal, {
+      ...this.params,
+      instance: parentInstanceId,
+    });
+  }
+
+  public getSupervisorProjectAllocationAccess() {
+    return this.dal.instance.getSupervisorProjectAllocationAccess(this.params);
   }
 
   get group() {
