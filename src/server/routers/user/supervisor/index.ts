@@ -28,7 +28,7 @@ export const supervisorRouter = createTRPCRouter({
           supervisorId,
         },
       }) => {
-        const exists = await ctx.db.supervisorInstanceDetails.findFirst({
+        const exists = await ctx.db.supervisorDetails.findFirst({
           where: {
             allocationGroupId: group,
             allocationSubGroupId: subGroup,
@@ -114,37 +114,36 @@ export const supervisorRouter = createTRPCRouter({
           supervisorId,
         },
       }) => {
-        const supervisorData =
-          await ctx.db.supervisorInstanceDetails.findFirstOrThrow({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              userId: supervisorId,
-            },
-            select: {
-              projectAllocationTarget: true,
-              projectAllocationUpperBound: true,
-              userInInstance: {
-                select: {
-                  user: { select: { id: true, name: true, email: true } },
-                  supervisorProjects: {
-                    select: {
-                      id: true,
-                      title: true,
-                      supervisorId: true,
-                      preAllocatedStudentId: true,
-                      tagOnProject: { select: { tag: true } },
-                      flagOnProjects: { select: { flag: true } },
-                      allocations: {
-                        select: { student: { select: { user: true } } },
-                      },
+        const supervisorData = await ctx.db.supervisorDetails.findFirstOrThrow({
+          where: {
+            allocationGroupId: group,
+            allocationSubGroupId: subGroup,
+            allocationInstanceId: instance,
+            userId: supervisorId,
+          },
+          select: {
+            projectAllocationTarget: true,
+            projectAllocationUpperBound: true,
+            userInInstance: {
+              select: {
+                user: { select: { id: true, name: true, email: true } },
+                supervisorProjects: {
+                  select: {
+                    id: true,
+                    title: true,
+                    supervisorId: true,
+                    preAllocatedStudentId: true,
+                    tagOnProject: { select: { tag: true } },
+                    flagOnProjects: { select: { flag: true } },
+                    allocations: {
+                      select: { student: { select: { user: true } } },
                     },
                   },
                 },
               },
             },
-          });
+          },
+        });
 
         const supervisor = {
           id: supervisorData.userInInstance.user.id,

@@ -7,6 +7,7 @@ import { AllocationGroup } from "./group";
 import { AllocationSubGroup } from "./subgroup";
 
 import { DAL } from "@/data-access";
+import { InstanceDTO } from "@/dto";
 import { checkInstanceExistsUseCase, getInstanceUseCase } from "@/interactors";
 
 export class AllocationInstance extends DataObject {
@@ -41,6 +42,11 @@ export class AllocationInstance extends DataObject {
       this._subgroup = new AllocationSubGroup(this.dal, this.params);
     return this._subgroup;
   }
+
+  public static eq = (a: InstanceDTO, b: InstanceDTO) =>
+    a.group === b.group &&
+    a.subGroup === b.subGroup &&
+    a.instance === b.instance;
 }
 
 // how to factor these DB dependent methods?

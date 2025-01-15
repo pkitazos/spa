@@ -11,7 +11,7 @@ export class InstanceStudent extends User {
 
   constructor(dal: DAL, id: string, params: InstanceParams) {
     super(dal, id);
-    this.instance = new AllocationInstance(params);
+    this.instance = new AllocationInstance(dal, params);
   }
 
   public async hasSelfDefinedProject(): Promise<boolean> {

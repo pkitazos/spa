@@ -4,17 +4,12 @@ import { expand } from "@/lib/utils/general/instance-params";
 import {
   GroupParams,
   InstanceParams,
+  ProjectParams,
   SubGroupParams,
 } from "@/lib/validations/params";
 
-import {
-  GroupDTO,
-  InstanceDTO,
-  SubGroupDTO,
-  UserDTO,
-} from "@/server/routers/user/dto";
-
 import { DB } from "@/db";
+import { GroupDTO, InstanceDTO, SubGroupDTO, UserDTO } from "@/dto";
 
 export class DAL {
   db: DB;
@@ -62,12 +57,67 @@ export class DAL {
   };
 
   public user = {
+    isSuperAdmin: async (userId: string): Promise<boolean> =>
+      !!(await this.db.superAdmin.findFirst({ where: { userId } })),
+
+    isGroupAdmin: async (
+      userId: string,
+      groupParams: GroupParams,
+    ): Promise<boolean> =>
+      !!(await this.db.groupAdmin.findFirst({
+        where: { userId, allocationGroupId: groupParams.group },
+      })),
+
+    isSubGroupAdmin: async (
+      userId: string,
+      subGroupParams: SubGroupParams,
+    ): Promise<boolean> =>
+      !!(await this.db.subGroupAdmin.findFirst({
+        where: {
+          userId,
+          allocationSubGroupId: subGroupParams.subGroup,
+          allocationGroupId: subGroupParams.group,
+        },
+      })),
+
     isInstanceStudent: async (
       userId: string,
       params: InstanceParams,
     ): Promise<boolean> =>
       !!(await this.db.studentDetails.findFirst({
         where: { ...expand(params), userId },
+      })),
+
+    isInstanceSupervisor: async (
+      userId: string,
+      params: InstanceParams,
+    ): Promise<boolean> =>
+      !!(await this.db.supervisorDetails.findFirst({
+        where: { ...expand(params), userId },
+      })),
+
+    isInstanceReader: async (
+      userId: string,
+      params: InstanceParams,
+    ): Promise<boolean> =>
+      !!(await this.db.readerDetails.findFirst({
+        where: { ...expand(params), userId },
+      })),
+
+    isProjectSupervisor: async (
+      userId: string,
+      { projectId, ...params }: ProjectParams,
+    ): Promise<boolean> =>
+      !!(await this.db.projectInInstance.findFirst({
+        where: { projectId, ...expand(params), supervisorId: userId },
+      })),
+
+    isProjectReader: async (
+      userId: string,
+      { projectId, ...params }: ProjectParams,
+    ): Promise<boolean> =>
+      !!(await this.db.readerProjectAllocation.findFirst({
+        where: { projectId, ...expand(params), userId },
       })),
 
     getAllInstances: async (userId: string): Promise<InstanceDTO[]> =>

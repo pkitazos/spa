@@ -11,6 +11,6 @@ export class SubGroupAdmin extends User {
 
   constructor(dal: DAL, id: string, subGroupParams: SubGroupParams) {
     super(dal, id);
-    this.subGroup = new AllocationSubGroup(subGroupParams);
+    this.subGroup = new AllocationSubGroup(dal, subGroupParams);
   }
 }

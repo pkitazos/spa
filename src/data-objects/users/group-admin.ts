@@ -11,6 +11,6 @@ export class GroupAdmin extends User {
 
   constructor(dal: DAL, id: string, groupParams: GroupParams) {
     super(dal, id);
-    this.allocationGroup = new AllocationGroup(groupParams);
+    this.allocationGroup = new AllocationGroup(dal, groupParams);
   }
 }

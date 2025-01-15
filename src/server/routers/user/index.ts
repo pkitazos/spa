@@ -16,11 +16,12 @@ import {
 
 import { getDisplayNameMap } from "./_utils/instance";
 import { validateSegments } from "./_utils/user-breadcrumbs";
-import { instanceEQ, userDtoSchema } from "./dto";
 import { studentRouter } from "./student";
 import { supervisorRouter } from "./supervisor";
 
+import { AllocationInstance } from "@/data-objects/spaces/instance";
 import { User } from "@/data-objects/users/user";
+import { userDtoSchema } from "@/dto";
 
 export const userRouter = createTRPCRouter({
   student: studentRouter,
@@ -136,7 +137,7 @@ export const userRouter = createTRPCRouter({
       const uniqueUnprivileged = relativeComplement(
         unprivilegedInstances,
         privilegedInstances,
-        instanceEQ,
+        AllocationInstance.eq,
       );
 
       const allInstances = [...privilegedInstances, ...uniqueUnprivileged];
