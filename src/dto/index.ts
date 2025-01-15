@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 export const userDtoSchema = z.object({
-  email: z.string(),
   id: z.string(),
+  email: z.string(),
   name: z.string(),
 });
 
@@ -41,3 +41,14 @@ export const instanceDtoSchema = z.object({
 });
 
 export type InstanceDTO = z.infer<typeof instanceDtoSchema>;
+
+export const flagDtoSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+});
+
+export const tagDtoSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+});

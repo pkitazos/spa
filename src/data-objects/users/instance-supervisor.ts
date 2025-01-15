@@ -13,4 +13,18 @@ export class InstanceSupervisor extends User {
     super(dal, id);
     this.instance = new AllocationInstance(dal, params);
   }
+
+  public async getSupervisionAllocations() {
+    return await this.dal.supervisor.getSupervisionAllocations(
+      this.id,
+      this.instance.params,
+    );
+  }
+
+  public async getCapacityDetails() {
+    return await this.dal.supervisor.getCapacityDetails(
+      this.id,
+      this.instance.params,
+    );
+  }
 }
