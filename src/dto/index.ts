@@ -41,6 +41,3 @@ export const instanceDtoSchema = z.object({
 });
 
 export type InstanceDTO = z.infer<typeof instanceDtoSchema>;
-
-export const instanceEQ = (a: InstanceDTO, b: InstanceDTO) =>
-  a.group === b.group && a.subGroup === b.subGroup && a.instance === b.instance;

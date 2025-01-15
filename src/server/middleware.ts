@@ -34,29 +34,35 @@ const groupMiddleware = t.middleware(async ({ ctx: { dal }, input, next }) => {
 /**
  * @requires a preceding `.input(z.object({ params: subGroupParamsSchema }))` or better
  */
-const subGroupMiddleware = t.middleware(async ({ input, next }) => {
-  const { params } = z.object({ params: subGroupParamsSchema }).parse(input);
-  const subGroup = new AllocationSubGroup(params);
-  return next({ ctx: { subGroup } });
-});
+const subGroupMiddleware = t.middleware(
+  async ({ ctx: { dal }, input, next }) => {
+    const { params } = z.object({ params: subGroupParamsSchema }).parse(input);
+    const subGroup = new AllocationSubGroup(dal, params);
+    return next({ ctx: { subGroup } });
+  },
+);
 
 /**
  * @requires a preceding `.input(z.object({ params: instanceParamsSchema }))`
  */
-const instanceMiddleware = t.middleware(async ({ input, next }) => {
-  const { params } = z.object({ params: instanceParamsSchema }).parse(input);
-  const instance = new AllocationInstance(params);
-  return next({ ctx: { instance } });
-});
+const instanceMiddleware = t.middleware(
+  async ({ ctx: { dal }, input, next }) => {
+    const { params } = z.object({ params: instanceParamsSchema }).parse(input);
+    const instance = new AllocationInstance(dal, params);
+    return next({ ctx: { instance } });
+  },
+);
 
 /**
  * @requires a preceding `.input(z.object({ params: projectParamsSchema }))`
  */
-const projectMiddleware = t.middleware(async ({ input, next }) => {
-  const { params } = z.object({ params: projectParamsSchema }).parse(input);
-  const project = new Project(params);
-  return next({ ctx: { project } });
-});
+const projectMiddleware = t.middleware(
+  async ({ ctx: { dal }, input, next }) => {
+    const { params } = z.object({ params: projectParamsSchema }).parse(input);
+    const project = new Project(dal, params);
+    return next({ ctx: { project } });
+  },
+);
 
 // Next, Lets consider the authenticated (permission protected) middlewares:
 // DTOs should be created for different kinds of users. These are in:
@@ -275,6 +281,7 @@ export const procedure = {
 // A procedure in an instance with group-admin permissions would be:
 procedure.instance.groupAdmin
   .input(z.object({ q: z.string() }))
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .query(({ ctx: _c, input: _ }) => {});
 // NB the types - no `| undefined` freakiness
 

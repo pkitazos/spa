@@ -5,8 +5,6 @@ import {
   SubGroupParams,
 } from "@/lib/validations/params";
 
-import { UserDTO } from "@/server/routers/user/dto";
-
 import { DataObject } from "../data-object";
 
 import { GroupAdmin } from "./group-admin";
@@ -19,6 +17,7 @@ import { SubGroupAdmin } from "./subgroup-admin";
 import { SuperAdmin } from "./super-admin";
 
 import { DAL } from "@/data-access";
+import { UserDTO } from "@/dto";
 
 export class User extends DataObject {
   id: string;
@@ -34,8 +33,8 @@ export class User extends DataObject {
     user._data = data;
   }
 
-  public isSuperAdmin(): boolean {
-    return this.dal.user.isSuperAdmin(this.id);
+  public async isSuperAdmin(): Promise<boolean> {
+    return await this.dal.user.isSuperAdmin(this.id);
   }
 
   public toSuperAdmin() {
@@ -43,8 +42,8 @@ export class User extends DataObject {
     return new SuperAdmin(this.dal, this.id);
   }
 
-  public isGroupAdmin(groupParams: GroupParams): boolean {
-    return this.dal.user.isGroupAdmin(this.id, groupParams);
+  public async isGroupAdmin(groupParams: GroupParams): Promise<boolean> {
+    return await this.dal.user.isGroupAdmin(this.id, groupParams);
   }
 
   public toGroupAdmin(groupParams: GroupParams) {
@@ -52,8 +51,10 @@ export class User extends DataObject {
     return new GroupAdmin(this.dal, this.id, groupParams);
   }
 
-  public isSubGroupAdmin(subGroupParams: SubGroupParams): boolean {
-    return this.dal.user.isSubGroupAdmin(this.id, subGroupParams);
+  public async isSubGroupAdmin(
+    subGroupParams: SubGroupParams,
+  ): Promise<boolean> {
+    return await this.dal.user.isSubGroupAdmin(this.id, subGroupParams);
   }
 
   public toSubGroupAdmin(subGroupParams: SubGroupParams) {
@@ -94,6 +95,9 @@ export class User extends DataObject {
   }
 
   public isProjectSupervisor(projectParams: ProjectParams) {
+    // ? Should this first check that user is in-fact a supervisor in this instance or should it assume that the user is a supervisor in the instance?
+    // for now, I'm assuming that the user is a supervisor in the instance
+
     return this.dal.user.isProjectSupervisor(this.id, projectParams);
   }
 
@@ -105,6 +109,8 @@ export class User extends DataObject {
   }
 
   public isProjectReader(projectParams: ProjectParams) {
+    // ? Should this first check that user is in-fact a reader in this instance or should it assume that the user is a reader in the instance?
+    // for now, I'm assuming that the user is a reader in the instance
     return this.dal.user.isProjectReader(this.id, projectParams);
   }
 

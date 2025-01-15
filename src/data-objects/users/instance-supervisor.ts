@@ -11,6 +11,6 @@ export class InstanceSupervisor extends User {
 
   constructor(dal: DAL, id: string, params: InstanceParams) {
     super(dal, id);
-    this.instance = new AllocationInstance(params);
+    this.instance = new AllocationInstance(dal, params);
   }
 }

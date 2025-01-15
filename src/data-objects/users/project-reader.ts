@@ -11,6 +11,6 @@ export class ProjectReader extends User {
 
   constructor(dal: DAL, id: string, projectParams: ProjectParams) {
     super(dal, id);
-    this.project = new Project(projectParams);
+    this.project = new Project(dal, projectParams);
   }
 }
