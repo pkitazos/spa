@@ -248,7 +248,7 @@ model ProjectAllocation {
     // ---
     project                 Project                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
     student                 UserInInstance            @relation(name: "project_allocation", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
-    ProjectAllocationReader ProjectAllocationReader[]
+    projectAllocationReader ProjectAllocationReader[]
 
     @@id(name: "allocationId", [projectId, userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@unique([userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
