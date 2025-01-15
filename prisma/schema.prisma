@@ -69,7 +69,7 @@ model UserInInstance {
     // ---
     supervisorInstanceDetails SupervisorInstanceDetails[] @relation(name: "supervisor_details")
     supervisorProjects        Project[]
-    ProjectAllocationReader   ProjectAllocationReader[]
+    projectAllocationReader   ProjectAllocationReader[]
 
     @@id(name: "instanceMembership", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
 }
