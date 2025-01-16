@@ -23,8 +23,6 @@ import { partitionSpaces } from "@/server/utils/space/partition";
 import { getGroupDisplayNames, getSubGroupDisplayNames } from "./_utils/space";
 
 export const accessControlRouter = createTRPCRouter({
-  user: protectedProcedure.query(async ({ ctx }) => ctx.session.user),
-
   allAdminPanels: protectedProcedure.query(async ({ ctx }) => {
     const user = ctx.session.user;
 
@@ -55,6 +53,7 @@ export const accessControlRouter = createTRPCRouter({
 
   adminInInstance: instanceProcedure
     .input(z.object({ params: instanceParamsSchema }))
+    .output(z.boolean())
     .query(async ({ ctx, input: { params } }) => {
       return await checkAdminPermissions(ctx.db, params, ctx.session.user.id);
     }),
