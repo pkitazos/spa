@@ -24,21 +24,27 @@ export const supervisorRouter = createTRPCRouter({
   /**
    * @version DAL
    */
+  // !!! TODO this is probably wrong
+  // assuming you mean to check if the user provided by id
+  // is a supervisor
+  // then you need to construct a new user object e.g.
+  // await new User(dal, supervisorId).isInstanceSupervisor(params)
   exists: procedure.instance.user
-    .input(z.object({ params: instanceParamsSchema, supervisorId: z.string() }))
+    .input(z.object({ supervisorId: z.string() }))
     .output(z.boolean())
-    .query(async ({ ctx: { dal }, input: { supervisorId, params } }) =>
-      dal.supervisor.exists(supervisorId, params),
+    .query(
+      async ({ ctx: { user }, input: { params } }) =>
+        await user.isInstanceSupervisor(params),
     ),
 
   /**
    * @version DAL
    */
   allocationAccess: procedure.instance.user
-    .input(z.object({ params: instanceParamsSchema }))
     .output(z.boolean())
-    .query(async ({ ctx: { instance } }) =>
-      instance.getSupervisorProjectAllocationAccess(),
+    .query(
+      async ({ ctx: { instance } }) =>
+        await instance.getSupervisorProjectAllocationAccess(),
     ),
 
   // !this does not allow any admin level, it only allows subgroupAdmin?
@@ -50,11 +56,14 @@ export const supervisorRouter = createTRPCRouter({
     .input(z.object({ params: instanceParamsSchema, access: z.boolean() }))
     .output(z.boolean())
     .mutation(async ({ ctx: { dal }, input: { params, access } }) =>
+      // Should be a method on instance DO
       dal.instance.setSupervisorProjectAllocationAccess(access, params),
     ),
 
   // this one should be pretty straightforward, however I'm not sure how to handle the transformation of the data
   // or whether this could be wrapped up in some sort of DTO
+  // definitely consider renaming - i can't tell what this does from the title
+  // I am also generally in favour of defining a DTO for it.
   instancePage: procedure.instance.supervisor
     .input(z.object({ params: instanceParamsSchema }))
     .output(
@@ -183,6 +192,7 @@ export const supervisorRouter = createTRPCRouter({
    * @version DAL
    */
   // ? not sure about the output schema definition here
+  // TODO consider renaming e.g. projectStats?
   projects: procedure.instance.supervisor
     .input(z.object({ params: instanceParamsSchema }))
     .output(
@@ -282,6 +292,7 @@ export const supervisorRouter = createTRPCRouter({
    * @version DAL
    */
   // ? same subGroupAdmin issue as above
+  // TODO Consider renaming e.g. to deleteMany?
   deleteSelected: procedure.instance.subgroupAdmin
     .input(
       z.object({
@@ -306,7 +317,9 @@ export const supervisorRouter = createTRPCRouter({
   allocations: procedure.instance.supervisor
     .input(z.object({ params: instanceParamsSchema }))
     .output(z.array(supervisionAllocationDtoSchema))
-    .query(async ({ ctx: { user }, input: { params } }) =>
-      user.toInstanceSupervisor(params).getSupervisionAllocations(),
+    .query(async ({ ctx: { user } }) =>
+      // NB the toInstanceSupervisor call is unnecessary;
+      // check the type of user
+      user.getSupervisionAllocations(),
     ),
 });

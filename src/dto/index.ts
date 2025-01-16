@@ -18,6 +18,8 @@ export const userInInstanceDtoSchema = z.object({
 
 export type UserInInstanceDTO = z.infer<typeof userInInstanceDtoSchema>;
 
+// Spaces
+
 export const groupDtoSchema = z.object({
   group: z.string(),
   displayName: z.string(),

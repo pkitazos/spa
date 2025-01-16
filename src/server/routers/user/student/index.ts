@@ -7,6 +7,7 @@ import { stageGte } from "@/lib/utils/permissions/stage-check";
 import { StudentProjectAllocationDto } from "@/lib/validations/allocation/data-table-dto";
 import { instanceParamsSchema } from "@/lib/validations/params";
 
+import { procedure } from "@/server/middleware";
 import {
   createTRPCRouter,
   instanceAdminProcedure,
@@ -19,29 +20,17 @@ import { getSelfDefinedProject } from "../_utils/get-self-defined-project";
 
 import { preferenceRouter } from "./preference";
 
+import { User } from "@/data-objects/users/user";
+
 export const studentRouter = createTRPCRouter({
   preference: preferenceRouter,
 
-  exists: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
+  exists: procedure.instance.user
+    .input(z.object({ studentId: z.string() }))
+    .output(z.boolean())
     .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, instance, subGroup },
-          studentId,
-        },
-      }) => {
-        const exists = await ctx.db.studentDetails.findFirst({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            userId: studentId,
-          },
-        });
-        return !!exists;
-      },
+      async ({ ctx: { instance, dal }, input: { studentId } }) =>
+        await new User(dal, studentId).isInstanceStudent(instance.params),
     ),
 
   getById: instanceProcedure
@@ -118,31 +107,24 @@ export const studentRouter = createTRPCRouter({
       },
     ),
 
-  allocationAccess: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ ctx }) => ctx.instance.studentAllocationAccess),
+  // Does not concern user-data;
+  // concerns an instance
+  // so should be in instance router
+  // not user.student
+  allocationAccess: procedure.instance.user
+    .output(z.boolean())
+    .query(
+      async ({ ctx: { instance } }) =>
+        await instance.allocationAccess.student(),
+    ),
 
-  setAllocationAccess: instanceAdminProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        access: z.boolean(),
-      }),
-    )
-    .mutation(async ({ ctx, input: { params, access } }) => {
-      await ctx.db.allocationInstance.update({
-        where: {
-          instanceId: {
-            allocationGroupId: params.group,
-            allocationSubGroupId: params.subGroup,
-            id: params.instance,
-          },
-        },
-        data: { studentAllocationAccess: access },
-      });
-
-      return access;
-    }),
+  // same again here
+  setAllocationAccess: procedure.instance.subgroupAdmin
+    .input(z.object({ access: z.boolean() }))
+    .output(z.boolean())
+    .mutation(async ({ ctx: { instance }, input: { access } }) =>
+      instance.setAllocationAccess(access),
+    ),
 
   overviewData: studentProcedure
     .input(z.object({ params: instanceParamsSchema }))
