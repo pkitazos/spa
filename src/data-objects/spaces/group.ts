@@ -1,10 +1,9 @@
 import { GroupParams } from "@/lib/validations/params";
 
-import { GroupDTO, SubGroupDTO } from "@/server/routers/user/dto";
-
 import { DataObject } from "../data-object";
 
 import { DAL } from "@/data-access";
+import { GroupDTO, SubGroupDTO } from "@/dto";
 
 export class AllocationGroup extends DataObject {
   public params: GroupParams;
@@ -12,6 +11,10 @@ export class AllocationGroup extends DataObject {
   constructor(dal: DAL, params: GroupParams) {
     super(dal);
     this.params = params;
+  }
+
+  static async create(dal: DAL, name: string) {
+    return await dal.group.create(name);
   }
 
   async exists(): Promise<boolean> {
@@ -24,5 +27,9 @@ export class AllocationGroup extends DataObject {
 
   async getSubGroups(): Promise<SubGroupDTO[]> {
     return await this.dal.subGroup.getAllForGroup(this.params);
+  }
+
+  async delete() {
+    return await this.dal.group.delete(this.params);
   }
 }

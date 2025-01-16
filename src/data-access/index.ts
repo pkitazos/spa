@@ -1,4 +1,4 @@
-import { AllocationInstance, Stage } from "@prisma/client";
+import { AllocationGroup, AllocationInstance, Stage } from "@prisma/client";
 
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import {
@@ -15,6 +15,7 @@ import {
   SupervisionAllocationDto,
   SupervisorCapacityDetails,
 } from "@/dto/supervisor_router";
+import { slugify } from "@/lib/utils/general/slugify";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type TODO = any;
@@ -26,13 +27,42 @@ export class DAL {
   }
 
   public group = {
+    create: async (groupName: string): Promise<GroupDTO> => {
+      return await this.db.allocationGroup
+        .create({
+          data: {
+            id: slugify(groupName),
+            displayName: groupName,
+          },
+        })
+        .then(allocationGroupToDTO);
+    },
+
     exists: async ({ group: id }: GroupParams): Promise<boolean> =>
       !!(await this.db.allocationGroup.findFirst({ where: { id } })),
 
     get: async ({ group: id }: GroupParams): Promise<GroupDTO> =>
       await this.db.allocationGroup
         .findFirstOrThrow({ where: { id } })
-        .then((data) => ({ group: data.id, ...data })),
+        .then(allocationGroupToDTO),
+
+    getAll: async (): Promise<GroupDTO[]> =>
+      await this.db.allocationGroup
+        .findMany()
+        .then((data) => data.map(allocationGroupToDTO)),
+
+    setName: async (
+      { group: id }: GroupParams,
+      newName: string,
+    ): Promise<GroupDTO> =>
+      await this.db.allocationGroup
+        .update({ where: { id }, data: { displayName: newName } })
+        .then(allocationGroupToDTO),
+
+    delete: async ({ group: id }: GroupParams): Promise<GroupDTO> =>
+      await this.db.allocationGroup
+        .delete({ where: { id } })
+        .then(allocationGroupToDTO),
   };
 
   public subGroup = {
@@ -247,6 +277,13 @@ export class DAL {
       }),
   };
 
+  public superAdmin = {
+    getAll: async (): Promise<UserDTO[]> =>
+      await this.db.superAdmin
+        .findMany({ select: { user: true } })
+        .then((data) => data.map((x) => x.user)),
+  };
+
   public groupAdmin = {
     getAllGroups: async (userId: string): Promise<GroupDTO[]> =>
       await this.db.groupAdmin
@@ -255,10 +292,7 @@ export class DAL {
           select: { allocationGroup: true },
         })
         .then((data) =>
-          data.map((x) => ({
-            group: x.allocationGroup.id,
-            ...x.allocationGroup,
-          })),
+          data.map((x) => allocationGroupToDTO(x.allocationGroup)),
         ),
 
     getAllInstances: async (userId: string): Promise<InstanceDTO[]> =>
@@ -423,9 +457,15 @@ export class DAL {
   };
 }
 
-const allocationInstanceToDTO = (x: AllocationInstance) => ({
-  group: x.allocationGroupId,
-  subGroup: x.allocationSubGroupId,
-  instance: x.id,
-  ...x,
-});
+function allocationInstanceToDTO(x: AllocationInstance): InstanceDTO {
+  return {
+    group: x.allocationGroupId,
+    subGroup: x.allocationSubGroupId,
+    instance: x.id,
+    displayName: x.displayName,
+  };
+}
+
+function allocationGroupToDTO(data: AllocationGroup): GroupDTO {
+  return { group: data.id, displayName: data.displayName };
+}
