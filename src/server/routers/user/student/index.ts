@@ -35,6 +35,7 @@ export const studentRouter = createTRPCRouter({
 
   getById: instanceProcedure
     .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
+    // .output(studentDtoSchema) ///help
     .query(
       async ({
         ctx,
@@ -115,7 +116,7 @@ export const studentRouter = createTRPCRouter({
     .output(z.boolean())
     .query(
       async ({ ctx: { instance } }) =>
-        await instance.allocationAccess.student(),
+        await instance.allocationAccess.project.getStudent(),
     ),
 
   // same again here
@@ -123,7 +124,7 @@ export const studentRouter = createTRPCRouter({
     .input(z.object({ access: z.boolean() }))
     .output(z.boolean())
     .mutation(async ({ ctx: { instance }, input: { access } }) =>
-      instance.setAllocationAccess(access),
+      instance.allocationAccess.project.setStudent(access),
     ),
 
   overviewData: studentProcedure
@@ -194,6 +195,7 @@ export const studentRouter = createTRPCRouter({
 
   isPreAllocated: studentProcedure
     .input(z.object({ params: instanceParamsSchema }))
+    .output(z.boolean())
     .query(
       async ({
         ctx,

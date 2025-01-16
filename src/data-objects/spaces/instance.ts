@@ -80,12 +80,22 @@ export class AllocationInstance extends DataObject {
 
   // TODO this
   public allocationAccess = {
-    async student(): Promise<boolean> {
-      throw new Error("Method not implemented.");
-    },
+    project: {
+      async getStudent(): Promise<boolean> {
+        throw new Error("Method not implemented.");
+      },
 
-    async supervisor(): Promise<boolean> {
-      throw new Error("Method not implemented.");
+      async setStudent(access: boolean): Promise<boolean> {
+        throw new Error("Method not implemented.");
+      },
+
+      async getSupervisor(): Promise<boolean> {
+        throw new Error("Method not implemented.");
+      },
+
+      async setSupervisor(access: boolean): Promise<boolean> {
+        throw new Error("Method not implemented.");
+      },
     },
   };
 }
