@@ -37,8 +37,8 @@ export class User extends DataObject {
     return await this.dal.user.isSuperAdmin(this.id);
   }
 
-  public toSuperAdmin() {
-    if (!this.isSuperAdmin()) throw new Error("unauthorised");
+  public async toSuperAdmin() {
+    if (!(await this.isSuperAdmin())) throw new Error("unauthorised");
     return new SuperAdmin(this.dal, this.id);
   }
 
@@ -46,8 +46,13 @@ export class User extends DataObject {
     return await this.dal.user.isGroupAdmin(this.id, groupParams);
   }
 
-  public toGroupAdmin(groupParams: GroupParams) {
-    if (!this.isGroupAdmin(groupParams)) throw new Error("unauthorised");
+  public async isGroupAdminOrBetter(params: GroupParams): Promise<boolean> {
+    return (await this.isSuperAdmin()) || (await this.isGroupAdmin(params));
+  }
+
+  public async toGroupAdmin(groupParams: GroupParams) {
+    if (!(await this.isGroupAdmin(groupParams)))
+      throw new Error("unauthorised");
     return new GroupAdmin(this.dal, this.id, groupParams);
   }
 
@@ -57,17 +62,29 @@ export class User extends DataObject {
     return await this.dal.user.isSubGroupAdmin(this.id, subGroupParams);
   }
 
-  public toSubGroupAdmin(subGroupParams: SubGroupParams) {
-    if (!this.isSubGroupAdmin(subGroupParams)) throw new Error("unauthorised");
+  public async isSubGroupAdminOrBetter(
+    params: SubGroupParams,
+  ): Promise<boolean> {
+    return (
+      (await this.isGroupAdmin({ group: params.group })) ||
+      (await this.isSubGroupAdmin(params))
+    );
+  }
+
+  public async toSubGroupAdmin(subGroupParams: SubGroupParams) {
+    if (!(await this.isSubGroupAdmin(subGroupParams)))
+      throw new Error("unauthorised");
     return new SubGroupAdmin(this.dal, this.id, subGroupParams);
   }
 
-  public isInstanceStudent(instanceParams: InstanceParams) {
-    return this.dal.user.isInstanceStudent(this.id, instanceParams);
+  public async isInstanceStudent(
+    instanceParams: InstanceParams,
+  ): Promise<boolean> {
+    return await this.dal.user.isInstanceStudent(this.id, instanceParams);
   }
 
-  public toInstanceStudent(instanceParams: InstanceParams) {
-    if (!this.isInstanceStudent(instanceParams))
+  public async toInstanceStudent(instanceParams: InstanceParams) {
+    if (!(await this.isInstanceStudent(instanceParams)))
       throw new Error("unauthorised");
 
     return new InstanceStudent(this.dal, this.id, instanceParams);
@@ -94,9 +111,21 @@ export class User extends DataObject {
     return new InstanceReader(this.dal, this.id, instanceParams);
   }
 
+  public async isInstanceMember(params: InstanceParams) {
+    // TODO @pkitazos
+    // might need some SBAC here
+    return (
+      (await this.isSubGroupAdmin(params)) ||
+      (await this.isInstanceReader(params)) ||
+      (await this.isInstanceStudent(params)) ||
+      (await this.isInstanceReader(params))
+    );
+  }
+
   public isProjectSupervisor(projectParams: ProjectParams) {
     // ? Should this first check that user is in-fact a supervisor in this instance or should it assume that the user is a supervisor in the instance?
     // for now, I'm assuming that the user is a supervisor in the instance
+    // irrelevant; we just need to know if they supervise this project
 
     return this.dal.user.isProjectSupervisor(this.id, projectParams);
   }
@@ -118,6 +147,11 @@ export class User extends DataObject {
     if (!this.isProjectReader(projectParams)) throw new Error("unauthorised");
 
     return new ProjectReader(this.dal, this.id, projectParams);
+  }
+
+  public async canAccessProject(_projectParams: ProjectParams) {
+    // TODO @pkitazos spec for when you can access a project would be great
+    return true;
   }
 
   public async toDTO(): Promise<UserDTO> {

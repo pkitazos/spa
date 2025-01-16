@@ -77,12 +77,15 @@ export class AllocationInstance extends DataObject {
     a.group === b.group &&
     a.subGroup === b.subGroup &&
     a.instance === b.instance;
+
+  // TODO this
+  public allocationAccess = {
+    async student(): Promise<boolean> {
+      throw new Error("Method not implemented.");
+    },
+
+    async supervisor(): Promise<boolean> {
+      throw new Error("Method not implemented.");
+    },
+  };
 }
-
-// how to factor these DB dependent methods?
-
-// several options
-// one is to include db in constructor
-// annother is to pass db to method.
-// passing to constructor could be very attractive - it makes the call sites very clean indeed.
-// but perhaps it makes testing more difficult. unclear.

@@ -1,10 +1,11 @@
-import { PrismaTransactionClient } from "@/db";
 import {
   GroupParams,
   InstanceParams,
   SubGroupParams,
 } from "@/lib/validations/params";
 import { InstanceDisplayData } from "@/lib/validations/spaces";
+
+import { PrismaTransactionClient } from "@/db";
 
 export async function getInstancesForGroups(
   db: PrismaTransactionClient,

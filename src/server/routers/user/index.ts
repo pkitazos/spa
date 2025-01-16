@@ -15,7 +15,6 @@ import {
 } from "@/server/trpc";
 
 import { getDisplayNameMap } from "./_utils/instance";
-import { validateSegments } from "./_utils/user-breadcrumbs";
 import { studentRouter } from "./student";
 import { supervisorRouter } from "./supervisor";
 
@@ -53,7 +52,9 @@ export const userRouter = createTRPCRouter({
     .output(z.boolean())
     .query(async ({ ctx: { user, instance } }) => {
       if (!user.isInstanceStudent(instance.params)) return false;
-      return user.toInstanceStudent(instance.params).hasSelfDefinedProject();
+      return await user
+        .toInstanceStudent(instance.params)
+        .then((student) => student.hasSelfDefinedProject());
     }),
 
   // TODO refactor
@@ -103,21 +104,18 @@ export const userRouter = createTRPCRouter({
       const getDisplayData = await getDisplayNameMap(ctx.db);
 
       // if the user is a super-admin return all instances
-      if (user.isSuperAdmin()) {
+      if (await user.isSuperAdmin()) {
         const allInstances = await dal.instance.getAll();
-        return allInstances.map((e) =>
-          getDisplayData({
-            group: e.allocationGroupId,
-            subGroup: e.allocationSubGroupId,
-            instance: e.id,
-          }),
-        );
+        return allInstances.map(getDisplayData);
       }
 
       // can safely assert that the user is not a super-admin
 
       // user is an admin in these spaces
       const groups = await dal.groupAdmin.getAllGroups(user.id);
+
+      const groupAdminInstances = await dal.instance.getForGroups(groups);
+
       const subGroups = await dal.subGroupAdmin.getAllSubgroups(user.id);
 
       const uniqueSubGroups = relativeComplement(
@@ -126,10 +124,13 @@ export const userRouter = createTRPCRouter({
         (a, b) => a.group == b.group,
       );
 
-      const privilegedInstances = await dal.instance.getAllFrom(
-        groups,
-        uniqueSubGroups,
-      );
+      const subGroupAdminInstances =
+        await dal.instance.getForGroups(uniqueSubGroups);
+
+      const privilegedInstances = [
+        ...groupAdminInstances,
+        ...subGroupAdminInstances,
+      ];
 
       // user has some role in these instances (student or supervisor or reader)
       const unprivilegedInstances = await dal.user.getAllInstances(user.id);
@@ -144,13 +145,46 @@ export const userRouter = createTRPCRouter({
       return allInstances.map(getDisplayData);
     }),
 
-  breadcrumbs: publicProcedure
+  breadcrumbs: procedure.user
     .input(z.object({ segments: z.array(z.string()) }))
     .output(z.array(validatedSegmentsSchema))
-    .query(async ({ ctx, input }) => {
-      if (!ctx.session || !ctx.session.user) return [];
-      const user = ctx.session.user;
-      return await validateSegments(ctx.db, input.segments, user.id);
+    .query(async ({ ctx: { user }, input: { segments } }) => {
+      // TODO
+      // This is fine as is, but I'd ask two things:
+      // 1. why is it "user.breadcrumbs"?
+      // 2. should the logic below live somewhere else?
+      const [group, subGroup, instance, projectId] = segments;
+      const res = [];
+      if (group) {
+        res.push({
+          segment: group,
+          access: await user.isGroupAdminOrBetter({ group }),
+        });
+      }
+      if (subGroup) {
+        res.push({
+          segment: subGroup,
+          access: await user.isSubGroupAdminOrBetter({ group, subGroup }),
+        });
+      }
+      if (instance) {
+        res.push({
+          segment: instance,
+          access: await user.isInstanceMember({ group, subGroup, instance }),
+        });
+      }
+      if (projectId) {
+        res.push({
+          segment: projectId,
+          access: await user.canAccessProject({
+            group,
+            subGroup,
+            instance,
+            projectId,
+          }),
+        });
+      }
+      return res;
     }),
 
   joinInstance: procedure.instance.user.mutation(
