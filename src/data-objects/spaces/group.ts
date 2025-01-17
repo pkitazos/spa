@@ -3,7 +3,7 @@ import { GroupParams } from "@/lib/validations/params";
 import { DataObject } from "../data-object";
 
 import { DAL } from "@/data-access";
-import { GroupDTO, SubGroupDTO } from "@/dto";
+import { GroupDTO, SubGroupDTO, UserDTO } from "@/dto";
 
 export class AllocationGroup extends DataObject {
   public params: GroupParams;
@@ -26,7 +26,17 @@ export class AllocationGroup extends DataObject {
   }
 
   async getSubGroups(): Promise<SubGroupDTO[]> {
-    return await this.dal.subGroup.getAllForGroup(this.params);
+    return await this.dal.group.getSubGroups(this.params);
+  }
+
+  async getAdmins(): Promise<UserDTO[]> {
+    return await this.dal.group.getAdmins(this.params);
+  }
+
+  async getManagers(): Promise<UserDTO[]> {
+    const groupAdmins = await this.getAdmins();
+    const superAdmins = await this.dal.superAdmin.getAll();
+    return [...groupAdmins, ...superAdmins];
   }
 
   async delete() {
