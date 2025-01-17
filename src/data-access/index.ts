@@ -1,4 +1,9 @@
-import { AllocationGroup, AllocationInstance, Stage } from "@prisma/client";
+import {
+  AllocationGroup,
+  AllocationInstance,
+  AllocationSubGroup,
+  Stage,
+} from "@prisma/client";
 
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import {
@@ -27,16 +32,15 @@ export class DAL {
   }
 
   public group = {
-    create: async (groupName: string): Promise<GroupDTO> => {
-      return await this.db.allocationGroup
+    create: async (groupName: string): Promise<GroupDTO> =>
+      await this.db.allocationGroup
         .create({
           data: {
             id: slugify(groupName),
             displayName: groupName,
           },
         })
-        .then(allocationGroupToDTO);
-    },
+        .then(allocationGroupToDTO),
 
     exists: async ({ group: id }: GroupParams): Promise<boolean> =>
       !!(await this.db.allocationGroup.findFirst({ where: { id } })),
@@ -50,6 +54,25 @@ export class DAL {
       await this.db.allocationGroup
         .findMany()
         .then((data) => data.map(allocationGroupToDTO)),
+
+    getSubGroups: async ({
+      group: allocationGroupId,
+    }: GroupParams): Promise<SubGroupDTO[]> => {
+      return await this.db.allocationSubGroup
+        .findMany({
+          where: { allocationGroupId },
+        })
+        .then((data) => data.map(allocationSubGroupToDTO));
+    },
+
+    getAdmins: async ({ group }: GroupParams): Promise<UserDTO[]> => {
+      return await this.db.groupAdmin
+        .findMany({
+          where: { allocationGroupId: group },
+          select: { user: true },
+        })
+        .then((data) => data.map((x) => x.user));
+    },
 
     setName: async (
       { group: id }: GroupParams,
@@ -66,6 +89,20 @@ export class DAL {
   };
 
   public subGroup = {
+    create: async (
+      allocationGroupId: string,
+      displayName: string,
+    ): Promise<SubGroupDTO> =>
+      this.db.allocationSubGroup
+        .create({
+          data: {
+            displayName,
+            id: slugify(displayName),
+            allocationGroupId,
+          },
+        })
+        .then(allocationSubGroupToDTO),
+
     exists: async (params: SubGroupParams): Promise<boolean> =>
       !!(await this.db.allocationSubGroup.findFirst({
         where: {
@@ -82,27 +119,19 @@ export class DAL {
             id: params.subGroup,
           },
         })
-        .then((data) => ({
-          group: data.allocationGroupId,
-          subGroup: data.id,
-          displayName: data.displayName,
-        })),
+        .then(allocationSubGroupToDTO),
 
-    getAllForGroup: async ({
-      group: allocationGroupId,
-    }: GroupParams): Promise<SubGroupDTO[]> => {
-      return await this.db.allocationSubGroup
-        .findMany({
-          where: { allocationGroupId },
+    delete: async ({ group, subGroup }: SubGroupParams): Promise<SubGroupDTO> =>
+      await this.db.allocationSubGroup
+        .delete({
+          where: {
+            subGroupId: {
+              allocationGroupId: group,
+              id: subGroup,
+            },
+          },
         })
-        .then((data) =>
-          data.map((i) => ({
-            group: i.allocationGroupId,
-            subGroup: i.id,
-            displayName: i.displayName,
-          })),
-        );
-    },
+        .then(allocationSubGroupToDTO),
   };
 
   public instance = {
@@ -157,6 +186,8 @@ export class DAL {
         where: { ...toInstanceId(params), parentInstanceId: { not: null } },
       })),
 
+    // Consider deprecating in favour of instance.get().stage?
+    // and putting stage on the DTO?
     getStage: async (params: InstanceParams): Promise<Stage> =>
       await this.db.allocationInstance
         .findFirstOrThrow({
@@ -323,12 +354,7 @@ export class DAL {
           select: { allocationSubGroup: true },
         })
         .then((data) =>
-          // TODO should this be a fn?
-          data.map((x) => ({
-            group: x.allocationSubGroup.allocationGroupId,
-            subGroup: x.allocationSubGroup.id,
-            ...x.allocationSubGroup,
-          })),
+          data.map((x) => allocationSubGroupToDTO(x.allocationSubGroup)),
         ),
   };
 
@@ -457,15 +483,25 @@ export class DAL {
   };
 }
 
-function allocationInstanceToDTO(x: AllocationInstance): InstanceDTO {
+// TODO move these to some other file
+// Maybe in @/dto?
+function allocationGroupToDTO(data: AllocationGroup): GroupDTO {
+  return { group: data.id, displayName: data.displayName };
+}
+
+function allocationSubGroupToDTO(data: AllocationSubGroup): SubGroupDTO {
   return {
-    group: x.allocationGroupId,
-    subGroup: x.allocationSubGroupId,
-    instance: x.id,
-    displayName: x.displayName,
+    group: data.allocationGroupId,
+    subGroup: data.id,
+    displayName: data.displayName,
   };
 }
 
-function allocationGroupToDTO(data: AllocationGroup): GroupDTO {
-  return { group: data.id, displayName: data.displayName };
+function allocationInstanceToDTO(data: AllocationInstance): InstanceDTO {
+  return {
+    group: data.allocationGroupId,
+    subGroup: data.allocationSubGroupId,
+    instance: data.id,
+    displayName: data.displayName,
+  };
 }

@@ -2,19 +2,15 @@ import { AdminLevel } from "@prisma/client";
 import { TRPCClientError } from "@trpc/client";
 import { z } from "zod";
 
-import { slugify } from "@/lib/utils/general/slugify";
 import { newAdminSchema } from "@/lib/validations/add-admins/new-admin";
-import {
-  groupParamsSchema,
-  subGroupParamsSchema,
-} from "@/lib/validations/params";
+import { groupParamsSchema } from "@/lib/validations/params";
 
+import { AllocationSubGroup } from "@/data-objects/spaces/subgroup";
+import { groupDtoSchema, subGroupDtoSchema, userDtoSchema } from "@/dto";
 import { procedure } from "@/server/middleware";
 import { adminProcedure, createTRPCRouter } from "@/server/trpc";
 import { isGroupAdmin } from "@/server/utils/admin/is-group-admin";
 import { validateEmailGUIDMatch } from "@/server/utils/id-email-check";
-
-import { groupDtoSchema } from "../user/dto";
 
 export const groupRouter = createTRPCRouter({
   exists: procedure.group.user
@@ -25,53 +21,38 @@ export const groupRouter = createTRPCRouter({
     .output(groupDtoSchema)
     .query(async ({ ctx: { group } }) => await group.get()),
 
-  // TODO rename
   /**
-   * returns true if the current user can access the specified group
+   * TODO rename?
+   * returns true if the current user can access the specified group?
    */
   access: procedure.group.user
     .output(z.boolean())
     .query(
       async ({ ctx: { user, group } }) =>
-        (await user.isSuperAdmin()) || (await user.isGroupAdmin(group.params)),
+        await user.isGroupAdminOrBetter(group.params),
     ),
 
-  // TODO rename
-  /**
-   * return a list of all managers for this group
-   * @pkitazos need u to clarify this one i think
-   */
-  subGroupManagement: adminProcedure
-    .input(z.object({ params: groupParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group },
-        },
-      }) => {
-        const { displayName, allocationSubGroups } =
-          await ctx.db.allocationGroup.findFirstOrThrow({
-            where: { id: group },
-            select: { displayName: true, allocationSubGroups: true },
-          });
+  // TODO check correct?
+  // consider renaming?
+  subGroupManagement: procedure.group.groupAdmin
+    .output(
+      z.object({
+        displayName: z.string(),
+        allocationSubGroups: z.array(subGroupDtoSchema),
+        groupAdmins: z.array(userDtoSchema),
+      }),
+    )
+    .query(async ({ ctx: { group } }) => {
+      const { displayName } = await group.get();
+      const allocationSubGroups = await group.getSubGroups();
+      // NB this gets all managers - group admin or better
+      // If correct, consider renaming field to e.g. managers
+      const groupAdmins = await group.getManagers();
+      // Uncomment below if you only want proper group admins
+      // const groupAdmins = await group.getAdmins();
 
-        const data = await ctx.db.adminInSpace.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: null,
-            adminLevel: AdminLevel.GROUP,
-          },
-          select: { user: { select: { id: true, name: true, email: true } } },
-        });
-
-        return {
-          displayName,
-          allocationSubGroups,
-          groupAdmins: data.map(({ user }) => user),
-        };
-      },
-    ),
+      return { displayName, allocationSubGroups, groupAdmins };
+    }),
 
   takenSubGroupNames: procedure.group.groupAdmin
     .output(z.array(z.string()))
@@ -82,47 +63,18 @@ export const groupRouter = createTRPCRouter({
           .then((data) => data.map((x) => x.displayName)),
     ),
 
-  createSubGroup: adminProcedure
-    .input(z.object({ params: groupParamsSchema, name: z.string() }))
-    .output(z.void())
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group },
-          name,
-        },
-      }) => {
-        await ctx.db.allocationSubGroup.create({
-          data: {
-            displayName: name,
-            id: slugify(name),
-            allocationGroupId: group,
-          },
-        });
-      },
-    ),
+  createSubGroup: procedure.group.groupAdmin
+    .input(z.object({ name: z.string() }))
+    .output(z.void()) // Consider returning the subgroup DTO
+    .mutation(async ({ ctx: { group, dal }, input: { name } }) => {
+      AllocationSubGroup.create(dal, group.params, name);
+    }),
 
-  deleteSubGroup: adminProcedure
-    .input(z.object({ params: subGroupParamsSchema }))
+  deleteSubGroup: procedure.subgroup.groupAdmin
     .output(z.void())
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup },
-        },
-      }) => {
-        await ctx.db.allocationSubGroup.delete({
-          where: {
-            subGroupId: {
-              allocationGroupId: group,
-              id: subGroup,
-            },
-          },
-        });
-      },
-    ),
+    .mutation(async ({ ctx: { subGroup } }) => {
+      await subGroup.delete();
+    }),
 
   // TODO: refactor after auth is implemented
   /**
@@ -150,6 +102,7 @@ export const groupRouter = createTRPCRouter({
         newAdmin: newAdminSchema,
       }),
     )
+    .output(z.void())
     .mutation(
       async ({
         ctx,
@@ -183,6 +136,7 @@ export const groupRouter = createTRPCRouter({
 
   removeAdmin: adminProcedure
     .input(z.object({ params: groupParamsSchema, userId: z.string() }))
+    .output(z.void())
     .mutation(
       async ({
         ctx,
