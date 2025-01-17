@@ -15,6 +15,7 @@ export const institutionRouter = createTRPCRouter({
   subGroup: subGroupRouter,
   instance: instanceRouter,
 
+  // not used; consider deleting?
   superAdminAccess: procedure.user
     .output(z.boolean())
     .query(async ({ ctx: { user } }) => await user.isSuperAdmin()),

@@ -100,6 +100,7 @@ export const createCallerFactory = t.createCallerFactory;
 export const createTRPCRouter = t.router;
 
 /**
+ * @deprecated - use the procedures from the middleware file
  * Public (unauthenticated) procedure
  *
  * This is the base piece you use to build new queries and mutations on your tRPC API. It does not
@@ -109,6 +110,7 @@ export const createTRPCRouter = t.router;
 export const publicProcedure = t.procedure;
 
 /**
+ * @deprecated - use the procedures from the middleware file
  * Middleware that enforces users are logged in before running the procedure.
  */
 const authedMiddleware = t.middleware(({ ctx: { session }, next }) => {
@@ -122,6 +124,7 @@ const authedMiddleware = t.middleware(({ ctx: { session }, next }) => {
 });
 
 /**
+ * @deprecated - use the procedures from the middleware file
  * Protected (authenticated) procedure
  *
  * If you want a query or mutation to ONLY be accessible to logged in users, use this. It verifies
@@ -132,6 +135,7 @@ const authedMiddleware = t.middleware(({ ctx: { session }, next }) => {
 export const protectedProcedure = t.procedure.use(authedMiddleware);
 
 /**
+ * @deprecated - use the procedures from the middleware file
  * Middleware that fetches the instance from the database and adds it to the context.
  */
 export const instanceMiddleware = authedMiddleware.unstable_pipe(
@@ -144,6 +148,7 @@ export const instanceMiddleware = authedMiddleware.unstable_pipe(
 );
 
 /**
+ * @deprecated - use the procedures from the middleware file
  * Middleware that fetches the user's role in the instance from the database and adds it to the context.
  */
 const userRoleMiddleware = instanceMiddleware.unstable_pipe(
@@ -159,6 +164,7 @@ const userRoleMiddleware = instanceMiddleware.unstable_pipe(
 );
 
 /**
+ * @deprecated - use the procedures from the middleware file
  * Procedure containing the current instance in its context.
  */
 export const instanceProcedure = protectedProcedure
@@ -170,6 +176,10 @@ export const instanceProcedure = protectedProcedure
  */
 export const roleAwareProcedure = instanceProcedure.use(userRoleMiddleware);
 
+/**
+ * @deprecated - use the procedures from the middleware file
+ *
+ */
 export const multiRoleAwareProcedure = instanceProcedure.use(
   async ({ ctx, next }) => {
     const user = ctx.session.user;
@@ -185,6 +195,7 @@ export type MultiRoleAwareContext = {
 };
 
 /**
+ * @deprecated - use the procedures from the middleware file
  * Procedure that enforces the user is a student.
  */
 export const studentProcedure = instanceProcedure
@@ -218,6 +229,7 @@ export const studentProcedure = instanceProcedure
   });
 
 /**
+ * @deprecated - use the procedures from the middleware file
  * Procedure that enforces the user is a admin.
  */
 export const adminProcedure = protectedProcedure
@@ -241,6 +253,7 @@ export const adminProcedure = protectedProcedure
   });
 
 /**
+ * @deprecated - use the procedures from the middleware file
  * Procedure that enforces the user is an Instance admin.
  */
 export const instanceAdminProcedure = adminProcedure
@@ -248,6 +261,7 @@ export const instanceAdminProcedure = adminProcedure
   .use(instanceMiddleware);
 
 /**
+ * @deprecated - use the procedures from the middleware file
  * Procedure that enforces the user is a super-admin
  */
 export const superAdminProcedure = protectedProcedure.use(
@@ -265,6 +279,10 @@ export const superAdminProcedure = protectedProcedure.use(
   },
 );
 
+/**
+ * @deprecated - use the procedures from the middleware file
+ * Looks like we can kill this one?
+ */
 export const projectProcedure = instanceProcedure
   .input(z.object({ projectId: z.string().optional() }))
   .use(async ({ ctx, next, input }) => {
