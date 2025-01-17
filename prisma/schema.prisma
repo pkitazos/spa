@@ -117,6 +117,9 @@ model AllocationInstance {
     maxPreferencesPerSupervisor  Int                    @map("max_preferences_per_supervisor")
     preferenceSubmissionDeadline DateTime               @map("preference_submission_deadline")
     studentAllocationAccess      Boolean                @default(false) @map("student_allocation_access")
+    // reader details
+    interimMarkingDeadline       DateTime               @default(now()) @map("interim_marking_deadline")
+    markingSubmissionDeadline    DateTime               @default(now()) @map("marking_submission_deadline")
     // ---
     allocationSubGroup           AllocationSubGroup     @relation(fields: [allocationGroupId, allocationSubGroupId], references: [allocationGroupId, id], onDelete: Cascade)
     allocationGroupId            String                 @map("allocation_group_id")
