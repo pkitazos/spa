@@ -105,7 +105,7 @@ const GroupAdminMiddleware = authedMiddleware.unstable_pipe(
   ({ ctx: { user }, next, input }) => {
     const { params } = z.object({ params: groupParamsSchema }).parse(input);
 
-    if (!user.isGroupAdmin(params)) {
+    if (!user.isGroupAdminOrBetter(params)) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
         message: "User is not a group admin of group XXX",
@@ -127,7 +127,7 @@ const SubGroupAdminMiddleware = authedMiddleware.unstable_pipe(
   ({ ctx: { user }, next, input }) => {
     const { params } = z.object({ params: subGroupParamsSchema }).parse(input);
 
-    if (!user.isSubGroupAdmin(params)) {
+    if (!user.isSubGroupAdminOrBetter(params)) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
         message: "User is not a group admin of group XXX",

@@ -36,11 +36,3 @@ export const stageOrd = {
   [Stage.ALLOCATION_ADJUSTMENT]: 5,
   [Stage.ALLOCATION_PUBLICATION]: 6,
 } as const;
-
-export type PrismaTransactionClient = Omit<
-  PrismaClient,
-  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
->;
-
-export type DB = PrismaClient;
-export type TX = PrismaTransactionClient;
