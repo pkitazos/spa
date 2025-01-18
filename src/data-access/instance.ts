@@ -10,6 +10,9 @@ export function checkAllocationInstanceExists(params: InstanceParams) {
   return db.allocationInstance.findFirst({ where: toInstanceId(params) });
 }
 
+/**
+ * @deprecated use instance.fetch instead
+ */
 export function getAllocationInstance(params: InstanceParams) {
   return db.allocationInstance.findFirstOrThrow({
     where: toInstanceId(params),

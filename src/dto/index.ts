@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { stageSchema } from "@/lib/validations/stage";
+
 export const userDtoSchema = z.object({
   id: z.string(),
   email: z.string(),
@@ -39,7 +41,21 @@ export const instanceDtoSchema = z.object({
   group: z.string(),
   subGroup: z.string(),
   instance: z.string(),
+
   displayName: z.string(),
+  stage: stageSchema,
+  selectedAlgName: z.string().optional(),
+  parentInstanceId: z.string().optional(),
+  projectSubmissionDeadline: z.date(),
+  supervisorAllocationAccess: z.boolean(),
+  minStudentPreferences: z.number(),
+  maxStudentPreferences: z.number(),
+  maxStudentPreferencesPerSupervisor: z.number(),
+  studentPreferenceSubmissionDeadline: z.date(),
+  studentAllocationAccess: z.boolean(),
+  minReaderPreferences: z.number(),
+  maxReaderPreferences: z.number(),
+  readerPreferenceSubmissionDeadline: z.date(),
 });
 
 export type InstanceDTO = z.infer<typeof instanceDtoSchema>;
@@ -50,7 +66,11 @@ export const flagDtoSchema = z.object({
   description: z.string(),
 });
 
+export type FlagDTO = z.infer<typeof flagDtoSchema>;
+
 export const tagDtoSchema = z.object({
   id: z.string(),
   title: z.string(),
 });
+
+export type TagDTO = z.infer<typeof tagDtoSchema>;
