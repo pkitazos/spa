@@ -11,7 +11,7 @@ export const supervisorDtoSchema = z.object({
   projectUpperQuota: z.number(),
 });
 
-export type SupervisorDto = z.infer<typeof supervisorDtoSchema>;
+export type SupervisorDTO = z.infer<typeof supervisorDtoSchema>;
 
 export const baseProjectDtoSchema = z.object({
   id: z.string(),

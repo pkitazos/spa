@@ -156,7 +156,7 @@ export class User extends DataObject {
 
   public async toDTO(): Promise<UserDTO> {
     if (!this._data) {
-      this._data = await this.dal.user.getDetails(this.id);
+      this._data = await this.dal.user.get(this.id);
     }
     return this._data;
   }

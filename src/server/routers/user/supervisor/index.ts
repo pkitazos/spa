@@ -1,8 +1,7 @@
 import { Stage } from "@prisma/client";
-import { toZonedTime } from "date-fns-tz";
 import { z } from "zod";
 
-import { getGMTOffset } from "@/lib/utils/date/timezone";
+import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
 import { stageGte } from "@/lib/utils/permissions/stage-check";
 import { instanceParamsSchema } from "@/lib/validations/params";
 import { supervisorInstanceCapacitiesSchema } from "@/lib/validations/supervisor-project-submission-details";
@@ -13,6 +12,7 @@ import { computeProjectSubmissionTarget } from "@/server/utils/instance/submissi
 
 import { formatSupervisorRowProjects } from "./_utils/supervisor-row-projects";
 
+import { User } from "@/data-objects/users/user";
 import {
   project__AllocatedStudents_Flags_Tags_Schema,
   project__Capacities_Schema,
@@ -21,176 +21,66 @@ import {
 } from "@/dto/supervisor_router";
 
 export const supervisorRouter = createTRPCRouter({
-  /**
-   * @version DAL
-   */
-  // !!! TODO this is probably wrong
-  // assuming you mean to check if the user provided by id
-  // is a supervisor
-  // then you need to construct a new user object e.g.
-  // await new User(dal, supervisorId).isInstanceSupervisor(params)
   exists: procedure.instance.user
     .input(z.object({ supervisorId: z.string() }))
     .output(z.boolean())
     .query(
-      async ({ ctx: { user }, input: { params } }) =>
-        await user.isInstanceSupervisor(params),
+      async ({ ctx: { dal }, input: { supervisorId, params } }) =>
+        await new User(dal, supervisorId).isInstanceSupervisor(params),
     ),
 
-  /**
-   * @version DAL
-   */
   allocationAccess: procedure.instance.user
     .output(z.boolean())
     .query(
       async ({ ctx: { instance } }) =>
-        await instance.getSupervisorProjectAllocationAccess(),
+        (await instance.get()).supervisorAllocationAccess,
     ),
 
-  // !this does not allow any admin level, it only allows subgroupAdmin?
-  // perhaps this is where instanceAdmin would come in handy?
-  /**
-   * @version DAL
-   */
   setAllocationAccess: procedure.instance.subgroupAdmin
     .input(z.object({ params: instanceParamsSchema, access: z.boolean() }))
     .output(z.boolean())
-    .mutation(async ({ ctx: { dal }, input: { params, access } }) =>
-      // Should be a method on instance DO
-      dal.instance.setSupervisorProjectAllocationAccess(access, params),
+    .mutation(
+      async ({ ctx: { instance }, input: { access } }) =>
+        await instance.setSupervisorAccess(access),
     ),
 
-  // this one should be pretty straightforward, however I'm not sure how to handle the transformation of the data
-  // or whether this could be wrapped up in some sort of DTO
-  // definitely consider renaming - i can't tell what this does from the title
-  // I am also generally in favour of defining a DTO for it.
+  // TODO rename
+  // TODO split
   instancePage: procedure.instance.supervisor
     .input(z.object({ params: instanceParamsSchema }))
     .output(
       z.object({
         displayName: z.string(),
-        projectSubmissionDeadline: z.date(),
+        // TODO make DTO for below
         deadlineTimeZoneOffset: z.string(),
+        projectSubmissionDeadline: z.date(),
       }),
     )
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const { displayName, projectSubmissionDeadline } =
-          await ctx.db.allocationInstance.findFirstOrThrow({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              id: instance,
-            },
-            select: {
-              displayName: true,
-              projectSubmissionDeadline: true,
-            },
-          });
+    .query(async ({ ctx: { instance } }) => {
+      const { displayName, projectSubmissionDeadline } = await instance.get();
 
-        return {
-          displayName,
-          projectSubmissionDeadline: toZonedTime(
-            projectSubmissionDeadline,
-            "Europe/London",
-          ),
-          deadlineTimeZoneOffset: getGMTOffset(projectSubmissionDeadline),
-        };
-      },
-    ),
+      return {
+        displayName,
+        deadlineTimeZoneOffset: getGMTOffset(projectSubmissionDeadline),
+        projectSubmissionDeadline: getGMTZoned(projectSubmissionDeadline),
+      };
+    }),
 
-  instanceData: instanceAdminProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        supervisorId: z.string(),
-      }),
-    )
+  instanceData: procedure.instance.subgroupAdmin
+    .input(z.object({ supervisorId: z.string() }))
     .output(
+      // TODO review output type here
       z.object({
         supervisor: supervisorDtoSchema,
         projects: z.array(project__AllocatedStudents_Flags_Tags_Schema),
       }),
     )
     .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          supervisorId,
-        },
-      }) => {
-        const supervisorData = await ctx.db.supervisorDetails.findFirstOrThrow({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            userId: supervisorId,
-          },
-          select: {
-            projectAllocationTarget: true,
-            projectAllocationUpperBound: true,
-            userInInstance: {
-              select: {
-                user: { select: { id: true, name: true, email: true } },
-              },
-            },
-            projects: {
-              select: {
-                supervisorId: true,
-                studentAllocations: {
-                  select: {
-                    student: {
-                      select: { userInInstance: { select: { user: true } } },
-                    },
-                  },
-                },
-                details: {
-                  select: {
-                    id: true,
-                    title: true,
-                    preAllocatedStudentId: true,
-                    tagsOnProject: { select: { tag: true } },
-                    flagsOnProject: { select: { flag: true } },
-                  },
-                },
-              },
-            },
-          },
-        });
-
-        const supervisor = {
-          id: supervisorData.userInInstance.user.id,
-          name: supervisorData.userInInstance.user.name,
-          email: supervisorData.userInInstance.user.email,
-          projectTarget: supervisorData.projectAllocationTarget,
-          projectUpperQuota: supervisorData.projectAllocationUpperBound,
-        };
-
-        const projects = supervisorData.projects.map((p) => ({
-          id: p.details.id,
-          title: p.details.title,
-          supervisorId: p.supervisorId,
-          preAllocatedStudentId: p.details.preAllocatedStudentId ?? undefined,
-          tags: p.details.tagsOnProject.map((t) => t.tag),
-          flags: p.details.flagsOnProject.map((f) => f.flag),
-          allocatedStudents: p.studentAllocations.map(
-            (a) => a.student.userInInstance.user,
-          ),
-        }));
-
-        return { supervisor, projects };
-      },
+      async ({ ctx: { dal }, input: { params, supervisorId } }) =>
+        // TODO put this method on instance obj
+        await dal.supervisor.getInstanceData(supervisorId, params),
     ),
 
-  /**
-   * @version DAL
-   */
   // ? not sure about the output schema definition here
   // TODO consider renaming e.g. projectStats?
   projects: procedure.instance.supervisor
@@ -208,7 +98,7 @@ export const supervisorRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx: { dal, instance, user }, input: { params } }) => {
-      const parentInstanceId = await instance.getParentInstanceId();
+      const parentInstanceId = (await instance.get()).parentInstanceId;
 
       const allProjects = await dal.supervisor.getAllProjects(user.id, params);
 
@@ -235,9 +125,8 @@ export const supervisorRouter = createTRPCRouter({
         totalAllocatedCount += allocatedCount;
       }
 
-      const { projectTarget: projectAllocationTarget } = await user
-        .toInstanceSupervisor(params)
-        .getCapacityDetails();
+      const { projectTarget: projectAllocationTarget } =
+        await user.getCapacityDetails();
 
       return {
         currentSubmissionCount: allProjects.length,
@@ -249,10 +138,6 @@ export const supervisorRouter = createTRPCRouter({
       };
     }),
 
-  /**
-   * @version DAL
-   */
-  // ? same subGroupAdmin issue as above
   updateInstanceCapacities: procedure.instance.subgroupAdmin
     .input(
       z.object({
@@ -264,6 +149,7 @@ export const supervisorRouter = createTRPCRouter({
     .output(supervisorInstanceCapacitiesSchema)
     .mutation(
       async ({ ctx: { dal }, input: { params, supervisorId, capacities } }) =>
+        // TODO move onto instance object
         await dal.supervisor.setCapacityDetails(
           supervisorId,
           capacities,
@@ -271,15 +157,12 @@ export const supervisorRouter = createTRPCRouter({
         ),
     ),
 
-  /**
-   * @version DAL
-   */
-  // ? same subGroupAdmin issue as above
   delete: procedure.instance.subgroupAdmin
-    .input(z.object({ params: instanceParamsSchema, supervisorId: z.string() }))
+    .input(z.object({ supervisorId: z.string() }))
+    .output(z.void())
     .mutation(
       async ({ ctx: { dal, instance }, input: { params, supervisorId } }) => {
-        const stage = await instance.getStage();
+        const { stage } = await instance.get();
         if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
           throw new Error("Cannot delete supervisor at this stage");
         }
@@ -288,11 +171,6 @@ export const supervisorRouter = createTRPCRouter({
       },
     ),
 
-  /**
-   * @version DAL
-   */
-  // ? same subGroupAdmin issue as above
-  // TODO Consider renaming e.g. to deleteMany?
   deleteSelected: procedure.instance.subgroupAdmin
     .input(
       z.object({
@@ -302,7 +180,7 @@ export const supervisorRouter = createTRPCRouter({
     )
     .mutation(
       async ({ ctx: { dal, instance }, input: { params, supervisorIds } }) => {
-        const stage = await instance.getStage();
+        const { stage } = await instance.get();
         if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
           throw new Error("Cannot delete supervisors at this stage");
         }
@@ -311,15 +189,8 @@ export const supervisorRouter = createTRPCRouter({
       },
     ),
 
-  /**
-   * @version DAL
-   */
   allocations: procedure.instance.supervisor
     .input(z.object({ params: instanceParamsSchema }))
     .output(z.array(supervisionAllocationDtoSchema))
-    .query(async ({ ctx: { user } }) =>
-      // NB the toInstanceSupervisor call is unnecessary;
-      // check the type of user
-      user.getSupervisionAllocations(),
-    ),
+    .query(async ({ ctx: { user } }) => user.getSupervisionAllocations()),
 });

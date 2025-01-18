@@ -1,11 +1,5 @@
-import {
-  AllocationGroup,
-  AllocationInstance,
-  AllocationSubGroup,
-  Stage,
-} from "@prisma/client";
-
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
+import { slugify } from "@/lib/utils/general/slugify";
 import {
   GroupParams,
   InstanceParams,
@@ -13,17 +7,28 @@ import {
   SubGroupParams,
 } from "@/lib/validations/params";
 
-import { DB } from "@/db";
-import { GroupDTO, InstanceDTO, SubGroupDTO, UserDTO } from "@/dto";
+import {
+  allocationGroupToDTO,
+  allocationInstanceToDTO,
+  allocationSubGroupToDTO,
+  flagToDTO,
+  projectInInstanceToDTO,
+  tagToDTO,
+  userInInstanceToDTO,
+} from "@/db/transformers";
+import { DB } from "@/db/types";
+import {
+  GroupDTO,
+  InstanceDTO,
+  SubGroupDTO,
+  UserDTO,
+  UserInInstanceDTO,
+} from "@/dto";
 import {
   Project__AllocatedStudents_Capacities,
   SupervisionAllocationDto,
   SupervisorCapacityDetails,
 } from "@/dto/supervisor_router";
-import { slugify } from "@/lib/utils/general/slugify";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type TODO = any;
 
 export class DAL {
   db: DB;
@@ -171,41 +176,6 @@ export class DAL {
         })
         .then((data) => data.map(allocationInstanceToDTO)),
 
-    getParentInstanceId: async (
-      params: InstanceParams,
-    ): Promise<string | undefined> =>
-      await this.db.allocationInstance
-        .findFirstOrThrow({
-          where: toInstanceId(params),
-          select: { parentInstanceId: true },
-        })
-        .then((x) => x.parentInstanceId ?? undefined),
-
-    isForked: async (params: InstanceParams): Promise<boolean> =>
-      !!(await this.db.allocationInstance.findFirst({
-        where: { ...toInstanceId(params), parentInstanceId: { not: null } },
-      })),
-
-    // Consider deprecating in favour of instance.get().stage?
-    // and putting stage on the DTO?
-    getStage: async (params: InstanceParams): Promise<Stage> =>
-      await this.db.allocationInstance
-        .findFirstOrThrow({
-          where: toInstanceId(params),
-          select: { stage: true },
-        })
-        .then((x) => x.stage),
-
-    getSupervisorProjectAllocationAccess: async (
-      params: InstanceParams,
-    ): Promise<boolean> =>
-      await this.db.allocationInstance
-        .findFirstOrThrow({
-          where: toInstanceId(params),
-          select: { supervisorAllocationAccess: true },
-        })
-        .then((x) => x.supervisorAllocationAccess),
-
     setSupervisorProjectAllocationAccess: async (
       access: boolean,
       params: InstanceParams,
@@ -292,20 +262,19 @@ export class DAL {
           data.map((x) => allocationInstanceToDTO(x.allocationInstance)),
         ),
 
-    getDetails: async (id: string): Promise<UserDTO> =>
-      await this.db.user.findFirstOrThrow({
-        where: { id },
-        select: { id: true, name: true, email: true },
-      }),
+    get: async (id: string): Promise<UserDTO> =>
+      await this.db.user.findFirstOrThrow({ where: { id } }),
 
     joinInstance: async (
       userId: string,
       params: InstanceParams,
-    ): Promise<TODO> =>
-      await this.db.userInInstance.update({
-        where: { instanceMembership: { ...expand(params), userId } },
-        data: { joined: true },
-      }),
+    ): Promise<UserInInstanceDTO> =>
+      await this.db.userInInstance
+        .update({
+          where: { instanceMembership: { ...expand(params), userId } },
+          data: { joined: true },
+        })
+        .then(userInInstanceToDTO),
   };
 
   public superAdmin = {
@@ -372,18 +341,53 @@ export class DAL {
   };
 
   public supervisor = {
-    delete: async (userId: string, params: InstanceParams): Promise<TODO> =>
-      await this.db.supervisorDetails.delete({
-        where: { supervisorDetailsId: { userId, ...expand(params) } },
-      }),
+    getInstanceData: async (userId: string, params: InstanceParams) => {
+      const { projects: projectData, ...supervisorData } =
+        await this.db.supervisorDetails.findFirstOrThrow({
+          where: { userId, ...expand(params) },
+          include: {
+            userInInstance: { include: { user: true } },
+            projects: {
+              include: {
+                studentAllocations: {
+                  include: {
+                    student: {
+                      include: { userInInstance: { include: { user: true } } },
+                    },
+                  },
+                },
+                details: {
+                  include: {
+                    tagsOnProject: { include: { tag: true } },
+                    flagsOnProject: { include: { flag: true } },
+                  },
+                },
+              },
+            },
+          },
+        });
 
-    deleteMany: async (
-      userIds: string[],
-      params: InstanceParams,
-    ): Promise<TODO> =>
-      await this.db.supervisorDetails.deleteMany({
-        where: { userId: { in: userIds }, ...expand(params) },
-      }),
+      const projects = projectData.map((data) => ({
+        project: projectInInstanceToDTO(data),
+        // TODO remove below
+        ...projectInInstanceToDTO(data),
+        allocatedStudents: data.studentAllocations.map((u) => ({
+          level: u.student.studentLevel,
+          ...u.student.userInInstance.user,
+        })),
+        flags: data.details.flagsOnProject.map((f) => flagToDTO(f.flag)),
+        tags: data.details.tagsOnProject.map((t) => tagToDTO(t.tag)),
+      }));
+
+      return {
+        projects,
+        supervisor: {
+          ...supervisorData.userInInstance.user,
+          projectTarget: supervisorData.projectAllocationTarget,
+          projectUpperQuota: supervisorData.projectAllocationUpperBound,
+        },
+      };
+    },
 
     // ! bad name because it includes allocated students
     getAllProjects: async (
@@ -480,28 +484,18 @@ export class DAL {
       });
       return { projectTarget, projectUpperQuota };
     },
-  };
-}
 
-// TODO move these to some other file
-// Maybe in @/dto?
-function allocationGroupToDTO(data: AllocationGroup): GroupDTO {
-  return { group: data.id, displayName: data.displayName };
-}
+    delete: async (userId: string, params: InstanceParams): Promise<TODO> =>
+      await this.db.supervisorDetails.delete({
+        where: { supervisorDetailsId: { userId, ...expand(params) } },
+      }),
 
-function allocationSubGroupToDTO(data: AllocationSubGroup): SubGroupDTO {
-  return {
-    group: data.allocationGroupId,
-    subGroup: data.id,
-    displayName: data.displayName,
-  };
-}
-
-function allocationInstanceToDTO(data: AllocationInstance): InstanceDTO {
-  return {
-    group: data.allocationGroupId,
-    subGroup: data.allocationSubGroupId,
-    instance: data.id,
-    displayName: data.displayName,
+    deleteMany: async (
+      userIds: string[],
+      params: InstanceParams,
+    ): Promise<TODO> =>
+      await this.db.supervisorDetails.deleteMany({
+        where: { userId: { in: userIds }, ...expand(params) },
+      }),
   };
 }
