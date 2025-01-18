@@ -1,5 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 
+import { InstanceParams } from "@/lib/validations/params";
+
 export type PrismaTransactionClient = Omit<
   PrismaClient,
   "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
@@ -24,3 +26,6 @@ export type {
   User as DB_User,
   UserInInstance as DB_UserInInstance,
 } from "@prisma/client";
+export { Stage } from "@prisma/client";
+
+export type __Instance<T> = T & InstanceParams;

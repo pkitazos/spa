@@ -1,7 +1,8 @@
 import { PrismaClient } from "@prisma/client";
+import { z } from "zod";
 
 import { expand } from "@/lib/utils/general/instance-params";
-import { matchingResultSchema } from "@/lib/validations/matching";
+import { matchingDetailsSchema } from "@/lib/validations/matching";
 import { InstanceParams } from "@/lib/validations/params";
 
 export async function getUnallocatedStudents(
@@ -14,9 +15,9 @@ export async function getUnallocatedStudents(
       where: expand(params),
       select: {
         studentLevel: true,
+        projectAllocation: { select: { project: true } },
         userInInstance: {
           select: {
-            studentAllocation: { select: { project: true } },
             user: true,
           },
         },
@@ -25,20 +26,26 @@ export async function getUnallocatedStudents(
     .then((d) =>
       d.map((s) => ({
         student: { ...s.userInInstance.user, level: s.studentLevel },
-        project: s.userInInstance.studentAllocation?.project,
+        project: s.projectAllocation?.project,
       })),
     );
 
-  const { matching } = await db.algorithm
+  const matchedStudentIds = await db.algorithmConfigInInstance
     .findFirstOrThrow({
-      where: { ...expand(params), algName: selectedAlgName },
-      select: { matchingResultData: true },
+      where: {
+        algorithmConfig: { algName: selectedAlgName },
+        ...expand(params),
+      },
+      include: { matchingResult: true },
     })
-    .then(({ matchingResultData }) =>
-      matchingResultSchema.parse(JSON.parse(matchingResultData as string)),
-    );
+    .then((x) => {
+      // TODO: this is not correct, the data is actually an array so we'll have to revisit this later on
+      const matching = z
+        .array(matchingDetailsSchema)
+        .parse(JSON.parse(x.matchingResult.matching as string));
 
-  const matchedStudentIds = new Set(matching.map((m) => m.student_id));
+      return new Set(matching.map((m) => m.student_id));
+    });
 
   return students.filter((s) => !matchedStudentIds.has(s.student.id));
 }

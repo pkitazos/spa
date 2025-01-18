@@ -12,7 +12,9 @@ import {
   allocationInstanceToDTO,
   allocationSubGroupToDTO,
   flagToDTO,
-  projectInInstanceToDTO,
+  projectDataToDTO,
+  studentDetailsToDto,
+  studentToDTO,
   tagToDTO,
   userInInstanceToDTO,
 } from "@/db/transformers";
@@ -24,6 +26,8 @@ import {
   UserDTO,
   UserInInstanceDTO,
 } from "@/dto";
+import { ProjectDTO } from "@/dto/project";
+import { StudentDetailsDTO, StudentDTO } from "@/dto/student";
 import {
   Project__AllocatedStudents_Capacities,
   SupervisionAllocationDto,
@@ -328,19 +332,110 @@ export class DAL {
   };
 
   public student = {
+    get: async (userId: string, params: InstanceParams): Promise<StudentDTO> =>
+      await this.db.studentDetails
+        .findFirstOrThrow({
+          where: { userId, ...expand(params) },
+          include: { userInInstance: { include: { user: true } } },
+        })
+        .then(studentToDTO),
+
+    getDetails: async (
+      userId: string,
+      params: InstanceParams,
+    ): Promise<StudentDetailsDTO> =>
+      await this.db.studentDetails
+        .findFirstOrThrow({ where: { userId, ...expand(params) } })
+        .then(studentDetailsToDto),
+
     hasSelfDefinedProject: async (
       preAllocatedStudentId: string,
       params: InstanceParams,
     ): Promise<boolean> =>
       !!(await this.db.projectInInstance.findFirst({
-        where: {
-          ...expand(params),
-          details: { preAllocatedStudentId },
-        },
+        where: { details: { preAllocatedStudentId }, ...expand(params) },
       })),
+
+    hasAllocatedProject: async (
+      userId: string,
+      params: InstanceParams,
+    ): Promise<boolean> =>
+      !!(await this.db.studentProjectAllocation.findFirst({
+        where: { userId, ...expand(params) },
+      })),
+
+    getAllocatedProject: async (
+      userId: string,
+      params: InstanceParams,
+    ): Promise<{ project: ProjectDTO; studentRanking: number }> =>
+      await this.db.studentProjectAllocation
+        .findFirstOrThrow({
+          where: { userId, ...expand(params) },
+          include: { project: { include: { details: true } } },
+        })
+        .then((x) => ({
+          project: projectDataToDTO(x.project),
+          studentRanking: x.studentRanking,
+        })),
+
+    getStudentDetails: async (
+      userId: string,
+      params: InstanceParams,
+    ): Promise<StudentDetailsDTO> =>
+      await this.db.studentDetails
+        .findFirstOrThrow({ where: { userId, ...expand(params) } })
+        .then(studentDetailsToDto),
+
+    setStudentLevel: async (
+      userId: string,
+      level: number,
+      params: InstanceParams,
+    ): Promise<StudentDetailsDTO> =>
+      await this.db.studentDetails
+        .update({
+          where: { studentDetailsId: { userId, ...expand(params) } },
+          data: { studentLevel: level },
+        })
+        .then(studentDetailsToDto),
+
+    setLatestSubmissionDateTime: async (
+      userId: string,
+      latestSubmissionDateTime: Date,
+      params: InstanceParams,
+    ): Promise<StudentDetailsDTO> =>
+      await this.db.studentDetails
+        .update({
+          where: { studentDetailsId: { userId, ...expand(params) } },
+          data: { latestSubmissionDateTime },
+        })
+        .then(studentDetailsToDto),
+
+    delete: async (userId: string, params: InstanceParams): Promise<void> => {
+      await this.db.studentDetails.delete({
+        where: { studentDetailsId: { userId, ...expand(params) } },
+      });
+    },
+
+    deleteMany: async (
+      userIds: string[],
+      params: InstanceParams,
+    ): Promise<void> => {
+      await this.db.studentDetails.deleteMany({
+        where: { userId: { in: userIds }, ...expand(params) },
+      });
+    },
   };
 
   public supervisor = {
+    get: async (userId: string, params: InstanceParams): Promise<UserDTO> =>
+      await this.db.supervisorDetails
+        .findFirstOrThrow({
+          where: { userId, ...expand(params) },
+          include: { userInInstance: { include: { user: true } } },
+        })
+        .then((x) => x.userInInstance.user),
+
+    // TODO: change output type to ProjectData (see EOF)
     getInstanceData: async (userId: string, params: InstanceParams) => {
       const { projects: projectData, ...supervisorData } =
         await this.db.supervisorDetails.findFirstOrThrow({
@@ -368,9 +463,9 @@ export class DAL {
         });
 
       const projects = projectData.map((data) => ({
-        project: projectInInstanceToDTO(data),
+        project: projectDataToDTO(data),
         // TODO remove below
-        ...projectInInstanceToDTO(data),
+        ...projectDataToDTO(data),
         allocatedStudents: data.studentAllocations.map((u) => ({
           level: u.student.studentLevel,
           ...u.student.userInInstance.user,
@@ -389,7 +484,7 @@ export class DAL {
       };
     },
 
-    // ! bad name because it includes allocated students
+    // TODO: rename
     getAllProjects: async (
       userId: string,
       params: InstanceParams,
@@ -485,17 +580,26 @@ export class DAL {
       return { projectTarget, projectUpperQuota };
     },
 
-    delete: async (userId: string, params: InstanceParams): Promise<TODO> =>
+    delete: async (userId: string, params: InstanceParams): Promise<void> => {
       await this.db.supervisorDetails.delete({
         where: { supervisorDetailsId: { userId, ...expand(params) } },
-      }),
+      });
+    },
 
     deleteMany: async (
       userIds: string[],
       params: InstanceParams,
-    ): Promise<TODO> =>
+    ): Promise<void> => {
       await this.db.supervisorDetails.deleteMany({
         where: { userId: { in: userIds }, ...expand(params) },
-      }),
+      });
+    },
   };
 }
+
+// type ProjectData = {
+//   project: ProjectDTO;
+//   allocatedStudents: StudentDTO[];
+//   flags: FlagDTO[];
+//   tags: TagDTO[];
+// };

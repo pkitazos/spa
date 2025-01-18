@@ -59,19 +59,26 @@ export class AllocationInstance extends DataObject {
     a.subGroup === b.subGroup &&
     a.instance === b.instance;
 
+  /**
+   * @deprecated
+   */
   async getStudentAccess(): Promise<boolean> {
     throw new Error("Method not implemented.");
   }
 
+  // TODO: rename
   async setStudentAccess(access: boolean): Promise<boolean> {
     throw new Error("Method not implemented.");
   }
 
+  /**
+   * @deprecated
+   */
   async getSupervisorAccess(): Promise<boolean> {
     throw new Error("Method not implemented.");
   }
 
-  // TODO rename?
+  // TODO rename
   async setSupervisorAccess(access: boolean): Promise<boolean> {
     return await this.dal.instance.setSupervisorProjectAllocationAccess(
       access,
@@ -79,11 +86,30 @@ export class AllocationInstance extends DataObject {
     );
   }
 
+  /**
+   * @deprecated
+   */
   async getReaderAccess(): Promise<boolean> {
     throw new Error("Method not implemented.");
   }
-
+  // TODO rename
   async setReaderAccess(access: boolean): Promise<boolean> {
     throw new Error("Method not implemented.");
+  }
+
+  async deleteStudent(studentId: string): Promise<void> {
+    return await this.dal.student.delete(studentId, this.params);
+  }
+
+  async deleteStudents(studentIds: string[]): Promise<void> {
+    return await this.dal.student.deleteMany(studentIds, this.params);
+  }
+
+  async deleteSupervisor(supervisorId: string): Promise<void> {
+    return await this.dal.supervisor.delete(supervisorId, this.params);
+  }
+
+  async deleteSupervisors(supervisorIds: string[]): Promise<void> {
+    return await this.dal.supervisor.deleteMany(supervisorIds, this.params);
   }
 }
