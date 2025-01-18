@@ -5,6 +5,7 @@ import { AllocationInstance } from "../spaces/instance";
 import { User } from "./user";
 
 import { DAL } from "@/data-access";
+import { SupervisorCapacityDetails } from "@/dto/supervisor_router";
 
 export class InstanceSupervisor extends User {
   instance: AllocationInstance;
@@ -24,6 +25,14 @@ export class InstanceSupervisor extends User {
   public async getCapacityDetails() {
     return await this.dal.supervisor.getCapacityDetails(
       this.id,
+      this.instance.params,
+    );
+  }
+
+  public async setCapacityDetails(capacities: SupervisorCapacityDetails) {
+    return await this.dal.supervisor.setCapacityDetails(
+      this.id,
+      capacities,
       this.instance.params,
     );
   }

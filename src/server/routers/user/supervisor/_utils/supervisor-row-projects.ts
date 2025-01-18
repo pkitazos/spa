@@ -1,4 +1,4 @@
-import { StudentDto } from "@/dto/student";
+import { StudentDTO } from "@/dto/student";
 import {
   BaseProjectDto,
   Project__AllocatedStudents_Capacities,
@@ -25,7 +25,7 @@ type AllocatedProject = BaseRowProject & {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 type _Row = {
   project: BaseProjectDto;
-  student?: StudentDto & { rank: number };
+  student?: StudentDTO & { rank: number };
 };
 
 export function formatSupervisorRowProjects(

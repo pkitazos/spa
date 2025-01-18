@@ -8,7 +8,7 @@ import { AllocationSubGroup } from "./subgroup";
 
 import { DAL } from "@/data-access";
 import { InstanceDTO } from "@/dto";
-import { checkInstanceExistsUseCase, getInstanceUseCase } from "@/interactors";
+import { checkInstanceExistsUseCase } from "@/interactors";
 
 export class AllocationInstance extends DataObject {
   public params: InstanceParams;
@@ -24,42 +24,23 @@ export class AllocationInstance extends DataObject {
     return checkInstanceExistsUseCase({ params: this.params });
   }
 
-  public fetch() {
-    return getInstanceUseCase({ params: this.params });
+  public async get() {
+    return await this.dal.instance.get(this.params);
   }
 
   public async getStudentProjectAllocation() {
     return await StudentProjectAllocationData.fromDB(this.params);
   }
 
-  public async getStage() {
-    return await this.dal.instance.getStage(this.params);
-  }
-
-  public async isForked(): Promise<boolean> {
-    return await this.dal.instance.isForked(this.params);
-  }
-
-  public async getParentInstanceId(): Promise<string | undefined> {
-    return await this.dal.instance.getParentInstanceId(this.params);
-  }
-
   public async getParentInstance(): Promise<AllocationInstance> {
-    const parentInstanceId = await this.dal.instance.getParentInstanceId(
-      this.params,
-    );
-    if (!parentInstanceId) {
-      throw new Error("No parent instance found");
-    }
+    const { parentInstanceId } = await this.get();
+
+    if (!parentInstanceId) throw new Error("No parent instance found");
 
     return new AllocationInstance(this.dal, {
       ...this.params,
       instance: parentInstanceId,
     });
-  }
-
-  public getSupervisorProjectAllocationAccess() {
-    return this.dal.instance.getSupervisorProjectAllocationAccess(this.params);
   }
 
   get group() {
@@ -78,24 +59,31 @@ export class AllocationInstance extends DataObject {
     a.subGroup === b.subGroup &&
     a.instance === b.instance;
 
-  // TODO this
-  public allocationAccess = {
-    project: {
-      async getStudent(): Promise<boolean> {
-        throw new Error("Method not implemented.");
-      },
+  async getStudentAccess(): Promise<boolean> {
+    throw new Error("Method not implemented.");
+  }
 
-      async setStudent(access: boolean): Promise<boolean> {
-        throw new Error("Method not implemented.");
-      },
+  async setStudentAccess(access: boolean): Promise<boolean> {
+    throw new Error("Method not implemented.");
+  }
 
-      async getSupervisor(): Promise<boolean> {
-        throw new Error("Method not implemented.");
-      },
+  async getSupervisorAccess(): Promise<boolean> {
+    throw new Error("Method not implemented.");
+  }
 
-      async setSupervisor(access: boolean): Promise<boolean> {
-        throw new Error("Method not implemented.");
-      },
-    },
-  };
+  // TODO rename?
+  async setSupervisorAccess(access: boolean): Promise<boolean> {
+    return await this.dal.instance.setSupervisorProjectAllocationAccess(
+      access,
+      this.params,
+    );
+  }
+
+  async getReaderAccess(): Promise<boolean> {
+    throw new Error("Method not implemented.");
+  }
+
+  async setReaderAccess(access: boolean): Promise<boolean> {
+    throw new Error("Method not implemented.");
+  }
 }
