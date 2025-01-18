@@ -6,4 +6,4 @@ export const studentDtoSchema = userDtoSchema.extend({
   level: z.number(),
 });
 
-export type StudentDto = z.infer<typeof studentDtoSchema>;
+export type StudentDTO = z.infer<typeof studentDtoSchema>;

@@ -1,3 +1,5 @@
+import { toZonedTime } from "date-fns-tz";
+
 /* Return a Date for the last Sunday in a month
  ** @param {number} year - full year number (e.g. 2015)
  ** @param {number} month - calendar month number (jan=1)
@@ -90,4 +92,8 @@ export function getGMTOffset(date: Date) {
   const dateStr = getLondonTime(date);
   const timeZoneOffset = dateStr.split("+")[1];
   return `GMT+${timeZoneOffset}`;
+}
+
+export function getGMTZoned(date: Date) {
+  return toZonedTime(date, "Europe/London");
 }
