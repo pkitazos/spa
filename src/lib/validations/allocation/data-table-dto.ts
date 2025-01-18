@@ -47,17 +47,18 @@ export type AllocationBySupervisorDto = z.infer<
   typeof allocationBySupervisorDtoSchema
 >;
 
-export type StudentProjectAllocationDto = {
-  project: {
-    id: string;
-    title: string;
-    supervisor: {
-      id: string;
-      name: string;
-    };
-  };
-  rank: number;
-};
+export const studentProjectAllocationDtoSchema = z.object({
+  project: z.object({
+    id: z.string(),
+    title: z.string(),
+    supervisor: z.object({ id: z.string(), name: z.string() }),
+  }),
+  rank: z.number(),
+});
+
+export type StudentProjectAllocationDto = z.infer<
+  typeof studentProjectAllocationDtoSchema
+>;
 
 export type RandomAllocationDto = {
   student: { id: string; name: string; level: number };

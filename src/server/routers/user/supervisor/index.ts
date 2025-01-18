@@ -1,4 +1,3 @@
-import { Stage } from "@prisma/client";
 import { z } from "zod";
 
 import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
@@ -7,12 +6,13 @@ import { instanceParamsSchema } from "@/lib/validations/params";
 import { supervisorInstanceCapacitiesSchema } from "@/lib/validations/supervisor-project-submission-details";
 
 import { procedure } from "@/server/middleware";
-import { createTRPCRouter, instanceAdminProcedure } from "@/server/trpc";
+import { createTRPCRouter } from "@/server/trpc";
 import { computeProjectSubmissionTarget } from "@/server/utils/instance/submission-target";
 
 import { formatSupervisorRowProjects } from "./_utils/supervisor-row-projects";
 
 import { User } from "@/data-objects/users/user";
+import { Stage } from "@/db/types";
 import {
   project__AllocatedStudents_Flags_Tags_Schema,
   project__Capacities_Schema,
@@ -160,16 +160,14 @@ export const supervisorRouter = createTRPCRouter({
   delete: procedure.instance.subgroupAdmin
     .input(z.object({ supervisorId: z.string() }))
     .output(z.void())
-    .mutation(
-      async ({ ctx: { dal, instance }, input: { params, supervisorId } }) => {
-        const { stage } = await instance.get();
-        if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
-          throw new Error("Cannot delete supervisor at this stage");
-        }
+    .mutation(async ({ ctx: { instance }, input: { supervisorId } }) => {
+      const { stage } = await instance.get();
+      if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
+        throw new Error("Cannot delete supervisor at this stage");
+      }
 
-        await dal.supervisor.delete(supervisorId, params);
-      },
-    ),
+      await instance.deleteSupervisor(supervisorId);
+    }),
 
   deleteSelected: procedure.instance.subgroupAdmin
     .input(
@@ -178,16 +176,14 @@ export const supervisorRouter = createTRPCRouter({
         supervisorIds: z.array(z.string()),
       }),
     )
-    .mutation(
-      async ({ ctx: { dal, instance }, input: { params, supervisorIds } }) => {
-        const { stage } = await instance.get();
-        if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
-          throw new Error("Cannot delete supervisors at this stage");
-        }
+    .mutation(async ({ ctx: { instance }, input: { supervisorIds } }) => {
+      const { stage } = await instance.get();
+      if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
+        throw new Error("Cannot delete supervisors at this stage");
+      }
 
-        await dal.supervisor.deleteMany(supervisorIds, params);
-      },
-    ),
+      await instance.deleteSupervisors(supervisorIds);
+    }),
 
   allocations: procedure.instance.supervisor
     .input(z.object({ params: instanceParamsSchema }))

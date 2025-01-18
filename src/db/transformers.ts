@@ -5,15 +5,11 @@ import {
   DB_AllocationInstance,
   DB_AllocationSubGroup,
   DB_Flag,
-  DB_FlagOnProject,
   DB_ProjectDetails,
   DB_ProjectInInstance,
   DB_StudentDetails,
-  DB_StudentProjectAllocation,
   DB_SupervisorDetails,
   DB_Tag,
-  DB_TagOnProject,
-  DB_User,
   DB_User,
   DB_UserInInstance,
 } from "./types";
@@ -26,7 +22,14 @@ import {
   TagDTO,
   UserInInstanceDTO,
 } from "@/dto";
-import { StudentDTO } from "@/dto/student";
+import { ProjectDTO } from "@/dto/project";
+import {
+  StudentDetailsDTO,
+  StudentDTO,
+  StudentPreferenceRestrictionsDTO,
+} from "@/dto/student";
+import { SupervisorDetailsDTO } from "@/dto/supervisor";
+import { SupervisorDTO } from "@/dto/supervisor_router";
 
 export function allocationGroupToDTO(data: DB_AllocationGroup): GroupDTO {
   return { group: data.id, displayName: data.displayName };
@@ -67,13 +70,68 @@ export function allocationInstanceToDTO(
   };
 }
 
-export declare function userInInstanceToDTO(
-  data: DB_UserInInstance,
-): UserInInstanceDTO;
+export function supervisorToDTO(
+  data: DB_SupervisorDetails & {
+    userInInstance: DB_UserInInstance & { user: DB_User };
+  },
+): SupervisorDTO {
+  return {
+    id: data.userId,
+    name: data.userInInstance.user.name,
+    email: data.userInInstance.user.email,
+    projectTarget: data.projectAllocationTarget,
+    projectUpperQuota: data.projectAllocationUpperBound,
+  };
+}
 
-export function projectInInstanceToDTO(
+export function supervisorDetailsToDTO(
+  data: DB_SupervisorDetails,
+): SupervisorDetailsDTO {
+  return {
+    supervisorId: data.userId,
+    projectTarget: data.projectAllocationTarget,
+    projectUpperQuota: data.projectAllocationUpperBound,
+  };
+}
+
+export function studentToDTO(
+  data: DB_StudentDetails & {
+    userInInstance: DB_UserInInstance & { user: DB_User };
+  },
+): StudentDTO {
+  return {
+    id: data.userId,
+    name: data.userInInstance.user.name,
+    email: data.userInInstance.user.email,
+    level: data.studentLevel,
+    latestSubmissionDateTime: data.latestSubmissionDateTime ?? undefined,
+  };
+}
+
+export function studentDetailsToDto(
+  data: DB_StudentDetails,
+): StudentDetailsDTO {
+  return {
+    studentId: data.userId,
+    level: data.studentLevel,
+    latestSubmissionDateTime: data.latestSubmissionDateTime ?? undefined,
+  };
+}
+
+export function instanceToStudentPreferenceRestrictionsDTO(
+  data: InstanceDTO,
+): StudentPreferenceRestrictionsDTO {
+  return {
+    minPreferences: data.minStudentPreferences,
+    maxPreferences: data.maxStudentPreferences,
+    maxPreferencesPerSupervisor: data.maxStudentPreferencesPerSupervisor,
+    preferenceSubmissionDeadline: data.studentPreferenceSubmissionDeadline,
+  };
+}
+
+export function projectDataToDTO(
   data: DB_ProjectInInstance & { details: DB_ProjectDetails },
-): ProjectInInstanceDTO {
+): ProjectDTO {
   return {
     id: data.details.id,
     title: data.details.title,
@@ -88,45 +146,22 @@ export function projectInInstanceToDTO(
   };
 }
 
-export declare function supervisorInInstanceToDTO(
-  data: DB_SupervisorDetails & {
-    userInInstance: DB_UserInInstance & { user: DB_User };
-  },
-): SupervisorDTO;
-
-export declare function studentToDTO(data: unknown): StudentDTO;
-
-export declare function tagToDTO(data: DB_Tag): TagDTO;
-
-export declare function flagToDTO(data: DB_Flag): FlagDTO;
-
-export function projectInstanceDataToDTO(
-  data: DB_ProjectInInstance & {
-    studentAllocations: (DB_StudentProjectAllocation & {
-      student: DB_StudentDetails & {
-        userInInstance: DB_UserInInstance & { user: DB_User };
-      };
-    })[];
-    flagsOnProject: (DB_FlagOnProject & { flag: DB_Flag })[];
-    tagsOnProject: (DB_TagOnProject & { tag: DB_Tag })[];
-  },
-): {
-  project: ProjectInInstanceDTO;
-  allocatedStudents: StudentDTO[];
-  flags: FlagDTO[];
-  tags: TagDTO[];
-} {
-  return;
+export function tagToDTO(data: DB_Tag): TagDTO {
+  return { id: data.id, title: data.title };
 }
 
-type ProjectInInstanceDTO = {
-  id: string;
-  title: string;
-  description: string;
-  preAllocatedStudentId: string | undefined;
-  specialTechnicalRequirements: string | undefined;
-  latestEditDateTime: Date;
-  capacityLowerBound: number;
-  capacityUpperBound: number;
-  supervisorId: string;
-};
+export function flagToDTO(data: DB_Flag): FlagDTO {
+  return { id: data.id, title: data.title, description: data.description };
+}
+
+export function userInInstanceToDTO(
+  data: DB_UserInInstance,
+): UserInInstanceDTO {
+  return {
+    userId: data.userId,
+    joined: data.joined,
+    group: data.allocationGroupId,
+    subGroup: data.allocationSubGroupId,
+    instance: data.allocationInstanceId,
+  };
+}

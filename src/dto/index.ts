@@ -13,6 +13,7 @@ export type UserDTO = z.infer<typeof userDtoSchema>;
 export const userInInstanceDtoSchema = z.object({
   userId: z.string(),
   joined: z.boolean(),
+  // I had a thought about these, but you might disagree
   group: z.string(),
   subGroup: z.string(),
   instance: z.string(),

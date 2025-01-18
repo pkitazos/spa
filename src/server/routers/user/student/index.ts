@@ -1,26 +1,26 @@
 import { Stage } from "@prisma/client";
-import { toZonedTime } from "date-fns-tz";
 import { z } from "zod";
 
-import { getGMTOffset } from "@/lib/utils/date/timezone";
+import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
 import { stageGte } from "@/lib/utils/permissions/stage-check";
-import { StudentProjectAllocationDto } from "@/lib/validations/allocation/data-table-dto";
+import { studentProjectAllocationDtoSchema } from "@/lib/validations/allocation/data-table-dto";
 import { instanceParamsSchema } from "@/lib/validations/params";
 
 import { procedure } from "@/server/middleware";
-import {
-  createTRPCRouter,
-  instanceAdminProcedure,
-  instanceProcedure,
-  studentProcedure,
-} from "@/server/trpc";
+import { createTRPCRouter } from "@/server/trpc";
 import { getUnallocatedStudents } from "@/server/utils/instance/unallocated-students";
-
-import { getSelfDefinedProject } from "../_utils/get-self-defined-project";
 
 import { preferenceRouter } from "./preference";
 
+import { InstanceStudent } from "@/data-objects/users/instance-student";
+import { InstanceSupervisor } from "@/data-objects/users/instance-supervisor";
 import { User } from "@/data-objects/users/user";
+import { instanceToStudentPreferenceRestrictionsDTO } from "@/db/transformers";
+import {
+  studentDetailsDtoSchema,
+  studentDtoSchema,
+  studentPreferenceRestrictionsDtoSchema,
+} from "@/dto/student";
 
 export const studentRouter = createTRPCRouter({
   preference: preferenceRouter,
@@ -33,383 +33,239 @@ export const studentRouter = createTRPCRouter({
         await new User(dal, studentId).isInstanceStudent(instance.params),
     ),
 
-  getById: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
-    // .output(studentDtoSchema) ///help
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, instance, subGroup },
-          studentId,
-        },
-      }) => {
-        const data = await ctx.db.studentDetails.findFirstOrThrow({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            userId: studentId,
-          },
-          select: {
-            studentLevel: true,
-            userInInstance: {
-              select: {
-                user: { select: { email: true, name: true } },
-                studentAllocation: {
-                  select: {
-                    project: {
-                      select: {
-                        id: true,
-                        title: true,
-                        supervisor: { select: { user: true } },
-                      },
-                    },
-                    studentRanking: true,
-                  },
-                },
-              },
-            },
-          },
-        });
+  // TODO: change output
+  getById: procedure.instance.subgroupAdmin
+    .input(z.object({ studentId: z.string() }))
+    .output(
+      studentDtoSchema.extend({
+        selfDefinedProjectId: z.string().optional(),
+        allocation: studentProjectAllocationDtoSchema.optional(),
+      }),
+    )
+    .query(async ({ ctx: { dal, instance }, input: { studentId } }) => {
+      const student = new InstanceStudent(dal, studentId, instance.params);
+      const studentData = await student.get();
 
-        const selfDefinedProject = await getSelfDefinedProject(
-          ctx.db,
-          { group, subGroup, instance },
-          studentId,
-        );
-
-        const studentAllocationData = data.userInInstance.studentAllocation;
-        const projectId = studentAllocationData?.project.id;
-        const projectTitle = studentAllocationData?.project.title;
-        const supervisor = studentAllocationData?.project.supervisor.user;
-        const studentRank = studentAllocationData?.studentRanking;
-
-        let studentAllocation: StudentProjectAllocationDto | undefined;
-        if (projectId && projectTitle && supervisor && studentRank) {
-          studentAllocation = {
-            project: {
-              id: projectId,
-              title: projectTitle,
-              supervisor: supervisor,
-            },
-            rank: studentRank,
-          };
-        }
-
+      if (!(await student.hasAllocation())) {
+        // no allocation
         return {
-          id: studentId,
-          name: data.userInInstance.user.name,
-          email: data.userInInstance.user.email,
-          level: data.studentLevel,
-          selfDefinedProjectId: selfDefinedProject?.id,
-          allocation: studentAllocation,
+          allocation: undefined,
+          selfDefinedProjectId: undefined,
+          ...studentData,
         };
-      },
-    ),
+      }
 
-  // Does not concern user-data;
-  // concerns an instance
-  // so should be in instance router
-  // not user.student
+      // definitely has allocation
+      const { project, studentRanking } = await student.getAllocation();
+      const supervisor = await new InstanceSupervisor(
+        dal,
+        project.supervisorId,
+        instance.params,
+      ).get();
+
+      if (!(await student.hasSelfDefinedProject())) {
+        // no self defined project
+        return {
+          allocation: {
+            project: { id: project.id, title: project.title, supervisor },
+            rank: studentRanking,
+          },
+          selfDefinedProjectId: undefined,
+          ...studentData,
+        };
+      }
+
+      // definitely has self defined project
+
+      return {
+        id: studentData.id,
+        name: studentData.name,
+        email: studentData.email,
+        level: studentData.level,
+        latestSubmissionDateTime: studentData.latestSubmissionDateTime,
+
+        selfDefinedProjectId: project.id,
+        allocation: {
+          project: { id: project.id, title: project.title, supervisor },
+          rank: studentRanking,
+        },
+      };
+    }),
+
+  // TODO: move to instance router
   allocationAccess: procedure.instance.user
     .output(z.boolean())
     .query(
       async ({ ctx: { instance } }) =>
-        await instance.allocationAccess.project.getStudent(),
+        await instance.get().then((x) => x.studentAllocationAccess),
     ),
 
-  // same again here
+  // TODO: move to instance router
   setAllocationAccess: procedure.instance.subgroupAdmin
     .input(z.object({ access: z.boolean() }))
     .output(z.boolean())
     .mutation(async ({ ctx: { instance }, input: { access } }) =>
-      instance.allocationAccess.project.setStudent(access),
+      instance.setStudentAccess(access),
     ),
 
-  overviewData: studentProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const { displayName, preferenceSubmissionDeadline } =
-          await ctx.db.allocationInstance.findFirstOrThrow({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              id: instance,
-            },
-            select: {
-              displayName: true,
-              preferenceSubmissionDeadline: true,
-            },
-          });
+  // TODO rename + split
+  overviewData: procedure.instance.student.query(
+    async ({ ctx: { instance } }) => {
+      const { displayName, studentPreferenceSubmissionDeadline: deadline } =
+        await instance.get();
 
-        return {
-          displayName,
-          preferenceSubmissionDeadline: toZonedTime(
-            preferenceSubmissionDeadline,
-            "Europe/London",
-          ),
-          deadlineTimeZoneOffset: getGMTOffset(preferenceSubmissionDeadline),
-        };
-      },
-    ),
+      return {
+        displayName,
+        preferenceSubmissionDeadline: getGMTZoned(deadline),
+        deadlineTimeZoneOffset: getGMTOffset(deadline),
+      };
+    },
+  ),
 
-  updateLevel: instanceAdminProcedure
+  updateLevel: procedure.instance.subgroupAdmin
     .input(
       z.object({
-        params: instanceParamsSchema,
         studentId: z.string(),
         level: z.number(),
       }),
     )
+    .output(studentDetailsDtoSchema)
     .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
+      async ({ ctx: { dal, instance }, input: { studentId, level } }) => {
+        return await new InstanceStudent(
+          dal,
           studentId,
-          level,
-        },
-      }) => {
-        await ctx.db.studentDetails.update({
-          where: {
-            detailsId: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              userId: studentId,
-            },
-          },
-          data: { studentLevel: level },
-        });
-
-        return level;
+          instance.params,
+        ).setStudentLevel(level);
       },
     ),
 
-  isPreAllocated: studentProcedure
-    .input(z.object({ params: instanceParamsSchema }))
+  isPreAllocated: procedure.instance.student
     .output(z.boolean())
+    .query(async ({ ctx: { user } }) => {
+      const student = await user;
+      return await student.hasSelfDefinedProject();
+    }),
+
+  // TODO: move to instance router
+  // @JakeTrevor - this is a very simple procedure but the transformer name is horrendous
+  // any ideas on how to make this suck less?
+  preferenceRestrictions: procedure.instance.user
+    .output(studentPreferenceRestrictionsDtoSchema)
     .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        return await getSelfDefinedProject(
-          ctx.db,
-          { group, subGroup, instance },
-          ctx.session.user.id,
-        );
-      },
+      async ({ ctx: { instance } }) =>
+        await instance.get().then(instanceToStudentPreferenceRestrictionsDTO),
     ),
 
-  preferenceRestrictions: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        return await ctx.db.allocationInstance.findFirstOrThrow({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            id: instance,
-          },
-          select: {
-            minPreferences: true,
-            maxPreferences: true,
-            maxPreferencesPerSupervisor: true,
-          },
-        });
-      },
-    ),
+  latestSubmission: procedure.instance.user
+    .input(z.object({ studentId: z.string() }))
+    .output(z.date().optional())
+    .query(async ({ ctx: { dal, instance }, input: { studentId } }) => {
+      return await new InstanceStudent(
+        dal,
+        studentId,
+        instance.params,
+      ).getLatestSubmissionDateTime();
+    }),
 
-  latestSubmission: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          studentId,
-        },
-      }) => {
-        const { latestSubmissionDateTime } =
-          await ctx.db.studentDetails.findFirstOrThrow({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              userId: studentId,
-            },
-            select: { latestSubmissionDateTime: true },
-          });
-
-        return latestSubmissionDateTime ?? undefined;
-      },
-    ),
-
-  /**
-   * @deprecated
-   */
-  allocatedProject: studentProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const user = ctx.session.user;
-        const projectAllocation = await ctx.db.projectAllocation.findFirst({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            userId: user.id,
-          },
-          select: {
-            studentRanking: true,
-            project: {
-              select: {
-                id: true,
-                title: true,
-                description: true,
-                supervisor: {
-                  select: { user: { select: { name: true, id: true } } },
-                },
-              },
-            },
-          },
-        });
-
-        if (!projectAllocation) return undefined;
-
-        return {
-          id: projectAllocation.project.id,
-          title: projectAllocation.project.title,
-          description: projectAllocation.project.description,
-          studentRanking: projectAllocation.studentRanking,
-          supervisor: {
-            name: projectAllocation.project.supervisor.user.name!,
-          },
-        };
-      },
-    ),
-
-  getAllocatedProject: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          studentId,
-        },
-      }) => {
-        const projectAllocation = await ctx.db.projectAllocation.findFirst({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            userId: studentId,
-          },
-          select: {
-            studentRanking: true,
-            project: {
-              select: {
-                id: true,
-                title: true,
-                description: true,
-                supervisor: { select: { user: true } },
-              },
-            },
-          },
-        });
-
-        if (!projectAllocation) return undefined;
-
-        return {
-          id: projectAllocation.project.id,
-          title: projectAllocation.project.title,
-          description: projectAllocation.project.description,
-          studentRanking: projectAllocation.studentRanking,
-          supervisor: projectAllocation.project.supervisor.user,
-        };
-      },
-    ),
-
-  delete: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          studentId,
-        },
-      }) => {
-        if (stageGte(ctx.instance.stage, Stage.PROJECT_ALLOCATION)) return;
-
-        await ctx.db.userInInstance.delete({
-          where: {
-            instanceMembership: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              userId: studentId,
-            },
-          },
-        });
-      },
-    ),
-
-  deleteSelected: instanceAdminProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        studentIds: z.array(z.string()),
-      }),
+  // TODO: change output type
+  // TODO: split into two procedures
+  getAllocatedProject: procedure.instance.user
+    .input(z.object({ studentId: z.string() }))
+    .output(
+      z
+        .object({
+          id: z.string(),
+          title: z.string(),
+          description: z.string(),
+          studentRanking: z.number(),
+          supervisor: z.object({
+            id: z.string(),
+            name: z.string(),
+            email: z.string(),
+          }),
+        })
+        .optional(),
     )
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          studentIds,
-        },
-      }) => {
-        if (stageGte(ctx.instance.stage, Stage.PROJECT_ALLOCATION)) return;
+    .query(async ({ ctx: { dal, instance }, input: { studentId } }) => {
+      const student = new InstanceStudent(dal, studentId, instance.params);
 
-        await ctx.db.userInInstance.deleteMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            userId: { in: studentIds },
-          },
-        });
-      },
-    ),
+      if (!(await student.hasAllocation())) return undefined;
 
-  getUnallocated: instanceAdminProcedure
+      const { project, studentRanking } = await student.getAllocation();
+
+      const supervisor = new InstanceSupervisor(
+        dal,
+        project.supervisorId,
+        instance.params,
+      );
+
+      return {
+        id: project.id,
+        title: project.title,
+        description: project.description,
+        studentRanking,
+        supervisor: await supervisor.get(),
+      };
+    }),
+
+  delete: procedure.instance.subgroupAdmin
+    .input(z.object({ studentId: z.string() }))
+    .mutation(async ({ ctx: { instance }, input: { studentId } }) => {
+      const { stage } = await instance.get();
+      if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
+        throw new Error("Cannot delete student at this stage");
+      }
+
+      await instance.deleteStudent(studentId);
+    }),
+
+  deleteSelected: procedure.instance.subgroupAdmin
+    .input(z.object({ studentIds: z.array(z.string()) }))
+    .mutation(async ({ ctx: { instance }, input: { studentIds } }) => {
+      const { stage } = await instance.get();
+      if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
+        throw new Error("Cannot delete students at this stage");
+      }
+
+      await instance.deleteStudents(studentIds);
+    }),
+
+  // TODO: move to instance router
+  getUnallocated: procedure.instance.subgroupAdmin
     .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ ctx, input: { params } }) => {
-      const selectedAlgName = ctx.instance.selectedAlgName;
+    .output(
+      z
+        .array(
+          z.object({
+            student: z.object({
+              level: z.number(),
+              id: z.string(),
+              name: z.string(),
+              email: z.string(),
+            }),
+            project: z
+              .object({
+                projectId: z.string(),
+                allocationGroupId: z.string(),
+                allocationSubGroupId: z.string(),
+                allocationInstanceId: z.string(),
+                supervisorId: z.string(),
+              })
+              .optional(),
+          }),
+        )
+        .optional(),
+    )
+    .query(async ({ ctx: { dal, instance } }) => {
+      const { selectedAlgName } = await instance.get();
       if (!selectedAlgName) return;
 
-      return await getUnallocatedStudents(ctx.db, params, selectedAlgName);
+      //  TODO: this needs to be moved to the dal
+      return await getUnallocatedStudents(
+        dal.db,
+        instance.params,
+        selectedAlgName,
+      );
     }),
 });
