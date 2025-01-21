@@ -173,6 +173,39 @@ export const projectRouter = createTRPCRouter({
       },
     ),
 
+  editSpecialCircumstances: instanceProcedure
+    .input(
+      z.object({
+        params: instanceParamsSchema,
+        projectId: z.string(),
+        specialCircumstances: z.string().optional(),
+      })
+    )
+    .mutation(
+      async ({
+        ctx, 
+        input: {
+          projectId,
+          specialCircumstances },
+        }) => {
+          await ctx.db.project.update({
+            where: { id: projectId },
+            data: { specialCircumstances },
+          });
+        },
+    ),
+  
+  getSpecialCircumstances: instanceProcedure  
+   .input(z.object({ params: instanceParamsSchema, projectId: z.string() }))
+   .query(async ({ ctx, input: { projectId } }) => {
+      const project = await ctx.db.project.findFirst({
+        where: { id: projectId },
+        select: { specialCircumstances: true },
+      });
+  
+      return project?.specialCircumstances ?? "";
+    }),
+
   getAllForStudentPreferences: instanceProcedure
     .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
     .query(
