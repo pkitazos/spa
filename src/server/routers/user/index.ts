@@ -2,7 +2,10 @@ import { z } from "zod";
 
 import { relativeComplement } from "@/lib/utils/general/set-difference";
 import { permissionCheck } from "@/lib/utils/permissions/permission-check";
-import { validatedSegmentsSchema } from "@/lib/validations/breadcrumbs";
+import {
+  ValidatedSegments,
+  validatedSegmentsSchema,
+} from "@/lib/validations/breadcrumbs";
 import { instanceParamsSchema } from "@/lib/validations/params";
 import { instanceDisplayDataSchema } from "@/lib/validations/spaces";
 
@@ -21,6 +24,7 @@ import { supervisorRouter } from "./supervisor";
 import { AllocationInstance } from "@/data-objects/spaces/instance";
 import { User } from "@/data-objects/users/user";
 import { userDtoSchema } from "@/dto";
+import { Role } from "@/db";
 
 export const userRouter = createTRPCRouter({
   student: studentRouter,
@@ -38,15 +42,19 @@ export const userRouter = createTRPCRouter({
         await new User(dal, userId).toDTO(),
     ),
 
-  // TODO refactor
+  /**
+   * @deprecated users can have multiple roles in an instance - use `roles` instead
+   */
   role: roleAwareProcedure
     .input(z.object({ params: instanceParamsSchema }))
     .query(async ({ ctx }) => ctx.session.user.role),
 
-  // TODO refactor
-  roles: multiRoleAwareProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ ctx }) => ctx.session.user.roles),
+  roles: procedure.instance.user
+    .output(z.set(z.nativeEnum(Role)))
+    .query(
+      async ({ ctx: { user, instance } }) =>
+        await user.getRolesInInstance(instance.params),
+    ),
 
   hasSelfDefinedProject: procedure.instance.user
     .output(z.boolean())
@@ -57,46 +65,48 @@ export const userRouter = createTRPCRouter({
         .then((student) => student.hasSelfDefinedProject());
     }),
 
-  // TODO refactor
-  // TODO: replace with new implementation that returns list of admin panels
-  getAdminPanel: publicProcedure.query(async ({ ctx }) => {
-    if (!ctx.session || !ctx.session.user) return;
+  // TODO refactor to use dal and/or object methods
+  getAdminPanel: procedure.user
+    .output(z.array(z.object({ displayName: z.string(), path: z.string() })))
+    .query(async ({ ctx: { user, db } }) => {
+      // if the user is a super-admin return the super-admin panel
 
-    const user = ctx.session.user;
+      if (await user.isSuperAdmin()) {
+        return [{ displayName: "Super-Admin Panel", path: "/admin" }];
+      }
 
-    const adminSpaces = await ctx.db.adminInSpace.findMany({
-      where: { userId: user.id },
-      select: {
-        adminLevel: true,
-        allocationGroupId: true,
-        allocationSubGroupId: true,
-      },
-    });
+      // get all the spaces the user is an admin in
+      // sort by admin level
+      // return a list of admin panels
 
-    if (adminSpaces.length === 0) return;
+      const groups = await db.groupAdmin
+        .findMany({
+          where: { userId: user.id },
+          select: { allocationGroup: true },
+        })
+        .then((data) =>
+          data.map((x) => ({
+            displayName: x.allocationGroup.displayName,
+            path: `/${x.allocationGroup.id}`,
+          })),
+        );
 
-    const highestLevel = adminSpaces
-      .sort((a, b) => (permissionCheck(a.adminLevel, b.adminLevel) ? 1 : 0))
-      .at(0);
+      const subGroups = await db.subGroupAdmin
+        .findMany({
+          where: { userId: user.id },
+          select: { allocationGroup: true, allocationSubGroup: true },
+        })
+        .then((data) =>
+          data.map((x) => ({
+            displayName: x.allocationSubGroup.displayName,
+            path: `/${x.allocationGroup.id}/${x.allocationSubGroup.id}`,
+          })),
+        );
 
-    if (!highestLevel) return;
+      return [...groups, ...subGroups];
+    }),
 
-    const {
-      adminLevel,
-      allocationGroupId: group,
-      allocationSubGroupId: subGroup,
-    } = highestLevel;
-
-    // TODO: breaks if user is admin in multiple groups and/or subgroups
-
-    if (adminLevel === "SUPER") return "/admin";
-    if (adminLevel === "GROUP") return `/${group}`;
-    if (adminLevel === "SUB_GROUP") return `/${group}/${subGroup}`;
-
-    return;
-  }),
-
-  // TODO refactor
+  // TODO refactor to use dal and/or object methods
   instances: procedure.user
     .output(z.array(instanceDisplayDataSchema))
     .query(async ({ ctx }) => {
@@ -152,9 +162,10 @@ export const userRouter = createTRPCRouter({
       // TODO
       // This is fine as is, but I'd ask two things:
       // 1. why is it "user.breadcrumbs"?
+      // @JakeTrevor - well the access to the breadcrumbs is based on the user's permissions
       // 2. should the logic below live somewhere else?
       const [group, subGroup, instance, projectId] = segments;
-      const res = [];
+      const res: ValidatedSegments[] = [];
       if (group) {
         res.push({
           segment: group,
@@ -173,17 +184,20 @@ export const userRouter = createTRPCRouter({
           access: await user.isInstanceMember({ group, subGroup, instance }),
         });
       }
-      if (projectId) {
-        res.push({
-          segment: projectId,
-          access: await user.canAccessProject({
-            group,
-            subGroup,
-            instance,
-            projectId,
-          }),
-        });
-      }
+      // if (projectId) {
+      //   res.push({
+      //     segment: projectId,
+      //     access: await user.canAccessProject({
+      //       group,
+      //       subGroup,
+      //       instance,
+      //       projectId,
+      //     }),
+      //   });
+      // }
+
+      // TODO: this doesn't yet handle users access to the /supervisors/[id] and /students/[id] routes (possibly going to be a new /readers/[id] route)
+      // users who don't have access to those pages should still see the breadcrumbs with the correct permissions to be able to navigate back to their allowed pages
       return res;
     }),
 
