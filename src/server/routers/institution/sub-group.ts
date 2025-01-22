@@ -11,109 +11,77 @@ import {
   subGroupParamsSchema,
 } from "@/lib/validations/params";
 
-import {
-  adminProcedure,
-  createTRPCRouter,
-  protectedProcedure,
-} from "@/server/trpc";
+import { procedure } from "@/server/middleware";
+import { adminProcedure, createTRPCRouter } from "@/server/trpc";
 import { isSubGroupAdmin } from "@/server/utils/admin/is-sub-group-admin";
-import { isSuperAdmin } from "@/server/utils/admin/is-super-admin";
 import { validateEmailGUIDMatch } from "@/server/utils/id-email-check";
 
+import { subGroupDtoSchema } from "@/dto";
+
 export const subGroupRouter = createTRPCRouter({
-  exists: protectedProcedure
-    .input(z.object({ params: subGroupParamsSchema }))
+  exists: procedure.subgroup.user
+    .output(z.boolean())
+    .query(async ({ ctx: { subGroup } }) => await subGroup.exists()),
+
+  get: procedure.subgroup.user
+    .output(subGroupDtoSchema)
+    .query(async ({ ctx: { subGroup } }) => await subGroup.get()),
+
+  access: procedure.subgroup.user
+    .output(z.boolean())
     .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup },
-        },
-      }) => {
-        return await ctx.db.allocationSubGroup.findFirst({
-          where: { id: subGroup, allocationGroupId: group },
-        });
-      },
+      async ({ ctx: { subGroup, user } }) =>
+        await user.isSubGroupAdminOrBetter(subGroup.params),
     ),
 
-  get: protectedProcedure
-    .input(z.object({ params: subGroupParamsSchema }))
-    .query(async ({ ctx, input: { params } }) => {
-      return await ctx.db.allocationSubGroup.findFirstOrThrow({
-        where: { allocationGroupId: params.group, id: params.subGroup },
-      });
-    }),
+  // TODO split in two
+  instanceManagement: procedure.subgroup.subgroupAdmin.query(
+    async ({ ctx: { subGroup } }) => {
+      const { displayName } = await subGroup.get();
+      const allocationInstances = await subGroup.getInstances();
 
-  access: protectedProcedure
-    .input(z.object({ params: subGroupParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup },
-        },
-      }) => {
-        const user = ctx.session.user;
+      const subGroupAdmins = await subGroup.getSubGroupAdmins();
 
-        const superAdmin = await isSuperAdmin(ctx.db, user.id);
-        if (superAdmin) return true;
+      return { displayName, allocationInstances, subGroupAdmins };
+    },
+  ),
 
-        const groupAdmin = await ctx.db.adminInSpace.findFirst({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: null,
-            userId: user.id,
-          },
-        });
-        if (groupAdmin) return true;
+  // adminProcedure
+  //   .input(z.object({ params: subGroupParamsSchema }))
+  //   .query(
+  //     async ({
+  //       ctx,
+  //       input: {
+  //         params: { group, subGroup },
+  //       },
+  //     }) => {
+  //       const { displayName, allocationInstances } =
+  //         await ctx.db.allocationSubGroup.findFirstOrThrow({
+  //           where: {
+  //             allocationGroupId: group,
+  //             id: subGroup,
+  //           },
+  //           select: {
+  //             displayName: true,
+  //             allocationInstances: true,
+  //           },
+  //         });
 
-        const subGroupAdmin = await ctx.db.adminInSpace.findFirst({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            userId: user.id,
-          },
-        });
-        return !!subGroupAdmin;
-      },
-    ),
+  //       const data = await ctx.db.adminInSpace.findMany({
+  //         where: {
+  //           allocationGroupId: group,
+  //           allocationSubGroupId: subGroup,
+  //         },
+  //         select: { user: { select: { id: true, name: true, email: true } } },
+  //       });
 
-  instanceManagement: adminProcedure
-    .input(z.object({ params: subGroupParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup },
-        },
-      }) => {
-        const { displayName, allocationInstances } =
-          await ctx.db.allocationSubGroup.findFirstOrThrow({
-            where: {
-              allocationGroupId: group,
-              id: subGroup,
-            },
-            select: {
-              displayName: true,
-              allocationInstances: true,
-            },
-          });
-
-        const data = await ctx.db.adminInSpace.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-          },
-          select: { user: { select: { id: true, name: true, email: true } } },
-        });
-
-        return {
-          displayName,
-          allocationInstances,
-          subGroupAdmins: data.map(({ user }) => user),
-        };
-      },
-    ),
+  //       return {
+  //         displayName,
+  //         allocationInstances,
+  //         subGroupAdmins: data.map(({ user }) => user),
+  //       };
+  //     },
+  //   ),
 
   takenInstanceNames: adminProcedure
     .input(z.object({ params: subGroupParamsSchema }))
