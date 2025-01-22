@@ -1,6 +1,15 @@
 import { z } from "zod";
 
-import { stageSchema } from "@/lib/validations/stage";
+import { Stage } from "@/db/types";
+
+export const stageSchema = z.enum([
+  Stage.SETUP,
+  Stage.PROJECT_SUBMISSION,
+  Stage.PROJECT_SELECTION,
+  Stage.PROJECT_ALLOCATION,
+  Stage.ALLOCATION_ADJUSTMENT,
+  Stage.ALLOCATION_PUBLICATION,
+]);
 
 export const userDtoSchema = z.object({
   id: z.string(),
@@ -75,3 +84,15 @@ export const tagDtoSchema = z.object({
 });
 
 export type TagDTO = z.infer<typeof tagDtoSchema>;
+
+export const instanceDisplayDataSchema = z.object({
+  group: z.object({ id: z.string(), displayName: z.string() }),
+  subGroup: z.object({ id: z.string(), displayName: z.string() }),
+  instance: z.object({ id: z.string(), displayName: z.string() }),
+});
+
+export type InstanceDisplayData = z.infer<typeof instanceDisplayDataSchema>;
+
+export const supervisorStages: Stage[] = [Stage.SETUP];
+
+export const studentStages: Stage[] = [Stage.SETUP, Stage.PROJECT_SUBMISSION];

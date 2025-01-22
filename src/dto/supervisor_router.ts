@@ -13,6 +13,7 @@ export const supervisorDtoSchema = z.object({
 
 export type SupervisorDTO = z.infer<typeof supervisorDtoSchema>;
 
+// TODO: revisit this whole file tbh
 export const baseProjectDtoSchema = z.object({
   id: z.string(),
   title: z.string(),

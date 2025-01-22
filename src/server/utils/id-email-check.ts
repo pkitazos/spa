@@ -1,9 +1,9 @@
 import { TRPCClientError } from "@trpc/client";
 
-import { PrismaTransactionClient } from "@/db";
+import { TX } from "@/db/types";
 
 export async function validateEmailGUIDMatch(
-  tx: PrismaTransactionClient,
+  tx: TX,
   institutionId: string,
   email: string,
   name: string,

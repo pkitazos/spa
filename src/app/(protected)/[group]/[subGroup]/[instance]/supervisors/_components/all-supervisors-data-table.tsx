@@ -25,7 +25,7 @@ export function SupervisorsDataTable({
 
   const { mutateAsync: deleteAsync } = api.user.supervisor.delete.useMutation();
   const { mutateAsync: deleteSelectedAsync } =
-    api.user.supervisor.deleteSelected.useMutation();
+    api.user.supervisor.deleteMany.useMutation();
 
   async function handleDelete(supervisorId: string) {
     void toast.promise(

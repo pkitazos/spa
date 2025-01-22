@@ -1,4 +1,4 @@
-import { AdminLevel } from "@prisma/client";
+/* eslint-disable simple-import-sort/imports */
 import { TRPCClientError } from "@trpc/client";
 import { z } from "zod";
 
@@ -22,7 +22,7 @@ export const groupRouter = createTRPCRouter({
     .query(async ({ ctx: { group } }) => await group.get()),
 
   /**
-   * TODO rename?
+   * TODO move
    * returns true if the current user can access the specified group?
    */
   access: procedure.group.user
@@ -32,8 +32,8 @@ export const groupRouter = createTRPCRouter({
         await user.isGroupAdminOrBetter(group.params),
     ),
 
-  // TODO check correct?
-  // consider renaming?
+  // TODO split
+  // TODO rename
   subGroupManagement: procedure.group.groupAdmin
     .output(
       z.object({
@@ -45,15 +45,12 @@ export const groupRouter = createTRPCRouter({
     .query(async ({ ctx: { group } }) => {
       const { displayName } = await group.get();
       const allocationSubGroups = await group.getSubGroups();
-      // NB this gets all managers - group admin or better
-      // If correct, consider renaming field to e.g. managers
-      const groupAdmins = await group.getManagers();
-      // Uncomment below if you only want proper group admins
-      // const groupAdmins = await group.getAdmins();
+      const groupAdmins = await group.getAdmins();
 
       return { displayName, allocationSubGroups, groupAdmins };
     }),
 
+  // TODO this should return a set
   takenSubGroupNames: procedure.group.groupAdmin
     .output(z.array(z.string()))
     .query(
@@ -65,10 +62,10 @@ export const groupRouter = createTRPCRouter({
 
   createSubGroup: procedure.group.groupAdmin
     .input(z.object({ name: z.string() }))
-    .output(z.void()) // Consider returning the subgroup DTO
-    .mutation(async ({ ctx: { group, dal }, input: { name } }) => {
-      AllocationSubGroup.create(dal, group.params, name);
-    }),
+    .output(subGroupDtoSchema)
+    .mutation(async ({ ctx: { group, dal }, input: { name } }) =>
+      AllocationSubGroup.create(dal, group.params, name),
+    ),
 
   deleteSubGroup: procedure.subgroup.groupAdmin
     .output(z.void())

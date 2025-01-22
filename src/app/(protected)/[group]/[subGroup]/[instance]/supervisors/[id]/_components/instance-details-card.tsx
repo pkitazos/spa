@@ -23,8 +23,8 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 import { api } from "@/lib/trpc/client";
 import { User } from "@/lib/validations/auth";
 import {
+  supervisorCapacitiesSchema,
   SupervisorInstanceCapacities,
-  supervisorInstanceCapacitiesSchema,
 } from "@/lib/validations/supervisor-project-submission-details";
 
 import { spacesLabels } from "@/content/spaces";
@@ -44,7 +44,7 @@ export function InstanceDetailsCard({
     useState<SupervisorInstanceCapacities>(supervisor);
 
   const form = useForm<SupervisorInstanceCapacities>({
-    resolver: zodResolver(supervisorInstanceCapacitiesSchema),
+    resolver: zodResolver(supervisorCapacitiesSchema),
     defaultValues: capacities,
   });
 

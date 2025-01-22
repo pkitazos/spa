@@ -1,30 +1,27 @@
 import { z } from "zod";
 
+import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
-import { AllocationGroup } from "@/data-objects/spaces/group";
-import { groupDtoSchema, userDtoSchema } from "@/dto";
-import { procedure } from "@/server/middleware";
 import { groupRouter } from "./group";
 import { instanceRouter } from "./instance";
 import { subGroupRouter } from "./sub-group";
 
-// TODO @pkitazos please review
+import { AllocationGroup } from "@/data-objects/spaces/group";
+import { groupDtoSchema, userDtoSchema } from "@/dto";
+
 export const institutionRouter = createTRPCRouter({
   group: groupRouter,
   subGroup: subGroupRouter,
   instance: instanceRouter,
 
-  // not used; consider deleting?
   superAdminAccess: procedure.user
     .output(z.boolean())
     .query(async ({ ctx: { user } }) => await user.isSuperAdmin()),
 
-  // slightly odd one
-  // Consider splitting into two?
-  // or perhaps just renaming? what does this really do?
+  // TODO split
+  // TODO rename
   groupManagement: procedure.superAdmin
-    // Best guess at output - need ur input @pkitazos
     .output(
       z.object({
         groups: z.array(groupDtoSchema),
@@ -37,15 +34,6 @@ export const institutionRouter = createTRPCRouter({
       return { groups, superAdmins };
     }),
 
-  // superAdminProcedure.query(async ({ ctx }) => {
-  //   const groups = await ctx.db.allocationGroup.findMany({});
-  //   const superAdmins = await ctx.db.adminInSpace.findMany({
-  //     where: { adminLevel: AdminLevel.SUPER },
-  //     select: { user: { select: { id: true, name: true, email: true } } },
-  //   });
-  //   return { groups, superAdmins: superAdmins.map(({ user }) => user) };
-  // }),
-
   takenGroupNames: procedure.superAdmin
     .output(z.set(z.string()))
     .query(
@@ -55,7 +43,7 @@ export const institutionRouter = createTRPCRouter({
 
   createGroup: procedure.superAdmin
     .input(z.object({ groupName: z.string() }))
-    .output(groupDtoSchema) // used to be z.void(); still should be safe.
+    .output(groupDtoSchema)
     .mutation(
       async ({ ctx: { dal }, input: { groupName } }) =>
         await AllocationGroup.create(dal, groupName),

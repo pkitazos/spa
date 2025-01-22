@@ -36,6 +36,7 @@ export class AllocationGroup extends DataObject {
   async getManagers(): Promise<UserDTO[]> {
     const groupAdmins = await this.getAdmins();
     const superAdmins = await this.dal.superAdmin.getAll();
+    // TODO distinct (nubs)
     return [...groupAdmins, ...superAdmins];
   }
 
