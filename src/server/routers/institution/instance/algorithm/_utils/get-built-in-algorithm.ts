@@ -3,7 +3,7 @@ import {
   GreedyAlgorithm,
   GreedyGenAlgorithm,
   MinCostAlgorithm,
-} from "@/lib/algorithms";
+} from "@/content/algorithms";
 
 export function getBuiltInAlgorithm(algName: string) {
   switch (algName) {

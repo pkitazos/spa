@@ -1,6 +1,6 @@
 import { Err, OK, Result } from "@/lib/utils/general/result";
 
-import { PrismaTransactionClient } from "@/db";
+import { TX } from "@/db/types";
 
 export function checkMembership<T>(
   newUsers: T[],
@@ -15,7 +15,7 @@ export function checkMembership<T>(
 
 export async function checkUsersMembership<
   T extends { institutionId: string; email: string; fullName: string },
->(tx: PrismaTransactionClient, newUsers: T[], existingUserRoleIds: string[]) {
+>(tx: TX, newUsers: T[], existingUserRoleIds: string[]) {
   const userData = await tx.user.findMany({
     select: { id: true, email: true },
   });
