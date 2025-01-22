@@ -83,8 +83,8 @@ export const supervisorRouter = createTRPCRouter({
 
   // ? not sure about the output schema definition here
   // TODO consider renaming e.g. projectStats?
+  // ! still not using object methods correctly
   projects: procedure.instance.supervisor
-    .input(z.object({ params: instanceParamsSchema }))
     .output(
       z.object({
         currentSubmissionCount: z.number(),
@@ -97,10 +97,13 @@ export const supervisorRouter = createTRPCRouter({
         ),
       }),
     )
-    .query(async ({ ctx: { dal, instance, user }, input: { params } }) => {
+    .query(async ({ ctx: { dal, instance, user } }) => {
       const parentInstanceId = (await instance.get()).parentInstanceId;
 
-      const allProjects = await dal.supervisor.getAllProjects(user.id, params);
+      const allProjects = await dal.supervisor.getAllProjects(
+        user.id,
+        instance.params,
+      );
 
       let totalAllocatedCount = 0;
       if (parentInstanceId) {
@@ -111,7 +114,7 @@ export const supervisorRouter = createTRPCRouter({
 
         const parentAllocatedCount = await dal.supervisor
           .getSupervisionAllocations(user.id, {
-            ...params,
+            ...instance.params,
             instance: parentInstanceId,
           })
           .then((allocations) => allocations.length);
@@ -119,7 +122,7 @@ export const supervisorRouter = createTRPCRouter({
         totalAllocatedCount += forkedPreAllocatedCount + parentAllocatedCount;
       } else {
         const allocatedCount = await dal.supervisor
-          .getSupervisionAllocations(user.id, params)
+          .getSupervisionAllocations(user.id, instance.params)
           .then((allocations) => allocations.length);
 
         totalAllocatedCount += allocatedCount;

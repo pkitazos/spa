@@ -143,7 +143,7 @@ export const studentRouter = createTRPCRouter({
   isPreAllocated: procedure.instance.student
     .output(z.boolean())
     .query(async ({ ctx: { user } }) => {
-      const student = await user;
+      const student = user;
       return await student.hasSelfDefinedProject();
     }),
 
