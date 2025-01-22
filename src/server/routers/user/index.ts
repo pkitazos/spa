@@ -1,24 +1,20 @@
 import { z } from "zod";
 
-import { relativeComplement } from "@/lib/utils/general/set-difference";
 import {
   ValidatedSegments,
   validatedSegmentsSchema,
 } from "@/lib/validations/breadcrumbs";
 import { instanceParamsSchema } from "@/lib/validations/params";
-import { instanceDisplayDataSchema } from "@/lib/validations/spaces";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter, roleAwareProcedure } from "@/server/trpc";
 
-import { getDisplayNameMap } from "./_utils/instance";
 import { studentRouter } from "./student";
 import { supervisorRouter } from "./supervisor";
 
-import { AllocationInstance } from "@/data-objects/spaces/instance";
 import { User } from "@/data-objects/users/user";
 import { Role } from "@/db";
-import { userDtoSchema } from "@/dto";
+import { instanceDisplayDataSchema, userDtoSchema } from "@/dto";
 
 export const userRouter = createTRPCRouter({
   student: studentRouter,
@@ -100,54 +96,9 @@ export const userRouter = createTRPCRouter({
       return [...groups, ...subGroups];
     }),
 
-  // TODO refactor to use dal and/or object methods
   instances: procedure.user
     .output(z.array(instanceDisplayDataSchema))
-    .query(async ({ ctx }) => {
-      const { user, dal } = ctx;
-      const getDisplayData = await getDisplayNameMap(ctx.db);
-
-      // if the user is a super-admin return all instances
-      if (await user.isSuperAdmin()) {
-        const allInstances = await dal.instance.getAll();
-        return allInstances.map(getDisplayData);
-      }
-
-      // can safely assert that the user is not a super-admin
-
-      // user is an admin in these spaces
-      const groups = await dal.groupAdmin.getAllGroups(user.id);
-
-      const groupAdminInstances = await dal.instance.getForGroups(groups);
-
-      const subGroups = await dal.subGroupAdmin.getAllSubgroups(user.id);
-
-      const uniqueSubGroups = relativeComplement(
-        subGroups,
-        groups,
-        (a, b) => a.group == b.group,
-      );
-
-      const subGroupAdminInstances =
-        await dal.instance.getForGroups(uniqueSubGroups);
-
-      const privilegedInstances = [
-        ...groupAdminInstances,
-        ...subGroupAdminInstances,
-      ];
-
-      // user has some role in these instances (student or supervisor or reader)
-      const unprivilegedInstances = await dal.user.getAllInstances(user.id);
-
-      const uniqueUnprivileged = relativeComplement(
-        unprivilegedInstances,
-        privilegedInstances,
-        AllocationInstance.eq,
-      );
-
-      const allInstances = [...privilegedInstances, ...uniqueUnprivileged];
-      return allInstances.map(getDisplayData);
-    }),
+    .query(async ({ ctx: { user } }) => await user.getInstances()),
 
   // TODO: rename
   breadcrumbs: procedure.user
@@ -177,17 +128,12 @@ export const userRouter = createTRPCRouter({
           access: await user.isInstanceMember({ group, subGroup, instance }),
         });
       }
-      // if (projectId) {
-      //   res.push({
-      //     segment: projectId,
-      //     access: await user.canAccessProject({
-      //       group,
-      //       subGroup,
-      //       instance,
-      //       projectId,
-      //     }),
-      //   });
-      // }
+      if (projectId) {
+        res.push({
+          segment: projectId,
+          access: true,
+        });
+      }
 
       // TODO: this doesn't yet handle users access to the /supervisors/[id] and /students/[id] routes (possibly going to be a new /readers/[id] route)
       // users who don't have access to those pages should still see the breadcrumbs with the correct permissions to be able to navigate back to their allowed pages

@@ -16,6 +16,7 @@ import {
   projectDataToDTO,
   studentDetailsToDto,
   studentToDTO,
+  supervisorToDTO,
   tagToDTO,
   userInInstanceToDTO,
 } from "@/db/transformers";
@@ -42,6 +43,8 @@ import {
 import { sortPreferenceType } from "@/lib/utils/preferences/sort";
 import { updateManyPreferenceTransaction } from "@/server/routers/user/student/_utils/update-many-preferences";
 import { updatePreferenceTransaction } from "@/server/routers/user/student/_utils/update-preference";
+import { InstanceDisplayData } from "@/dto";
+import { SupervisorDTO } from "@/dto/supervisor";
 
 export class DAL {
   db: DB;
@@ -188,6 +191,41 @@ export class DAL {
           },
         })
         .then((data) => data.map(allocationInstanceToDTO)),
+
+    toQualifiedPaths: async (
+      instances: InstanceParams[],
+    ): Promise<InstanceDisplayData[]> =>
+      await this.db.allocationInstance
+        .findMany({
+          where: { OR: instances.map((x) => toInstanceId(x)) },
+          select: {
+            displayName: true,
+            id: true,
+            allocationSubGroup: {
+              select: {
+                displayName: true,
+                id: true,
+                allocationGroup: { select: { displayName: true, id: true } },
+              },
+            },
+          },
+        })
+        .then((data) =>
+          data.map((x) => ({
+            group: {
+              id: x.allocationSubGroup.allocationGroup.id,
+              displayName: x.allocationSubGroup.allocationGroup.displayName,
+            },
+            subGroup: {
+              id: x.allocationSubGroup.id,
+              displayName: x.allocationSubGroup.displayName,
+            },
+            instance: {
+              id: x.id,
+              displayName: x.displayName,
+            },
+          })),
+        ),
 
     setSupervisorProjectAllocationAccess: async (
       access: boolean,
@@ -612,13 +650,22 @@ export class DAL {
         })
         .then((x) => x.userInInstance.user),
 
-    // TODO: change output type to ProjectData (see EOF)
+    getDetails: async (
+      userId: string,
+      params: InstanceParams,
+    ): Promise<SupervisorDTO> =>
+      await this.db.supervisorDetails
+        .findFirstOrThrow({
+          where: { userId, ...expand(params) },
+          include: { userInInstance: { include: { user: true } } },
+        })
+        .then(supervisorToDTO),
+
     getInstanceData: async (userId: string, params: InstanceParams) => {
-      const { projects: projectData, ...supervisorData } =
+      const { projects: projectData } =
         await this.db.supervisorDetails.findFirstOrThrow({
           where: { userId, ...expand(params) },
           include: {
-            userInInstance: { include: { user: true } },
             projects: {
               include: {
                 studentAllocations: {
@@ -639,7 +686,7 @@ export class DAL {
           },
         });
 
-      const projects = projectData.map((data) => ({
+      return projectData.map((data) => ({
         project: projectDataToDTO(data),
         // TODO remove below
         ...projectDataToDTO(data),
@@ -650,15 +697,6 @@ export class DAL {
         flags: data.details.flagsOnProject.map((f) => flagToDTO(f.flag)),
         tags: data.details.tagsOnProject.map((t) => tagToDTO(t.tag)),
       }));
-
-      return {
-        projects,
-        supervisor: {
-          ...supervisorData.userInInstance.user,
-          projectTarget: supervisorData.projectAllocationTarget,
-          projectUpperQuota: supervisorData.projectAllocationUpperBound,
-        },
-      };
     },
 
     // TODO: rename
@@ -722,9 +760,9 @@ export class DAL {
             },
             student: {
               ...student.userInInstance.user,
-              rank,
               level: student.studentLevel,
             },
+            rank,
           })),
         );
     },

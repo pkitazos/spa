@@ -30,6 +30,7 @@ export const studentRouter = createTRPCRouter({
     .output(z.boolean())
     .query(
       async ({ ctx: { instance, dal }, input: { studentId } }) =>
+        // TODO: method on instance
         await new User(dal, studentId).isInstanceStudent(instance.params),
     ),
 
@@ -57,11 +58,9 @@ export const studentRouter = createTRPCRouter({
 
       // definitely has allocation
       const { project, studentRanking } = await student.getAllocation();
-      const supervisor = await new InstanceSupervisor(
-        dal,
-        project.supervisorId,
-        instance.params,
-      ).get();
+      const supervisor = await instance
+        .getSupervisor(project.supervisorId)
+        .get();
 
       if (!(await student.hasSelfDefinedProject())) {
         // no self defined project
@@ -95,10 +94,10 @@ export const studentRouter = createTRPCRouter({
   // TODO: move to instance router
   allocationAccess: procedure.instance.user
     .output(z.boolean())
-    .query(
-      async ({ ctx: { instance } }) =>
-        await instance.get().then((x) => x.studentAllocationAccess),
-    ),
+    .query(async ({ ctx: { instance } }) => {
+      const { studentAllocationAccess } = await instance.get();
+      return studentAllocationAccess;
+    }),
 
   // TODO: move to instance router
   setAllocationAccess: procedure.instance.subgroupAdmin
@@ -122,6 +121,9 @@ export const studentRouter = createTRPCRouter({
     },
   ),
 
+  // TODO: move to instance router (a lot of these operations should really be on the instance object)
+  // they can also be on the student object and just use the same underlying dal methods
+  // maybe not
   updateLevel: procedure.instance.subgroupAdmin
     .input(
       z.object({
@@ -142,12 +144,10 @@ export const studentRouter = createTRPCRouter({
 
   isPreAllocated: procedure.instance.student
     .output(z.boolean())
-    .query(async ({ ctx: { user } }) => {
-      const student = user;
-      return await student.hasSelfDefinedProject();
-    }),
+    .query(async ({ ctx: { user } }) => await user.hasSelfDefinedProject()),
 
   // TODO: move to instance router
+  // this sucks actually
   preferenceRestrictions: procedure.instance.user
     .output(studentPreferenceRestrictionsDtoSchema)
     .query(

@@ -62,7 +62,8 @@ export type Project__AllocatedStudents_Flags_Tags = z.infer<
 
 export const supervisionAllocationDtoSchema = z.object({
   project: baseProjectDtoSchema,
-  student: studentDtoSchema.extend({ rank: z.number() }),
+  student: studentDtoSchema,
+  rank: z.number(),
 });
 
 export type SupervisionAllocationDto = z.infer<

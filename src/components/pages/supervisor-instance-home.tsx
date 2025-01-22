@@ -23,7 +23,7 @@ export async function SupervisorInstanceHome({
   });
 
   const { currentSubmissionCount, submissionTarget } =
-    await api.user.supervisor.projects({
+    await api.user.supervisor.projectStats({
       params,
     });
 
