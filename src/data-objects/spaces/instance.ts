@@ -2,13 +2,13 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { DataObject } from "../data-object";
 import { StudentProjectAllocationData } from "../student-project-allocation-data";
+import { User } from "../users/user";
 
 import { AllocationGroup } from "./group";
 import { AllocationSubGroup } from "./subgroup";
 
 import { DAL } from "@/data-access";
-import { InstanceDTO } from "@/dto";
-import { checkInstanceExistsUseCase } from "@/interactors";
+import { InstanceDisplayData, InstanceDTO } from "@/dto";
 
 export class AllocationInstance extends DataObject {
   public params: InstanceParams;
@@ -20,8 +20,15 @@ export class AllocationInstance extends DataObject {
     this.params = params;
   }
 
-  public exists() {
-    return checkInstanceExistsUseCase({ params: this.params });
+  static async toQualifiedPaths(
+    dal: DAL,
+    instances: InstanceDTO[],
+  ): Promise<InstanceDisplayData[]> {
+    return await dal.instance.toQualifiedPaths(instances);
+  }
+
+  public async exists() {
+    return await this.dal.instance.exists(this.params);
   }
 
   public async get() {
@@ -89,27 +96,31 @@ export class AllocationInstance extends DataObject {
   /**
    * @deprecated
    */
-  async getReaderAccess(): Promise<boolean> {
+  public async getReaderAccess(): Promise<boolean> {
     throw new Error("Method not implemented.");
   }
   // TODO rename
-  async setReaderAccess(access: boolean): Promise<boolean> {
+  public async setReaderAccess(access: boolean): Promise<boolean> {
     throw new Error("Method not implemented.");
   }
 
-  async deleteStudent(studentId: string): Promise<void> {
+  public getSupervisor(userId: string) {
+    return new User(this.dal, userId).toInstanceSupervisor(this.params);
+  }
+
+  public async deleteStudent(studentId: string): Promise<void> {
     return await this.dal.student.delete(studentId, this.params);
   }
 
-  async deleteStudents(studentIds: string[]): Promise<void> {
+  public async deleteStudents(studentIds: string[]): Promise<void> {
     return await this.dal.student.deleteMany(studentIds, this.params);
   }
 
-  async deleteSupervisor(supervisorId: string): Promise<void> {
+  public async deleteSupervisor(supervisorId: string): Promise<void> {
     return await this.dal.supervisor.delete(supervisorId, this.params);
   }
 
-  async deleteSupervisors(supervisorIds: string[]): Promise<void> {
+  public async deleteSupervisors(supervisorIds: string[]): Promise<void> {
     return await this.dal.supervisor.deleteMany(supervisorIds, this.params);
   }
 }

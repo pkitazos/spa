@@ -1,3 +1,4 @@
+import { relativeComplement } from "@/lib/utils/general/set-difference";
 import {
   GroupParams,
   InstanceParams,
@@ -6,6 +7,8 @@ import {
 } from "@/lib/validations/params";
 
 import { DataObject } from "../data-object";
+import { AllocationInstance } from "../spaces/instance";
+import { Institution } from "../spaces/institution";
 
 import { GroupAdmin } from "./group-admin";
 import { InstanceReader } from "./instance-reader";
@@ -32,6 +35,10 @@ export class User extends DataObject {
   static fromDTO(dal: DAL, data: UserDTO) {
     const user = new User(dal, data.id);
     user._data = data;
+  }
+
+  public toUser() {
+    return new User(this.dal, this.id);
   }
 
   public async isSuperAdmin(): Promise<boolean> {
@@ -67,7 +74,7 @@ export class User extends DataObject {
     params: SubGroupParams,
   ): Promise<boolean> {
     return (
-      (await this.isGroupAdmin({ group: params.group })) ||
+      (await this.isGroupAdminOrBetter({ group: params.group })) ||
       (await this.isSubGroupAdmin(params))
     );
   }
@@ -97,7 +104,7 @@ export class User extends DataObject {
 
   public toInstanceSupervisor(instanceParams: InstanceParams) {
     if (!this.isInstanceSupervisor(instanceParams))
-      throw new Error("unauthorised");
+      throw new Error("User is not a supervisor in this instance");
 
     return new InstanceSupervisor(this.dal, this.id, instanceParams);
   }
@@ -117,7 +124,7 @@ export class User extends DataObject {
     // might need some SBAC here
     return (
       (await this.isSubGroupAdmin(params)) ||
-      (await this.isInstanceReader(params)) ||
+      (await this.isInstanceSupervisor(params)) ||
       (await this.isInstanceStudent(params)) ||
       (await this.isInstanceReader(params))
     );
@@ -173,6 +180,43 @@ export class User extends DataObject {
     }
 
     return roles;
+  }
+
+  public async getInstances() {
+    if (await this.isSuperAdmin()) {
+      const instances = await Institution.getAllInstances(this.dal);
+      return AllocationInstance.toQualifiedPaths(this.dal, instances);
+    }
+
+    const groups = await this.dal.groupAdmin.getAllGroups(this.id);
+    const groupAdminInstances = await this.dal.instance.getForGroups(groups);
+
+    const subGroups = await this.dal.subGroupAdmin.getAllSubgroups(this.id);
+
+    const uniqueSubGroups = relativeComplement(
+      subGroups,
+      groups,
+      (a, b) => a.group == b.group,
+    );
+
+    const subGroupAdminInstances =
+      await this.dal.instance.getForGroups(uniqueSubGroups);
+
+    const privilegedInstances = [
+      ...groupAdminInstances,
+      ...subGroupAdminInstances,
+    ];
+
+    const unprivilegedInstances = await this.dal.user.getAllInstances(this.id);
+
+    const uniqueUnprivileged = relativeComplement(
+      unprivilegedInstances,
+      privilegedInstances,
+      AllocationInstance.eq,
+    );
+
+    const allInstances = [...privilegedInstances, ...uniqueUnprivileged];
+    return await AllocationInstance.toQualifiedPaths(this.dal, allInstances);
   }
 
   public async toDTO(): Promise<UserDTO> {

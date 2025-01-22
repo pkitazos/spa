@@ -23,10 +23,11 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 }
 
 export default async function Page({ params }: { params: InstanceParams }) {
-  const { submissionTarget, rowProjects } = await api.user.supervisor.projects({
+  const { submissionTarget } = await api.user.supervisor.projectStats({
     params,
   });
 
+  const rowProjects = await api.user.supervisor.rowProjects({ params });
   const uniqueProjectIds = new Set(rowProjects.map((project) => project.id));
 
   return (

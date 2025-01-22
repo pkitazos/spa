@@ -34,7 +34,8 @@ export const subGroupRouter = createTRPCRouter({
         await user.isSubGroupAdminOrBetter(subGroup.params),
     ),
 
-  // TODO split in two
+  // TODO split
+  // TODO rename
   instanceManagement: procedure.subgroup.subgroupAdmin.query(
     async ({ ctx: { subGroup } }) => {
       const { displayName } = await subGroup.get();
@@ -83,6 +84,7 @@ export const subGroupRouter = createTRPCRouter({
   //     },
   //   ),
 
+  // TODO return a set
   takenInstanceNames: adminProcedure
     .input(z.object({ params: subGroupParamsSchema }))
     .query(

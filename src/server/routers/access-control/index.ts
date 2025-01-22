@@ -7,7 +7,6 @@ import {
   refinedSpaceParamsSchema,
   SubGroupParams,
 } from "@/lib/validations/params";
-import { studentStages, supervisorStages } from "@/lib/validations/stage";
 
 import {
   createTRPCRouter,
@@ -21,6 +20,8 @@ import { dispatchBySpace } from "@/server/utils/space/dispatch";
 import { partitionSpaces } from "@/server/utils/space/partition";
 
 import { getGroupDisplayNames, getSubGroupDisplayNames } from "./_utils/space";
+
+import { studentStages, supervisorStages } from "@/dto";
 
 export const accessControlRouter = createTRPCRouter({
   allAdminPanels: protectedProcedure.query(async ({ ctx }) => {

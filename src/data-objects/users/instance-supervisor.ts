@@ -15,6 +15,10 @@ export class InstanceSupervisor extends User {
     this.instance = new AllocationInstance(dal, params);
   }
 
+  public async toDTO() {
+    return await this.dal.supervisor.getDetails(this.id, this.instance.params);
+  }
+
   public async get() {
     return await this.dal.supervisor.get(this.id, this.instance.params);
   }
@@ -31,6 +35,31 @@ export class InstanceSupervisor extends User {
       this.id,
       this.instance.params,
     );
+  }
+
+  public async getProjects() {
+    return await this.dal.supervisor.getAllProjects(
+      this.id,
+      this.instance.params,
+    );
+  }
+
+  public async getProjectsWithDetails() {
+    return await this.dal.supervisor.getInstanceData(
+      this.id,
+      this.instance.params,
+    );
+  }
+
+  public async countAllocationsInParent(parentInstanceId: string) {
+    const parentInstanceParams = {
+      ...this.instance.params,
+      instance: parentInstanceId,
+    };
+
+    return await new InstanceSupervisor(this.dal, this.id, parentInstanceParams)
+      .getSupervisionAllocations()
+      .then((allocations) => allocations.length);
   }
 
   public async setCapacityDetails(capacities: SupervisorCapacityDetails) {
