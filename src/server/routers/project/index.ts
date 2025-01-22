@@ -2,7 +2,6 @@
 import { Stage } from "@prisma/client";
 import { z } from "zod";
 
-import { nullable } from "@/lib/utils/general/nullable";
 import {
   getFlagFromStudentLevel,
   getStudentLevelFromFlag,
@@ -124,11 +123,10 @@ export const projectRouter = createTRPCRouter({
               title: title,
               description: description,
               capacityUpperBound: capacityUpperBound,
-              preAllocatedStudentId: nullable(newPreAllocatedStudentId),
+              preAllocatedStudentId: newPreAllocatedStudentId ?? null,
               latestEditDateTime: new Date(),
-              specialTechnicalRequirements: nullable(
-                specialTechnicalRequirements,
-              ),
+              specialTechnicalRequirements:
+                specialTechnicalRequirements ?? null,
             },
           });
 

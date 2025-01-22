@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import { relativeComplement } from "@/lib/utils/general/set-difference";
-import { permissionCheck } from "@/lib/utils/permissions/permission-check";
 import {
   ValidatedSegments,
   validatedSegmentsSchema,
@@ -10,12 +9,7 @@ import { instanceParamsSchema } from "@/lib/validations/params";
 import { instanceDisplayDataSchema } from "@/lib/validations/spaces";
 
 import { procedure } from "@/server/middleware";
-import {
-  createTRPCRouter,
-  multiRoleAwareProcedure,
-  publicProcedure,
-  roleAwareProcedure,
-} from "@/server/trpc";
+import { createTRPCRouter, roleAwareProcedure } from "@/server/trpc";
 
 import { getDisplayNameMap } from "./_utils/instance";
 import { studentRouter } from "./student";
@@ -23,8 +17,8 @@ import { supervisorRouter } from "./supervisor";
 
 import { AllocationInstance } from "@/data-objects/spaces/instance";
 import { User } from "@/data-objects/users/user";
-import { userDtoSchema } from "@/dto";
 import { Role } from "@/db";
+import { userDtoSchema } from "@/dto";
 
 export const userRouter = createTRPCRouter({
   student: studentRouter,
@@ -155,15 +149,14 @@ export const userRouter = createTRPCRouter({
       return allInstances.map(getDisplayData);
     }),
 
+  // TODO: rename
   breadcrumbs: procedure.user
     .input(z.object({ segments: z.array(z.string()) }))
     .output(z.array(validatedSegmentsSchema))
     .query(async ({ ctx: { user }, input: { segments } }) => {
       // TODO
       // This is fine as is, but I'd ask two things:
-      // 1. why is it "user.breadcrumbs"?
-      // @JakeTrevor - well the access to the breadcrumbs is based on the user's permissions
-      // 2. should the logic below live somewhere else?
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const [group, subGroup, instance, projectId] = segments;
       const res: ValidatedSegments[] = [];
       if (group) {

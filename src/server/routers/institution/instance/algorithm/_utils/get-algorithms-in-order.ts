@@ -1,10 +1,11 @@
+import { relativeComplement } from "@/lib/utils/general/set-difference";
+
 import {
   GenerousAlgorithm,
   GreedyAlgorithm,
   GreedyGenAlgorithm,
   MinCostAlgorithm,
-} from "@/lib/algorithms";
-import { relativeComplement } from "@/lib/utils/general/set-difference";
+} from "@/content/algorithms";
 
 export function getAlgorithmsInOrder<T extends { algName: string }>(
   algorithmData: T[],

@@ -148,8 +148,6 @@ export const studentRouter = createTRPCRouter({
     }),
 
   // TODO: move to instance router
-  // @JakeTrevor - this is a very simple procedure but the transformer name is horrendous
-  // any ideas on how to make this suck less?
   preferenceRestrictions: procedure.instance.user
     .output(studentPreferenceRestrictionsDtoSchema)
     .query(
