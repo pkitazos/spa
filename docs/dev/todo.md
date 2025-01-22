@@ -18,15 +18,15 @@ A Big list of things we need to refactor:
     - [ ] addAdmin
     - [ ] removeAdmin
     <!-- up to here -->
-  - [ ] institution.subGroup
-  - [ ] project
-  - [ ] institution.instance
-  - [ ] institution.instance.algorithm
-  - [ ] institution.instance.external
-  - [ ] institution.instance.matching
-  - [ ] institution.instance.preference
-  - [ ] institution.instance.project
-  - [ ] access-control
+  - [ ] institution.subGroup (6)
+  - [ ] project (15)
+  - [ ] institution.instance (27)
+  - [ ] institution.instance.algorithm (9)
+  - [ ] institution.instance.external (3)
+  - [ ] institution.instance.matching (12)
+  - [ ] institution.instance.preference (5)
+  - [ ] institution.instance.project (1)
+  - [ ] access-control (6)
 - [ ] lib/utils?
 - [ ] lib/validations
 - [ ] tests
