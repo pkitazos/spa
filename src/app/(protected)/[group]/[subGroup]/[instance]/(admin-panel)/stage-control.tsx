@@ -8,9 +8,10 @@ import { useInstanceParams } from "@/components/params-context";
 import { Button } from "@/components/ui/button";
 
 import { api } from "@/lib/trpc/client";
-import { stageSchema } from "@/lib/validations/stage";
 
 import { StageButton } from "./_components/stage-button";
+
+import { stageSchema } from "@/dto";
 
 export function StageControl({ stage }: { stage: Stage }) {
   const params = useInstanceParams();

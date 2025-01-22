@@ -84,7 +84,7 @@ const authedMiddleware = t.middleware(({ ctx: { dal, session }, next }) => {
 // this already lets us write more powerful stuff like this:
 
 const SuperAdminMiddleware = authedMiddleware.unstable_pipe(
-  ({ ctx: { user }, next }) => {
+  async ({ ctx: { user }, next }) => {
     if (!user.isSuperAdmin()) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
@@ -92,7 +92,7 @@ const SuperAdminMiddleware = authedMiddleware.unstable_pipe(
       });
     }
 
-    return next({ ctx: { user: user.toSuperAdmin() } });
+    return next({ ctx: { user: await user.toSuperAdmin() } });
   },
 );
 
@@ -102,7 +102,7 @@ const SuperAdminMiddleware = authedMiddleware.unstable_pipe(
  * @requires a preceding `.input(z.object({ params: groupParamsSchema }))` or better
  */
 const GroupAdminMiddleware = authedMiddleware.unstable_pipe(
-  ({ ctx: { user }, next, input }) => {
+  async ({ ctx: { user }, next, input }) => {
     const { params } = z.object({ params: groupParamsSchema }).parse(input);
 
     if (!user.isGroupAdminOrBetter(params)) {
@@ -113,7 +113,7 @@ const GroupAdminMiddleware = authedMiddleware.unstable_pipe(
     }
 
     return next({
-      ctx: { user: user.toGroupAdmin(params) },
+      ctx: { user: await user.toGroupAdmin(params) },
     });
   },
 );
@@ -124,7 +124,7 @@ const GroupAdminMiddleware = authedMiddleware.unstable_pipe(
  * @requires a preceding `.input(z.object({ params: subGroupParamsSchema }))` or better
  */
 const SubGroupAdminMiddleware = authedMiddleware.unstable_pipe(
-  ({ ctx: { user }, next, input }) => {
+  async ({ ctx: { user }, next, input }) => {
     const { params } = z.object({ params: subGroupParamsSchema }).parse(input);
 
     if (!user.isSubGroupAdminOrBetter(params)) {
@@ -135,7 +135,7 @@ const SubGroupAdminMiddleware = authedMiddleware.unstable_pipe(
     }
 
     return next({
-      ctx: { user: user.toSubGroupAdmin(params) },
+      ctx: { user: await user.toSubGroupAdmin(params) },
     });
   },
 );
@@ -163,7 +163,7 @@ const instanceStudentMiddleware = authedMiddleware.unstable_pipe(
  * @requires a preceding `.input(z.object({ params: instanceParamsSchema }))` or better
  */
 const instanceSupervisorMiddleware = authedMiddleware.unstable_pipe(
-  ({ ctx: { user }, next, input }) => {
+  async ({ ctx: { user }, next, input }) => {
     const { params } = z.object({ params: instanceParamsSchema }).parse(input);
 
     if (!user.isInstanceSupervisor(params)) {
@@ -174,7 +174,7 @@ const instanceSupervisorMiddleware = authedMiddleware.unstable_pipe(
     }
 
     return next({
-      ctx: { user: user.toInstanceSupervisor(params) },
+      ctx: { user: await user.toInstanceSupervisor(params) },
     });
   },
 );
@@ -183,7 +183,7 @@ const instanceSupervisorMiddleware = authedMiddleware.unstable_pipe(
  * @requires a preceding `.input(z.object({ params: projectParamsSchema }))`
  */
 const projectSupervisorMiddleware = authedMiddleware.unstable_pipe(
-  ({ ctx: { user }, next, input }) => {
+  async ({ ctx: { user }, next, input }) => {
     const { params } = z.object({ params: projectParamsSchema }).parse(input);
 
     if (!user.isProjectSupervisor(params)) {
@@ -193,7 +193,7 @@ const projectSupervisorMiddleware = authedMiddleware.unstable_pipe(
       });
     }
     return next({
-      ctx: { user: user.toProjectSupervisor(params) },
+      ctx: { user: await user.toProjectSupervisor(params) },
     });
   },
 );
@@ -202,7 +202,7 @@ const projectSupervisorMiddleware = authedMiddleware.unstable_pipe(
  * @requires a preceding `.input(z.object({ params: projectParamsSchema }))`
  */
 const projectReaderMiddleware = authedMiddleware.unstable_pipe(
-  ({ ctx: { user }, next, input }) => {
+  async ({ ctx: { user }, next, input }) => {
     const { params } = z.object({ params: projectParamsSchema }).parse(input);
 
     if (!user.isProjectReader(params)) {
@@ -212,7 +212,7 @@ const projectReaderMiddleware = authedMiddleware.unstable_pipe(
       });
     }
     return next({
-      ctx: { user: user.toProjectReader(params) },
+      ctx: { user: await user.toProjectReader(params) },
     });
   },
 );

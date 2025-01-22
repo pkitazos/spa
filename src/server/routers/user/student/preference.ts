@@ -27,7 +27,7 @@ export const preferenceRouter = createTRPCRouter({
           project: z.object({ id: z.string(), title: z.string() }),
           supervisor: userDtoSchema,
           type: z.nativeEnum(PreferenceType),
-          rank: z.number().optional(),
+          rank: z.number(),
         }),
       ),
     )
