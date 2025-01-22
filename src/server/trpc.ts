@@ -26,7 +26,7 @@ import { getInstance } from "./utils/instance";
 import { getAllUserRoles, getUserRole } from "./utils/instance/user-role";
 
 import { DAL } from "@/data-access";
-import { db, Role } from "@/db";
+import { db, SystemRole } from "@/db";
 
 /**
  * 1. CONTEXT
@@ -188,8 +188,11 @@ export const multiRoleAwareProcedure = instanceProcedure.use(
   },
 );
 
+/**
+ * @deprecated - don't use this type, user Object methods instead
+ */
 export type MultiRoleAwareContext = {
-  session: { user: User & { roles: Set<Role> } };
+  session: { user: User & { roles: Set<SystemRole> } };
   db: PrismaClient;
   instance: AllocationInstance;
 };

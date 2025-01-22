@@ -1,6 +1,9 @@
 import { z } from "zod";
 
+import { projectDtoSchema } from "./project";
 import { userDtoSchema } from ".";
+
+import { PreferenceType } from "@/db/types";
 
 export const studentDtoSchema = userDtoSchema.extend({
   level: z.number(),
@@ -26,4 +29,27 @@ export const studentPreferenceRestrictionsDtoSchema = z.object({
 
 export type StudentPreferenceRestrictionsDTO = z.infer<
   typeof studentPreferenceRestrictionsDtoSchema
+>;
+
+// TODO: review this schema
+export const studentDraftPreferenceDtoSchema = z.object({
+  project: projectDtoSchema,
+  score: z.number(),
+  type: z.nativeEnum(PreferenceType),
+  supervisor: userDtoSchema,
+});
+
+export type StudentDraftPreferenceDTO = z.infer<
+  typeof studentDraftPreferenceDtoSchema
+>;
+
+// TODO: review this schema
+export const studentSubmittedPreferenceDtoSchema = z.object({
+  project: projectDtoSchema,
+  rank: z.number(),
+  supervisor: userDtoSchema,
+});
+
+export type StudentSubmittedPreferenceDTO = z.infer<
+  typeof studentSubmittedPreferenceDtoSchema
 >;

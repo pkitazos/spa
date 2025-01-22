@@ -1,65 +1,57 @@
-import { PreferenceType, PrismaClient } from "@prisma/client";
-
+import { expand } from "@/lib/utils/general/instance-params";
 import { relativeComplement } from "@/lib/utils/general/set-difference";
-import {
-  getFlagFromStudentLevel,
-  getStudentLevelFromFlag,
-} from "@/lib/utils/permissions/get-student-level";
 import { InstanceParams } from "@/lib/validations/params";
 
-export async function updateManyPreferenceTransaction({
-  db,
-  params: { group, subGroup, instance },
-  student,
-  projectIds,
-  preferenceType,
-}: {
-  db: PrismaClient;
-  params: InstanceParams;
-  student: { id: string; studentLevel: number };
-  projectIds: string[];
-  preferenceType: PreferenceType | "None";
-}) {
+import { flagToDTO } from "@/db/transformers";
+import { DB, PreferenceType } from "@/db/types";
+
+export async function updateManyPreferenceTransaction(
+  db: DB,
+  {
+    params,
+    userId,
+    projectIds,
+    preferenceType,
+  }: {
+    params: InstanceParams;
+    userId: string;
+    projectIds: string[];
+    preferenceType: PreferenceType | undefined;
+  },
+) {
   await db.$transaction(async (tx) => {
-    const data = await tx.project.findMany({
-      where: { id: { in: projectIds } },
-      select: { flagOnProjects: { select: { flag: true } } },
-    });
+    const projectFlags = await tx.projectDetails
+      .findFirstOrThrow({
+        where: { id: { in: projectIds } },
+        select: { flagsOnProject: { select: { flag: true } } },
+      })
+      .then((data) => data.flagsOnProject.map((f) => flagToDTO(f.flag)))
+      .then((x) => new Set(x));
 
-    const suitable = data.every((p) =>
-      p.flagOnProjects.some(
-        ({ flag }) => getStudentLevelFromFlag(flag) === student.studentLevel,
-      ),
-    );
+    const studentFlags = await tx.studentDetails
+      .findFirstOrThrow({
+        where: { userId, ...expand(params) },
+        select: { studentFlags: { select: { flag: true } } },
+      })
+      .then((data) => data.studentFlags.map((f) => flagToDTO(f.flag)))
+      .then((x) => new Set(x));
 
-    if (!suitable) {
+    if (projectFlags.intersection(studentFlags).size <= 0) {
       throw new Error(
-        `One or more of the selected projects are not suitable for ${getFlagFromStudentLevel(student.studentLevel)} students`,
+        `One or more of the selected projects are not suitable for this student`,
       );
     }
 
-    if (preferenceType === "None") {
-      await tx.preference.deleteMany({
-        where: {
-          allocationGroupId: group,
-          allocationSubGroupId: subGroup,
-          allocationInstanceId: instance,
-          userId: student.id,
-          projectId: { in: projectIds },
-        },
+    if (!preferenceType) {
+      await tx.studentDraftPreference.deleteMany({
+        where: { userId, projectId: { in: projectIds }, ...expand(params) },
       });
       return;
     }
 
     if (preferenceType === PreferenceType.SHORTLIST) {
-      const alreadyInLists = await tx.preference.findMany({
-        where: {
-          allocationGroupId: group,
-          allocationSubGroupId: subGroup,
-          allocationInstanceId: instance,
-          userId: student.id,
-          projectId: { in: projectIds },
-        },
+      const alreadyInLists = await tx.studentDraftPreference.findMany({
+        where: { userId, projectId: { in: projectIds }, ...expand(params) },
         select: { projectId: true },
       });
 
@@ -69,69 +61,49 @@ export async function updateManyPreferenceTransaction({
         (a, b) => a === b.projectId,
       );
 
-      await tx.preference.createMany({
+      await tx.studentDraftPreference.createMany({
         data: newAdditions.map((id) => ({
-          allocationGroupId: group,
-          allocationSubGroupId: subGroup,
-          allocationInstanceId: instance,
           projectId: id,
           type: preferenceType,
-          rank: 1,
-          userId: student.id,
+          score: 1,
+          userId,
+          ...expand(params),
         })),
       });
 
-      await tx.preference.updateMany({
+      await tx.studentDraftPreference.updateMany({
         where: {
-          allocationGroupId: group,
-          allocationSubGroupId: subGroup,
-          allocationInstanceId: instance,
-          userId: student.id,
+          userId,
           projectId: { in: alreadyInLists.map((p) => p.projectId) },
+          ...expand(params),
         },
         data: { type: preferenceType },
       });
     }
 
-    const preferences = await tx.preference.aggregate({
-      where: {
-        allocationGroupId: group,
-        allocationSubGroupId: subGroup,
-        allocationInstanceId: instance,
-        userId: student.id,
-        type: preferenceType,
-      },
-      _max: { rank: true },
+    const preferences = await tx.studentDraftPreference.aggregate({
+      where: { userId, type: preferenceType, ...expand(params) },
+      _max: { score: true },
     });
 
-    let nextRank = (preferences._max?.rank ?? 0) + 1;
+    let nextScore = (preferences._max?.score ?? 0) + 1;
 
     for (const projectId of projectIds) {
-      await tx.preference.upsert({
-        where: {
-          preferenceId: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            projectId,
-            userId: student.id,
-          },
-        },
+      await tx.studentDraftPreference.upsert({
+        where: { draftPreferenceId: { projectId, userId, ...expand(params) } },
         create: {
-          allocationGroupId: group,
-          allocationSubGroupId: subGroup,
-          allocationInstanceId: instance,
           projectId,
-          userId: student.id,
+          userId,
           type: preferenceType,
-          rank: nextRank,
+          score: nextScore,
+          ...expand(params),
         },
         update: {
           type: preferenceType,
-          rank: nextRank,
+          score: nextScore,
         },
       });
-      nextRank++;
+      nextScore++;
     }
   });
 }

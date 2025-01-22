@@ -23,6 +23,7 @@ export default async function Projects({ params }: { params: InstanceParams }) {
   const role = await api.user.role({ params });
   const projects = await api.project.getAllForUser({ params, userId: user.id });
 
+  // TODO: should only be run if user has role student
   const preferencesByProject = await api.user.student.preference.getByProject({
     params,
   });

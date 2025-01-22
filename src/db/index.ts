@@ -19,7 +19,7 @@ export const Role = {
   STUDENT: "STUDENT",
 } as const;
 
-export type Role = typeof Role;
+export type SystemRole = (typeof Role)[keyof typeof Role];
 
 // export const adminLevelOrd = {
 //   [AdminLevel.SUPER]: 3,

@@ -43,7 +43,6 @@ import { projectRouter } from "./project";
 import { pages } from "@/content/pages";
 import { getStudentDetailsWithUser } from "@/data-access/student-details";
 import { deleteUsersInInstance } from "@/data-access/user";
-import { Role } from "@/db";
 import {
   allStudentsUseCase,
   checkInstanceExistsUseCase,

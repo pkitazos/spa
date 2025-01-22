@@ -26,6 +26,6 @@ export type {
   User as DB_User,
   UserInInstance as DB_UserInInstance,
 } from "@prisma/client";
-export { Stage } from "@prisma/client";
+export { PreferenceType, Stage } from "@prisma/client";
 
 export type __Instance<T> = T & InstanceParams;

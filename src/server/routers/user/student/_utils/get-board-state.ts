@@ -1,14 +1,14 @@
-import { PreferenceType, PrismaClient } from "@prisma/client";
-
 import { ProjectPreferenceCardDto } from "@/lib/validations/board";
 import { InstanceParams } from "@/lib/validations/params";
 
+import { DB, PreferenceType } from "@/db/types";
+
 export async function getBoardState(
-  db: PrismaClient,
+  db: DB,
   params: InstanceParams,
   studentId: string,
 ) {
-  const res = await db.preference.findMany({
+  const res = await db.studentDraftPreference.findMany({
     where: {
       allocationGroupId: params.group,
       allocationSubGroupId: params.subGroup,
@@ -18,28 +18,27 @@ export async function getBoardState(
     select: {
       project: {
         select: {
-          id: true,
-          title: true,
+          details: { select: { id: true, title: true } },
           supervisor: {
-            select: { user: { select: { id: true, name: true } } },
+            select: { userInInstance: { select: { user: true } } },
           },
         },
       },
-      rank: true,
+      score: true,
       type: true,
     },
-    orderBy: { rank: "asc" },
+    orderBy: { score: "asc" },
   });
 
   const allProjects = res.map((e) => ({
-    id: e.project.id,
-    title: e.project.title,
+    id: e.project.details.id,
+    title: e.project.details.title,
     columnId: e.type,
-    rank: e.rank,
-    supervisor: e.project.supervisor.user,
+    rank: e.score,
+    supervisor: e.project.supervisor.userInInstance.user,
   }));
 
-  const projects: Record<PreferenceType, ProjectPreferenceCardDto[]> = {
+  const boardState: Record<PreferenceType, ProjectPreferenceCardDto[]> = {
     [PreferenceType.PREFERENCE]: allProjects.filter(
       (e) => e.columnId === PreferenceType.PREFERENCE,
     ),
@@ -49,5 +48,5 @@ export async function getBoardState(
     ),
   };
 
-  return { projects };
+  return boardState;
 }

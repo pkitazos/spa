@@ -17,6 +17,7 @@ import { SubGroupAdmin } from "./subgroup-admin";
 import { SuperAdmin } from "./super-admin";
 
 import { DAL } from "@/data-access";
+import { Role, SystemRole } from "@/db";
 import { UserDTO } from "@/dto";
 
 export class User extends DataObject {
@@ -149,9 +150,29 @@ export class User extends DataObject {
     return new ProjectReader(this.dal, this.id, projectParams);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public async canAccessProject(_projectParams: ProjectParams) {
     // TODO @pkitazos spec for when you can access a project would be great
     return true;
+  }
+
+  public async getRolesInInstance(instanceParams: InstanceParams) {
+    const roles = new Set<SystemRole>();
+
+    if (await this.isSubGroupAdminOrBetter(instanceParams)) {
+      roles.add(Role.ADMIN);
+    }
+    if (await this.isInstanceStudent(instanceParams)) {
+      roles.add(Role.STUDENT);
+    }
+    if (await this.isInstanceReader(instanceParams)) {
+      roles.add(Role.READER);
+    }
+    if (await this.isInstanceSupervisor(instanceParams)) {
+      roles.add(Role.SUPERVISOR);
+    }
+
+    return roles;
   }
 
   public async toDTO(): Promise<UserDTO> {
