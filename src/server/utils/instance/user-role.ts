@@ -4,8 +4,13 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { checkAdminPermissions } from "../admin/access";
 
-import { PrismaTransactionClient, Role } from "@/db";
+import { SystemRole } from "@/db";
+import { TX } from "@/db/types";
 
+/**
+ *
+ * @deprecated users can have multiple roles
+ */
 export async function getUserRole(
   db: PrismaClient,
   params: InstanceParams,
@@ -26,12 +31,16 @@ export async function getUserRole(
   return userInInstance.role;
 }
 
+/**
+ *
+ * @deprecated use user object to determine roles
+ */
 export async function getAllUserRoles(
-  db: PrismaTransactionClient,
+  db: TX,
   params: InstanceParams,
   userId: string,
 ) {
-  const roles: Role[] = [];
+  const roles: SystemRole[] = [];
 
   const admin = await checkAdminPermissions(db, params, userId);
   if (admin) roles.push(Role.ADMIN);

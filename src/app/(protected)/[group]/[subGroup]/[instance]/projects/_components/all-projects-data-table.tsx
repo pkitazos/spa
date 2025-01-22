@@ -31,7 +31,7 @@ export function AllProjectsDataTable({
   data: ProjectTableDataDto[];
   user: User;
   role: Role;
-  projectPreferences: Map<string, PreferenceType>;
+  projectPreferences: Record<string, PreferenceType>;
   hasSelfDefinedProject: boolean;
 }) {
   const params = useInstanceParams();

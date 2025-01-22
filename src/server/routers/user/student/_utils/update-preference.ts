@@ -1,90 +1,71 @@
-import { PreferenceType, PrismaClient } from "@prisma/client";
-
-import {
-  getFlagFromStudentLevel,
-  getStudentLevelFromFlag,
-} from "@/lib/utils/permissions/get-student-level";
+import { expand } from "@/lib/utils/general/instance-params";
 import { InstanceParams } from "@/lib/validations/params";
 
-export async function updatePreferenceTransaction({
-  db,
-  params: { group, subGroup, instance },
-  student,
-  projectId,
-  preferenceType,
-}: {
-  db: PrismaClient;
-  params: InstanceParams;
-  student: { id: string; studentLevel: number };
-  projectId: string;
-  preferenceType: PreferenceType | "None";
-}) {
+import { flagToDTO } from "@/db/transformers";
+import { DB, PreferenceType } from "@/db/types";
+
+export async function updatePreferenceTransaction(
+  db: DB,
+  {
+    params,
+    userId,
+    projectId,
+    preferenceType,
+  }: {
+    params: InstanceParams;
+    userId: string;
+    projectId: string;
+    preferenceType: PreferenceType | undefined;
+  },
+) {
   await db.$transaction(async (tx) => {
-    const { flagOnProjects } = await tx.project.findFirstOrThrow({
-      where: { id: projectId },
-      select: { flagOnProjects: { select: { flag: true } } },
-    });
+    const projectFlags = await tx.projectDetails
+      .findFirstOrThrow({
+        where: { id: projectId },
+        select: { flagsOnProject: { select: { flag: true } } },
+      })
+      .then((data) => data.flagsOnProject.map((f) => flagToDTO(f.flag)))
+      .then((x) => new Set(x));
 
-    const suitable = flagOnProjects.some(
-      ({ flag }) => getStudentLevelFromFlag(flag) === student.studentLevel,
-    );
+    const studentFlags = await tx.studentDetails
+      .findFirstOrThrow({
+        where: { userId, ...expand(params) },
+        select: { studentFlags: { select: { flag: true } } },
+      })
+      .then((data) => data.studentFlags.map((f) => flagToDTO(f.flag)))
+      .then((x) => new Set(x));
 
-    if (!suitable) {
-      throw new Error(
-        `This project is not suitable for ${getFlagFromStudentLevel(student.studentLevel)} students`,
-      );
+    if (projectFlags.intersection(studentFlags).size <= 0) {
+      throw new Error(`This project is not suitable for this student`);
     }
 
-    if (preferenceType === "None") {
-      await tx.preference.delete({
-        where: {
-          preferenceId: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            projectId,
-            userId: student.id,
-          },
-        },
+    if (!preferenceType) {
+      await tx.studentDraftPreference.delete({
+        where: { draftPreferenceId: { userId, projectId, ...expand(params) } },
       });
+
       return;
     }
 
-    const preferences = await tx.preference.aggregate({
-      where: {
-        allocationGroupId: group,
-        allocationSubGroupId: subGroup,
-        allocationInstanceId: instance,
-        userId: student.id,
-        type: preferenceType,
-      },
-      _max: { rank: true },
+    const preferences = await tx.studentDraftPreference.aggregate({
+      where: { userId, type: preferenceType, ...expand(params) },
+      _max: { score: true },
     });
 
-    const nextRank = (preferences._max?.rank ?? 0) + 1;
+    const nextScore = (preferences._max?.score ?? 0) + 1;
 
-    await tx.preference.upsert({
-      where: {
-        preferenceId: {
-          allocationGroupId: group,
-          allocationSubGroupId: subGroup,
-          allocationInstanceId: instance,
-          projectId,
-          userId: student.id,
-        },
-      },
+    await tx.studentDraftPreference.upsert({
+      where: { draftPreferenceId: { projectId, userId, ...expand(params) } },
       create: {
-        allocationGroupId: group,
-        allocationSubGroupId: subGroup,
-        allocationInstanceId: instance,
+        ...expand(params),
         projectId,
-        userId: student.id,
+        userId,
         type: preferenceType,
-        rank: nextRank,
+        score: nextScore,
       },
       update: {
         type: preferenceType,
-        rank: nextRank,
+        score: nextScore,
       },
     });
   });

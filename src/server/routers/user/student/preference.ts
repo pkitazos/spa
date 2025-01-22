@@ -1,595 +1,361 @@
-import { PreferenceType, Role, Stage } from "@prisma/client";
 import { z } from "zod";
 
 import { stageGte, stageIn } from "@/lib/utils/permissions/stage-check";
-import { sortPreferenceType } from "@/lib/utils/preferences/sort";
-import { instanceParamsSchema } from "@/lib/validations/params";
+import { projectPreferenceCardDtoSchema } from "@/lib/validations/board";
 import { studentPreferenceSchema } from "@/lib/validations/student-preference";
 
-import {
-  createTRPCRouter,
-  instanceAdminProcedure,
-  instanceProcedure,
-  MultiRoleAwareContext,
-  multiRoleAwareProcedure,
-  roleAwareProcedure,
-  studentProcedure,
-} from "@/server/trpc";
+import { procedure } from "@/server/middleware";
+import { createTRPCRouter } from "@/server/trpc";
 
-import { getSelfDefinedProject } from "../_utils/get-self-defined-project";
-import { getStudent } from "../_utils/get-student";
-
-import { getBoardState } from "./_utils/get-board-state";
-import { updateManyPreferenceTransaction } from "./_utils/update-many-preferences";
-import { updatePreferenceTransaction } from "./_utils/update-preference";
+import { AllocationInstance } from "@/data-objects/spaces/instance";
+import { InstanceStudent } from "@/data-objects/users/instance-student";
+import { User } from "@/data-objects/users/user";
+import { Role, SystemRole } from "@/db";
+import { PreferenceType, Stage } from "@/db/types";
+import { userDtoSchema } from "@/dto";
 
 export const preferenceRouter = createTRPCRouter({
-  getAll: instanceAdminProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        studentId: z.string(),
-      }),
+  /**
+   * Get all draft preferences of a student
+   */
+  // TODO: change output type
+  getAll: procedure.instance.user
+    .input(z.object({ studentId: z.string() }))
+    .output(
+      z.array(
+        z.object({
+          project: z.object({ id: z.string(), title: z.string() }),
+          supervisor: userDtoSchema,
+          type: z.nativeEnum(PreferenceType),
+          rank: z.number().optional(),
+        }),
+      ),
     )
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          studentId,
-        },
-      }) => {
-        const studentProjectPreferenceDetails =
-          await ctx.db.preference.findMany({
-            where: {
-              allocationGroupId: group,
-              allocationInstanceId: instance,
-              allocationSubGroupId: subGroup,
-              userId: studentId,
-            },
-            select: {
-              type: true,
-              rank: true,
-              project: {
-                select: {
-                  title: true,
-                  id: true,
-                  supervisor: {
-                    select: { user: { select: { name: true, id: true } } },
-                  },
-                },
-              },
-            },
-            orderBy: { rank: "asc" },
-          });
+    .query(async ({ ctx: { dal, instance }, input: { studentId } }) => {
+      const student = new InstanceStudent(dal, studentId, instance.params);
+      const draftPreferences = await student.getAllDraftPreferences();
 
-        return studentProjectPreferenceDetails
-          .sort(sortPreferenceType)
-          .map(({ project, type }, i) => ({
-            project: { id: project.id, title: project.title },
-            supervisor: {
-              name: project.supervisor.user.name!,
-              id: project.supervisor.user.id,
-            },
-            type: type,
-            rank: type === PreferenceType.PREFERENCE ? i + 1 : NaN,
-          }));
-      },
-    ),
+      return draftPreferences.map(({ project, type, supervisor }, i) => ({
+        project: { id: project.id, title: project.title },
+        supervisor,
+        type: type,
+        rank: type === PreferenceType.PREFERENCE ? i + 1 : NaN,
+      }));
+    }),
 
-  getAllSaved: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          studentId,
-        },
-      }) => {
-        const { preferences } = await ctx.db.studentDetails.findFirstOrThrow({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            userId: studentId,
-          },
-          select: {
-            preferences: {
-              select: {
-                project: {
-                  include: {
-                    supervisor: {
-                      select: { user: { select: { id: true, name: true } } },
-                    },
-                  },
-                },
-                rank: true,
-              },
-              orderBy: { rank: "asc" },
-            },
-          },
-        });
+  /**
+   * Get all saved preferences of a student
+   */
+  // TODO: change output type
+  getAllSaved: procedure.instance.user
+    .input(z.object({ studentId: z.string() }))
+    .output(
+      z.array(
+        z.object({
+          id: z.string(),
+          title: z.string(),
+          supervisor: userDtoSchema,
+          rank: z.number(),
+        }),
+      ),
+    )
+    .query(async ({ ctx: { dal, instance }, input: { studentId } }) => {
+      const student = new InstanceStudent(dal, studentId, instance.params);
+      const submittedPreferences = await student.getSubmittedPreferences();
 
-        return preferences.map(({ project, rank }) => ({
-          id: project.id,
-          title: project.title,
-          supervisor: {
-            id: project.supervisor.user.id,
-            name: project.supervisor.user.name!,
-          },
-          rank,
-        }));
-      },
-    ),
+      return submittedPreferences.map(({ project, rank, supervisor }) => ({
+        id: project.id,
+        title: project.title,
+        supervisor,
+        rank,
+      }));
+    }),
 
-  getByProject: roleAwareProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const role = ctx.session.user.role;
+  // TODO: handle error client-side
+  getByProject: procedure.instance.student
+    .output(z.record(z.string(), z.nativeEnum(PreferenceType)))
+    .query(async ({ ctx: { user } }) => {
+      const draftPreferences = await user.getAllDraftPreferences();
 
-        if (role !== Role.STUDENT) return new Map<string, PreferenceType>();
+      return draftPreferences.reduce(
+        (acc, { project, type }) => ({ ...acc, [project.id]: type }),
+        {} as Record<string, PreferenceType>,
+      );
+    }),
 
-        const student = await ctx.db.studentDetails.findFirstOrThrow({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            userId: ctx.session.user.id,
-          },
-          select: {
-            userInInstance: {
-              select: {
-                studentPreferences: { select: { projectId: true, type: true } },
-              },
-            },
-          },
-        });
-
-        const preferenceByProject = new Map<string, PreferenceType>();
-
-        student.userInInstance.studentPreferences.forEach(
-          ({ projectId, type }) => {
-            preferenceByProject.set(projectId, type);
-          },
-        );
-
-        return preferenceByProject;
-      },
-    ),
-
-  makeUpdate: multiRoleAwareProcedure
+  makeUpdate: procedure.instance.user
     .input(
       z.object({
-        params: instanceParamsSchema,
         studentId: z.string(),
         projectId: z.string(),
         preferenceType: studentPreferenceSchema,
       }),
     )
+    .output(
+      z.record(
+        z.nativeEnum(PreferenceType),
+        z.array(projectPreferenceCardDtoSchema),
+      ),
+    )
     .mutation(
       async ({
-        ctx,
-        input: { params, studentId, projectId, preferenceType },
+        ctx: { dal, user, instance },
+        input: { studentId, projectId, preferenceType },
       }) => {
-        const { ok, message } = accessControl({
-          ctx,
+        const { ok, message } = await accessControl({
+          user,
+          instance,
           allowedRoles: [Role.ADMIN, Role.STUDENT],
           stageCheck: (s) => s === Stage.PROJECT_SELECTION,
         });
         if (!ok) throw new Error(message);
 
-        const selfDefinedProject = await getSelfDefinedProject(
-          ctx.db,
-          params,
-          studentId,
-        );
-        if (selfDefinedProject) {
+        const student = new InstanceStudent(dal, studentId, instance.params);
+
+        if (await student.hasSelfDefinedProject()) {
           throw new Error("Student has self-defined a project");
         }
 
-        const student = await getStudent(ctx.db, params, studentId);
+        const newPreferenceType = convertPreferenceType(preferenceType);
+        await student.updateDraftPreferenceType(projectId, newPreferenceType);
 
-        await updatePreferenceTransaction({
-          db: ctx.db,
-          student,
-          params,
-          projectId,
-          preferenceType,
-        });
-
-        const { projects } = await getBoardState(ctx.db, params, studentId);
-        return projects;
+        return await student.getPreferenceBoardState();
       },
     ),
 
-  update: studentProcedure
+  update: procedure.instance.student
     .input(
       z.object({
-        params: instanceParamsSchema,
         projectId: z.string(),
         preferenceType: studentPreferenceSchema,
       }),
     )
-    .mutation(async ({ ctx, input: { params, projectId, preferenceType } }) => {
-      if (ctx.instance.stage !== Stage.PROJECT_SELECTION) return;
-      const student = ctx.session.user;
-      const selfDefinedProject = await getSelfDefinedProject(
-        ctx.db,
-        params,
-        student.id,
-      );
-      if (selfDefinedProject) return;
+    .output(z.void())
+    .mutation(
+      async ({
+        ctx: { instance, user },
+        input: { projectId, preferenceType },
+      }) => {
+        const { stage } = await instance.get();
+        if (stage !== Stage.PROJECT_SELECTION) return;
 
-      await updatePreferenceTransaction({
-        db: ctx.db,
-        student,
-        params,
-        projectId,
-        preferenceType,
-      });
-    }),
+        if (await user.hasSelfDefinedProject()) return;
 
-  updateSelected: studentProcedure
+        const newPreferenceType = convertPreferenceType(preferenceType);
+        await user.updateDraftPreferenceType(projectId, newPreferenceType);
+      },
+    ),
+
+  updateSelected: procedure.instance.student
     .input(
       z.object({
-        params: instanceParamsSchema,
         projectIds: z.array(z.string()),
         preferenceType: studentPreferenceSchema,
       }),
     )
+    .output(z.void())
     .mutation(
-      async ({ ctx, input: { params, projectIds, preferenceType } }) => {
-        if (ctx.instance.stage !== Stage.PROJECT_SELECTION) return;
-        const student = ctx.session.user;
-        const selfDefinedProject = await getSelfDefinedProject(
-          ctx.db,
-          params,
-          student.id,
-        );
-        if (selfDefinedProject) return;
+      async ({
+        ctx: { instance, user },
+        input: { projectIds, preferenceType },
+      }) => {
+        const { stage } = await instance.get();
+        if (stage !== Stage.PROJECT_SELECTION) return;
 
-        await updateManyPreferenceTransaction({
-          db: ctx.db,
-          student,
-          params,
+        if (await user.hasSelfDefinedProject()) return;
+
+        const newPreferenceType = convertPreferenceType(preferenceType);
+        await user.updateManyDraftPreferenceTypes(
           projectIds,
-          preferenceType,
-        });
+          newPreferenceType,
+        );
       },
     ),
 
-  makeReorder: multiRoleAwareProcedure
+  makeReorder: procedure.instance.user
     .input(
       z.object({
-        params: instanceParamsSchema,
         studentId: z.string(),
         projectId: z.string(),
         preferenceType: z.nativeEnum(PreferenceType),
         updatedRank: z.number(),
       }),
     )
+    .output(z.void())
     .mutation(
       async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          studentId,
-          projectId,
-          preferenceType,
-          updatedRank,
-        },
+        ctx: { dal, instance, user },
+        input: { studentId, projectId, preferenceType, updatedRank },
       }) => {
-        const { ok, message } = accessControl({
-          ctx,
+        const { ok, message } = await accessControl({
+          instance,
+          user,
           allowedRoles: [Role.ADMIN, Role.STUDENT],
           stageCheck: (s) => s === Stage.PROJECT_SELECTION,
         });
         if (!ok) throw new Error(message);
 
-        const selfDefinedProject = await getSelfDefinedProject(
-          ctx.db,
-          { group, subGroup, instance },
-          studentId,
-        );
-        if (selfDefinedProject) return;
+        const student = new InstanceStudent(dal, studentId, instance.params);
+        if (await student.hasSelfDefinedProject()) return;
 
-        await ctx.db.preference.update({
-          where: {
-            preferenceId: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              projectId,
-              userId: studentId,
-            },
-          },
-          data: {
-            type: preferenceType,
-            rank: updatedRank,
-          },
-        });
+        await student.updateDraftPreferenceRank(
+          projectId,
+          updatedRank,
+          preferenceType,
+        );
       },
     ),
 
-  reorder: studentProcedure
+  reorder: procedure.instance.student
     .input(
       z.object({
-        params: instanceParamsSchema,
         projectId: z.string(),
         preferenceType: z.nativeEnum(PreferenceType),
         updatedRank: z.number(),
       }),
     )
+    .output(z.void())
     .mutation(
       async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          projectId,
-          preferenceType,
-          updatedRank,
-        },
+        ctx: { instance, user },
+        input: { projectId, preferenceType, updatedRank },
       }) => {
-        if (stageGte(ctx.instance.stage, Stage.PROJECT_ALLOCATION)) return;
-        const student = ctx.session.user;
-        const selfDefinedProject = await getSelfDefinedProject(
-          ctx.db,
-          { group, subGroup, instance },
-          student.id,
-        );
-        if (selfDefinedProject) return;
+        const { stage } = await instance.get();
+        if (stageGte(stage, Stage.PROJECT_ALLOCATION)) return;
 
-        await ctx.db.preference.update({
-          where: {
-            preferenceId: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              projectId,
-              userId: ctx.session.user.id,
-            },
-          },
-          data: {
-            type: preferenceType,
-            rank: updatedRank,
-          },
-        });
+        if (await user.hasSelfDefinedProject()) return;
+
+        await user.updateDraftPreferenceRank(
+          projectId,
+          updatedRank,
+          preferenceType,
+        );
       },
     ),
 
-  getForProject: instanceProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        projectId: z.string(),
-      }),
-    )
+  getForProject: procedure.instance.student
+    .input(z.object({ projectId: z.string() }))
+    .output(z.nativeEnum(PreferenceType).or(z.literal("None")))
     .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          projectId,
-        },
-      }) => {
-        const preference = await ctx.db.preference.findFirst({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            projectId,
-            userId: ctx.session.user.id,
-          },
-          select: { type: true },
-        });
-
-        return preference ? preference.type : "None";
-      },
+      async ({ ctx: { user }, input: { projectId } }) =>
+        (await user.getDraftPreference(projectId)) ?? "None",
     ),
 
   /**
    * TODO: check all references
    */
-  submit: multiRoleAwareProcedure
-    .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
+  submit: procedure.instance.user
+    .input(z.object({ studentId: z.string() }))
+    .output(z.date().optional())
     .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          studentId,
-        },
-      }) => {
-        const { ok, message } = accessControl({
-          ctx,
+      async ({ ctx: { dal, instance, user }, input: { studentId } }) => {
+        const { ok, message } = await accessControl({
+          instance,
+          user,
           allowedRoles: [Role.ADMIN, Role.STUDENT],
           stageCheck: (s) => s === Stage.PROJECT_SELECTION,
         });
         if (!ok) throw new Error(message);
 
-        const selfDefinedProject = await getSelfDefinedProject(
-          ctx.db,
-          { group, subGroup, instance },
-          studentId,
-        );
-        if (selfDefinedProject) return;
+        const student = new InstanceStudent(dal, studentId, instance.params);
 
-        const newSubmissionDateTime = new Date();
+        if (await student.hasSelfDefinedProject()) return;
 
-        await ctx.db.$transaction(async (tx) => {
-          const preferences = await tx.preference.findMany({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              userId: studentId,
-              type: PreferenceType.PREFERENCE,
-            },
-            select: { projectId: true, rank: true },
-            orderBy: { rank: "asc" },
-          });
-
-          await tx.savedPreference.deleteMany({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              userId: studentId,
-            },
-          });
-
-          await tx.savedPreference.createMany({
-            data: preferences.map(({ projectId }, i) => ({
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              projectId,
-              rank: i + 1,
-              userId: studentId,
-            })),
-          });
-
-          await tx.studentDetails.update({
-            where: {
-              detailsId: {
-                allocationGroupId: group,
-                allocationSubGroupId: subGroup,
-                allocationInstanceId: instance,
-                userId: studentId,
-              },
-            },
-            data: {
-              submittedPreferences: true,
-              latestSubmissionDateTime: newSubmissionDateTime,
-            },
-          });
-        });
-
-        return newSubmissionDateTime;
+        return await student.submitPreferences();
       },
     ),
 
-  initialBoardState: multiRoleAwareProcedure
-    .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
-    .query(async ({ ctx, input: { params, studentId } }) => {
-      const { ok, message } = accessControl({
-        ctx,
+  initialBoardState: procedure.instance.user
+    .input(z.object({ studentId: z.string() }))
+    .output(
+      z.object({
+        initialProjects: z.record(
+          z.nativeEnum(PreferenceType),
+          z.array(projectPreferenceCardDtoSchema),
+        ),
+      }),
+    )
+    .query(async ({ ctx: { dal, instance, user }, input: { studentId } }) => {
+      const { ok, message } = await accessControl({
+        instance,
+        user,
         allowedRoles: [Role.ADMIN, Role.STUDENT],
         stageCheck: (s) =>
           stageIn(s, [Stage.PROJECT_SELECTION, Stage.ALLOCATION_ADJUSTMENT]),
       });
       if (!ok) throw new Error(message);
 
-      const board = await getBoardState(ctx.db, params, studentId);
-      return { initialProjects: board.projects };
+      const student = new InstanceStudent(dal, studentId, instance.params);
+
+      return { initialProjects: await student.getPreferenceBoardState() };
     }),
 
-  change: instanceAdminProcedure
+  change: procedure.instance.subgroupAdmin
     .input(
       z.object({
-        params: instanceParamsSchema,
         studentId: z.string(),
         projectId: z.string(),
         newPreferenceType: studentPreferenceSchema,
       }),
     )
+    .output(z.void())
     .mutation(
       async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          studentId,
-          projectId,
-          newPreferenceType,
-        },
+        ctx: { dal, instance },
+        input: { studentId, projectId, newPreferenceType },
       }) => {
-        const { studentLevel } = await ctx.db.studentDetails.findFirstOrThrow({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            userId: studentId,
-          },
-          select: { studentLevel: true },
-        });
-
-        await updatePreferenceTransaction({
-          db: ctx.db,
-          student: { id: studentId, studentLevel },
-          params: { group, subGroup, instance },
-          projectId,
-          preferenceType: newPreferenceType,
-        });
+        const student = new InstanceStudent(dal, studentId, instance.params);
+        const preferenceType = convertPreferenceType(newPreferenceType);
+        await student.updateDraftPreferenceType(projectId, preferenceType);
       },
     ),
 
-  changeSelected: instanceAdminProcedure
+  changeSelected: procedure.instance.subgroupAdmin
     .input(
       z.object({
-        params: instanceParamsSchema,
         studentId: z.string(),
         newPreferenceType: z.nativeEnum(PreferenceType).or(z.literal("None")),
         projectIds: z.array(z.string()),
       }),
     )
+    .output(z.void())
     .mutation(
       async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          studentId,
-          newPreferenceType,
-          projectIds,
-        },
+        ctx: { dal, instance },
+        input: { studentId, newPreferenceType, projectIds },
       }) => {
-        const { studentLevel } = await ctx.db.studentDetails.findFirstOrThrow({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            userId: studentId,
-          },
-          select: { studentLevel: true },
-        });
-
-        await updateManyPreferenceTransaction({
-          db: ctx.db,
-          student: { id: studentId, studentLevel },
-          params: { group, subGroup, instance },
+        const student = new InstanceStudent(dal, studentId, instance.params);
+        const preferenceType = convertPreferenceType(newPreferenceType);
+        await student.updateManyDraftPreferenceTypes(
           projectIds,
-          preferenceType: newPreferenceType,
-        });
+          preferenceType,
+        );
       },
     ),
 });
 
-function accessControl({
-  ctx,
+async function accessControl({
+  user,
+  instance,
   allowedRoles,
   stageCheck,
 }: {
-  ctx: MultiRoleAwareContext;
-  allowedRoles: Role[];
+  user: User;
+  instance: AllocationInstance;
+  allowedRoles: SystemRole[keyof SystemRole][];
   stageCheck: (s: Stage) => boolean;
 }) {
-  const user = ctx.session.user;
-  const roleOk = user.roles.isSubsetOf(new Set(allowedRoles));
+  const userRoles = await user.getRolesInInstance(instance.params);
+  const roleOk = userRoles.isSubsetOf(new Set(allowedRoles));
 
   if (!roleOk) {
     return {
       ok: false,
-      message: `User ${user.id} does not have permission to access this resource, as ${Array.from(user.roles)} does not sufficiently overlap with ${allowedRoles}.`,
+      message: `User ${user.id} does not have permission to access this resource, as ${Array.from(userRoles)} does not sufficiently overlap with ${allowedRoles}.`,
     };
   }
 
-  const stageOk = stageCheck(ctx.instance.stage);
+  const stageOk = await instance.get().then(({ stage }) => stageCheck(stage));
   if (!stageOk) {
     return {
       ok: false,
@@ -598,4 +364,8 @@ function accessControl({
   }
 
   return { ok: true, message: "User can access this resource." };
+}
+
+function convertPreferenceType(preferenceType: PreferenceType | "None") {
+  return preferenceType === "None" ? undefined : preferenceType;
 }

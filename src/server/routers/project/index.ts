@@ -1,4 +1,5 @@
-import { Role, Stage } from "@prisma/client";
+/* eslint-disable simple-import-sort/imports */
+import { Stage } from "@prisma/client";
 import { z } from "zod";
 
 import { nullable } from "@/lib/utils/general/nullable";
@@ -23,19 +24,16 @@ import {
 } from "@/server/trpc";
 
 import { getPreAllocatedProjects } from "./_utils/pre-allocated";
+import { procedure } from "@/server/middleware";
+import { expand } from "@/lib/utils/general/instance-params";
 
 export const projectRouter = createTRPCRouter({
-  exists: instanceProcedure
+  exists: procedure.instance.user
     .input(z.object({ params: instanceParamsSchema, projectId: z.string() }))
     .query(async ({ ctx, input: { params, projectId } }) => {
-      return await ctx.db.project.findFirst({
-        where: {
-          id: projectId,
-          allocationGroupId: params.group,
-          allocationSubGroupId: params.subGroup,
-          allocationInstanceId: params.instance,
-        },
-      });
+      return !!(await ctx.db.projectInInstance.findFirst({
+        where: { projectId, ...expand(params) },
+      }));
     }),
 
   edit: instanceProcedure

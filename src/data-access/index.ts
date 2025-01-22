@@ -1,3 +1,4 @@
+/* eslint-disable simple-import-sort/imports */
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { slugify } from "@/lib/utils/general/slugify";
 import {
@@ -18,7 +19,7 @@ import {
   tagToDTO,
   userInInstanceToDTO,
 } from "@/db/transformers";
-import { DB } from "@/db/types";
+import { DB, PreferenceType } from "@/db/types";
 import {
   GroupDTO,
   InstanceDTO,
@@ -27,12 +28,20 @@ import {
   UserInInstanceDTO,
 } from "@/dto";
 import { ProjectDTO } from "@/dto/project";
-import { StudentDetailsDTO, StudentDTO } from "@/dto/student";
+import {
+  StudentDetailsDTO,
+  StudentDraftPreferenceDTO,
+  StudentDTO,
+  StudentSubmittedPreferenceDTO,
+} from "@/dto/student";
 import {
   Project__AllocatedStudents_Capacities,
   SupervisionAllocationDto,
   SupervisorCapacityDetails,
 } from "@/dto/supervisor_router";
+import { sortPreferenceType } from "@/lib/utils/preferences/sort";
+import { updateManyPreferenceTransaction } from "@/server/routers/user/student/_utils/update-many-preferences";
+import { updatePreferenceTransaction } from "@/server/routers/user/student/_utils/update-preference";
 
 export class DAL {
   db: DB;
@@ -398,6 +407,83 @@ export class DAL {
         })
         .then(studentDetailsToDto),
 
+    getDraftPreference: async (
+      userId: string,
+      projectId: string,
+      params: InstanceParams,
+    ): Promise<PreferenceType | undefined> => {
+      return await this.db.studentDraftPreference
+        .findFirst({
+          where: { userId, projectId, ...expand(params) },
+          select: { type: true },
+        })
+        .then((x) => x?.type);
+    },
+
+    getDraftPreferences: async (
+      userId: string,
+      params: InstanceParams,
+    ): Promise<StudentDraftPreferenceDTO[]> => {
+      return await this.db.studentDraftPreference
+        .findMany({
+          where: { userId, ...expand(params) },
+          select: {
+            type: true,
+            score: true,
+            project: {
+              include: {
+                details: true,
+                supervisor: {
+                  select: { userInInstance: { select: { user: true } } },
+                },
+              },
+            },
+          },
+          orderBy: { score: "asc" },
+        })
+        .then((data) =>
+          data.sort(sortPreferenceType).map((x) => ({
+            project: projectDataToDTO(x.project),
+            supervisor: x.project.supervisor.userInInstance.user,
+            score: x.score,
+            type: x.type,
+          })),
+        );
+    },
+
+    getSubmittedPreferences: async (
+      userId: string,
+      params: InstanceParams,
+    ): Promise<StudentSubmittedPreferenceDTO[]> => {
+      return await this.db.studentDetails
+        .findFirstOrThrow({
+          where: { userId, ...expand(params) },
+          select: {
+            studentSubmittedPreferences: {
+              select: {
+                project: {
+                  include: {
+                    details: true,
+                    supervisor: {
+                      select: { userInInstance: { select: { user: true } } },
+                    },
+                  },
+                },
+                rank: true,
+              },
+              orderBy: { rank: "asc" },
+            },
+          },
+        })
+        .then((data) =>
+          data.studentSubmittedPreferences.map((x) => ({
+            project: projectDataToDTO(x.project),
+            rank: x.rank,
+            supervisor: x.project.supervisor.userInInstance.user,
+          })),
+        );
+    },
+
     setLatestSubmissionDateTime: async (
       userId: string,
       latestSubmissionDateTime: Date,
@@ -409,6 +495,97 @@ export class DAL {
           data: { latestSubmissionDateTime },
         })
         .then(studentDetailsToDto),
+
+    setDraftPreferenceType: async (
+      userId: string,
+      projectId: string,
+      preferenceType: PreferenceType | undefined,
+      params: InstanceParams,
+    ): Promise<void> => {
+      return updatePreferenceTransaction(this.db, {
+        userId,
+        projectId,
+        preferenceType,
+        params,
+      });
+    },
+
+    setDraftPreference: async (
+      userId: string,
+      projectId: string,
+      preferenceType: PreferenceType,
+      updatedRank: number,
+      params: InstanceParams,
+    ): Promise<{
+      project: ProjectDTO;
+      rank: number;
+    }> => {
+      return await this.db.studentDraftPreference
+        .update({
+          where: {
+            draftPreferenceId: {
+              projectId,
+              userId,
+              ...expand(params),
+            },
+          },
+          data: {
+            type: preferenceType,
+            score: updatedRank,
+          },
+          include: { project: { include: { details: true } } },
+        })
+        .then((data) => ({
+          project: projectDataToDTO(data.project),
+          rank: updatedRank,
+        }));
+    },
+
+    setManyDraftPreferenceTypes: async (
+      userId: string,
+      projectIds: string[],
+      preferenceType: PreferenceType | undefined,
+      params: InstanceParams,
+    ): Promise<void> => {
+      await updateManyPreferenceTransaction(this.db, {
+        userId,
+        params,
+        projectIds,
+        preferenceType,
+      });
+    },
+
+    submitPreferences: async (userId: string, params: InstanceParams) => {
+      const newSubmissionDateTime = new Date();
+
+      await this.db.$transaction(async (tx) => {
+        const preferences = await tx.studentDraftPreference.findMany({
+          where: { userId, type: PreferenceType.PREFERENCE, ...expand(params) },
+          select: { projectId: true, score: true },
+          orderBy: { score: "asc" },
+        });
+
+        await tx.studentSubmittedPreference.deleteMany({
+          where: { userId, ...expand(params) },
+        });
+
+        await tx.studentSubmittedPreference.createMany({
+          data: preferences.map(({ projectId }, i) => ({
+            projectId,
+            rank: i + 1,
+            userId,
+            ...expand(params),
+          })),
+        });
+
+        await tx.studentDetails.update({
+          where: { studentDetailsId: { userId, ...expand(params) } },
+          data: { latestSubmissionDateTime: newSubmissionDateTime },
+        });
+      });
+
+      return newSubmissionDateTime;
+    },
 
     delete: async (userId: string, params: InstanceParams): Promise<void> => {
       await this.db.studentDetails.delete({

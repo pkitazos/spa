@@ -144,7 +144,7 @@ const SubGroupAdminMiddleware = authedMiddleware.unstable_pipe(
  * @requires a preceding `.input(z.object({ params: instanceParamsSchema }))` or better
  */
 const instanceStudentMiddleware = authedMiddleware.unstable_pipe(
-  ({ ctx: { user }, next, input }) => {
+  async ({ ctx: { user }, next, input }) => {
     const { params } = z.object({ params: instanceParamsSchema }).parse(input);
 
     if (!user.isInstanceStudent(params)) {
@@ -155,7 +155,7 @@ const instanceStudentMiddleware = authedMiddleware.unstable_pipe(
     }
 
     return next({
-      ctx: { user: user.toInstanceStudent(params) },
+      ctx: { user: await user.toInstanceStudent(params) },
     });
   },
 );

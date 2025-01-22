@@ -52,7 +52,7 @@ export function useAllProjectsColumns({
 }: {
   user: User;
   role: Role;
-  projectPreferences: Map<string, PreferenceType>;
+  projectPreferences: Record<string, PreferenceType>;
   hasSelfDefinedProject: boolean;
   deleteProject: (id: string) => Promise<void>;
   deleteSelectedProjects: (ids: string[]) => Promise<void>;
@@ -360,7 +360,7 @@ export function useAllProjectsColumns({
                     extraConditions={{ RBAC: { AND: !hasSelfDefinedProject } }}
                   >
                     <StudentPreferenceActionSubMenu
-                      defaultType={projectPreferences.get(project.id) ?? "None"}
+                      defaultType={projectPreferences[project.id] ?? "None"}
                       changePreference={async (t) =>
                         void changePreference(t, project.id)
                       }

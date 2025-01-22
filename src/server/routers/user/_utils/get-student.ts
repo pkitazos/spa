@@ -1,8 +1,9 @@
-import { PrismaTransactionClient } from "@/db";
 import { InstanceParams } from "@/lib/validations/params";
 
+import { TX } from "@/db/types";
+
 export async function getStudent(
-  db: PrismaTransactionClient,
+  db: TX,
   params: InstanceParams,
   studentId: string,
 ) {
@@ -17,7 +18,6 @@ export async function getStudent(
       userInInstance: { select: { user: true } },
       studentLevel: true,
       latestSubmissionDateTime: true,
-      submittedPreferences: true,
     },
   });
 
@@ -27,6 +27,6 @@ export async function getStudent(
     email: s.userInInstance.user.email,
     studentLevel: s.studentLevel,
     latestSubmissionDateTime: s.latestSubmissionDateTime,
-    submittedPreferences: s.submittedPreferences,
+    submittedPreferences: !!s.latestSubmissionDateTime,
   };
 }

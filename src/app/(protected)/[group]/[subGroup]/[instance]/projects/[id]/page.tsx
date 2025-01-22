@@ -19,6 +19,7 @@ import { toPositional } from "@/lib/utils/general/to-positional";
 import { previousStages } from "@/lib/utils/permissions/stage-check";
 import { ProjectDto } from "@/lib/validations/dto/project";
 import { InstanceParams } from "@/lib/validations/params";
+import { StudentPreferenceType } from "@/lib/validations/student-preference";
 
 import { StudentPreferenceButton } from "./_components/student-preference-button";
 import { StudentPreferenceDataTable } from "./_components/student-preference-data-table";
@@ -70,14 +71,15 @@ export default async function Project({ params }: { params: PageParams }) {
   const role = await api.user.role({ params });
 
   let preAllocated = false;
+  let preferenceStatus: StudentPreferenceType = "None";
+
   if (role === Role.STUDENT) {
     preAllocated = !!(await api.user.student.isPreAllocated({ params }));
+    preferenceStatus = await api.user.student.preference.getForProject({
+      params,
+      projectId,
+    });
   }
-
-  const preferenceStatus = await api.user.student.preference.getForProject({
-    params,
-    projectId,
-  });
 
   const studentPreferences = await api.project.getAllStudentPreferences({
     params,
