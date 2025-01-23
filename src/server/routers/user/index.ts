@@ -52,19 +52,13 @@ export const userRouter = createTRPCRouter({
         .then((student) => student.hasSelfDefinedProject());
     }),
 
-  //@pkitazos could move this to e.g. user.getAdminPanel
-  // But could also leave like this; thoughts?
   getAdminPanel: procedure.user
     .output(z.array(z.object({ displayName: z.string(), path: z.string() })))
     .query(async ({ ctx: { user } }) => {
-      // if the user is a super-admin return the super-admin panel
-
       if (await user.isSuperAdmin()) {
         return [{ displayName: "Super-Admin Panel", path: "/admin" }];
       }
-      // get all the spaces the user is an admin in
-      // sort by admin level
-      // return a list of admin panels
+
       const groups = await user.getManagedGroups();
       const subGroups = await user.getManagedSubGroups();
 

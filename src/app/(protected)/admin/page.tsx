@@ -19,7 +19,8 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  const { superAdmins, groups } = await api.institution.groupManagement();
+  const superAdmins = await api.institution.superAdmins();
+  const groups = await api.institution.groups();
 
   return (
     <div className="mt-6 flex h-max w-full max-w-5xl flex-col gap-10 px-6 pb-20">
@@ -58,14 +59,14 @@ export default async function Page() {
           </Button>
         </Link>
         <div className="grid w-full grid-cols-3 gap-6">
-          {groups.map((group, i) => (
-            <Link className="col-span-1" href={`/${group.id}`} key={i}>
+          {groups.map(({ group, displayName }, i) => (
+            <Link className="col-span-1" href={`/${group}`} key={i}>
               <Button
                 className="h-20 w-full text-base font-semibold"
                 variant="outline"
                 size="lg"
               >
-                {group.displayName}
+                {displayName}
               </Button>
             </Link>
           ))}

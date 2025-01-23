@@ -10,8 +10,7 @@ A Big list of things we need to refactor:
   <!-- not reviewed these -->
   - [ ] user.supervisor
     - [ ] projectStats
-  - [ ] institution
-    - [ ] groupManagement
+  - [x] institution
   - [ ] institution.group
     - [ ] subGroupManagement
     - [ ] takenSubGroupNames
