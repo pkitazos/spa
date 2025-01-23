@@ -19,20 +19,13 @@ export const institutionRouter = createTRPCRouter({
     .output(z.boolean())
     .query(async ({ ctx: { user } }) => await user.isSuperAdmin()),
 
-  // TODO split
-  // TODO rename
-  groupManagement: procedure.superAdmin
-    .output(
-      z.object({
-        groups: z.array(groupDtoSchema),
-        superAdmins: z.array(userDtoSchema),
-      }),
-    )
-    .query(async ({ ctx: { dal } }) => {
-      const groups = await dal.group.getAll();
-      const superAdmins = await dal.superAdmin.getAll();
-      return { groups, superAdmins };
-    }),
+  superAdmins: procedure.superAdmin
+    .output(z.array(userDtoSchema))
+    .query(async ({ ctx: { dal } }) => await dal.superAdmin.getAll()),
+
+  groups: procedure.superAdmin
+    .output(z.array(groupDtoSchema))
+    .query(async ({ ctx: { dal } }) => await dal.group.getAll()),
 
   takenGroupNames: procedure.superAdmin
     .output(z.set(z.string()))

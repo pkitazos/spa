@@ -1,3 +1,6 @@
+/**
+ * @deprecated use FlagOnStudent instead
+ */
 export const projectFlags = {
   level4: "Level 4",
   level5: "Level 5",
