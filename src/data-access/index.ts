@@ -303,6 +303,33 @@ export class DAL {
         where: { projectId, ...expand(params), userId },
       })),
 
+    getManagedGroups: async (
+      userId: string,
+    ): Promise<{ displayName: string; path: string }[]> =>
+      await this.db.groupAdmin
+        .findMany({ where: { userId }, select: { allocationGroup: true } })
+        .then((data) =>
+          data.map((x) => ({
+            displayName: x.allocationGroup.displayName,
+            path: `/${x.allocationGroup.id}`,
+          })),
+        ),
+
+    getManagedSubGroups: async (
+      userId: string,
+    ): Promise<{ displayName: string; path: string }[]> =>
+      this.db.subGroupAdmin
+        .findMany({
+          where: { userId },
+          select: { allocationGroup: true, allocationSubGroup: true },
+        })
+        .then((data) =>
+          data.map((x) => ({
+            displayName: x.allocationSubGroup.displayName,
+            path: `/${x.allocationGroup.id}/${x.allocationSubGroup.id}`,
+          })),
+        ),
+
     getAllInstances: async (userId: string): Promise<InstanceDTO[]> =>
       await this.db.userInInstance
         .findMany({

@@ -2,8 +2,8 @@ A Big list of things we need to refactor:
 
 - [ ] routers:
   - [ ] user
-    - [ ] getAdminPanel
-    - [ ] breadcrumbs
+    - [x] getAdminPanel
+    - [ ] breadcrumbs --> see user DO
     <!-- not reviewed these -->
   - [ ] user.student
   - [ ] user.student.preferences

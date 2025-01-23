@@ -1,9 +1,6 @@
 import { z } from "zod";
 
-import {
-  ValidatedSegments,
-  validatedSegmentsSchema,
-} from "@/lib/validations/breadcrumbs";
+import { validatedSegmentsSchema } from "@/lib/validations/breadcrumbs";
 import { instanceParamsSchema } from "@/lib/validations/params";
 
 import { procedure } from "@/server/middleware";
@@ -55,43 +52,21 @@ export const userRouter = createTRPCRouter({
         .then((student) => student.hasSelfDefinedProject());
     }),
 
-  // TODO refactor to use dal and/or object methods
+  //@pkitazos could move this to e.g. user.getAdminPanel
+  // But could also leave like this; thoughts?
   getAdminPanel: procedure.user
     .output(z.array(z.object({ displayName: z.string(), path: z.string() })))
-    .query(async ({ ctx: { user, db } }) => {
+    .query(async ({ ctx: { user } }) => {
       // if the user is a super-admin return the super-admin panel
 
       if (await user.isSuperAdmin()) {
         return [{ displayName: "Super-Admin Panel", path: "/admin" }];
       }
-
       // get all the spaces the user is an admin in
       // sort by admin level
       // return a list of admin panels
-
-      const groups = await db.groupAdmin
-        .findMany({
-          where: { userId: user.id },
-          select: { allocationGroup: true },
-        })
-        .then((data) =>
-          data.map((x) => ({
-            displayName: x.allocationGroup.displayName,
-            path: `/${x.allocationGroup.id}`,
-          })),
-        );
-
-      const subGroups = await db.subGroupAdmin
-        .findMany({
-          where: { userId: user.id },
-          select: { allocationGroup: true, allocationSubGroup: true },
-        })
-        .then((data) =>
-          data.map((x) => ({
-            displayName: x.allocationSubGroup.displayName,
-            path: `/${x.allocationGroup.id}/${x.allocationSubGroup.id}`,
-          })),
-        );
+      const groups = await user.getManagedGroups();
+      const subGroups = await user.getManagedSubGroups();
 
       return [...groups, ...subGroups];
     }),
@@ -104,41 +79,10 @@ export const userRouter = createTRPCRouter({
   breadcrumbs: procedure.user
     .input(z.object({ segments: z.array(z.string()) }))
     .output(z.array(validatedSegmentsSchema))
-    .query(async ({ ctx: { user }, input: { segments } }) => {
-      // TODO
-      // This is fine as is, but I'd ask two things:
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const [group, subGroup, instance, projectId] = segments;
-      const res: ValidatedSegments[] = [];
-      if (group) {
-        res.push({
-          segment: group,
-          access: await user.isGroupAdminOrBetter({ group }),
-        });
-      }
-      if (subGroup) {
-        res.push({
-          segment: subGroup,
-          access: await user.isSubGroupAdminOrBetter({ group, subGroup }),
-        });
-      }
-      if (instance) {
-        res.push({
-          segment: instance,
-          access: await user.isInstanceMember({ group, subGroup, instance }),
-        });
-      }
-      if (projectId) {
-        res.push({
-          segment: projectId,
-          access: true,
-        });
-      }
-
-      // TODO: this doesn't yet handle users access to the /supervisors/[id] and /students/[id] routes (possibly going to be a new /readers/[id] route)
-      // users who don't have access to those pages should still see the breadcrumbs with the correct permissions to be able to navigate back to their allowed pages
-      return res;
-    }),
+    .query(
+      async ({ ctx: { user }, input: { segments } }) =>
+        await user.authoriseBreadcrumbs(segments),
+    ),
 
   joinInstance: procedure.instance.user.mutation(
     async ({ ctx: { user, instance } }) => {

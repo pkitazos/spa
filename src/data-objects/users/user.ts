@@ -1,4 +1,5 @@
 import { relativeComplement } from "@/lib/utils/general/set-difference";
+import { ValidatedSegments } from "@/lib/validations/breadcrumbs";
 import {
   GroupParams,
   InstanceParams,
@@ -182,6 +183,14 @@ export class User extends DataObject {
     return roles;
   }
 
+  public async getManagedGroups() {
+    return await this.dal.user.getManagedGroups(this.id);
+  }
+
+  public async getManagedSubGroups() {
+    return await this.dal.user.getManagedSubGroups(this.id);
+  }
+
   public async getInstances() {
     if (await this.isSuperAdmin()) {
       const instances = await Institution.getAllInstances(this.dal);
@@ -217,6 +226,80 @@ export class User extends DataObject {
 
     const allInstances = [...privilegedInstances, ...uniqueUnprivileged];
     return await AllocationInstance.toQualifiedPaths(this.dal, allInstances);
+  }
+
+  public async authoriseBreadcrumbs(segments: string[]) {
+    const [group, subGroup, instance, staticSegment, id] = segments;
+    const res: ValidatedSegments[] = [];
+
+    if (group) {
+      res.push({
+        segment: group,
+        access: await this.isGroupAdminOrBetter({ group }),
+      });
+    }
+    if (subGroup) {
+      res.push({
+        segment: subGroup,
+        access: await this.isSubGroupAdminOrBetter({ group, subGroup }),
+      });
+    }
+    if (instance) {
+      res.push({
+        segment: instance,
+        access: await this.isInstanceMember({ group, subGroup, instance }),
+      });
+    }
+
+    // TODO: this doesn't yet handle users access to the /supervisors/[id] and /students/[id] routes (possibly going to be a new /readers/[id] route)
+    // users who don't have access to those pages should still see the breadcrumbs with the correct permissions to be able to navigate back to their allowed pages
+
+    // @pkitazos here's is a skeleton implementation - just needs you to implement the rules for when access is possible
+    if (staticSegment) {
+      res.push({
+        segment: staticSegment,
+        access: true,
+      });
+    }
+
+    if (id) {
+      switch (staticSegment) {
+        case "projects":
+          res.push({
+            segment: id,
+            access: true,
+          });
+          break;
+
+        case "students":
+          res.push({
+            segment: id,
+            access: true,
+          });
+          break;
+
+        case "supervisors":
+          res.push({
+            segment: id,
+            access: true,
+          });
+          break;
+
+        case "readers":
+          res.push({
+            segment: id,
+            access: true,
+          });
+          break;
+
+        default:
+          throw new Error(
+            `User.AuthoriseBreadcrumbs: Unknown static segment ${staticSegment}`,
+          );
+      }
+    }
+
+    return res;
   }
 
   public async toDTO(): Promise<UserDTO> {
