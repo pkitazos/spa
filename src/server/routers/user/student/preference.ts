@@ -8,7 +8,6 @@ import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
 import { AllocationInstance } from "@/data-objects/spaces/instance";
-import { InstanceStudent } from "@/data-objects/users/instance-student";
 import { User } from "@/data-objects/users/user";
 import { Role, SystemRole } from "@/db";
 import { PreferenceType, Stage } from "@/db/types";
@@ -31,8 +30,8 @@ export const preferenceRouter = createTRPCRouter({
         }),
       ),
     )
-    .query(async ({ ctx: { dal, instance }, input: { studentId } }) => {
-      const student = new InstanceStudent(dal, studentId, instance.params);
+    .query(async ({ ctx: { instance }, input: { studentId } }) => {
+      const student = await instance.getStudent(studentId);
       const draftPreferences = await student.getAllDraftPreferences();
 
       return draftPreferences.map(({ project, type, supervisor }, i) => ({
@@ -59,8 +58,8 @@ export const preferenceRouter = createTRPCRouter({
         }),
       ),
     )
-    .query(async ({ ctx: { dal, instance }, input: { studentId } }) => {
-      const student = new InstanceStudent(dal, studentId, instance.params);
+    .query(async ({ ctx: { instance }, input: { studentId } }) => {
+      const student = await instance.getStudent(studentId);
       const submittedPreferences = await student.getSubmittedPreferences();
 
       return submittedPreferences.map(({ project, rank, supervisor }) => ({
@@ -99,7 +98,7 @@ export const preferenceRouter = createTRPCRouter({
     )
     .mutation(
       async ({
-        ctx: { dal, user, instance },
+        ctx: { user, instance },
         input: { studentId, projectId, preferenceType },
       }) => {
         const { ok, message } = await accessControl({
@@ -110,7 +109,7 @@ export const preferenceRouter = createTRPCRouter({
         });
         if (!ok) throw new Error(message);
 
-        const student = new InstanceStudent(dal, studentId, instance.params);
+        const student = await instance.getStudent(studentId);
 
         if (await student.hasSelfDefinedProject()) {
           throw new Error("Student has self-defined a project");
@@ -184,7 +183,7 @@ export const preferenceRouter = createTRPCRouter({
     .output(z.void())
     .mutation(
       async ({
-        ctx: { dal, instance, user },
+        ctx: { instance, user },
         input: { studentId, projectId, preferenceType, updatedRank },
       }) => {
         const { ok, message } = await accessControl({
@@ -195,7 +194,7 @@ export const preferenceRouter = createTRPCRouter({
         });
         if (!ok) throw new Error(message);
 
-        const student = new InstanceStudent(dal, studentId, instance.params);
+        const student = await instance.getStudent(studentId);
         if (await student.hasSelfDefinedProject()) return;
 
         await student.updateDraftPreferenceRank(
@@ -247,23 +246,21 @@ export const preferenceRouter = createTRPCRouter({
   submit: procedure.instance.user
     .input(z.object({ studentId: z.string() }))
     .output(z.date().optional())
-    .mutation(
-      async ({ ctx: { dal, instance, user }, input: { studentId } }) => {
-        const { ok, message } = await accessControl({
-          instance,
-          user,
-          allowedRoles: [Role.ADMIN, Role.STUDENT],
-          stageCheck: (s) => s === Stage.PROJECT_SELECTION,
-        });
-        if (!ok) throw new Error(message);
+    .mutation(async ({ ctx: { instance, user }, input: { studentId } }) => {
+      const { ok, message } = await accessControl({
+        instance,
+        user,
+        allowedRoles: [Role.ADMIN, Role.STUDENT],
+        stageCheck: (s) => s === Stage.PROJECT_SELECTION,
+      });
+      if (!ok) throw new Error(message);
 
-        const student = new InstanceStudent(dal, studentId, instance.params);
+      const student = await instance.getStudent(studentId);
 
-        if (await student.hasSelfDefinedProject()) return;
+      if (await student.hasSelfDefinedProject()) return;
 
-        return await student.submitPreferences();
-      },
-    ),
+      return await student.submitPreferences();
+    }),
 
   initialBoardState: procedure.instance.user
     .input(z.object({ studentId: z.string() }))
@@ -275,7 +272,7 @@ export const preferenceRouter = createTRPCRouter({
         ),
       }),
     )
-    .query(async ({ ctx: { dal, instance, user }, input: { studentId } }) => {
+    .query(async ({ ctx: { instance, user }, input: { studentId } }) => {
       const { ok, message } = await accessControl({
         instance,
         user,
@@ -285,7 +282,7 @@ export const preferenceRouter = createTRPCRouter({
       });
       if (!ok) throw new Error(message);
 
-      const student = new InstanceStudent(dal, studentId, instance.params);
+      const student = await instance.getStudent(studentId);
 
       return { initialProjects: await student.getPreferenceBoardState() };
     }),
@@ -301,10 +298,10 @@ export const preferenceRouter = createTRPCRouter({
     .output(z.void())
     .mutation(
       async ({
-        ctx: { dal, instance },
+        ctx: { instance },
         input: { studentId, projectId, newPreferenceType },
       }) => {
-        const student = new InstanceStudent(dal, studentId, instance.params);
+        const student = await instance.getStudent(studentId);
         const preferenceType = convertPreferenceType(newPreferenceType);
         await student.updateDraftPreferenceType(projectId, preferenceType);
       },
@@ -321,10 +318,10 @@ export const preferenceRouter = createTRPCRouter({
     .output(z.void())
     .mutation(
       async ({
-        ctx: { dal, instance },
+        ctx: { instance },
         input: { studentId, newPreferenceType, projectIds },
       }) => {
-        const student = new InstanceStudent(dal, studentId, instance.params);
+        const student = await instance.getStudent(studentId);
         const preferenceType = convertPreferenceType(newPreferenceType);
         await student.updateManyDraftPreferenceTypes(
           projectIds,
@@ -334,6 +331,7 @@ export const preferenceRouter = createTRPCRouter({
     ),
 });
 
+// TODO I like this but it should move...
 async function accessControl({
   user,
   instance,

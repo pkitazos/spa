@@ -14,7 +14,6 @@ import { preferenceRouter } from "./preference";
 
 import { InstanceStudent } from "@/data-objects/users/instance-student";
 import { InstanceSupervisor } from "@/data-objects/users/instance-supervisor";
-import { User } from "@/data-objects/users/user";
 import { instanceToStudentPreferenceRestrictionsDTO } from "@/db/transformers";
 import {
   studentDetailsDtoSchema,
@@ -29,9 +28,8 @@ export const studentRouter = createTRPCRouter({
     .input(z.object({ studentId: z.string() }))
     .output(z.boolean())
     .query(
-      async ({ ctx: { instance, dal }, input: { studentId } }) =>
-        // TODO: method on instance
-        await new User(dal, studentId).isInstanceStudent(instance.params),
+      async ({ ctx: { instance }, input: { studentId } }) =>
+        await instance.isStudent(studentId),
     ),
 
   // TODO: change output
@@ -43,8 +41,8 @@ export const studentRouter = createTRPCRouter({
         allocation: studentProjectAllocationDtoSchema.optional(),
       }),
     )
-    .query(async ({ ctx: { dal, instance }, input: { studentId } }) => {
-      const student = new InstanceStudent(dal, studentId, instance.params);
+    .query(async ({ ctx: { instance }, input: { studentId } }) => {
+      const student = await instance.getStudent(studentId);
       const studentData = await student.get();
 
       if (!(await student.hasAllocation())) {
@@ -132,15 +130,19 @@ export const studentRouter = createTRPCRouter({
       }),
     )
     .output(studentDetailsDtoSchema)
-    .mutation(
-      async ({ ctx: { dal, instance }, input: { studentId, level } }) => {
-        return await new InstanceStudent(
-          dal,
-          studentId,
-          instance.params,
-        ).setStudentLevel(level);
-      },
-    ),
+    .mutation(async ({ ctx: { instance }, input: { studentId, level } }) => {
+      const student = await instance.getStudent(studentId);
+      return student.setStudentLevel(level);
+    }),
+
+  // Can anyone see this?
+  latestSubmission: procedure.instance.user
+    .input(z.object({ studentId: z.string() }))
+    .output(z.date().optional())
+    .query(async ({ ctx: { instance }, input: { studentId } }) => {
+      const student = await instance.getStudent(studentId);
+      return student.getLatestSubmissionDateTime();
+    }),
 
   isPreAllocated: procedure.instance.student
     .output(z.boolean())
@@ -154,17 +156,6 @@ export const studentRouter = createTRPCRouter({
       async ({ ctx: { instance } }) =>
         await instance.get().then(instanceToStudentPreferenceRestrictionsDTO),
     ),
-
-  latestSubmission: procedure.instance.user
-    .input(z.object({ studentId: z.string() }))
-    .output(z.date().optional())
-    .query(async ({ ctx: { dal, instance }, input: { studentId } }) => {
-      return await new InstanceStudent(
-        dal,
-        studentId,
-        instance.params,
-      ).getLatestSubmissionDateTime();
-    }),
 
   // TODO: change output type
   // TODO: split into two procedures
