@@ -108,6 +108,14 @@ export class AllocationInstance extends DataObject {
     return new User(this.dal, userId).toInstanceSupervisor(this.params);
   }
 
+  public isStudent(userId: string) {
+    return new User(this.dal, userId).isInstanceStudent(this.params);
+  }
+
+  public getStudent(userId: string) {
+    return new User(this.dal, userId).toInstanceStudent(this.params);
+  }
+
   public async deleteStudent(studentId: string): Promise<void> {
     return await this.dal.student.delete(studentId, this.params);
   }
