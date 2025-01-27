@@ -1,4 +1,3 @@
-import { AdminLevel } from "@prisma/client";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -19,6 +18,7 @@ import { FormButton } from "./_components/form-button";
 
 import { app, metadataTitle } from "@/content/config/app";
 import { spacesLabels } from "@/content/spaces";
+import { AdminLevel } from "@/db/types";
 
 export async function generateMetadata({ params }: { params: GroupParams }) {
   const { displayName } = await api.institution.group.get({ params });
@@ -38,8 +38,9 @@ export default async function Page({ params }: { params: GroupParams }) {
     );
   }
 
-  const { allocationSubGroups, displayName, groupAdmins } =
-    await api.institution.group.subGroupManagement({ params });
+  const { displayName } = await api.institution.group.get({ params });
+  const groupAdmins = await api.institution.group.groupAdmins({ params });
+  const subGroups = await api.institution.group.subGroups({ params });
 
   return (
     <div className="mt-6 flex h-max w-full max-w-5xl flex-col gap-10 px-6 pb-20 ">
@@ -84,10 +85,10 @@ export default async function Page({ params }: { params: GroupParams }) {
           </Button>
         </Link>
         <div className="grid grid-cols-3 gap-6">
-          {allocationSubGroups.map((subGroup, i) => (
+          {subGroups.map(({ subGroup, displayName }, i) => (
             <Link
               className="col-span-1"
-              href={`/${params.group}/${subGroup.id}`}
+              href={`/${params.group}/${subGroup}`}
               key={i}
             >
               <Button
@@ -95,7 +96,7 @@ export default async function Page({ params }: { params: GroupParams }) {
                 variant="outline"
                 size="lg"
               >
-                {subGroup.displayName}
+                {displayName}
               </Button>
             </Link>
           ))}

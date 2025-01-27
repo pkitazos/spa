@@ -21,7 +21,7 @@ import { SubGroupAdmin } from "./subgroup-admin";
 import { SuperAdmin } from "./super-admin";
 
 import { DAL } from "@/data-access";
-import { Role, SystemRole } from "@/db";
+import { Role, SystemRole } from "@/db/types";
 import { UserDTO } from "@/dto";
 
 export class User extends DataObject {

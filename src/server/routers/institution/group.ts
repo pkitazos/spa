@@ -32,32 +32,21 @@ export const groupRouter = createTRPCRouter({
         await user.isGroupAdminOrBetter(group.params),
     ),
 
-  // TODO split
-  // TODO rename
-  subGroupManagement: procedure.group.groupAdmin
-    .output(
-      z.object({
-        displayName: z.string(),
-        allocationSubGroups: z.array(subGroupDtoSchema),
-        groupAdmins: z.array(userDtoSchema),
-      }),
-    )
-    .query(async ({ ctx: { group } }) => {
-      const { displayName } = await group.get();
-      const allocationSubGroups = await group.getSubGroups();
-      const groupAdmins = await group.getAdmins();
+  subGroups: procedure.group.groupAdmin
+    .output(z.array(subGroupDtoSchema))
+    .query(async ({ ctx: { group } }) => await group.getSubGroups()),
 
-      return { displayName, allocationSubGroups, groupAdmins };
-    }),
+  groupAdmins: procedure.group.groupAdmin
+    .output(z.array(userDtoSchema))
+    .query(async ({ ctx: { group } }) => await group.getAdmins()),
 
-  // TODO this should return a set
   takenSubGroupNames: procedure.group.groupAdmin
-    .output(z.array(z.string()))
+    .output(z.set(z.string()))
     .query(
       async ({ ctx: { group } }) =>
         await group
           .getSubGroups()
-          .then((data) => data.map((x) => x.displayName)),
+          .then((data) => new Set(data.map((x) => x.displayName))),
     ),
 
   createSubGroup: procedure.group.groupAdmin
@@ -104,12 +93,12 @@ export const groupRouter = createTRPCRouter({
       async ({
         ctx,
         input: {
-          params: { group },
+          params,
           newAdmin: { institutionId, name, email },
         },
       }) => {
         await ctx.db.$transaction(async (tx) => {
-          const exists = await isGroupAdmin(tx, { group }, institutionId);
+          const exists = await isGroupAdmin(tx, params, institutionId);
           if (exists) throw new TRPCClientError("User is already an admin");
 
           const user = await validateEmailGUIDMatch(
@@ -119,38 +108,19 @@ export const groupRouter = createTRPCRouter({
             name,
           );
 
-          await tx.adminInSpace.create({
-            data: {
-              userId: user.id,
-              allocationGroupId: group,
-              allocationSubGroupId: null,
-              adminLevel: AdminLevel.GROUP,
-            },
+          await tx.groupAdmin.create({
+            data: { userId: user.id, allocationGroupId: params.group },
           });
         });
       },
     ),
 
-  removeAdmin: adminProcedure
+  removeAdmin: procedure.superAdmin
     .input(z.object({ params: groupParamsSchema, userId: z.string() }))
     .output(z.void())
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group },
-          userId,
-        },
-      }) => {
-        const { systemId } = await ctx.db.adminInSpace.findFirstOrThrow({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: null,
-            userId,
-          },
-        });
-
-        await ctx.db.adminInSpace.delete({ where: { systemId } });
-      },
-    ),
+    .mutation(async ({ ctx, input: { params, userId } }) => {
+      await ctx.db.groupAdmin.delete({
+        where: { groupAdminId: { allocationGroupId: params.group, userId } },
+      });
+    }),
 });

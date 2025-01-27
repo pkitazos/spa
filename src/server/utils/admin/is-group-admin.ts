@@ -1,17 +1,14 @@
-import { PrismaTransactionClient } from "@/db";
 import { GroupParams } from "@/lib/validations/params";
 
+import { TX } from "@/db/types";
+
 export async function isGroupAdmin(
-  db: PrismaTransactionClient,
+  db: TX,
   params: GroupParams,
   userId: string,
 ) {
-  const groupAdmin = await db.adminInSpace.findFirst({
-    where: {
-      allocationGroupId: params.group,
-      allocationSubGroupId: null,
-      userId,
-    },
+  const groupAdmin = await db.groupAdmin.findFirst({
+    where: { allocationGroupId: params.group, userId },
   });
 
   return !!groupAdmin;

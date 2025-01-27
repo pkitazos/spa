@@ -26,7 +26,8 @@ import { getInstance } from "./utils/instance";
 import { getAllUserRoles, getUserRole } from "./utils/instance/user-role";
 
 import { DAL } from "@/data-access";
-import { db, SystemRole } from "@/db";
+import { db } from "@/db";
+import { Role, SystemRole } from "@/db/types";
 
 /**
  * 1. CONTEXT
