@@ -4,7 +4,7 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { checkAdminPermissions } from "../admin/access";
 
-import { SystemRole } from "@/db";
+import { SystemRole } from "@/db/types";
 import { TX } from "@/db/types";
 
 /**

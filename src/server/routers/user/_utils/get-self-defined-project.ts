@@ -1,7 +1,7 @@
 import { User } from "@/lib/validations/auth";
 import { InstanceParams } from "@/lib/validations/params";
 
-import { Role, SystemRole } from "@/db";
+import { Role, SystemRole } from "@/db/types";
 import { DB } from "@/db/types";
 
 export async function getSelfDefinedProject(

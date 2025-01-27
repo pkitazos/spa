@@ -1,6 +1,6 @@
 import { Stage } from "@prisma/client";
 
-import { stageOrd } from "@/db";
+import { stageOrd } from "@/db/types";
 import { stageSchema } from "@/dto";
 
 /**

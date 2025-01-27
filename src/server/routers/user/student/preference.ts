@@ -9,7 +9,7 @@ import { createTRPCRouter } from "@/server/trpc";
 
 import { AllocationInstance } from "@/data-objects/spaces/instance";
 import { User } from "@/data-objects/users/user";
-import { Role, SystemRole } from "@/db";
+import { Role, SystemRole } from "@/db/types";
 import { PreferenceType, Stage } from "@/db/types";
 import { userDtoSchema } from "@/dto";
 

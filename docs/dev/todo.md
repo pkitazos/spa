@@ -12,8 +12,8 @@ A Big list of things we need to refactor:
     - [ ] projectStats
   - [x] institution
   - [ ] institution.group
-    - [ ] subGroupManagement
-    - [ ] takenSubGroupNames
+    - [x] subGroupManagement
+    - [x] takenSubGroupNames
     - [ ] addAdmin
     - [ ] removeAdmin
     <!-- up to here -->

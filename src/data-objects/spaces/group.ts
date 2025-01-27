@@ -13,34 +13,47 @@ export class AllocationGroup extends DataObject {
     this.params = params;
   }
 
-  static async create(dal: DAL, name: string) {
+  public static async create(dal: DAL, name: string) {
     return await dal.group.create(name);
   }
 
-  async exists(): Promise<boolean> {
+  public async addAdmin(userId: string) {
+    // check if the user exists
+    const exists = await this.dal.user.exists(userId);
+    if (!exists) throw new Error("User does not exist");
+
+    const isGroupAdmin = await this.dal.user.isGroupAdmin(userId, this.params);
+    if (isGroupAdmin) throw new Error("User is already a group admin");
+
+    return await this.dal.groupAdmin.create(userId, this.params);
+    // if they don't exist - create them
+    // add them as an admin
+  }
+
+  public async exists(): Promise<boolean> {
     return await this.dal.group.exists(this.params);
   }
 
-  async get(): Promise<GroupDTO> {
+  public async get(): Promise<GroupDTO> {
     return await this.dal.group.get(this.params);
   }
 
-  async getSubGroups(): Promise<SubGroupDTO[]> {
+  public async getSubGroups(): Promise<SubGroupDTO[]> {
     return await this.dal.group.getSubGroups(this.params);
   }
 
-  async getAdmins(): Promise<UserDTO[]> {
+  public async getAdmins(): Promise<UserDTO[]> {
     return await this.dal.group.getAdmins(this.params);
   }
 
-  async getManagers(): Promise<UserDTO[]> {
+  public async getManagers(): Promise<UserDTO[]> {
     const groupAdmins = await this.getAdmins();
     const superAdmins = await this.dal.superAdmin.getAll();
     // TODO distinct (nubs)
     return [...groupAdmins, ...superAdmins];
   }
 
-  async delete() {
+  public async delete() {
     return await this.dal.group.delete(this.params);
   }
 }

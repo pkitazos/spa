@@ -240,6 +240,9 @@ export class DAL {
   };
 
   public user = {
+    exists: async (userId: string): Promise<boolean> =>
+      !!(await this.db.user.findFirst({ where: { id: userId } })),
+
     isSuperAdmin: async (userId: string): Promise<boolean> =>
       !!(await this.db.superAdmin.findFirst({ where: { userId } })),
 
@@ -363,6 +366,17 @@ export class DAL {
   };
 
   public groupAdmin = {
+    create: async (
+      userId: string,
+      groupParams: GroupParams,
+    ): Promise<UserDTO> =>
+      await this.db.groupAdmin
+        .create({
+          data: { userId, allocationGroupId: groupParams.group },
+          select: { user: true },
+        })
+        .then((x) => x.user),
+
     getAllGroups: async (userId: string): Promise<GroupDTO[]> =>
       await this.db.groupAdmin
         .findMany({
