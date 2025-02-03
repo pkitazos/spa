@@ -43,6 +43,11 @@ enum PreferenceType {
     PREFERENCE
 }
 
+enum MarkerType {
+    SUPERVISOR
+    READER
+}
+
 model Invitation {
     email                String
     allocationGroupId    String @map("allocation_group_id")
@@ -131,6 +136,10 @@ model AllocationInstance {
     algorithms                   Algorithm[]
     flags                        Flag[]
     tags                         Tag[]
+    studentFlags                 FlagOnStudent[]
+    // flagSubmissions              FlagSubmission[] // TODO: rename
+    // componentScores              ComponentScore[]
+    // finalGrades                  FinalGrade[]
 
     @@id(name: "instanceId", [allocationGroupId, allocationSubGroupId, id])
 }
@@ -160,6 +169,7 @@ model StudentDetails {
     // ---
     userInInstance           UserInInstance    @relation(name: "student_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, onUpdate: Cascade)
     preferences              SavedPreference[]
+    flagsOnStudent           FlagOnStudent[]
 
     @@id(name: "detailsId", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
 }
@@ -283,7 +293,9 @@ model Flag {
     allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
     // ---
     flagOnProjects       FlagOnProject[]
+    flagOnStudents       FlagOnStudent[]
 
+    @@unique([id, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@unique([title, allocationGroupId, allocationSubGroupId, allocationInstanceId])
 }
 
@@ -294,6 +306,22 @@ model FlagOnProject {
     projectId String  @map("project_id")
 
     @@id([flagId, projectId])
+}
+
+model FlagOnStudent {
+    flag                 Flag               @relation(fields: [flagId], references: [id], onDelete: Cascade)
+    flagId               String             @map("flag_id")
+    student              StudentDetails     @relation(fields: [studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+    studentId            String             @map("student_id")
+    // ---
+    allocationGroupId    String             @map("allocation_group_id")
+    allocationSubGroupId String             @map("allocation_sub_group_id")
+    allocationInstanceId String             @map("allocation_instance_id")
+    // ---
+    allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+
+    @@id(name: "flagOnStudentId", map: "flag_on_student_id", [flagId, studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("flag_on_student")
 }
 
 model Tag {
