@@ -33,7 +33,6 @@ export default async function Layout({
         <SidePanel tabGroups={tabGroups} />
       </div>
       <section className="col-span-9 max-w-6xl pb-32">
-        {/* <section className="col-span-11 max-w-6xl pb-32"> */}
         <Heading>{instance.displayName}</Heading>
         {children}
       </section>
