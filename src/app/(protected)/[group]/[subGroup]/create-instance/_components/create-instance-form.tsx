@@ -18,7 +18,7 @@ export function CreateInstanceForm({
   takenNames,
 }: {
   params: SubGroupParams;
-  takenNames: string[];
+  takenNames: Set<string>;
 }) {
   const { group, subGroup } = params;
   const router = useRouter();

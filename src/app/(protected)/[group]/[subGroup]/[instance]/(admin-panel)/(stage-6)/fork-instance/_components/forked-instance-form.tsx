@@ -46,7 +46,7 @@ export function ForkedInstanceForm({
   takenNames,
 }: {
   currentInstance: ForkedInstanceDetails;
-  takenNames: string[];
+  takenNames: Set<string>;
 }) {
   const params = useInstanceParams();
   const { group, subGroup } = params;

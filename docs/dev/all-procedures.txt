@@ -1,0 +1,170 @@
+access-control                          -- router
+    user
+    allAdminPanels
+    adminInInstance
+    getAdminLevelInSpace
+    memberAccess
+    stageAccess
+    instanceRoles
+
+institution                             -- router
+    superAdminAccess
+    groupManagement
+    takenGroupNames
+    createGroup
+    deleteGroup
+    group                               -- router
+        exists
+        get
+        access
+        subGroupManagement
+        takenSubGroupNames
+        createSubGroup
+        deleteSubGroup
+        addAdmin
+        removeAdmin
+    subGroup                            -- router
+        exists
+        get
+        access
+        instanceManagement
+        takenInstanceNames
+        createInstance
+        deleteInstance
+        addAdmin
+        removeAdmin
+    instance                            -- router
+        exists
+        get
+        access
+        currentStage
+        setStage
+        selectedAlgorithm
+        projectAllocations
+        getEditFormDetails
+        supervisors
+        students
+        getSupervisors
+        addSupervisor
+        addSupervisors
+        removeSupervisor
+        removeSupervisors
+        invitedSupervisors
+        getStudents
+        addStudent
+        addStudents
+        removeStudent
+        removeStudents
+        invitedStudents
+        edit
+        getHeaderTabs
+        getSidePanelTabs
+        fork
+        merge
+        getFlags
+        algorithm                       -- router
+            run
+            takenNames
+            create
+            delete
+            getAll
+            getAllSummaryResults
+            singleResult
+            allStudentResults
+            allSupervisorResults
+        external                        -- router
+            checkStudents
+            checkSupervisors
+            createProjects
+        preference                      -- router
+            studentSubmissions
+            statsByProject
+            statsBySupervisor
+            statsByTag
+            allStats
+        matching                        -- router
+            select
+            clearSelection
+            clearAll
+            preferences
+            rowData
+            updateAllocation
+            exportCsvData
+            getRandomAllocation
+            getRandomAllocationForAll
+            removeAllocation
+        project                         -- router
+            submissionInfo
+
+project                                 -- router
+    exists
+    edit
+    getAllForStudentPreferences
+    getAllForUser
+    getAllLateProposals
+    getAllPreAllocated
+    getById
+    getIsForked
+    getUserAccess
+    getAllStudentPreferences
+    delete
+    deleteSelected
+    details
+    create
+    getFormDetails
+    getAllocation
+
+user                                    -- router
+    get
+    getById
+    role
+    roles
+    hasSelfDefinedProject
+    adminLevel
+    adminLevelInGroup
+    adminLevelInSubGroup
+    getAdminPanel
+    adminPanelRoute
+    instances
+    breadcrumbs
+    joinInstance
+    student                             -- router
+        exists
+        getById
+        allocationAccess
+        setAllocationAccess
+        overviewData
+        updateLevel
+        isPreAllocated
+        preferenceRestrictions
+        latestSubmission
+        allocatedProject
+        getAllocatedProject
+        delete
+        deleteSelected
+        getUnallocated
+        preference                      -- router
+            getAll
+            getAllSaved
+            getByProject
+            makeUpdate
+            update
+            updateSelected
+            makeReorder
+            reorder
+            getForProject
+            submit
+            initialBoardState
+            change
+            changeSelected
+    supervisor                          -- router
+        exists
+        allocationAccess
+        setAllocationAccess
+        instancePage
+        instanceData
+        projects
+        updateInstanceCapacities
+        delete
+        deleteSelected
+        allocations

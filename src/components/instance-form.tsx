@@ -36,14 +36,14 @@ import { spacesLabels } from "@/content/spaces";
 
 export function InstanceForm({
   submissionButtonLabel,
-  takenNames = [],
+  takenNames = new Set(),
   currentInstanceDetails,
   isForked = false,
   onSubmit,
   children: dismissalButton,
 }: {
   submissionButtonLabel: string;
-  takenNames?: string[];
+  takenNames?: Set<string>;
   currentInstanceDetails?: ValidatedInstanceDetails;
   isForked?: boolean;
   onSubmit: (data: ValidatedInstanceDetails) => Promise<void>;
