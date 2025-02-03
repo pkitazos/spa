@@ -29,10 +29,12 @@ export default async function Layout({
 
   return (
     <div className="grid w-full grid-cols-11">
-      <div className="col-span-2 mt-28 flex justify-center border-r pr-2.5">
+      {/* <div className="col-span-2 mt-28 flex justify-center border-r pr-2.5">
         <SidePanel tabGroups={tabGroups} />
-      </div>
+      </div> 
       <section className="col-span-9 max-w-6xl pb-32">
+        */}
+      <section className="col-span-11 max-w-6xl pb-32">
         <Heading>{instance.displayName}</Heading>
         {children}
       </section>
