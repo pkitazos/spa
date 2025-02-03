@@ -26,7 +26,7 @@ export type UpdatedInstance = z.infer<typeof updatedInstanceSchema>;
 
 export type ValidatedInstanceDetails = z.infer<typeof baseSchema>;
 
-export function buildInstanceFormSchema(takenNames: string[]) {
+export function buildInstanceFormSchema(takenNames: Set<string>) {
   return baseSchema
     .omit({
       minPreferences: true,
@@ -60,7 +60,7 @@ export function buildInstanceFormSchema(takenNames: string[]) {
       message: "Please add at least one flag",
       path: ["flags.0.title"],
     })
-    .refine(({ instanceName }) => !takenNames.includes(instanceName), {
+    .refine(({ instanceName }) => !takenNames.has(instanceName), {
       message: "This name is already taken",
       path: ["instanceName"],
     })
@@ -112,9 +112,9 @@ export const forkedInstanceSchema = baseForkedSchema;
 
 export type ForkedInstanceDetails = z.infer<typeof baseForkedSchema>;
 
-export function buildForkedInstanceSchema(takenNames: string[]) {
+export function buildForkedInstanceSchema(takenNames: Set<string>) {
   return baseForkedSchema
-    .refine(({ instanceName }) => !takenNames.includes(instanceName), {
+    .refine(({ instanceName }) => !takenNames.has(instanceName), {
       message: "This name is already taken",
       path: ["instanceName"],
     })

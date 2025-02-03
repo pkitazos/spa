@@ -51,6 +51,22 @@ export class AllocationSubGroup extends DataObject {
     return this._group;
   }
 
+  public async getInstances() {
+    return await this.dal.subGroup.getInstances(this.params);
+  }
+
+  public async getAdmins(): Promise<UserDTO[]> {
+    return await this.dal.subGroup.getAdmins(this.params);
+  }
+
+  public async getManagers(): Promise<UserDTO[]> {
+    const subGroupAdmins = await this.getAdmins();
+    const groupAdmins = await this.group.getAdmins();
+    const superAdmins = await this.dal.superAdmin.getAll();
+    // TODO distinct (nubs)
+    return [...subGroupAdmins, ...groupAdmins, ...superAdmins];
+  }
+
   public async delete() {
     await this.dal.subGroup.delete(this.params);
   }
