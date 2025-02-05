@@ -39,6 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 
 export function SidePanel() {
   const router = useRouter();
@@ -55,7 +56,9 @@ export function SidePanel() {
     (s) => s.setSelectedSubmission,
   );
   const addFlag = useMarkingSchemeStore((s) => s.addFlag);
+  const removeFlag = useMarkingSchemeStore((s) => s.removeFlag);
   const addSubmission = useMarkingSchemeStore((s) => s.addSubmission);
+  const removeSubmission = useMarkingSchemeStore((s) => s.removeSubmission);
 
   function handleTabChange(flagIdx: number, submissionIdx?: number) {
     const flag = flags[flagIdx];
@@ -76,6 +79,26 @@ export function SidePanel() {
     setSelectedSubmission(submissionIdx);
 
     router.push(`?flag=${flagId}&submission=${submissionId}`);
+  }
+
+  function handleRemoveFlag(flagIdx: number) {
+    removeFlag(flagIdx);
+    if (selectedFlagIdx === flagIdx) {
+      setSelectedFlag(null);
+      setSelectedSubmission(null);
+    }
+    toast.success("Flag removed");
+  }
+
+  function handleRemoveSubmission(flagIdx: number, submissionIdx: number) {
+    removeSubmission(flagIdx, submissionIdx);
+    if (
+      selectedFlagIdx === flagIdx &&
+      selectedSubmissionIdx === submissionIdx
+    ) {
+      setSelectedSubmission(null);
+    }
+    toast.success("Submission removed");
   }
 
   const createQueryString = useCallback(
@@ -118,9 +141,10 @@ export function SidePanel() {
   // action hover  "bg-slate-400/20";
 
   return (
-    <Sidebar className="" collapsible="none">
-      <SidebarHeader>
-        <Button onClick={handleNewFlag} size="icon">
+    <Sidebar className="w-[17rem] flex-none pt-6" collapsible="none">
+      <SidebarHeader className="mb-5 flex flex-row items-center justify-between px-2">
+        <Input placeholder="Search flags" className="w-full" />
+        <Button className="flex-none" onClick={handleNewFlag} size="icon">
           <PlusIcon className="h-4 w-4" />
         </Button>
       </SidebarHeader>
@@ -156,7 +180,10 @@ export function SidePanel() {
                 >
                   {flag.title}
                 </button>
-                <FlagMenuIcon flagIdx={flagIdx} />
+                <FlagMenuIcon
+                  flagIdx={flagIdx}
+                  removalHandler={handleRemoveFlag}
+                />
                 <Button
                   size="icon"
                   variant="ghost"
@@ -193,6 +220,7 @@ export function SidePanel() {
                         <SubmissionMenuIcon
                           flagIdx={flagIdx}
                           submissionIdx={submissionIdx}
+                          removalHandler={handleRemoveSubmission}
                         />
                       </SidebarMenuItem>
                     ))}
@@ -209,10 +237,14 @@ export function SidePanel() {
 
 function ContextualMenuIcon({
   itemType,
+  flagIdx,
+  submissionIdx,
+  removalHandler,
 }: {
   itemType: string;
   flagIdx: number;
   submissionIdx?: number;
+  removalHandler: (flagIdx: number, submissionIdx?: number) => void;
 }) {
   return (
     <DropdownMenu>
@@ -235,7 +267,10 @@ function ContextualMenuIcon({
           </button>
         </DropdownMenuItem>
         <DropdownMenuItem className="bg-background text-destructive focus:bg-red-100/40 focus:text-destructive">
-          <button className="flex items-center gap-2 text-sm">
+          <button
+            className="flex items-center gap-2 text-sm"
+            onClick={() => removalHandler(flagIdx, submissionIdx)}
+          >
             <Trash2Icon className="h-4 w-4" />
             <span>Delete {itemType}</span>
           </button>
@@ -245,22 +280,37 @@ function ContextualMenuIcon({
   );
 }
 
-function FlagMenuIcon({ flagIdx }: { flagIdx: number }) {
-  return <ContextualMenuIcon itemType="Flag" flagIdx={flagIdx} />;
+function FlagMenuIcon({
+  flagIdx,
+  removalHandler,
+}: {
+  flagIdx: number;
+  removalHandler: (flagIdx: number) => void;
+}) {
+  return (
+    <ContextualMenuIcon
+      itemType="Flag"
+      flagIdx={flagIdx}
+      removalHandler={removalHandler}
+    />
+  );
 }
 
 function SubmissionMenuIcon({
   flagIdx,
   submissionIdx,
+  removalHandler,
 }: {
   flagIdx: number;
   submissionIdx: number;
+  removalHandler: (flagIdx: number, submissionIdx: number) => void;
 }) {
   return (
     <ContextualMenuIcon
       itemType="Submission"
       flagIdx={flagIdx}
       submissionIdx={submissionIdx}
+      removalHandler={() => removalHandler(flagIdx, submissionIdx)}
     />
   );
 }
