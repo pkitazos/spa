@@ -1,12 +1,17 @@
 "use client";
 import { Check, Pen } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 import { cn } from "@/lib/utils";
-import { slugify } from "@/lib/utils/general/slugify";
-import { FlagMarkingScheme, FlagSubmission } from "./store";
+import { useMarkingSchemeStore } from "./state";
+import { useUpdateQueryParams } from "./use-update-query-params";
 
 type EditableTextProps = {
   initialValue: string;
@@ -26,6 +31,11 @@ export function EditableText({
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(initialValue);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setValue(initialValue);
+    setIsEditing(false);
+  }, [initialValue]);
 
   // Focus input when entering edit mode
   useEffect(() => {
@@ -66,7 +76,6 @@ export function EditableText({
               inputClassName,
             )}
           />
-
           <WithTooltip tip="Save text">
             <button
               onClick={handleSave}
@@ -95,85 +104,77 @@ export function EditableText({
   );
 }
 
-type URLAwareEditableTextProps = EditableTextProps & {
-  urlParamKey: string;
-  otherParams?: Record<string, string | undefined>;
-};
-
-export function URLAwareEditableText({
-  initialValue,
-  onSave,
-  urlParamKey,
-  otherParams = {},
-  ...props
-}: URLAwareEditableTextProps) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  function handleSave(newValue: string) {
-    onSave(newValue);
-
-    const params = new URLSearchParams(searchParams.toString());
-
-    params.set(urlParamKey, slugify(newValue));
-
-    Object.entries(otherParams).forEach(([key, value]) => {
-      if (value !== undefined) {
-        params.set(key, value);
-      }
-    });
-
-    router.push(`?${params.toString()}`);
-  }
-
-  return (
-    <EditableText initialValue={initialValue} onSave={handleSave} {...props} />
-  );
-}
-
-export function EditableFlag({
-  flagIndex,
-  flag,
-  onSave,
-  ...props
-}: {
-  flagIndex: number;
-  flag: FlagMarkingScheme;
-  onSave: (value: string) => void;
-  [key: string]: any;
+export function EditableFlag(props: {
+  className?: string;
+  component?: keyof JSX.IntrinsicElements | React.ComponentType<any>;
+  inputClassName?: string;
 }) {
+  const updateQueryParams = useUpdateQueryParams();
+  const {
+    flags,
+    selectedFlagIndex: flagIdx,
+    updateFlag,
+  } = useMarkingSchemeStore((s) => s);
+
+  if (flagIdx === undefined) throw new Error("No Flag");
+
+  const flag = useMemo(() => flags[flagIdx], [flags, flagIdx]);
+
+  const handleRenameFlag = useCallback(
+    (value: string) => {
+      if (flagIdx === undefined) throw new Error("No Flag");
+      const newFlag = { ...flag, title: value };
+      updateFlag(flagIdx, newFlag);
+      updateQueryParams(value, undefined);
+    },
+    [flagIdx, flag, updateQueryParams],
+  );
+
   return (
-    <URLAwareEditableText
+    <EditableText
       initialValue={flag.title}
-      onSave={onSave}
-      urlParamKey="flag"
+      onSave={handleRenameFlag}
       {...props}
     />
   );
 }
 
-export function EditableSubmission({
-  flagIndex,
-  submissionIndex,
-  flag,
-  submission,
-  onSave,
-  ...props
-}: {
-  flagIndex: number;
-  submissionIndex: number;
-  flag: FlagMarkingScheme;
-  submission: FlagSubmission;
-  onSave: (value: string) => void;
-  [key: string]: any;
+export function EditableSubmission(props: {
+  className?: string;
+  component?: keyof JSX.IntrinsicElements | React.ComponentType<any>;
+  inputClassName?: string;
 }) {
-  console.log("EditableSubmission:", submission.title);
+  const updateQueryParams = useUpdateQueryParams();
+  const {
+    flags,
+    selectedFlagIndex: flagIdx,
+    selectedSubmissionIndex: submissionIdx,
+    updateSubmission,
+  } = useMarkingSchemeStore((s) => s);
+
+  if (flagIdx === undefined) throw new Error("No Flag");
+  if (submissionIdx === undefined) throw new Error("No Submission");
+
+  const submission = flags[flagIdx].submissions[submissionIdx];
+
+  function handleRenameSubmission(value: string) {
+    if (flagIdx === undefined) throw new Error("No Flag");
+    if (submissionIdx === undefined) throw new Error("No Submission");
+
+    const selectedFlag = flags[flagIdx];
+    const newSubmission = {
+      ...selectedFlag.submissions[submissionIdx],
+      title: value,
+    };
+
+    updateSubmission(flagIdx, submissionIdx, newSubmission);
+    updateQueryParams(selectedFlag.title, newSubmission.title);
+  }
+
   return (
-    <URLAwareEditableText
+    <EditableText
       initialValue={submission.title}
-      onSave={onSave}
-      urlParamKey="submission"
-      otherParams={{ flag: slugify(flag.title) }}
+      onSave={handleRenameSubmission}
       {...props}
     />
   );
