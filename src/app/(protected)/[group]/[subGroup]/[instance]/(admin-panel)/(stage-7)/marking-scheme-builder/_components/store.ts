@@ -41,6 +41,8 @@ interface MarkingSchemeState {
 
   removeFlag: (index: number) => void;
 
+  setFlags: (flags: FlagMarkingScheme[]) => void;
+
   // Submission actions
   addSubmission: (flagIndex: number, submission: FlagSubmission) => void;
 
@@ -51,6 +53,8 @@ interface MarkingSchemeState {
   ) => void;
 
   removeSubmission: (flagIndex: number, submissionIndex: number) => void;
+
+  setSubmissions: (flagIndex: number, submissions: FlagSubmission[]) => void;
 
   // Component actions
   updateComponents: (
@@ -93,6 +97,11 @@ export const useMarkingSchemeStore = create<MarkingSchemeState>()(
         }
       }),
 
+    setFlags: (flags) =>
+      set((state) => {
+        state.flags = flags;
+      }),
+
     // Submission actions
     addSubmission: (flagIndex, submission) =>
       set((state) => {
@@ -118,6 +127,13 @@ export const useMarkingSchemeStore = create<MarkingSchemeState>()(
           if (state.selectedSubmissionIndex === submissionIndex) {
             state.selectedSubmissionIndex = null;
           }
+        }
+      }),
+
+    setSubmissions: (flagIndex, submissions) =>
+      set((state) => {
+        if (state.flags[flagIndex]) {
+          state.flags[flagIndex].submissions = submissions;
         }
       }),
 

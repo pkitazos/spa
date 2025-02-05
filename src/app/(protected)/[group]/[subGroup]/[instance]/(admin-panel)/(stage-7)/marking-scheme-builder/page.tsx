@@ -6,8 +6,8 @@ import { SidePanel } from "./_components/side-panel";
 // TODO: this is gonna break stuff when we add the second sidebar for sure
 export default async function Page() {
   return (
-    <SidebarProvider className="relative ">
-      <div className="flex">
+    <SidebarProvider className="relative">
+      <div className="flex w-full">
         <SidePanel />
         <MainContentPanel />
       </div>
