@@ -13,7 +13,7 @@ type MarkerComponents = {
   READER: AssessmentCriterion[];
 };
 
-type Submission = {
+export type FlagSubmission = {
   title: string;
   studentSubmissionDeadline: Date;
   markerSubmissionDeadline: Date;
@@ -23,7 +23,7 @@ type Submission = {
 export type FlagMarkingScheme = {
   title: string;
   description?: string;
-  submissions: Submission[];
+  submissions: FlagSubmission[];
 };
 
 interface MarkingSchemeState {
@@ -42,12 +42,12 @@ interface MarkingSchemeState {
   removeFlag: (index: number) => void;
 
   // Submission actions
-  addSubmission: (flagIndex: number, submission: Submission) => void;
+  addSubmission: (flagIndex: number, submission: FlagSubmission) => void;
 
   updateSubmission: (
     flagIndex: number,
     submissionIndex: number,
-    submission: Submission,
+    submission: FlagSubmission,
   ) => void;
 
   removeSubmission: (flagIndex: number, submissionIndex: number) => void;
