@@ -7,7 +7,7 @@ import {
   PlusIcon,
   Trash2Icon,
 } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -27,10 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import { cn } from "@/lib/utils";
-import { slugify } from "@/lib/utils/general/slugify";
 
-import { useCallback } from "react";
-import { FlagMarkingScheme, useMarkingSchemeStore } from "./store";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,99 +37,89 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { useMarkingSchemeStore } from "./state";
+import { useUpdateQueryParams } from "./use-update-query-params";
 
 export function SidePanel() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const updateQueryParams = useUpdateQueryParams();
 
-  const flags = useMarkingSchemeStore((state) => state.flags);
-  const selectedFlagIdx = useMarkingSchemeStore((s) => s.selectedFlagIndex);
-  const selectedSubmissionIdx = useMarkingSchemeStore(
-    (s) => s.selectedSubmissionIndex,
-  );
-  const setSelectedFlag = useMarkingSchemeStore((s) => s.setSelectedFlag);
-  const setSelectedSubmission = useMarkingSchemeStore(
-    (s) => s.setSelectedSubmission,
-  );
-  const addFlag = useMarkingSchemeStore((s) => s.addFlag);
-  const removeFlag = useMarkingSchemeStore((s) => s.removeFlag);
-  const addSubmission = useMarkingSchemeStore((s) => s.addSubmission);
-  const removeSubmission = useMarkingSchemeStore((s) => s.removeSubmission);
+  const {
+    flags,
+    selectedFlagIndex,
+    selectedSubmissionIndex,
+    setTabPosition,
+    createFlag,
+    deleteFlag,
+    createSubmission,
+    deleteSubmission,
+  } = useMarkingSchemeStore((s) => s);
 
   function handleTabChange(flagIdx: number, submissionIdx?: number) {
     const flag = flags[flagIdx];
-    const flagId = slugify(flag.title);
 
-    if (!submissionIdx && submissionIdx !== 0) {
-      setSelectedFlag(flagIdx);
-      setSelectedSubmission(null);
+    if (submissionIdx === undefined) {
+      setTabPosition(flagIdx, undefined);
 
-      router.push(`?flag=${flagId}`);
+      updateQueryParams(flag.title, undefined);
       return;
     }
 
-    const submission = flag.submissions[submissionIdx];
-    const submissionId = slugify(submission.title);
+    setTabPosition(flagIdx, submissionIdx);
 
-    setSelectedFlag(flagIdx);
-    setSelectedSubmission(submissionIdx);
-
-    router.push(`?flag=${flagId}&submission=${submissionId}`);
+    updateQueryParams(flag.title, flag.submissions[submissionIdx].title);
   }
 
   function handleRemoveFlag(flagIdx: number) {
-    removeFlag(flagIdx);
-    if (selectedFlagIdx === flagIdx) {
-      setSelectedFlag(null);
-      setSelectedSubmission(null);
+    deleteFlag(flagIdx);
+    if (selectedFlagIndex === flagIdx) {
+      setTabPosition(undefined, undefined);
+
+      updateQueryParams(undefined, undefined);
     }
     toast.success("Flag removed");
   }
 
   function handleRemoveSubmission(flagIdx: number, submissionIdx: number) {
-    removeSubmission(flagIdx, submissionIdx);
+    deleteSubmission(flagIdx, submissionIdx);
     if (
-      selectedFlagIdx === flagIdx &&
-      selectedSubmissionIdx === submissionIdx
+      selectedFlagIndex === flagIdx &&
+      selectedSubmissionIndex === submissionIdx
     ) {
-      setSelectedSubmission(null);
+      setTabPosition(flagIdx, undefined);
+
+      updateQueryParams(flags[flagIdx].title, undefined);
     }
     toast.success("Submission removed");
   }
-
-  const createQueryString = useCallback(
-    (name: string, value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set(name, value);
-
-      return params.toString();
-    },
-    [searchParams],
-  );
 
   function handleNewFlag() {
     const newFlag = {
       title: `New Flag ${flags.length + 1}`,
       submissions: [],
     };
-    addFlag(newFlag);
-    router.push(`?flag=${slugify(newFlag.title)}`);
-    setSelectedFlag(flags.length ?? 0);
-    toast.success("New flag added");
+
+    createFlag(newFlag);
+    setTabPosition(flags.length, undefined);
+
+    updateQueryParams(newFlag.title, undefined);
+    toast.success("New flag created");
   }
 
-  function handleNewSubmission(flag: FlagMarkingScheme) {
-    const selectedFlagIndex = flags.indexOf(flag);
-    addSubmission(selectedFlagIndex, {
+  function handleNewSubmission(flagIdx: number) {
+    const flag = flags[flagIdx];
+
+    const newSubmission = {
       title: `New Submission ${flag.submissions.length + 1}`,
       components: { SUPERVISOR: [], READER: [] },
       studentSubmissionDeadline: new Date(),
       markerSubmissionDeadline: addWeeks(new Date(), 3),
-    });
-    router.push(`?flag=${flag.title}&submission=${slugify("New Submission")}`);
-    setSelectedSubmission(flag.submissions.length ?? 0);
-    toast.success(`Submission added to ${flag.title}`);
+    };
+
+    createSubmission(flagIdx, newSubmission);
+    setTabPosition(flagIdx, flag.submissions.length);
+
+    updateQueryParams(flag.title, newSubmission.title);
+    toast.success(`Submission created for ${flag.title}`);
   }
 
   // base          "bg-slate-300/30";
@@ -159,9 +146,9 @@ export function SidePanel() {
                 className={cn(
                   buttonVariants({ variant: "ghost" }),
                   "flex h-10 w-full items-center justify-between gap-1 bg-slate-300/30 px-1.5 hover:bg-slate-300/80",
-                  selectedFlagIdx === flagIdx &&
-                    !selectedSubmissionIdx &&
-                    selectedSubmissionIdx !== 0 &&
+                  selectedFlagIndex === flagIdx &&
+                    !selectedSubmissionIndex &&
+                    selectedSubmissionIndex !== 0 &&
                     "bg-slate-300/60",
                 )}
               >
@@ -188,7 +175,7 @@ export function SidePanel() {
                   size="icon"
                   variant="ghost"
                   className="h-7 w-7 flex-none hover:bg-slate-400/20"
-                  onClick={() => handleNewSubmission(flag)}
+                  onClick={() => handleNewSubmission(flagIdx)}
                   // ? any way to make this onClick also toggle the collapsible?
                 >
                   <PlusIcon className="h-4 w-4" />
@@ -204,8 +191,8 @@ export function SidePanel() {
                           buttonVariants({ variant: "ghost" }),
                           "flex w-full items-center justify-between gap-2 bg-slate-300/30 pl-14 pr-1.5 hover:bg-slate-300/80",
                           submissionIdx === 0 && "mt-1.5",
-                          selectedFlagIdx === flagIdx &&
-                            selectedSubmissionIdx === submissionIdx &&
+                          selectedFlagIndex === flagIdx &&
+                            selectedSubmissionIndex === submissionIdx &&
                             "bg-slate-300/60",
                         )}
                       >
@@ -314,3 +301,16 @@ function SubmissionMenuIcon({
     />
   );
 }
+
+function deleteSubmission(flagIdx: number, submissionIdx: number) {
+  throw new Error("Function not implemented.");
+}
+// const createQueryString = useCallback(
+//   (name: string, value: string) => {
+//     const params = new URLSearchParams(searchParams.toString());
+//     params.set(name, value);
+
+//     return params.toString();
+//   },
+//   [searchParams],
+// );
