@@ -6,6 +6,7 @@ import { MarkerType } from "@prisma/client";
 import { EditableFlag, EditableSubmission } from "./editable-text";
 import { useMarkingSchemeStore } from "./state";
 import { useEffect } from "react";
+import { SortableForm } from "./sortable";
 
 export function CentrePanel() {
   const { flags, selectedFlagIndex, selectedSubmissionIndex } =
@@ -86,18 +87,7 @@ export function CentrePanel() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value={MarkerType.SUPERVISOR}>
-            <p>
-              {selectedSubmission.components.SUPERVISOR.length > 0
-                ? selectedSubmission.components.SUPERVISOR.map(
-                    (component, i) => (
-                      <div key={i}>
-                        <p>{component.name}</p>
-                        <p>{component.description}</p>
-                      </div>
-                    ),
-                  )
-                : "No components provided"}
-            </p>
+            <SortableForm activeMarkerType={"SUPERVISOR"} />
           </TabsContent>
           <TabsContent value={MarkerType.READER}>
             <p>
