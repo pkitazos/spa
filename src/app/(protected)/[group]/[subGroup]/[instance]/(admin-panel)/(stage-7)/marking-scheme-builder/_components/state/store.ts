@@ -1,6 +1,7 @@
 import { MarkerType } from "@prisma/client";
-import { createStore } from "zustand/vanilla";
+import { v4 as uuidv4 } from "uuid";
 import { immer } from "zustand/middleware/immer";
+import { createStore } from "zustand/vanilla";
 
 export type Classification = {
   title: string;
@@ -15,11 +16,12 @@ type ClassificationSubmission = {
   components: Record<MarkerType, AssessmentCriterion[]>;
 };
 
-type AssessmentCriterion = {
+export type AssessmentCriterion = {
+  id: string;
   name: string;
   weight: number;
   description: string;
-  layoutIndex: number;
+  rank: number;
 };
 
 export type State = {
@@ -53,14 +55,14 @@ type Actions = {
     flagIndex: number,
     submissionIndex: number,
     markerType: MarkerType,
-    criterion: AssessmentCriterion,
+    criterion: Omit<AssessmentCriterion, "id">,
   ) => void;
 
   updateCriterion: (
     flagIndex: number,
     submissionIndex: number,
     markerType: MarkerType,
-    criterionIndex: number,
+    criterionId: string,
     criterion: AssessmentCriterion,
   ) => void;
 
@@ -68,7 +70,7 @@ type Actions = {
     flagIndex: number,
     submissionIndex: number,
     markerType: MarkerType,
-    criterionIndex: number,
+    criterionId: string,
   ) => void;
 };
 
@@ -102,7 +104,37 @@ export function createMarkingSchemeStore(initState: State) {
 
       createSubmission: (flagIndex, submission) =>
         set((state) => {
-          state.flags[flagIndex].submissions.push(submission);
+          const new_submission: ClassificationSubmission = {
+            ...submission,
+            components: {
+              SUPERVISOR: [
+                {
+                  description: "",
+                  id: "1",
+                  name: "Supervisor",
+                  rank: 1,
+                  weight: 1,
+                },
+                {
+                  description: "",
+                  id: "2",
+                  name: "hello2",
+                  rank: 2,
+                  weight: 1,
+                },
+                {
+                  description: "",
+                  id: "2",
+                  name: "hello3",
+                  rank: 3,
+                  weight: 1,
+                },
+              ],
+              READER: [],
+            },
+          };
+
+          state.flags[flagIndex].submissions.push(new_submission);
         }),
 
       updateSubmission: (flagIndex, submissionIndex, submission) =>
@@ -119,43 +151,43 @@ export function createMarkingSchemeStore(initState: State) {
         set((state) => {
           state.flags[flagIndex].submissions[submissionIndex].components[
             markerType
-          ].push(criterion);
+          ].push({ ...criterion, id: uuidv4() });
         }),
 
       updateCriterion: (
         flagIndex,
         submissionIndex,
         markerType,
-        criterionIndex,
+        criterionId,
         criterion,
       ) =>
         set((state) => {
-          state.flags[flagIndex].submissions[submissionIndex].components[
-            markerType
-          ][criterionIndex] = criterion;
+          const component =
+            state.flags[flagIndex].submissions[submissionIndex].components[
+              markerType
+            ];
 
-          state.flags[flagIndex].submissions[submissionIndex].components[
-            markerType
-          ].sort(sortByLayoutIndex);
+          const criterionIdx = component.findIndex((c) => c.id === criterionId);
+          component[criterionIdx] = criterion;
+          component.sort(sortByRank);
         }),
 
-      deleteCriterion: (
-        flagIndex,
-        submissionIndex,
-        markerType,
-        criterionIndex,
-      ) =>
+      deleteCriterion: (flagIndex, submissionIndex, markerType, criterionId) =>
         set((state) => {
-          state.flags[flagIndex].submissions[submissionIndex].components[
-            markerType
-          ].splice(criterionIndex, 1);
+          const component =
+            state.flags[flagIndex].submissions[submissionIndex].components[
+              markerType
+            ];
+
+          const criterionIdx = component.findIndex((c) => c.id === criterionId);
+          component.splice(criterionIdx, 1);
         }),
     })),
   );
 }
 
-const sortByLayoutIndex = (a: AssessmentCriterion, b: AssessmentCriterion) =>
-  a.layoutIndex - b.layoutIndex;
+const sortByRank = (a: AssessmentCriterion, b: AssessmentCriterion) =>
+  a.rank - b.rank;
 
 // Okay so, a couple things to note here:
 
