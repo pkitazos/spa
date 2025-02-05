@@ -1,5 +1,6 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
+import { useMarkingSchemeStore } from "./state";
 
 export function useUpdateQueryParams() {
   const router = useRouter();
@@ -20,4 +21,29 @@ export function useUpdateQueryParams() {
     },
     [router, pathname, searchParams],
   );
+}
+
+export function useTabPosition() {
+  const updateQueryParams = useUpdateQueryParams();
+
+  const { flags, selectedFlagIndex, selectedSubmissionIndex, setTabPosition } =
+    useMarkingSchemeStore((s) => s);
+
+  const updateTabPosition = useCallback(
+    (flagIdx: number | undefined, submissionIdx: number | undefined) => {
+      const flagTitle =
+        flagIdx !== undefined ? flags[flagIdx].title : undefined;
+
+      const submissionTitle =
+        flagIdx !== undefined && submissionIdx !== undefined
+          ? flags[flagIdx].submissions[submissionIdx].title
+          : undefined;
+
+      setTabPosition(flagIdx, submissionIdx);
+      updateQueryParams(flagTitle, submissionTitle);
+    },
+    [flags, updateQueryParams],
+  );
+
+  return { selectedFlagIndex, selectedSubmissionIndex, updateTabPosition };
 }

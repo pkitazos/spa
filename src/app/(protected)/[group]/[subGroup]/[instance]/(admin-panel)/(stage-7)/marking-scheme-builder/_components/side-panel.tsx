@@ -38,59 +38,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { useMarkingSchemeStore } from "./state";
-import { useUpdateQueryParams } from "./use-update-query-params";
+import {
+  useTabPosition,
+  useUpdateQueryParams,
+} from "./use-update-query-params";
+import { useState } from "react";
+import { Classification } from "./state/store";
 
 export function SidePanel() {
   const updateQueryParams = useUpdateQueryParams();
-
-  const {
-    flags,
-    selectedFlagIndex,
-    selectedSubmissionIndex,
-    setTabPosition,
-    createFlag,
-    deleteFlag,
-    createSubmission,
-    deleteSubmission,
-  } = useMarkingSchemeStore((s) => s);
-
-  function handleTabChange(flagIdx: number, submissionIdx?: number) {
-    const flag = flags[flagIdx];
-
-    if (submissionIdx === undefined) {
-      setTabPosition(flagIdx, undefined);
-
-      updateQueryParams(flag.title, undefined);
-      return;
-    }
-
-    setTabPosition(flagIdx, submissionIdx);
-
-    updateQueryParams(flag.title, flag.submissions[submissionIdx].title);
-  }
-
-  function handleRemoveFlag(flagIdx: number) {
-    deleteFlag(flagIdx);
-    if (selectedFlagIndex === flagIdx) {
-      setTabPosition(undefined, undefined);
-
-      updateQueryParams(undefined, undefined);
-    }
-    toast.success("Flag removed");
-  }
-
-  function handleRemoveSubmission(flagIdx: number, submissionIdx: number) {
-    deleteSubmission(flagIdx, submissionIdx);
-    if (
-      selectedFlagIndex === flagIdx &&
-      selectedSubmissionIndex === submissionIdx
-    ) {
-      setTabPosition(flagIdx, undefined);
-
-      updateQueryParams(flags[flagIdx].title, undefined);
-    }
-    toast.success("Submission removed");
-  }
+  const { flags, createFlag, setTabPosition } = useMarkingSchemeStore((s) => s);
 
   function handleNewFlag() {
     const newFlag = {
@@ -100,29 +57,10 @@ export function SidePanel() {
 
     createFlag(newFlag);
     setTabPosition(flags.length, undefined);
-
     updateQueryParams(newFlag.title, undefined);
     toast.success("New flag created");
   }
 
-  function handleNewSubmission(flagIdx: number) {
-    const flag = flags[flagIdx];
-
-    const newSubmission = {
-      title: `New Submission ${flag.submissions.length + 1}`,
-      components: { SUPERVISOR: [], READER: [] },
-      studentSubmissionDeadline: new Date(),
-      markerSubmissionDeadline: addWeeks(new Date(), 3),
-    };
-
-    createSubmission(flagIdx, newSubmission);
-    setTabPosition(flagIdx, flag.submissions.length);
-
-    updateQueryParams(flag.title, newSubmission.title);
-    toast.success(`Submission created for ${flag.title}`);
-  }
-
-  // base          "bg-slate-300/30";
   // selected      "bg-slate-300/60";
   // hover         "bg-slate-300/80";
   // action hover  "bg-slate-400/20";
@@ -137,88 +75,154 @@ export function SidePanel() {
       </SidebarHeader>
       <SidebarContent className="flex flex-col gap-4 px-2">
         {flags.map((flag, flagIdx) => (
-          <Collapsible
-            key={`${flag.title}_${flagIdx}`}
-            className="group/collapsible"
-          >
-            <SidebarGroup className="p-0">
-              <SidebarMenuItem
-                className={cn(
-                  buttonVariants({ variant: "ghost" }),
-                  "flex h-10 w-full items-center justify-between gap-1 bg-slate-300/30 px-1.5 hover:bg-slate-300/80",
-                  selectedFlagIndex === flagIdx &&
-                    !selectedSubmissionIndex &&
-                    selectedSubmissionIndex !== 0 &&
-                    "bg-slate-300/60",
-                )}
-              >
-                <CollapsibleTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7 flex-none hover:bg-slate-400/20"
-                  >
-                    <ChevronDown className="h-4 w-4 -rotate-90 transition-transform group-data-[state=open]/collapsible:rotate-0" />
-                  </Button>
-                </CollapsibleTrigger>
-                <button
-                  className="flex h-full w-full items-center justify-start text-sm"
-                  onClick={() => handleTabChange(flagIdx)}
-                >
-                  {flag.title}
-                </button>
-                <FlagMenuIcon
-                  flagIdx={flagIdx}
-                  removalHandler={handleRemoveFlag}
-                />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7 flex-none hover:bg-slate-400/20"
-                  onClick={() => handleNewSubmission(flagIdx)}
-                  // ? any way to make this onClick also toggle the collapsible?
-                >
-                  <PlusIcon className="h-4 w-4" />
-                </Button>
-              </SidebarMenuItem>
-              <CollapsibleContent>
-                <SidebarGroupContent>
-                  <SidebarMenu className="flex flex-col gap-1.5">
-                    {flag.submissions.map((submission, submissionIdx) => (
-                      <SidebarMenuItem
-                        key={`${flag.title}_${flagIdx}_${submission.title}_${submissionIdx}`}
-                        className={cn(
-                          buttonVariants({ variant: "ghost" }),
-                          "flex w-full items-center justify-between gap-2 bg-slate-300/30 pl-14 pr-1.5 hover:bg-slate-300/80",
-                          submissionIdx === 0 && "mt-1.5",
-                          selectedFlagIndex === flagIdx &&
-                            selectedSubmissionIndex === submissionIdx &&
-                            "bg-slate-300/60",
-                        )}
-                      >
-                        <button
-                          className="flex h-full w-full items-center justify-start text-sm"
-                          onClick={() =>
-                            handleTabChange(flagIdx, submissionIdx)
-                          }
-                        >
-                          {submission.title}
-                        </button>
-                        <SubmissionMenuIcon
-                          flagIdx={flagIdx}
-                          submissionIdx={submissionIdx}
-                          removalHandler={handleRemoveSubmission}
-                        />
-                      </SidebarMenuItem>
-                    ))}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </CollapsibleContent>
-            </SidebarGroup>
-          </Collapsible>
+          <CollapsibleClassificationTab flag={flag} flagIdx={flagIdx} />
         ))}
       </SidebarContent>
     </Sidebar>
+  );
+}
+
+function CollapsibleClassificationTab({
+  flag,
+  flagIdx,
+}: {
+  flag: Classification;
+  flagIdx: number;
+}) {
+  const updateQueryParams = useUpdateQueryParams();
+  const { selectedFlagIndex, selectedSubmissionIndex, updateTabPosition } =
+    useTabPosition();
+  const {
+    flags,
+    deleteFlag,
+    createSubmission,
+    deleteSubmission,
+    setTabPosition,
+  } = useMarkingSchemeStore((s) => s);
+
+  const [open, setOpen] = useState<boolean | undefined>(undefined);
+
+  function handleRemoveFlag(flagIdx: number) {
+    deleteFlag(flagIdx);
+    if (selectedFlagIndex === flagIdx) {
+      updateTabPosition(undefined, undefined);
+    } else if (selectedFlagIndex !== undefined && selectedFlagIndex > flagIdx) {
+      updateTabPosition(selectedFlagIndex - 1, undefined);
+    }
+    toast.success("Flag removed");
+  }
+
+  function handleRemoveSubmission(flagIdx: number, submissionIdx: number) {
+    deleteSubmission(flagIdx, submissionIdx);
+    if (selectedFlagIndex !== flagIdx) {
+      toast.success("Submission removed");
+      return;
+    }
+
+    if (selectedSubmissionIndex === submissionIdx) {
+      updateTabPosition(flagIdx, undefined);
+    } else if (
+      selectedSubmissionIndex !== undefined &&
+      selectedSubmissionIndex > submissionIdx
+    ) {
+      updateTabPosition(flagIdx, selectedSubmissionIndex - 1);
+    }
+    toast.success("Submission removed");
+  }
+
+  function handleNewSubmission(flagIdx: number) {
+    const flag = flags[flagIdx];
+
+    const newSubmission = {
+      title: `New Submission ${flag.submissions.length + 1}`,
+      components: { SUPERVISOR: [], READER: [] },
+      studentSubmissionDeadline: new Date(),
+      markerSubmissionDeadline: addWeeks(new Date(), 3),
+    };
+
+    createSubmission(flagIdx, newSubmission);
+    setTabPosition(flagIdx, flag.submissions.length);
+    updateQueryParams(flag.title, newSubmission.title);
+
+    toast.success(`Submission created for ${flag.title}`);
+  }
+
+  return (
+    <Collapsible
+      key={`${flag.title}_${flagIdx}`}
+      className="group/collapsible"
+      open={open}
+    >
+      <SidebarGroup className="p-0">
+        <SidebarMenuItem
+          className={cn(
+            "flex w-full items-center justify-between gap-1 rounded-md px-1.5 py-1.5 hover:bg-slate-300/80",
+            selectedFlagIndex === flagIdx &&
+              selectedSubmissionIndex === undefined &&
+              "bg-slate-300/60",
+          )}
+        >
+          <CollapsibleTrigger asChild>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-6 w-6 flex-none hover:bg-slate-400/20"
+              onClick={() => setOpen(undefined)}
+            >
+              <ChevronDown className="h-4 w-4 -rotate-90 transition-transform group-data-[state=open]/collapsible:rotate-0" />
+            </Button>
+          </CollapsibleTrigger>
+          <button
+            className="flex h-full w-full items-center justify-start text-sm font-medium"
+            onClick={() => updateTabPosition(flagIdx, undefined)}
+          >
+            {flag.title}
+          </button>
+          <FlagMenuIcon flagIdx={flagIdx} removalHandler={handleRemoveFlag} />
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-6 w-6 flex-none hover:bg-slate-400/20"
+            onClick={() => {
+              handleNewSubmission(flagIdx);
+              setOpen(true);
+            }}
+          >
+            <PlusIcon className="h-4 w-4" />
+          </Button>
+        </SidebarMenuItem>
+        <CollapsibleContent>
+          <SidebarGroupContent>
+            <SidebarMenu className="flex flex-col gap-1.5">
+              {flag.submissions.map((submission, submissionIdx) => (
+                <SidebarMenuItem
+                  key={`${flag.title}_${flagIdx}_${submission.title}_${submissionIdx}`}
+                  className={cn(
+                    "flex w-full items-center justify-between gap-2 rounded-md py-1.5 pl-14 pr-[2.125rem] hover:bg-slate-300/80",
+                    submissionIdx === 0 && "mt-1.5",
+                    selectedFlagIndex === flagIdx &&
+                      selectedSubmissionIndex === submissionIdx &&
+                      "bg-slate-300/60",
+                  )}
+                >
+                  <button
+                    className="flex h-full w-full items-center justify-start text-sm font-medium"
+                    onClick={() => updateTabPosition(flagIdx, submissionIdx)}
+                  >
+                    {submission.title}
+                  </button>
+                  <SubmissionMenuIcon
+                    flagIdx={flagIdx}
+                    submissionIdx={submissionIdx}
+                    removalHandler={handleRemoveSubmission}
+                  />
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </CollapsibleContent>
+      </SidebarGroup>
+    </Collapsible>
   );
 }
 
@@ -239,7 +243,7 @@ function ContextualMenuIcon({
         <Button
           size="icon"
           variant="ghost"
-          className="h-7 w-7 flex-none hover:bg-slate-400/20"
+          className="h-6 w-6 flex-none hover:bg-slate-400/20"
         >
           <MoreHorizontalIcon className="h-4 w-4" />
         </Button>
@@ -247,12 +251,6 @@ function ContextualMenuIcon({
       <DropdownMenuContent align="start">
         <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <button className="flex items-center gap-2 text-sm">
-            <PenIcon className="h-4 w-4" />
-            <span>Rename</span>
-          </button>
-        </DropdownMenuItem>
         <DropdownMenuItem className="bg-background text-destructive focus:bg-red-100/40 focus:text-destructive">
           <button
             className="flex items-center gap-2 text-sm"
