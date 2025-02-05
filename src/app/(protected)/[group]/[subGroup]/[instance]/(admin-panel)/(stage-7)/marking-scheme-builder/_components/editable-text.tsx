@@ -1,5 +1,4 @@
 "use client";
-import { Check, Pen } from "lucide-react";
 import React, {
   useCallback,
   useEffect,
@@ -7,9 +6,12 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { Check, Pen } from "lucide-react";
 
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
+
 import { cn } from "@/lib/utils";
+
 import { useMarkingSchemeStore } from "./state";
 import { useUpdateQueryParams } from "./use-update-query-params";
 
@@ -17,7 +19,7 @@ type EditableTextProps = {
   initialValue: string;
   onSave: (value: string) => void;
   className?: string;
-  component?: keyof JSX.IntrinsicElements | React.ComponentType<any>;
+  component?: keyof JSX.IntrinsicElements;
   inputClassName?: string;
 };
 
@@ -106,7 +108,7 @@ export function EditableText({
 
 export function EditableFlag(props: {
   className?: string;
-  component?: keyof JSX.IntrinsicElements | React.ComponentType<any>;
+  component?: keyof JSX.IntrinsicElements;
   inputClassName?: string;
 }) {
   const updateQueryParams = useUpdateQueryParams();
@@ -127,7 +129,7 @@ export function EditableFlag(props: {
       updateFlag(flagIdx, newFlag);
       updateQueryParams(value, undefined);
     },
-    [flagIdx, flag, updateQueryParams],
+    [flagIdx, flag, updateFlag, updateQueryParams],
   );
 
   return (
@@ -141,7 +143,7 @@ export function EditableFlag(props: {
 
 export function EditableSubmission(props: {
   className?: string;
-  component?: keyof JSX.IntrinsicElements | React.ComponentType<any>;
+  component?: keyof JSX.IntrinsicElements;
   inputClassName?: string;
 }) {
   const updateQueryParams = useUpdateQueryParams();
