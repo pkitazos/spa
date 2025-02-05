@@ -11,16 +11,10 @@ export function CentrePanel() {
   const { flags, selectedFlagIndex, selectedSubmissionIndex } =
     useMarkingSchemeStore((s) => s);
 
-  useEffect(() => {
-    console.log("flag:", selectedFlagIndex, flags[selectedFlagIndex ?? -1]);
-    console.log("sub:", selectedSubmissionIndex);
-  });
-
   if (
     selectedFlagIndex === undefined &&
     selectedSubmissionIndex === undefined
   ) {
-    console.log("hello from a");
     return (
       <div className="flex h-full w-full flex-col items-center justify-center">
         <h2 className="text-3xl text-sky-500">AAAAAAAAAA!!</h2>
@@ -34,7 +28,6 @@ export function CentrePanel() {
     selectedSubmissionIndex === undefined
   ) {
     const selectedFlag = flags[selectedFlagIndex];
-    console.log("hello from b");
 
     return (
       <div className="flex w-full flex-col items-center justify-start gap-10 px-10 pt-10">
@@ -122,8 +115,6 @@ export function CentrePanel() {
       </div>
     );
   }
-
-  console.log("hello from hell");
 }
 
 function insertOrReplace<T>(arr: T[], element: T, index: number): T[] {
