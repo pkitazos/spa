@@ -1,5 +1,6 @@
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
 import { useMarkingSchemeStore } from "./state";
 
 export function useUpdateQueryParams() {
@@ -42,7 +43,7 @@ export function useTabPosition() {
       setTabPosition(flagIdx, submissionIdx);
       updateQueryParams(flagTitle, submissionTitle);
     },
-    [flags, updateQueryParams],
+    [flags, setTabPosition, updateQueryParams],
   );
 
   return { selectedFlagIndex, selectedSubmissionIndex, updateTabPosition };
