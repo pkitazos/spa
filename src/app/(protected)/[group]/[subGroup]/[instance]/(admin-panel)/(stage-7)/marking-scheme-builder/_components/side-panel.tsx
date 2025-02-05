@@ -309,9 +309,6 @@ function SubmissionMenuIcon({
   );
 }
 
-function deleteSubmission(flagIdx: number, submissionIdx: number) {
-  throw new Error("Function not implemented.");
-}
 // const createQueryString = useCallback(
 //   (name: string, value: string) => {
 //     const params = new URLSearchParams(searchParams.toString());
