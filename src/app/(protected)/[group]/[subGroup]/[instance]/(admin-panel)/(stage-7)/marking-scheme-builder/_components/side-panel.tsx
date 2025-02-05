@@ -58,6 +58,11 @@ export function SidePanel() {
     toast.success("New flag created");
   }
 
+  // base          "bg-slate-300/30";
+  // selected      "bg-slate-300/60";
+  // hover         "bg-slate-300/80";
+  // action hover  "bg-slate-400/20";
+
   return (
     <Sidebar
       className="w-[17rem] flex-none bg-background pt-6"
