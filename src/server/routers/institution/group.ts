@@ -1,16 +1,15 @@
-/* eslint-disable simple-import-sort/imports */
 import { TRPCClientError } from "@trpc/client";
 import { z } from "zod";
 
 import { newAdminSchema } from "@/lib/validations/add-admins/new-admin";
 import { groupParamsSchema } from "@/lib/validations/params";
 
-import { AllocationSubGroup } from "@/data-objects/spaces/subgroup";
-import { groupDtoSchema, subGroupDtoSchema, userDtoSchema } from "@/dto";
 import { procedure } from "@/server/middleware";
 import { adminProcedure, createTRPCRouter } from "@/server/trpc";
 import { isGroupAdmin } from "@/server/utils/admin/is-group-admin";
 import { validateEmailGUIDMatch } from "@/server/utils/id-email-check";
+
+import { groupDtoSchema, subGroupDtoSchema, userDtoSchema } from "@/dto";
 
 export const groupRouter = createTRPCRouter({
   exists: procedure.group.user
@@ -22,8 +21,8 @@ export const groupRouter = createTRPCRouter({
     .query(async ({ ctx: { group } }) => await group.get()),
 
   /**
-   * TODO move
    * returns true if the current user can access the specified group?
+   * TODO move
    */
   access: procedure.group.user
     .output(z.boolean())
@@ -52,8 +51,8 @@ export const groupRouter = createTRPCRouter({
   createSubGroup: procedure.group.groupAdmin
     .input(z.object({ name: z.string() }))
     .output(subGroupDtoSchema)
-    .mutation(async ({ ctx: { group, dal }, input: { name } }) =>
-      AllocationSubGroup.create(dal, group.params, name),
+    .mutation(async ({ ctx: { group }, input: { name } }) =>
+      group.createSubGroup(name),
     ),
 
   deleteSubGroup: procedure.subgroup.groupAdmin

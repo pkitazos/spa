@@ -82,6 +82,9 @@ export const preferenceRouter = createTRPCRouter({
       );
     }),
 
+  // ? weird name... what's the difference between this and "update"?
+  // Not immediately clear
+  // From what I can tell, this is a updateById vs updateCurrentUser
   makeUpdate: procedure.instance.user
     .input(
       z.object({
@@ -145,6 +148,8 @@ export const preferenceRouter = createTRPCRouter({
       },
     ),
 
+  // ? Yet a third name for an update method; this one is updateMany i think
+  // Imagine seeing these three in an autocomplete list and being asked what the difference is
   updateSelected: procedure.instance.student
     .input(
       z.object({
@@ -307,6 +312,7 @@ export const preferenceRouter = createTRPCRouter({
       },
     ),
 
+  // change rather than update? change what
   changeSelected: procedure.instance.subgroupAdmin
     .input(
       z.object({

@@ -193,7 +193,7 @@ export class User extends DataObject {
 
   public async getInstances() {
     if (await this.isSuperAdmin()) {
-      const instances = await Institution.getAllInstances(this.dal);
+      const instances = await new Institution(this.dal).getAllInstances();
       return AllocationInstance.toQualifiedPaths(this.dal, instances);
     }
 

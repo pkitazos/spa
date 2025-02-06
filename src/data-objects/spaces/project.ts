@@ -19,9 +19,8 @@ export class Project extends DataObject {
     this.params = params;
   }
 
-  public exists() {
-    // todo
-    return true;
+  public async exists() {
+    return await this.dal.project.exists(this.params);
   }
 
   get group() {

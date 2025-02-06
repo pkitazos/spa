@@ -8,7 +8,19 @@ export class Institution extends DataObject {
     super(dal);
   }
 
-  static getAllInstances(dal: DAL): Promise<InstanceDTO[]> {
-    return dal.instance.getAll();
+  public async createGroup(groupName: string) {
+    return await this.dal.group.create(groupName);
+  }
+
+  public async getAllInstances(): Promise<InstanceDTO[]> {
+    return await this.dal.instance.getAll();
+  }
+
+  public async getAllSuperAdmins() {
+    return await this.dal.superAdmin.getAll();
+  }
+
+  public async getAllGroups() {
+    return await this.dal.group.getAll();
   }
 }

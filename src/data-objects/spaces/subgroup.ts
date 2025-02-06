@@ -1,10 +1,12 @@
-import { GroupParams, SubGroupParams } from "@/lib/validations/params";
+import { ValidatedInstanceDetails } from "@/lib/validations/instance-form";
+import { SubGroupParams } from "@/lib/validations/params";
 
 import { DataObject } from "../data-object";
 
 import { AllocationGroup } from "./group";
 
 import { DAL } from "@/data-access";
+import { UserDTO } from "@/dto";
 
 export class AllocationSubGroup extends DataObject {
   public params: SubGroupParams;
@@ -15,8 +17,8 @@ export class AllocationSubGroup extends DataObject {
     this.params = params;
   }
 
-  static async create(dal: DAL, params: GroupParams, name: string) {
-    return await dal.subGroup.create(params.group, name);
+  public async createInstance(newInstance: ValidatedInstanceDetails) {
+    return this.dal.instance.create(this.params, newInstance);
   }
 
   public async exists() {
@@ -25,6 +27,23 @@ export class AllocationSubGroup extends DataObject {
 
   public async get() {
     return await this.dal.subGroup.get(this.params);
+  }
+
+  public async getInstances() {
+    return await this.dal.subGroup.getInstances(this.params);
+  }
+
+  public async getAdmins(): Promise<UserDTO[]> {
+    return await this.dal.group.getAdmins(this.params);
+  }
+
+  public async getManagers(): Promise<UserDTO[]> {
+    const subGroupAdmins = await this.getAdmins();
+    const groupAdmins = await this.group.getAdmins();
+    const superAdmins = await this.dal.superAdmin.getAll();
+
+    // TODO distinct (nubs)
+    return [...subGroupAdmins, ...groupAdmins, ...superAdmins];
   }
 
   get group() {

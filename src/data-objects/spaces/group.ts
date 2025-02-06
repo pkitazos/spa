@@ -13,10 +13,6 @@ export class AllocationGroup extends DataObject {
     this.params = params;
   }
 
-  public static async create(dal: DAL, name: string) {
-    return await dal.group.create(name);
-  }
-
   public async addAdmin(userId: string) {
     // check if the user exists
     const exists = await this.dal.user.exists(userId);
@@ -28,6 +24,10 @@ export class AllocationGroup extends DataObject {
     return await this.dal.groupAdmin.create(userId, this.params);
     // if they don't exist - create them
     // add them as an admin
+  }
+
+  public async createSubGroup(name: string) {
+    return await this.dal.subGroup.create(this.params.group, name);
   }
 
   public async exists(): Promise<boolean> {
