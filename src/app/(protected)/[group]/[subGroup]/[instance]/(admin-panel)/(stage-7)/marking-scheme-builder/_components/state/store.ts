@@ -109,25 +109,32 @@ export function createMarkingSchemeStore(initState: State) {
             components: {
               SUPERVISOR: [
                 {
-                  description: "",
                   id: "1",
-                  name: "Supervisor",
-                  rank: 1,
-                  weight: 1,
+                  name: "1. Professional Conduct",
+                  description: "",
+                  rank: 1000,
+                  weight: 20,
                 },
                 {
-                  description: "",
                   id: "2",
-                  name: "hello2",
-                  rank: 2,
-                  weight: 1,
+                  name: "2. Problem Statement",
+                  description: "",
+                  rank: 2000,
+                  weight: 20,
                 },
                 {
+                  id: "3",
+                  name: "3. Literature Survey",
                   description: "",
-                  id: "2",
-                  name: "hello3",
-                  rank: 3,
-                  weight: 1,
+                  rank: 3000,
+                  weight: 40,
+                },
+                {
+                  id: "4",
+                  name: "4. Evaluation",
+                  description: "",
+                  rank: 4000,
+                  weight: 20,
                 },
               ],
               READER: [],
@@ -161,15 +168,15 @@ export function createMarkingSchemeStore(initState: State) {
         criterionId,
         criterion,
       ) =>
-        set((state) => {
-          const component =
-            state.flags[flagIndex].submissions[submissionIndex].components[
+        set((s) => {
+          const criteria =
+            s.flags[flagIndex].submissions[submissionIndex].components[
               markerType
             ];
 
-          const criterionIdx = component.findIndex((c) => c.id === criterionId);
-          component[criterionIdx] = criterion;
-          component.sort(sortByRank);
+          const criterionIdx = criteria.findIndex((c) => c.id === criterionId);
+          criteria[criterionIdx] = criterion;
+          criteria.sort(sortByRank);
         }),
 
       deleteCriterion: (flagIndex, submissionIndex, markerType, criterionId) =>

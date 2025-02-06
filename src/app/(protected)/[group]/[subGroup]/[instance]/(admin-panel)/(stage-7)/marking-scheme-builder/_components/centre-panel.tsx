@@ -7,6 +7,7 @@ import { EditableFlag, EditableSubmission } from "./editable-text";
 import { useMarkingSchemeStore } from "./state";
 import { useEffect } from "react";
 import { SortableForm } from "./sortable";
+import { DeadlinesSection } from "./deadlines-section";
 
 export function CentrePanel() {
   const { flags, selectedFlagIndex, selectedSubmissionIndex } =
@@ -18,8 +19,7 @@ export function CentrePanel() {
   ) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center">
-        <h2 className="text-3xl text-sky-500">AAAAAAAAAA!!</h2>
-        Select a flag or create a new one
+        Click the plus button in the sidebar to create a new flag
       </div>
     );
   }
@@ -51,30 +51,19 @@ export function CentrePanel() {
     selectedSubmissionIndex !== undefined &&
     selectedFlagIndex !== undefined
   ) {
-    console.log("hello from c");
     const selectedFlag = flags[selectedFlagIndex];
     const selectedSubmission =
       selectedFlag.submissions[selectedSubmissionIndex];
 
     return (
       <div className="flex w-full flex-col items-center justify-start gap-10 px-10 pt-10">
-        <div className="flex w-full flex-col items-start justify-center gap-7">
+        <div className="flex w-full flex-col items-start justify-center gap-10">
           <SubHeading>{selectedFlag.title}</SubHeading>
           <EditableSubmission
             component="h3"
             className="h-7 text-2xl font-medium leading-none tracking-tight"
           />
-
-          <div className="flex flex-col gap-2">
-            <p>
-              Student Submission Deadline:{" "}
-              {selectedSubmission.studentSubmissionDeadline.toLocaleDateString()}
-            </p>
-            <p>
-              Marker Submission Deadline:{" "}
-              {selectedSubmission.studentSubmissionDeadline.toLocaleDateString()}
-            </p>
-          </div>
+          <DeadlinesSection defaultDates={selectedSubmission} />
         </div>
 
         <Tabs defaultValue={MarkerType.SUPERVISOR} className="w-full">
@@ -87,33 +76,13 @@ export function CentrePanel() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value={MarkerType.SUPERVISOR}>
-            <SortableForm activeMarkerType={"SUPERVISOR"} />
+            <SortableForm activeMarkerType={MarkerType.SUPERVISOR} />
           </TabsContent>
           <TabsContent value={MarkerType.READER}>
-            <p>
-              {selectedSubmission.components.READER.length > 0
-                ? selectedSubmission.components.READER.map((component, i) => (
-                    <div key={i}>
-                      <p>{component.name}</p>
-                      <p>{component.description}</p>
-                    </div>
-                  ))
-                : "No components provided"}
-            </p>
+            <SortableForm activeMarkerType={MarkerType.READER} />
           </TabsContent>
         </Tabs>
       </div>
     );
   }
-}
-
-function insertOrReplace<T>(arr: T[], element: T, index: number): T[] {
-  if (index < 0) throw new Error("Index can't be negative");
-
-  const newArr = [...arr];
-
-  if (index >= newArr.length) newArr.push(element);
-  else newArr[index] = element;
-
-  return newArr;
 }

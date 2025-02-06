@@ -61,21 +61,25 @@ export function SidePanel() {
     toast.success("New flag created");
   }
 
-  // selected      "bg-slate-300/60";
-  // hover         "bg-slate-300/80";
-  // action hover  "bg-slate-400/20";
-
   return (
     <Sidebar className="w-[17rem] flex-none pt-6" collapsible="none">
       <SidebarHeader className="mb-5 flex flex-row items-center justify-between px-2">
-        <Input placeholder="Search flags" className="w-full" />
-        <Button className="flex-none" onClick={handleNewFlag} size="icon">
+        <Button
+          variant="outline"
+          className="flex w-full items-center gap-2"
+          onClick={handleNewFlag}
+        >
           <PlusIcon className="h-4 w-4" />
+          <span>New Flag</span>
         </Button>
       </SidebarHeader>
       <SidebarContent className="flex flex-col gap-4 px-2">
         {flags.map((flag, flagIdx) => (
-          <CollapsibleClassificationTab flag={flag} flagIdx={flagIdx} />
+          <CollapsibleClassificationTab
+            key={`${flag.title}_${flagIdx}`}
+            flag={flag}
+            flagIdx={flagIdx}
+          />
         ))}
       </SidebarContent>
     </Sidebar>
@@ -299,16 +303,3 @@ function SubmissionMenuIcon({
     />
   );
 }
-
-function deleteSubmission(flagIdx: number, submissionIdx: number) {
-  throw new Error("Function not implemented.");
-}
-// const createQueryString = useCallback(
-//   (name: string, value: string) => {
-//     const params = new URLSearchParams(searchParams.toString());
-//     params.set(name, value);
-
-//     return params.toString();
-//   },
-//   [searchParams],
-// );
