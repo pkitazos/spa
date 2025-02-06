@@ -53,7 +53,11 @@ export function SortableForm({
     [flags, selectedFlagIndex, selectedSubmissionIndex, activeMarkerType],
   );
 
-  console.log(assessmentCriteria);
+  const itemIds = useMemo(
+    () => assessmentCriteria.map((e) => e.id),
+    [assessmentCriteria],
+  );
+
   return (
     <DndContext
       sensors={sensors}
@@ -61,16 +65,11 @@ export function SortableForm({
       onDragEnd={onDragEnd}
     >
       <div className="flex h-full w-full flex-col gap-5">
-        <div>Hello</div>
-        <SortableContext
-          strategy={verticalListSortingStrategy}
-          items={assessmentCriteria.map((e) => e.id)}
-        >
-          {assessmentCriteria.map((e, i) => (
+        <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
+          {assessmentCriteria.map((e) => (
             <AssessmentCriterionCard key={e.id} item={e} />
           ))}
         </SortableContext>
-
         {createPortal(
           <DragOverlay>
             {activeCard && <AssessmentCriterionCard item={activeCard} />}
@@ -82,9 +81,8 @@ export function SortableForm({
   );
 
   function onDragStart({ active }: DragStartEvent) {
-    console.log("this is on");
     if (active.data.current) {
-      setActiveCard(active.data.current as any);
+      setActiveCard(active.data.current?.item as AssessmentCriterion);
     }
   }
 
@@ -93,19 +91,31 @@ export function SortableForm({
       selectedFlagIndex === undefined ||
       selectedSubmissionIndex === undefined
     ) {
-      throw new Error("TGC");
+      throw new Error("How are you even here?");
     }
 
     if (!over) return;
-    console.log("over is", over);
 
-    // if the active item is the same as the over item, it means the item is dropped
-    // over itself, so we can just return
     if (active.id === over.id) return;
 
-    console.log("active is", active);
-
+    const activeIdx = assessmentCriteria.findIndex((c) => c.id === active.id);
     const overIdx = assessmentCriteria.findIndex((c) => c.id === over.id);
+
+    console.log({
+      direction: activeIdx < overIdx ? "downward" : "upward",
+      activeIdx,
+      overIdx,
+      beforeArray: assessmentCriteria.map((c) => c.rank),
+    });
+
+    let adjustedArray = [...assessmentCriteria];
+    if (activeIdx < overIdx) {
+      // Remove the active item and shift everything up
+      adjustedArray = [
+        ...assessmentCriteria.slice(0, activeIdx),
+        ...assessmentCriteria.slice(activeIdx + 1),
+      ];
+    }
 
     updateCriterion(
       selectedFlagIndex,
@@ -113,8 +123,8 @@ export function SortableForm({
       activeMarkerType,
       active.id as string,
       {
-        ...(active.data as unknown as AssessmentCriterion),
-        rank: computeUpdatedRank(assessmentCriteria, overIdx),
+        ...(active.data.current?.item as unknown as AssessmentCriterion),
+        rank: computeUpdatedRank(adjustedArray, overIdx),
       },
     );
 
