@@ -45,6 +45,7 @@ import { updateManyPreferenceTransaction } from "@/server/routers/user/student/_
 import { updatePreferenceTransaction } from "@/server/routers/user/student/_utils/update-preference";
 import { InstanceDisplayData } from "@/dto";
 import { SupervisorDTO } from "@/dto/supervisor";
+import { ValidatedInstanceDetails } from "@/lib/validations/instance-form";
 
 export class DAL {
   db: DB;
@@ -142,6 +143,27 @@ export class DAL {
         })
         .then(allocationSubGroupToDTO),
 
+    getInstances: async (params: SubGroupParams): Promise<InstanceDTO[]> =>
+      await this.db.allocationInstance
+        .findMany({
+          where: {
+            allocationGroupId: params.group,
+            allocationSubGroupId: params.subGroup,
+          },
+        })
+        .then((data) => data.map(allocationInstanceToDTO)),
+
+    getAdmins: async (params: SubGroupParams): Promise<UserDTO[]> =>
+      this.db.subGroupAdmin
+        .findMany({
+          where: {
+            allocationGroupId: params.group,
+            allocationSubGroupId: params.subGroup,
+          },
+          select: { user: true },
+        })
+        .then((data) => data.map((x) => x.user)),
+
     delete: async ({ group, subGroup }: SubGroupParams): Promise<SubGroupDTO> =>
       await this.db.allocationSubGroup
         .delete({
@@ -156,6 +178,68 @@ export class DAL {
   };
 
   public instance = {
+    // TODO unfuck
+    create: async (
+      { group, subGroup }: SubGroupParams,
+      {
+        instanceName,
+        minPreferences,
+        maxPreferences,
+        maxPreferencesPerSupervisor,
+        preferenceSubmissionDeadline,
+        projectSubmissionDeadline,
+        flags,
+        tags,
+      }: ValidatedInstanceDetails,
+    ) => {
+      const instance = slugify(instanceName);
+
+      await this.db.$transaction(async (tx) => {
+        await tx.allocationInstance.create({
+          data: {
+            allocationGroupId: group,
+            allocationSubGroupId: subGroup,
+            id: instance,
+            displayName: instanceName,
+            minPreferences,
+            maxPreferences,
+            maxPreferencesPerSupervisor,
+            preferenceSubmissionDeadline,
+            projectSubmissionDeadline,
+            tags: { createMany: { data } },
+          },
+        });
+
+        await tx.flag.createMany({
+          data: flags.map(({ title }) => ({
+            title,
+            allocationGroupId: group,
+            allocationSubGroupId: subGroup,
+            allocationInstanceId: instance,
+          })),
+        });
+
+        await tx.tag.createMany({
+          data: tags.map(({ title }) => ({
+            title,
+            allocationGroupId: group,
+            allocationSubGroupId: subGroup,
+            allocationInstanceId: instance,
+          })),
+        });
+
+        await tx.algorithm.createMany({
+          data: builtInAlgorithms.map((a) => ({
+            ...a,
+            allocationGroupId: group,
+            allocationSubGroupId: subGroup,
+            allocationInstanceId: instance,
+            matchingResultData: JSON.stringify({}),
+          })),
+        });
+      });
+    },
+
     exists: async (params: InstanceParams): Promise<boolean> =>
       !!(await this.db.allocationInstance.findFirst({ where: expand(params) })),
 
@@ -237,6 +321,24 @@ export class DAL {
       });
       return access;
     },
+
+    delete: async (params: InstanceParams) =>
+      await this.db.allocationInstance.delete({
+        where: {
+          instanceId: {
+            id: params.instance,
+            allocationSubGroupId: params.subGroup,
+            allocationGroupId: params.group,
+          },
+        },
+      }),
+  };
+
+  public project = {
+    exists: async (params: ProjectParams) =>
+      !!(await this.db.projectInInstance.findFirst({
+        where: { projectId: params.projectId, ...expand(params) },
+      })),
   };
 
   public user = {

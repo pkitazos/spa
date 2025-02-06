@@ -134,6 +134,9 @@ export const supervisorRouter = createTRPCRouter({
       };
     }),
 
+  // TODO kill this?
+  // use supervisor.getProjects on the client
+  // run it through format rows on that side?
   rowProjects: procedure.instance.supervisor
     .output(
       z.array(

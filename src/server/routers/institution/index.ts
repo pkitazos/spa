@@ -7,7 +7,6 @@ import { groupRouter } from "./group";
 import { instanceRouter } from "./instance";
 import { subGroupRouter } from "./sub-group";
 
-import { AllocationGroup } from "@/data-objects/spaces/group";
 import { groupDtoSchema, userDtoSchema } from "@/dto";
 
 export const institutionRouter = createTRPCRouter({
@@ -21,25 +20,29 @@ export const institutionRouter = createTRPCRouter({
 
   superAdmins: procedure.superAdmin
     .output(z.array(userDtoSchema))
-    .query(async ({ ctx: { dal } }) => await dal.superAdmin.getAll()),
+    .query(
+      async ({ ctx: { institution } }) => await institution.getAllSuperAdmins(),
+    ),
 
   groups: procedure.superAdmin
     .output(z.array(groupDtoSchema))
-    .query(async ({ ctx: { dal } }) => await dal.group.getAll()),
+    .query(
+      async ({ ctx: { institution } }) => await institution.getAllGroups(),
+    ),
 
   takenGroupNames: procedure.superAdmin
     .output(z.set(z.string()))
     .query(
-      async ({ ctx: { dal } }) =>
-        new Set((await dal.group.getAll()).map((x) => x.displayName)),
+      async ({ ctx: { institution } }) =>
+        new Set((await institution.getAllGroups()).map((x) => x.displayName)),
     ),
 
   createGroup: procedure.superAdmin
     .input(z.object({ groupName: z.string() }))
     .output(groupDtoSchema)
     .mutation(
-      async ({ ctx: { dal }, input: { groupName } }) =>
-        await AllocationGroup.create(dal, groupName),
+      async ({ ctx: { institution }, input: { groupName } }) =>
+        await institution.createGroup(groupName),
     ),
 
   deleteGroup: procedure.group.superAdmin

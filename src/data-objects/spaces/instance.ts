@@ -131,4 +131,8 @@ export class AllocationInstance extends DataObject {
   public async deleteSupervisors(supervisorIds: string[]): Promise<void> {
     return await this.dal.supervisor.deleteMany(supervisorIds, this.params);
   }
+
+  public async delete() {
+    await this.dal.instance.delete(this.params);
+  }
 }

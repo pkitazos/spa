@@ -209,6 +209,7 @@ export const studentRouter = createTRPCRouter({
       await instance.deleteStudent(studentId);
     }),
 
+  // TODO naming inconsistency (see supervisor deleteMany)
   deleteSelected: procedure.instance.subgroupAdmin
     .input(z.object({ studentIds: z.array(z.string()) }))
     .mutation(async ({ ctx: { instance }, input: { studentIds } }) => {

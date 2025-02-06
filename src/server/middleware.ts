@@ -12,6 +12,7 @@ import { t } from "./trpc";
 
 import { AllocationGroup } from "@/data-objects/spaces/group";
 import { AllocationInstance } from "@/data-objects/spaces/instance";
+import { Institution } from "@/data-objects/spaces/institution";
 import { Project } from "@/data-objects/spaces/project";
 import { AllocationSubGroup } from "@/data-objects/spaces/subgroup";
 import { User } from "@/data-objects/users/user";
@@ -21,6 +22,11 @@ import { User } from "@/data-objects/users/user";
 // First, I'm re-writing the space middlewares, as so:
 // Note that each type of space gets its own DTO, which you can find in:
 //      `data-objects/spaces`
+
+const institutionMiddleware = t.middleware(async ({ ctx: { dal }, next }) => {
+  const institution = new Institution(dal);
+  return next({ ctx: { institution } });
+});
 
 /**
  * @requires a preceding `.input(z.object({ params: groupParamsSchema }))` or better
@@ -223,26 +229,34 @@ const projectReaderMiddleware = authedMiddleware.unstable_pipe(
 // now we can write the proper procedures:
 
 // Primitives (DO NOT EXPORT)
-const groupProcedure = t.procedure
+const institutionProcedure = t.procedure.use(institutionMiddleware);
+
+const groupProcedure = institutionProcedure
   .input(z.object({ params: groupParamsSchema }))
   .use(groupMiddleware);
 
-const subgroupProcedure = t.procedure
+const subgroupProcedure = institutionProcedure
   .input(z.object({ params: subGroupParamsSchema }))
+  .use(groupMiddleware)
   .use(subGroupMiddleware);
 
-const instanceProcedure = t.procedure
+const instanceProcedure = institutionProcedure
   .input(z.object({ params: instanceParamsSchema }))
+  .use(groupMiddleware)
+  .use(subGroupMiddleware)
   .use(instanceMiddleware);
 
-const projectProcedure = t.procedure
+const projectProcedure = institutionProcedure
   .input(z.object({ params: projectParamsSchema }))
+  .use(groupMiddleware)
+  .use(subGroupMiddleware)
+  .use(instanceMiddleware)
   .use(projectMiddleware);
 
 export const procedure = {
   // site wide procedures (i.e. not tied to a space)
-  user: t.procedure.use(authedMiddleware),
-  superAdmin: t.procedure.use(SuperAdminMiddleware),
+  user: institutionProcedure.use(authedMiddleware),
+  superAdmin: institutionProcedure.use(SuperAdminMiddleware),
 
   group: {
     user: groupProcedure.use(authedMiddleware),
@@ -292,13 +306,6 @@ procedure.subgroup.user;
 // You can't have a procedure in a group requiring subgroup perms,
 // So the line below errors:
 // procedure.group.subgroupAdmin;
-
-// What's left to do?
-
-// Theres more of the same for a few other things probably.
-// For example, I predict you will want a 'project procedure' and a corresponding 'project owner' permission level
-// You might also want "project reader" permission level
-// and perhaps a instance.student proc too.
 
 //  -------------------------------------------
 
