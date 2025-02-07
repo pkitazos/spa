@@ -2,14 +2,9 @@ import { AdminLevel } from "@prisma/client";
 import { TRPCClientError } from "@trpc/client";
 import { z } from "zod";
 
-import { slugify } from "@/lib/utils/general/slugify";
 import { newAdminSchema } from "@/lib/validations/add-admins/new-admin";
-import { builtInAlgorithms } from "@/lib/validations/algorithm";
 import { createdInstanceSchema } from "@/lib/validations/instance-form";
-import {
-  instanceParamsSchema,
-  subGroupParamsSchema,
-} from "@/lib/validations/params";
+import { subGroupParamsSchema } from "@/lib/validations/params";
 
 import { procedure } from "@/server/middleware";
 import { adminProcedure, createTRPCRouter } from "@/server/trpc";
@@ -41,159 +36,34 @@ export const subGroupRouter = createTRPCRouter({
       const { displayName } = await subGroup.get();
       const allocationInstances = await subGroup.getInstances();
 
-      const subGroupAdmins = await subGroup.getSubGroupAdmins();
+      // TODO think this is right...
+      const subGroupAdmins = await subGroup.getAdmins();
 
       return { displayName, allocationInstances, subGroupAdmins };
     },
   ),
 
-  // adminProcedure
-  //   .input(z.object({ params: subGroupParamsSchema }))
-  //   .query(
-  //     async ({
-  //       ctx,
-  //       input: {
-  //         params: { group, subGroup },
-  //       },
-  //     }) => {
-  //       const { displayName, allocationInstances } =
-  //         await ctx.db.allocationSubGroup.findFirstOrThrow({
-  //           where: {
-  //             allocationGroupId: group,
-  //             id: subGroup,
-  //           },
-  //           select: {
-  //             displayName: true,
-  //             allocationInstances: true,
-  //           },
-  //         });
-
-  //       const data = await ctx.db.adminInSpace.findMany({
-  //         where: {
-  //           allocationGroupId: group,
-  //           allocationSubGroupId: subGroup,
-  //         },
-  //         select: { user: { select: { id: true, name: true, email: true } } },
-  //       });
-
-  //       return {
-  //         displayName,
-  //         allocationInstances,
-  //         subGroupAdmins: data.map(({ user }) => user),
-  //       };
-  //     },
-  //   ),
-
   // TODO return a set
-  takenInstanceNames: adminProcedure
-    .input(z.object({ params: subGroupParamsSchema }))
+  takenInstanceNames: procedure.subgroup.subgroupAdmin
+    .output(z.array(z.string()))
     .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup },
-        },
-      }) => {
-        const data = await ctx.db.allocationSubGroup.findFirstOrThrow({
-          where: { allocationGroupId: group, id: subGroup },
-          select: { allocationInstances: { select: { displayName: true } } },
-        });
-        return data.allocationInstances.map((item) => item.displayName);
-      },
+      async ({ ctx: { subGroup } }) =>
+        await subGroup
+          .getInstances()
+          .then((data) => data.map((instance) => instance.displayName)),
     ),
 
-  createInstance: adminProcedure
-    .input(
-      z.object({
-        params: subGroupParamsSchema,
-        newInstance: createdInstanceSchema,
-      }),
-    )
+  createInstance: procedure.subgroup.subgroupAdmin
+    .input(z.object({ newInstance: createdInstanceSchema }))
+    .output(z.void())
     .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup },
-          newInstance: {
-            instanceName,
-            minPreferences,
-            maxPreferences,
-            maxPreferencesPerSupervisor,
-            preferenceSubmissionDeadline,
-            projectSubmissionDeadline,
-            flags,
-            tags,
-          },
-        },
-      }) => {
-        const instance = slugify(instanceName);
-
-        await ctx.db.$transaction(async (tx) => {
-          await tx.allocationInstance.create({
-            data: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              id: instance,
-              displayName: instanceName,
-              minPreferences,
-              maxPreferences,
-              maxPreferencesPerSupervisor,
-              preferenceSubmissionDeadline,
-              projectSubmissionDeadline,
-            },
-          });
-
-          await tx.flag.createMany({
-            data: flags.map(({ title }) => ({
-              title,
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-            })),
-          });
-
-          await tx.tag.createMany({
-            data: tags.map(({ title }) => ({
-              title,
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-            })),
-          });
-
-          await tx.algorithm.createMany({
-            data: builtInAlgorithms.map((a) => ({
-              ...a,
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              matchingResultData: JSON.stringify({}),
-            })),
-          });
-        });
-      },
+      async ({ ctx: { subGroup }, input: { newInstance } }) =>
+        await subGroup.createInstance(newInstance),
     ),
 
-  deleteInstance: adminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        await ctx.db.allocationInstance.delete({
-          where: {
-            instanceId: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              id: instance,
-            },
-          },
-        });
-      },
-    ),
+  deleteInstance: procedure.instance.subgroupAdmin
+    .output(z.void())
+    .mutation(async ({ ctx: { instance } }) => await instance.delete()),
 
   // TODO: refactor after auth is implemented
   /**
