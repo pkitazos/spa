@@ -12,15 +12,15 @@ A Big list of things we need to refactor:
     - [x] user.supervisor
       - [ ] projectStats
     - [x] institution
-    - [ ] institution.group
+    - [x] institution.group
       - [x] subGroupManagement
       - [x] takenSubGroupNames
       - [ ] addAdmin
       - [ ] removeAdmin
-      <!-- up to here -->
-  - [ ] institution.subGroup (6)
+  - [x] institution.subGroup (6)
     - [ ] addAdmin
     - [ ] removeAdmin
+    <!-- up to here -->
   - [ ] institution.instance (27)
   - [ ] institution.instance.algorithm (9)
   - [ ] institution.instance.external (3)
