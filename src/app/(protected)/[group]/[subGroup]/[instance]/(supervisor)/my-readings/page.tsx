@@ -7,9 +7,10 @@ import { PanelWrapper } from "@/components/panel-wrapper";
 import { api } from "@/lib/trpc/server";
 import { InstanceParams } from "@/lib/validations/params";
 
+import { MyReadingsDataTable } from "./_components/my-readings-data-table";
+
 import { app, metadataTitle } from "@/content/config/app";
 import { pages } from "@/content/pages";
-import { MyReadingsDataTable } from "./_components/my-readings-data-table";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
