@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { addDays } from "date-fns";
 
 import {
   algorithms,
@@ -23,7 +24,25 @@ import {
 
 const db = new PrismaClient();
 
+async function clearDatabase() {
+  await db.$transaction([
+    db.user.deleteMany(),
+    db.adminInSpace.deleteMany(),
+    db.invitation.deleteMany(),
+    db.allocationGroup.deleteMany(),
+    db.allocationSubGroup.deleteMany(),
+    db.allocationInstance.deleteMany(),
+    db.project.deleteMany(),
+    db.preference.deleteMany(),
+    db.flag.deleteMany(),
+    db.tag.deleteMany(),
+    // Add other tables as needed
+  ]);
+}
+
 async function main() {
+  await clearDatabase(); // Clear the database first
+
   await db.$transaction(async (tx) => {
     await tx.user.createMany({ data: superAdmin_users });
     await tx.adminInSpace.createMany({ data: superAdmin_levels });
@@ -35,7 +54,13 @@ async function main() {
     // create spaces
     await tx.allocationGroup.create({ data: sampleGroup(ID) });
     await tx.allocationSubGroup.create({ data: sampleSubGroup(ID) });
-    await tx.allocationInstance.create({ data: sampleInstance(ID) });
+    await tx.allocationInstance.create({
+      data: {
+        ...sampleInstance(ID),
+        interimMarkingDeadline: addDays(new Date(), 14),
+        markingSubmissionDeadline: addDays(new Date(), 30),
+      },
+    });
 
     // add users to spaces
     await tx.userInInstance.createMany({ data: allUsersInInstance(ID) });

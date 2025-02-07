@@ -321,6 +321,8 @@ export const sampleInstance = (ID: string): AllocationInstance => ({
   parentInstanceId: null,
   supervisorAllocationAccess: false,
   studentAllocationAccess: false,
+  interimMarkingDeadline: addDays(new Date(), 7),
+  markingSubmissionDeadline: addDays(new Date(), 14),
 });
 
 export const adminsInSpaces = (ID: string): New<AdminInSpace>[] => [
@@ -399,8 +401,13 @@ export const projects = (ID: string): Project[] =>
       preAllocatedStudentId: null,
       specialTechnicalRequirements: null,
       latestEditDateTime: subDays(new Date(), 7),
+      interimMarkingDeadline: addDays(new Date(), 7),
+      interimMark: 0,
+      specialCircumstances: null,
       capacityLowerBound: 0,
       capacityUpperBound: 1,
+      interimMarkSaved: [],
+      interimMarked: false,
     }),
   );
 
