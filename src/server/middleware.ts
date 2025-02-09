@@ -16,6 +16,7 @@ import { Institution } from "@/data-objects/spaces/institution";
 import { Project } from "@/data-objects/spaces/project";
 import { AllocationSubGroup } from "@/data-objects/spaces/subgroup";
 import { User } from "@/data-objects/users/user";
+import { Stage } from "@/db/types";
 
 // We should re-imagine how our middleware works
 
@@ -58,6 +59,28 @@ const instanceMiddleware = t.middleware(
     return next({ ctx: { instance } });
   },
 );
+
+// * NEW!
+// Stage middleware
+/**
+ * @requires a preceding `.input(z.object({params: instanceParamsSchema}))`
+ * Adds a check to ensure the provided instance is in a set of allowed stages
+ * @param allowedStages a list of stages in which a procedure using this middleware can run
+ * @returns A middleware
+ */
+const stageMiddleware = (allowedStages: Stage[]) =>
+  instanceMiddleware.unstable_pipe(async ({ ctx: { instance }, next }) => {
+    const instanceData = await instance.get();
+
+    if (!allowedStages.includes(instanceData.stage)) {
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: "Instance is not in correct stage",
+      });
+    }
+
+    return next();
+  });
 
 /**
  * @requires a preceding `.input(z.object({ params: projectParamsSchema }))`
@@ -165,6 +188,7 @@ const instanceStudentMiddleware = authedMiddleware.unstable_pipe(
     });
   },
 );
+
 /**
  * @requires a preceding `.input(z.object({ params: instanceParamsSchema }))` or better
  */
@@ -278,6 +302,23 @@ export const procedure = {
     subgroupAdmin: instanceProcedure.use(SubGroupAdminMiddleware),
     student: instanceProcedure.use(instanceStudentMiddleware),
     supervisor: instanceProcedure.use(instanceSupervisorMiddleware),
+
+    inStage: (allowedStages: Stage[]) => {
+      const proc = institutionProcedure
+        .input(z.object({ params: instanceParamsSchema }))
+        .use(groupMiddleware)
+        .use(subGroupMiddleware)
+        .use(stageMiddleware(allowedStages));
+
+      return {
+        user: proc.use(authedMiddleware),
+        superAdmin: proc.use(SuperAdminMiddleware),
+        groupAdmin: proc.use(GroupAdminMiddleware),
+        subgroupAdmin: proc.use(SubGroupAdminMiddleware),
+        student: proc.use(instanceStudentMiddleware),
+        supervisor: proc.use(instanceSupervisorMiddleware),
+      };
+    },
   },
 
   project: {
@@ -287,6 +328,24 @@ export const procedure = {
     subgroupAdmin: projectProcedure.use(SubGroupAdminMiddleware),
     supervisor: projectProcedure.use(projectSupervisorMiddleware),
     reader: projectProcedure.use(projectReaderMiddleware),
+
+    inStage: (allowedStages: Stage[]) => {
+      const proc = institutionProcedure
+        .input(z.object({ params: projectParamsSchema }))
+        .use(groupMiddleware)
+        .use(subGroupMiddleware)
+        .use(stageMiddleware(allowedStages))
+        .use(projectMiddleware);
+
+      return {
+        user: proc.use(authedMiddleware),
+        superAdmin: proc.use(SuperAdminMiddleware),
+        groupAdmin: proc.use(GroupAdminMiddleware),
+        subgroupAdmin: proc.use(SubGroupAdminMiddleware),
+        supervisor: proc.use(projectSupervisorMiddleware),
+        reader: proc.use(projectReaderMiddleware),
+      };
+    },
   },
 };
 
@@ -301,6 +360,11 @@ procedure.instance.groupAdmin
 
 // A procedure in a subgroup with simple log-in required would be:
 procedure.subgroup.user;
+
+// an example procedure specifying the stage:
+procedure.instance
+  .inStage([Stage.ALLOCATION_ADJUSTMENT])
+  .student.query(() => {});
 
 // and N.B. that nonsense is not representable.
 // You can't have a procedure in a group requiring subgroup perms,
