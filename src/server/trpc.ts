@@ -21,7 +21,6 @@ import {
 } from "@/lib/validations/params";
 
 import { checkAdminPermissions } from "./utils/admin/access";
-import { isSuperAdmin } from "./utils/admin/is-super-admin";
 import { getInstance } from "./utils/instance";
 import { getAllUserRoles, getUserRole } from "./utils/instance/user-role";
 
@@ -200,40 +199,6 @@ export type MultiRoleAwareContext = {
 
 /**
  * @deprecated - use the procedures from the middleware file
- * Procedure that enforces the user is a student.
- */
-export const studentProcedure = instanceProcedure
-  .use(userRoleMiddleware)
-  .use(async ({ ctx, next }) => {
-    const user = ctx.session.user;
-    if (user.role !== Role.STUDENT) {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "User is not a Student",
-      });
-    }
-
-    const { studentLevel, latestSubmissionDateTime } =
-      await ctx.db.studentDetails.findFirstOrThrow({
-        where: { userId: user.id },
-      });
-
-    return next({
-      ctx: {
-        session: {
-          user: {
-            ...user,
-            role: user.role,
-            studentLevel,
-            latestSubmissionDateTime,
-          },
-        },
-      },
-    });
-  });
-
-/**
- * @deprecated - use the procedures from the middleware file
  * Procedure that enforces the user is a admin.
  */
 export const adminProcedure = protectedProcedure
@@ -263,60 +228,3 @@ export const adminProcedure = protectedProcedure
 export const instanceAdminProcedure = adminProcedure
   .input(z.object({ params: instanceParamsSchema }))
   .use(instanceMiddleware);
-
-/**
- * @deprecated - use the procedures from the middleware file
- * Procedure that enforces the user is a super-admin
- */
-export const superAdminProcedure = protectedProcedure.use(
-  async ({ ctx, next }) => {
-    const membership = await isSuperAdmin(ctx.db, ctx.session.user.id);
-
-    if (!membership) {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "User is not a Super Admin",
-      });
-    }
-
-    return next();
-  },
-);
-
-/**
- * @deprecated - use the procedures from the middleware file
- * Looks like we can kill this one?
- */
-export const projectProcedure = instanceProcedure
-  .input(z.object({ projectId: z.string().optional() }))
-  .use(async ({ ctx, next, input }) => {
-    if (input.projectId) {
-      const projectData = await ctx.db.project.findFirstOrThrow({
-        where: { id: input.projectId },
-        include: {
-          flagOnProjects: {
-            select: { flag: { select: { id: true, title: true } } },
-          },
-          tagOnProject: {
-            select: { tag: { select: { id: true, title: true } } },
-          },
-        },
-      });
-
-      if (!projectData) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Project not found",
-        });
-      }
-      const { flagOnProjects, tagOnProject, ...rest } = projectData;
-      const project = {
-        ...rest,
-        flags: flagOnProjects.map((f) => f.flag),
-        tags: tagOnProject.map((t) => t.tag),
-      };
-
-      return next({ ctx: { project } });
-    }
-    return next();
-  });

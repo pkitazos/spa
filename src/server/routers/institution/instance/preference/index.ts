@@ -7,8 +7,6 @@ import { instanceParamsSchema } from "@/lib/validations/params";
 
 import { createTRPCRouter, instanceAdminProcedure } from "@/server/trpc";
 
-import { getPreAllocatedStudents } from "../_utils/pre-allocated-students";
-
 import {
   generateProjectAggregated,
   generateProjectNormalised,
@@ -17,6 +15,8 @@ import {
   generateTagAggregated,
   generateTagNormalised,
 } from "./_utils/generate-csv-data";
+
+import { getPreAllocatedStudents } from "@/db/transactions/pre-allocated-students";
 
 export const preferenceRouter = createTRPCRouter({
   studentSubmissions: instanceAdminProcedure

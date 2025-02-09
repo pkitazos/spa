@@ -16,8 +16,6 @@ import { instanceParamsSchema } from "@/lib/validations/params";
 
 import { createTRPCRouter, instanceAdminProcedure } from "@/server/trpc";
 
-import { getSupervisorPreAllocatedProjects } from "../_utils/supervisor-pre-allocations";
-
 import { applyModifiers } from "./_utils/apply-modifiers";
 import { executeMatchingAlgorithm } from "./_utils/execute-matching-algorithm";
 import {
@@ -27,6 +25,8 @@ import {
 import { getAlgorithmsInOrder } from "./_utils/get-algorithms-in-order";
 import { getBuiltInAlgorithm } from "./_utils/get-built-in-algorithm";
 import { getMatchingData } from "./_utils/get-matching-data";
+
+import { getSupervisorPreAllocatedProjects } from "@/db/transactions/supervisor-pre-allocations";
 
 export const algorithmRouter = createTRPCRouter({
   run: instanceAdminProcedure

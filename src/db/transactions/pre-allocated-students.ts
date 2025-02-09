@@ -1,10 +1,8 @@
-import { PrismaTransactionClient } from "@/db";
 import { InstanceParams } from "@/lib/validations/params";
 
-export async function getPreAllocatedStudents(
-  db: PrismaTransactionClient,
-  params: InstanceParams,
-) {
+import { TX } from "@/db/types";
+
+export async function getPreAllocatedStudents(db: TX, params: InstanceParams) {
   const projectData = await db.projectInInstance.findMany({
     where: {
       allocationGroupId: params.group,
