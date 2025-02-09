@@ -2,10 +2,19 @@ import { expand } from "@/lib/utils/general/instance-params";
 import { setDiff } from "@/lib/utils/general/set-difference";
 import { UpdatedInstance } from "@/lib/validations/instance-form";
 import { InstanceParams } from "@/lib/validations/params";
-import { PrismaClient } from "@prisma/client";
 
+import { DB } from "@/db/types";
+
+// Complex procedure for sure
+// I think the source of the complexity comes down to
+// not following SRP
+// How many things does this function do?
+// Arguably, there should be a separate Tx for "setInstanceFlags"
+// And a corresopnding procedure maybe...
+// For sure though, this function does many things
+// and has many reasons to change
 export async function editInstanceTx(
-  db: PrismaClient,
+  db: DB,
   { flags, tags, ...updatedData }: UpdatedInstance,
   params: InstanceParams,
 ) {

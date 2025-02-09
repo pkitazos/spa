@@ -1,8 +1,9 @@
-import { PrismaTransactionClient } from "@/db";
 import { InstanceParams } from "@/lib/validations/params";
 
+import { TX } from "@/db/types";
+
 export async function getSupervisorPreAllocatedProjects(
-  tx: PrismaTransactionClient,
+  tx: TX,
   params: InstanceParams,
 ) {
   return await tx.project

@@ -1,6 +1,6 @@
 import { AllocationInstance, PrismaClient } from "@prisma/client";
 
-import { getSupervisorPreAllocatedProjects } from "../../_utils/supervisor-pre-allocations";
+import { getSupervisorPreAllocatedProjects } from "@/db/transactions/supervisor-pre-allocations";
 
 export async function getMatchingData(
   db: PrismaClient,

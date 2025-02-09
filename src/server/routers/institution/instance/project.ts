@@ -11,7 +11,7 @@ import {
 } from "@/server/trpc";
 import { computeProjectSubmissionTarget } from "@/server/utils/instance/submission-target";
 
-import { computeSubmissionDetails } from "./_utils/submission-details";
+import { computeSubmissionDetails } from "@/db/transactions/submission-details";
 
 export const projectRouter = createTRPCRouter({
   submissionInfo: instanceAdminProcedure
