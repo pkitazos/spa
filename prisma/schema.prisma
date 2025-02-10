@@ -339,6 +339,19 @@ model ComponentScore {
 }
 
 // table collecting the component scores together and attaches a tick box to each component score (recommend for prize) + also an optional summary box
+model MarkerSubmissionComments {
+    id                   String  @id @default(uuid())
+    summary              String
+    recommendedForPrize  Boolean @default(false) @map("recommended_for_prize")
+    // ---
+    markerId             String  @map("marker_id")
+    studentId            String  @map("student_id")
+    flagId               String  @map("flag_id")
+    submissionId         String  @map("submission_id")
+    allocationGroupId    String  @map("allocation_group_id")
+    allocationSubGroupId String  @map("allocation_sub_group_id")
+    allocationInstanceId String  @map("allocation_instance_id")
+}
 
 model FinalGrade {
     id                   String             @id @default(uuid())
