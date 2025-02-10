@@ -9,7 +9,7 @@ import { Classification, State } from "./_components/state/store";
 
 type SearchParams = { [key: string]: string | undefined };
 
-export default async function Page({
+export async function MarkingSchemeBuilder({
   searchParams,
 }: {
   searchParams: SearchParams;
