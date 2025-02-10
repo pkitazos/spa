@@ -1,6 +1,7 @@
 import { Role, Stage } from "@prisma/client";
 import { z } from "zod";
 
+import { expand } from "@/lib/utils/general/instance-params";
 import { nullable } from "@/lib/utils/general/nullable";
 import {
   getFlagFromStudentLevel,
@@ -169,6 +170,29 @@ export const projectRouter = createTRPCRouter({
             data: tags.map(({ id }) => ({ tagId: id, projectId })),
             skipDuplicates: true,
           });
+        });
+      },
+    ),
+
+  editSpecialCircumstances: instanceProcedure
+    .input(
+      z.object({
+        params: instanceParamsSchema,
+        studentId: z.string(),
+        projectId: z.string(),
+        specialCircumstances: z.string().optional(),
+      }),
+    )
+    .mutation(
+      async ({
+        ctx,
+        input: { params, studentId, projectId, specialCircumstances },
+      }) => {
+        await ctx.db.projectAllocation.update({
+          where: {
+            allocationId: { projectId, userId: studentId, ...expand(params) },
+          },
+          data: { specialCircumstances },
         });
       },
     ),
@@ -796,13 +820,21 @@ export const projectRouter = createTRPCRouter({
     .query(async ({ ctx, input: { projectId } }) => {
       const allocation = await ctx.db.projectAllocation.findFirst({
         where: { projectId },
-        select: { student: { select: { user: true } }, studentRanking: true },
+        select: {
+          specialCircumstances: true,
+          student: { select: { user: true } },
+          studentRanking: true,
+        },
       });
 
       const student = allocation?.student?.user ?? undefined;
+      const specialCircumstances = allocation?.specialCircumstances ?? "";
       const rank = allocation?.studentRanking ?? undefined;
 
-      if (student && rank) return { ...student, rank };
-      return undefined;
+      console.log("from server", { student, rank, specialCircumstances });
+
+      if (!student || !rank || specialCircumstances === undefined)
+        return undefined;
+      return { ...student, rank, specialCircumstances };
     }),
 });
