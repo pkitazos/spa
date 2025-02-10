@@ -283,6 +283,7 @@ model ProjectAllocationReader {
     @@id(name: "projectAllocationReaderId", [readerId, projectId, studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
 }
 
+// TODO: rename
 model FlagSubmission {
     flagId               String             @map("flag_id")
     title                String // e.g. "Interim Report", "Final Submission"
