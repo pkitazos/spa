@@ -21,6 +21,7 @@ export function CSVUploadButton({
   requiredHeaders: string[];
 }) {
   function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    // TODO: handle multiple files
     const fileList = event.target.files;
     if (fileList && fileList.length > 0) {
       const file = fileList[0];
