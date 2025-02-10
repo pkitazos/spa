@@ -282,6 +282,7 @@ model AssessmentComponent {
     flagId               String     @map("flag_id")
     submissionId         String     @map("submission_id")
     title                String
+    description          String
     weight               Int
     layoutIndex          Int        @map("layout_index")
     markerType           MarkerType @map("marker_type")
@@ -302,6 +303,7 @@ model ComponentScore {
     submissionId         String             @map("submission_id")
     grade                Int
     justification        String
+    draft                Boolean
     markerType           MarkerType         @map("marker_type")
     // ---
     allocationGroupId    String             @map("allocation_group_id")
@@ -313,6 +315,8 @@ model ComponentScore {
     @@unique([markerId, studentId, flagId, submissionId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@map("component_score")
 }
+
+// table collecting the component scores together and attaches a tick box to each component score (recommend for prize) + also an optional summary box
 
 model FinalGrade {
     id                   String             @id @default(uuid())

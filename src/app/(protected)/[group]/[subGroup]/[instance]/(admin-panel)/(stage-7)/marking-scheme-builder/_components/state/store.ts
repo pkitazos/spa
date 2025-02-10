@@ -58,6 +58,14 @@ type Actions = {
     criterion: Omit<AssessmentCriterion, "id">,
   ) => void;
 
+  createCriterionAtIndex: (
+    flagIndex: number,
+    submissionIndex: number,
+    markerType: MarkerType,
+    criterion: Omit<AssessmentCriterion, "id">,
+    index: number,
+  ) => void;
+
   updateCriterion: (
     flagIndex: number,
     submissionIndex: number,
@@ -107,36 +115,7 @@ export function createMarkingSchemeStore(initState: State) {
           const new_submission: ClassificationSubmission = {
             ...submission,
             components: {
-              SUPERVISOR: [
-                {
-                  id: "1",
-                  name: "1. Professional Conduct",
-                  description: "",
-                  rank: 1000,
-                  weight: 20,
-                },
-                {
-                  id: "2",
-                  name: "2. Problem Statement",
-                  description: "",
-                  rank: 2000,
-                  weight: 20,
-                },
-                {
-                  id: "3",
-                  name: "3. Literature Survey",
-                  description: "",
-                  rank: 3000,
-                  weight: 40,
-                },
-                {
-                  id: "4",
-                  name: "4. Evaluation",
-                  description: "",
-                  rank: 4000,
-                  weight: 20,
-                },
-              ],
+              SUPERVISOR: [],
               READER: [],
             },
           };
@@ -159,6 +138,19 @@ export function createMarkingSchemeStore(initState: State) {
           state.flags[flagIndex].submissions[submissionIndex].components[
             markerType
           ].push({ ...criterion, id: uuidv4() });
+        }),
+
+      createCriterionAtIndex: (
+        flagIndex,
+        submissionIndex,
+        markerType,
+        criterion,
+        index,
+      ) =>
+        set((state) => {
+          state.flags[flagIndex].submissions[submissionIndex].components[
+            markerType
+          ].splice(index, 0, { ...criterion, id: uuidv4() });
         }),
 
       updateCriterion: (
