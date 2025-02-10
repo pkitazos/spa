@@ -134,7 +134,7 @@ model AllocationInstance {
     flags                        Flag[]
     tags                         Tag[]
     studentFlags                 FlagOnStudent[]
-    // flagSubmissions              FlagSubmission[] // TODO: rename
+    flagSubmissions              FlagSubmission[] // TODO: rename
     componentScores              ComponentScore[]
     finalGrades                  FinalGrade[]
 
@@ -277,6 +277,23 @@ model ProjectAllocationReader {
     projectAllocation    ProjectAllocation @relation(fields: [projectId, studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [projectId, userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
 
     @@id(name: "projectAllocationReaderId", [readerId, projectId, studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+}
+
+// TODO: rename
+model FlagSubmission {
+    flagId               String             @map("flag_id")
+    title                String // e.g. "Interim Report", "Final Submission"
+    deadline             DateTime
+    weight               Int
+    // ---
+    allocationGroupId    String             @map("allocation_group_id")
+    allocationSubGroupId String             @map("allocation_sub_group_id")
+    allocationInstanceId String             @map("allocation_instance_id")
+    // ---
+    allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+
+    @@id(name: "flagSubmissionId", [flagId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("flag_submission")
 }
 
 model AssessmentComponent {
