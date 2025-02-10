@@ -41,6 +41,6 @@ export function Marking({ project }: { project: CurrentMarks }) {
       project={project}
       submissionButtonLabel="Submit Marks"
       onSubmit={onSubmit}
-    ></MarkingForm>
+    />
   );
 }
