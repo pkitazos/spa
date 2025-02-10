@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AccessControl } from "@/components/access-control";
-import { Heading, SubHeading } from "@/components/heading";
+import { Heading, SectionHeading, SubHeading } from "@/components/heading";
 import { MarkdownRenderer } from "@/components/markdown-editor";
 import { PageWrapper } from "@/components/page-wrapper";
 import { Badge } from "@/components/ui/badge";
@@ -91,109 +91,6 @@ export default async function Project({ params }: { params: PageParams }) {
     projectId,
   });
 
-  if (role === Role.SUPERVISOR) {
-    const specialCircumstances = await api.project.getSpecialCircumstances({
-      params,
-      projectId,
-    });
-
-    return (
-      <PageWrapper>
-        <Heading
-          className={cn(
-            "flex items-center justify-between gap-2 text-4xl",
-            project.title.length > 30 && "text-3xl",
-          )}
-        >
-          {project.title}
-          <AccessControl
-            allowedRoles={[Role.STUDENT]}
-            allowedStages={[Stage.PROJECT_SELECTION]}
-            extraConditions={{ RBAC: { AND: !preAllocated } }}
-          >
-            <StudentPreferenceButton
-              projectId={projectId}
-              defaultStatus={preferenceStatus}
-            />
-          </AccessControl>
-          <AccessControl
-            allowedRoles={[Role.ADMIN]}
-            allowedStages={previousStages(Stage.PROJECT_SELECTION)}
-            extraConditions={{
-              RBAC: { OR: project.supervisor.id === user.id },
-            }}
-          >
-            <Link
-              className={cn(buttonVariants(), "min-w-32 text-nowrap")}
-              href={`${instancePath}/projects/${projectId}/edit`}
-            >
-              Edit or Delete
-            </Link>
-          </AccessControl>
-        </Heading>
-
-        <div className="mt-6 flex gap-6">
-          <div className="flex w-3/4 flex-col gap-16">
-            <section className="flex flex-col">
-              <SubHeading>Description</SubHeading>
-              <div className="mt-6">
-                <MarkdownRenderer source={project.description} />
-              </div>
-            </section>
-            <section
-              className={cn(
-                "flex flex-col",
-                project.specialTechnicalRequirements === "" && "hidden",
-              )}
-            >
-              <SubHeading>Special Technical Requirements</SubHeading>
-              <p className="mt-6">{project.specialTechnicalRequirements}</p>
-            </section>
-
-            <Separator />
-            <section className="flex flex-col">
-              <SubHeading>Special Circumstances</SubHeading>
-              <SpecialCircumstancesPage
-                formInternalData={{
-                  specialCircumstances: specialCircumstances,
-                }}
-                project={{
-                  id: projectId,
-                  specialCircumstances: specialCircumstances,
-                }}
-              />
-            </section>
-          </div>
-          <div className="w-1/4">
-            <ProjectDetailsCard project={project} role={role} />
-          </div>
-        </div>
-
-        <AccessControl
-          allowedRoles={[Role.ADMIN]}
-          extraConditions={{ RBAC: { AND: !!allocatedStudent } }}
-        >
-          <section className={cn("my-16 flex flex-col gap-8")}>
-            <SubHeading>Allocation</SubHeading>
-            <AllocatedStudentCard
-              student={allocatedStudent!}
-              preAllocated={!!project.preAllocatedStudentId}
-            />
-          </section>
-        </AccessControl>
-
-        <AccessControl
-          allowedRoles={[Role.ADMIN]}
-          extraConditions={{ RBAC: { AND: !project.preAllocatedStudentId } }}
-        >
-          <section className="mt-16 flex flex-col gap-8">
-            <SubHeading>Student Preferences</SubHeading>
-            <StudentPreferenceDataTable data={studentPreferences} />
-          </section>
-        </AccessControl>
-      </PageWrapper>
-    );
-  }
   return (
     <PageWrapper>
       <Heading
@@ -252,17 +149,37 @@ export default async function Project({ params }: { params: PageParams }) {
 
       <AccessControl
         allowedRoles={[Role.ADMIN]}
-        extraConditions={{ RBAC: { AND: !!allocatedStudent } }}
+        extraConditions={{
+          RBAC: {
+            OR: project.supervisor.id === user.id,
+            AND: !!allocatedStudent,
+          },
+        }}
       >
-        <section className={cn("my-16 flex flex-col gap-8")}>
+        <section className={cn("mt-16 flex flex-col gap-8")}>
           <SubHeading>Allocation</SubHeading>
           <AllocatedStudentCard
             student={allocatedStudent!}
             preAllocated={!!project.preAllocatedStudentId}
           />
         </section>
+        <section className="mb-16 flex flex-col">
+          <SectionHeading>Special Circumstances</SectionHeading>
+          <SpecialCircumstancesPage
+            formInternalData={{
+              specialCircumstances:
+                allocatedStudent?.specialCircumstances ?? "",
+            }}
+            studentId={allocatedStudent!.id}
+            project={{
+              id: projectId,
+              specialCircumstances:
+                allocatedStudent?.specialCircumstances ?? "",
+            }}
+          />
+        </section>
+        <Separator />
       </AccessControl>
-
       <AccessControl
         allowedRoles={[Role.ADMIN]}
         extraConditions={{ RBAC: { AND: !project.preAllocatedStudentId } }}

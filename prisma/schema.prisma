@@ -188,7 +188,6 @@ model Project {
     supervisorId                 String              @map("supervisor_id")
     preAllocatedStudentId        String?             @map("pre_allocated_student_id")
     specialTechnicalRequirements String?             @map("special_technical_requirements")
-    specialCircumstances         String?             @map("special_circumstances")
     latestEditDateTime           DateTime            @default(now()) @map("latest_edit_date_time")
     // ---
     allocationInstance           AllocationInstance  @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
@@ -244,6 +243,7 @@ model ProjectAllocation {
     projectId               String                    @map("project_id")
     userId                  String                    @map("user_id")
     studentRanking          Int                       @map("student_ranking")
+    specialCircumstances    String?                   @map("special_circumstances")
     // ---
     allocationGroupId       String                    @map("allocation_group_id")
     allocationSubGroupId    String                    @map("allocation_sub_group_id")
