@@ -1,21 +1,28 @@
 "use client";
+import { useState } from "react";
 import { addWeeks } from "date-fns";
 import {
   ChevronDown,
   MoreHorizontalIcon,
-  PenIcon,
   PlusIcon,
   Trash2Icon,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -28,22 +35,12 @@ import {
 
 import { cn } from "@/lib/utils";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+import { Classification } from "./state/store";
 import { useMarkingSchemeStore } from "./state";
 import {
   useTabPosition,
   useUpdateQueryParams,
 } from "./use-update-query-params";
-import { useState } from "react";
-import { Classification } from "./state/store";
 
 export function SidePanel() {
   const updateQueryParams = useUpdateQueryParams();
@@ -62,7 +59,10 @@ export function SidePanel() {
   }
 
   return (
-    <Sidebar className="w-[17rem] flex-none pt-6" collapsible="none">
+    <Sidebar
+      className="w-[17rem] flex-none bg-background pt-6"
+      collapsible="none"
+    >
       <SidebarHeader className="mb-5 flex flex-row items-center justify-between px-2">
         <Button
           variant="outline"

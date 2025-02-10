@@ -1,3 +1,5 @@
+import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   DndContext,
   DragEndEvent,
@@ -12,20 +14,27 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { MarkerType } from "@prisma/client";
-import { useMemo, useState } from "react";
-import { createPortal } from "react-dom";
-import { useMarkingSchemeStore } from "../state";
-import { AssessmentCriterionCard } from "./assessment-criterion-card";
-import { AssessmentCriterion } from "../state/store";
+
 import { computeUpdatedRank } from "@/lib/utils/sorting/compute-updated-rank";
+
+import { useMarkingSchemeStore } from "../state";
+import { AssessmentCriterion } from "../state/store";
+
+import { AssessmentCriterionCard } from "./assessment-criterion-card";
+import { FormDivider } from "./form-divider";
 
 export function SortableForm({
   activeMarkerType,
 }: {
   activeMarkerType: MarkerType;
 }) {
-  const { flags, selectedFlagIndex, selectedSubmissionIndex, updateCriterion } =
-    useMarkingSchemeStore((s) => s);
+  const {
+    flags,
+    selectedFlagIndex,
+    selectedSubmissionIndex,
+    createCriterionAtIndex,
+    updateCriterion,
+  } = useMarkingSchemeStore((s) => s);
   const [activeCard, setActiveCard] = useState<AssessmentCriterion | null>(
     null,
   );
@@ -43,6 +52,31 @@ export function SortableForm({
     selectedSubmissionIndex === undefined
   ) {
     throw new Error("cannot render if submission not selected");
+  }
+
+  function handleNewCriterion(index: number) {
+    if (
+      selectedFlagIndex === undefined ||
+      selectedSubmissionIndex === undefined
+    ) {
+      throw new Error("cannot render if submission not selected");
+    }
+
+    const newCriterion = {
+      name: `New Criterion ${assessmentCriteria.length + 1}`,
+      description: "",
+      weight: 0,
+      // rank: (assessmentCriteria[index].rank ?? 1000) / 2,
+      rank: computeUpdatedRank(assessmentCriteria, index),
+    };
+
+    createCriterionAtIndex(
+      selectedFlagIndex,
+      selectedSubmissionIndex,
+      activeMarkerType,
+      newCriterion,
+      index,
+    );
   }
 
   const assessmentCriteria = useMemo(
@@ -65,14 +99,24 @@ export function SortableForm({
       onDragEnd={onDragEnd}
     >
       <div className="flex h-full w-full flex-col gap-5">
+        <FormDivider className="mt-1.5" onClick={() => handleNewCriterion(0)} />
         <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
-          {assessmentCriteria.map((e) => (
-            <AssessmentCriterionCard key={e.id} item={e} />
+          {assessmentCriteria.map((e, idx) => (
+            <AssessmentCriterionCard
+              key={e.id}
+              item={e}
+              handleNewCriterion={() => handleNewCriterion(idx + 1)}
+            />
           ))}
         </SortableContext>
         {createPortal(
           <DragOverlay>
-            {activeCard && <AssessmentCriterionCard item={activeCard} />}
+            {activeCard && (
+              <AssessmentCriterionCard
+                item={activeCard}
+                handleNewCriterion={() => console.log("hmm")}
+              />
+            )}
           </DragOverlay>,
           document.body,
         )}

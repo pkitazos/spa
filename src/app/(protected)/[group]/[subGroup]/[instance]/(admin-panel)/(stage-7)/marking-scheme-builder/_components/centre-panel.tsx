@@ -1,13 +1,13 @@
 "use client";
-import { SubHeading } from "@/components/heading";
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MarkerType } from "@prisma/client";
-import { EditableFlag, EditableSubmission } from "./editable-text";
-import { useMarkingSchemeStore } from "./state";
-import { useEffect } from "react";
-import { SortableForm } from "./sortable";
+
+import { SubHeading } from "@/components/heading";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { DeadlinesSection } from "./deadlines-section";
+import { EditableFlag, EditableSubmission } from "./editable-text";
+import { SortableForm } from "./sortable";
+import { useMarkingSchemeStore } from "./state";
 
 export function CentrePanel() {
   const { flags, selectedFlagIndex, selectedSubmissionIndex } =
@@ -18,7 +18,7 @@ export function CentrePanel() {
     selectedSubmissionIndex === undefined
   ) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center">
+      <div className="flex w-full flex-col items-center justify-center">
         Click the plus button in the sidebar to create a new flag
       </div>
     );
