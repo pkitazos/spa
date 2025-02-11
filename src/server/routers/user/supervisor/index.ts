@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
-import { stageGte } from "@/lib/utils/permissions/stage-check";
+import { subsequentStages } from "@/lib/utils/permissions/stage-check";
 import { instanceParamsSchema } from "@/lib/validations/params";
 import { supervisorCapacitiesSchema } from "@/lib/validations/supervisor-project-submission-details";
 
@@ -36,6 +36,7 @@ export const supervisorRouter = createTRPCRouter({
       return supervisorAllocationAccess;
     }),
 
+  // TODO stage check?
   setAllocationAccess: procedure.instance.subgroupAdmin
     .input(z.object({ access: z.boolean() }))
     .output(z.boolean())
@@ -169,33 +170,23 @@ export const supervisorRouter = createTRPCRouter({
           .setCapacityDetails(capacities),
     ),
 
-  delete: procedure.instance.subgroupAdmin
-    .input(z.object({ supervisorId: z.string() }))
+  delete: procedure.instance
+    .inStage(subsequentStages(Stage.PROJECT_ALLOCATION))
+    .subgroupAdmin.input(z.object({ supervisorId: z.string() }))
     .output(z.void())
-    .mutation(async ({ ctx: { instance }, input: { supervisorId } }) => {
-      const { stage } = await instance.get();
-      if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
-        throw new Error("Cannot delete supervisor at this stage");
-      }
+    .mutation(
+      async ({ ctx: { instance }, input: { supervisorId } }) =>
+        await instance.deleteSupervisor(supervisorId),
+    ),
 
-      await instance.deleteSupervisor(supervisorId);
-    }),
-
-  deleteMany: procedure.instance.subgroupAdmin
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        supervisorIds: z.array(z.string()),
-      }),
-    )
-    .mutation(async ({ ctx: { instance }, input: { supervisorIds } }) => {
-      const { stage } = await instance.get();
-      if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
-        throw new Error("Cannot delete supervisors at this stage");
-      }
-
-      await instance.deleteSupervisors(supervisorIds);
-    }),
+  deleteMany: procedure.instance
+    .inStage(subsequentStages(Stage.PROJECT_ALLOCATION))
+    .subgroupAdmin.input(z.object({ supervisorIds: z.array(z.string()) }))
+    .output(z.void())
+    .mutation(
+      async ({ ctx: { instance }, input: { supervisorIds } }) =>
+        await instance.deleteSupervisors(supervisorIds),
+    ),
 
   // TODO: fix on client
   allocations: procedure.instance.supervisor
