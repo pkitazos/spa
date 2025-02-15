@@ -198,7 +198,6 @@ model Project {
     supervisorId                 String              @map("supervisor_id")
     preAllocatedStudentId        String?             @map("pre_allocated_student_id")
     specialTechnicalRequirements String?             @map("special_technical_requirements")
-    specialCircumstances         String?             @map("special_circumstances")
     latestEditDateTime           DateTime            @default(now()) @map("latest_edit_date_time")
     interimMark                  Int                 @default(0) @map("interim_mark")
     interimMarkSaved             Int[]               @default([]) @map("interim_mark_saved")
@@ -258,6 +257,7 @@ model ProjectAllocation {
     projectId               String                    @map("project_id")
     userId                  String                    @map("user_id")
     studentRanking          Int                       @map("student_ranking")
+    specialCircumstances    String?                   @map("special_circumstances")
     // ---
     allocationGroupId       String                    @map("allocation_group_id")
     allocationSubGroupId    String                    @map("allocation_sub_group_id")

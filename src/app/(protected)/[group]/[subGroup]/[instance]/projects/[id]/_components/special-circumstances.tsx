@@ -15,9 +15,11 @@ import {
 export function SpecialCircumstancesPage({
   formInternalData,
   project,
+  studentId,
 }: {
   formInternalData: specialCircumstances;
   project: CurrentSpecialCircumstances;
+  studentId: string;
 }) {
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const params = useInstanceParams();
@@ -33,6 +35,7 @@ export function SpecialCircumstancesPage({
       editAsync({
         params,
         projectId: project.id,
+        studentId,
         specialCircumstances: data.specialCircumstances,
       }).then(() => {
         router.push(`${instancePath}/projects/${project.id}`);
@@ -52,6 +55,6 @@ export function SpecialCircumstancesPage({
       project={project}
       submissionButtonLabel="Update Special Circumstances"
       onSubmit={onSubmit}
-    ></SpecialCircumstancesForm>
+    />
   );
 }
