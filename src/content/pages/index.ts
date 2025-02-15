@@ -189,9 +189,9 @@ export const pages = {
     href: "upload-readings",
     icon: "file-plus-2",
   },
-  specialCircumstances: {
-    title: "Update Special Circumstances",
-    href: "special-circumstances",
-    icon: "users"
-  }
+  myMarking: {
+    title: "My Marking",
+    href: "my-marking",
+    icon: "file-check-2",
+  },
 };

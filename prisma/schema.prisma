@@ -199,6 +199,10 @@ model Project {
     preAllocatedStudentId        String?             @map("pre_allocated_student_id")
     specialTechnicalRequirements String?             @map("special_technical_requirements")
     latestEditDateTime           DateTime            @default(now()) @map("latest_edit_date_time")
+    interimMark                  Int                 @default(0) @map("interim_mark")
+    interimMarkSaved             Int[]               @default([]) @map("interim_mark_saved")
+    interimMarked                Boolean             @default(false) @map("interim_marked")
+    interimMarkingDeadline       DateTime            @default(now()) @map("interim_marking_deadline")
     // ---
     allocationInstance           AllocationInstance  @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
     supervisor                   UserInInstance      @relation(fields: [supervisorId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)

@@ -197,6 +197,32 @@ export const projectRouter = createTRPCRouter({
       },
     ),
 
+  editMarks: instanceProcedure
+    .input(
+      z.object({
+        params: instanceParamsSchema,
+        projectId: z.string(),
+        marks: z.array(z.number()),
+      }),
+    )
+    .mutation(async ({ ctx, input: { projectId, marks } }) => {
+      await ctx.db.project.update({
+        where: { id: projectId },
+        data: { interimMarkSaved: marks },
+      });
+    }),
+
+  getSpecialCircumstances: instanceProcedure
+    .input(z.object({ params: instanceParamsSchema, projectId: z.string() }))
+    .query(async ({ ctx, input: { projectId } }) => {
+      const project = await ctx.db.project.findFirst({
+        where: { id: projectId },
+        select: { specialCircumstances: true },
+      });
+
+      return project?.specialCircumstances ?? "";
+    }),
+
   getAllForStudentPreferences: instanceProcedure
     .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
     .query(
@@ -409,6 +435,7 @@ export const projectRouter = createTRPCRouter({
           tagOnProject: {
             select: { tag: { select: { id: true, title: true } } },
           },
+          interimMarkSaved: true,
         },
       });
 
@@ -422,6 +449,7 @@ export const projectRouter = createTRPCRouter({
           project.specialTechnicalRequirements ?? "",
         flags: project.flagOnProjects.map(({ flag }) => flag),
         tags: project.tagOnProject.map(({ tag }) => tag),
+        interimMarkSaved: project.interimMarkSaved,
       };
     }),
 
@@ -683,6 +711,7 @@ export const projectRouter = createTRPCRouter({
               preAllocatedStudentId,
               specialTechnicalRequirements,
               latestEditDateTime: new Date(),
+              interimMarkingDeadline: new Date(),
             },
           });
 
