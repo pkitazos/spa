@@ -1,5 +1,6 @@
 import { expand } from "@/lib/utils/general/instance-params";
 import { InstanceParams } from "@/lib/validations/params";
+import { SupervisorProjectSubmissionDetails } from "@/lib/validations/supervisor-project-submission-details";
 import { TabType } from "@/lib/validations/tabs";
 
 import { Algorithm } from "../algorithm";
@@ -12,6 +13,7 @@ import { AllocationSubGroup } from "./subgroup";
 
 import { PAGES } from "@/config/pages";
 import { ADMIN_TABS_BY_STAGE } from "@/config/side-panel-tabs/admin-tabs-by-stage";
+import { computeProjectSubmissionTarget } from "@/config/submission-target";
 import { DAL } from "@/data-access";
 import { allocationInstanceToDTO } from "@/db/transformers";
 import { Stage } from "@/db/types";
@@ -274,6 +276,38 @@ export class AllocationInstance extends DataObject {
   }
 
   // ---
+
+  public async getSupervisorSubmissionDetails(): Promise<
+    SupervisorProjectSubmissionDetails[]
+  > {
+    const data = await this.dal.db.supervisorDetails.findMany({
+      where: expand(this.params),
+      include: {
+        projects: { include: { studentAllocations: true } },
+        userInInstance: { include: { user: true } },
+      },
+      orderBy: { userId: "asc" },
+    });
+
+    return data.map(({ projects, projectAllocationTarget, ...s }) => {
+      const allocatedCount = projects
+        .map((p) => p.studentAllocations.length)
+        .reduce((a, b) => a + b, 0);
+
+      return {
+        userId: s.userInInstance.user.id,
+        name: s.userInInstance.user.name,
+        email: s.userInInstance.user.email,
+        projectAllocationTarget,
+        allocatedCount,
+        submittedProjectsCount: projects.length,
+        submissionTarget: computeProjectSubmissionTarget(
+          projectAllocationTarget,
+          allocatedCount,
+        ),
+      };
+    });
+  }
 
   public async deleteUser(userId: string) {
     await this.dal.user.deleteInInstance(userId, this.params);

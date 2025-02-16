@@ -35,13 +35,13 @@ A Big list of things we need to refactor:
     - [ ] fork
     - [ ] merge
 
-     <!-- up to here -->
+  - [x] institution.instance.project (1)
+  <!-- up to here -->
 
   - [ ] institution.instance.algorithm (9)
   - [ ] institution.instance.external (3)
   - [ ] institution.instance.matching (12)
   - [ ] institution.instance.preference (5)
-  - [ ] institution.instance.project (1)
   - [ ] project (15)
   - [ ] access-control (6)
 
