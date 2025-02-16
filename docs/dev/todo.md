@@ -1,6 +1,7 @@
 A Big list of things we need to refactor:
 
 - [ ] routers:
+
   - [x] user
     - [x] getAdminPanel
     - [ ] breadcrumbs --> see user DO
@@ -20,8 +21,22 @@ A Big list of things we need to refactor:
   - [x] institution.subGroup (6)
     - [ ] addAdmin
     - [ ] removeAdmin
-    <!-- up to here -->
-  - [ ] institution.instance (27)
+  - [x] institution.instance (10)
+    <!-- all of these are transactions -->
+
+    - [ ] addSupervisor
+    - [ ] addSupervisors
+    - [ ] addStudent
+    - [ ] addStudents
+    - [ ] removeStudent
+    - [ ] removeStudents
+    - [ ] getPreAllocatedStudents
+    - [ ] edit
+    - [ ] fork
+    - [ ] merge
+
+     <!-- up to here -->
+
   - [ ] institution.instance.algorithm (9)
   - [ ] institution.instance.external (3)
   - [ ] institution.instance.matching (12)
@@ -29,6 +44,7 @@ A Big list of things we need to refactor:
   - [ ] institution.instance.project (1)
   - [ ] project (15)
   - [ ] access-control (6)
+
 - [ ] lib/utils?
 - [ ] lib/validations
 - [ ] tests
