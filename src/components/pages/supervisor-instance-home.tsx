@@ -68,7 +68,7 @@ export async function SupervisorInstanceHome({
   });
 
   if (
-    stage === Stage.PROJECT_SELECTION ||
+    stage === Stage.STUDENT_BIDDING ||
     stage === Stage.PROJECT_ALLOCATION ||
     stage === Stage.ALLOCATION_ADJUSTMENT ||
     (stage === Stage.ALLOCATION_PUBLICATION && !allocationAccess)

@@ -34,7 +34,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
       <Heading>My Projects</Heading>
       <PanelWrapper className="pt-6">
         <AccessControl
-          allowedStages={[Stage.PROJECT_SUBMISSION, Stage.PROJECT_SELECTION]}
+          allowedStages={[Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING]}
         >
           <Card className="flex justify-between px-10 py-5">
             <h2

@@ -33,7 +33,7 @@ export async function StudentOverview({ params }: { params: InstanceParams }) {
       params,
     });
 
-  if (stage === Stage.PROJECT_SELECTION) {
+  if (stage === Stage.STUDENT_BIDDING) {
     const preAllocatedProject = await api.user.student.isPreAllocated({
       params,
     });

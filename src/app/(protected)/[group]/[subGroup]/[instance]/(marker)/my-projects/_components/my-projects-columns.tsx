@@ -258,6 +258,6 @@ export function useMyProjectColumns({
     ),
   };
 
-  if (stageGt(stage, Stage.PROJECT_SELECTION)) return userCols;
+  if (stageGt(stage, Stage.STUDENT_BIDDING)) return userCols;
   return [selectCol, ...userCols, actionCol];
 }

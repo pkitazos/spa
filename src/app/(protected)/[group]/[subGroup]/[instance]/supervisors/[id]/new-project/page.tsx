@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: { params: PageParams }) {
 
 export default async function Page({ params }: { params: PageParams }) {
   const stage = await api.institution.instance.currentStage({ params });
-  if (stageGt(stage, Stage.PROJECT_SELECTION)) {
+  if (stageGt(stage, Stage.STUDENT_BIDDING)) {
     return (
       <Unauthorised message="You can't access this resource at this time" />
     );

@@ -22,7 +22,7 @@ export const adminLevelOrd = {
 export const stageOrd = {
   [Stage.SETUP]: 1,
   [Stage.PROJECT_SUBMISSION]: 2,
-  [Stage.PROJECT_SELECTION]: 3,
+  [Stage.STUDENT_BIDDING]: 3,
   [Stage.PROJECT_ALLOCATION]: 4,
   [Stage.ALLOCATION_ADJUSTMENT]: 5,
   [Stage.ALLOCATION_PUBLICATION]: 6,

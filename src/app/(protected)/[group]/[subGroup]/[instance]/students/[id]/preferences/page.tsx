@@ -24,7 +24,7 @@ export default async function Page({ params }: { params: PageParams }) {
   if (!exists) notFound();
 
   const stage = await api.institution.instance.currentStage({ params });
-  if (stage !== Stage.PROJECT_SELECTION) {
+  if (stage !== Stage.STUDENT_BIDDING) {
     return (
       <Unauthorised message="You are not allowed to access this resource at this time" />
     );
@@ -54,7 +54,7 @@ export default async function Page({ params }: { params: PageParams }) {
         <p>Preferences</p>
         <p className="text-3xl text-muted-foreground">for {student.name}</p>
       </Heading>
-      <AccessControl allowedStages={[Stage.PROJECT_SELECTION]}>
+      <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
         <section className="flex flex-col gap-3">
           <SubmissionArea
             title="Submit student preference list"

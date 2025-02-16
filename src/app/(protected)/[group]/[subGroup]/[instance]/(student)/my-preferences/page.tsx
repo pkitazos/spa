@@ -64,7 +64,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
     <>
       <Heading>{pages.myPreferences.title}</Heading>
       <PanelWrapper className="mt-10 h-full">
-        <AccessControl allowedStages={[Stage.PROJECT_SELECTION]}>
+        <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
           <SubmissionArea
             title="Submit your preference list"
             studentId={user.id}

@@ -24,7 +24,7 @@ export function CurrentBoardState({
   return (
     <BoardDetailsProvider projects={initialProjects}>
       <section className="flex w-full max-w-7xl flex-col">
-        <AccessControl allowedStages={[Stage.PROJECT_SELECTION]}>
+        <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
           <Card className="my-4">
             <CardContent className="flex items-center justify-between pt-6">
               <p className="font-medium">

@@ -317,8 +317,7 @@ export function ProjectForm({
           allowedRoles={[Role.ADMIN, Role.SUPERVISOR]}
           extraConditions={{
             SBAC: {
-              OR:
-                stage === Stage.PROJECT_SELECTION && userRoles.has(Role.ADMIN),
+              OR: stage === Stage.STUDENT_BIDDING && userRoles.has(Role.ADMIN),
             },
           }}
         >
@@ -348,7 +347,7 @@ export function ProjectForm({
         <div className="flex justify-between">
           <AccessControl
             allowedRoles={[Role.ADMIN]}
-            allowedStages={[Stage.PROJECT_SUBMISSION, Stage.PROJECT_SELECTION]}
+            allowedStages={[Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING]}
           >
             <FormField
               control={form.control}
@@ -388,8 +387,7 @@ export function ProjectForm({
             extraConditions={{
               SBAC: {
                 OR:
-                  stage === Stage.PROJECT_SELECTION &&
-                  userRoles.has(Role.ADMIN),
+                  stage === Stage.STUDENT_BIDDING && userRoles.has(Role.ADMIN),
               },
             }}
           >

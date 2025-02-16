@@ -102,7 +102,7 @@ export default async function Project({ params }: { params: PageParams }) {
         {project.title}
         <AccessControl
           allowedRoles={[Role.STUDENT]}
-          allowedStages={[Stage.PROJECT_SELECTION]}
+          allowedStages={[Stage.STUDENT_BIDDING]}
           extraConditions={{ RBAC: { AND: !preAllocated } }}
         >
           <StudentPreferenceButton
@@ -112,7 +112,7 @@ export default async function Project({ params }: { params: PageParams }) {
         </AccessControl>
         <AccessControl
           allowedRoles={[Role.ADMIN]}
-          allowedStages={previousStages(Stage.PROJECT_SELECTION)}
+          allowedStages={previousStages(Stage.STUDENT_BIDDING)}
           extraConditions={{ RBAC: { OR: project.supervisor.id === user.id } }}
         >
           <Link

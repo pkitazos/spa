@@ -22,7 +22,7 @@ function adminOnlyTabs<
       pages.addStudents,
       pages.addSupervisors,
     ],
-    [Stage.PROJECT_SELECTION]: [
+    [Stage.STUDENT_BIDDING]: [
       pages.studentInvites,
       pages.preferenceSubmissions,
       pages.lateProposals,
@@ -66,10 +66,15 @@ function supervisorOnlyTabs(instance: AllocationInstance) {
   const tabs = {
     [Stage.SETUP]: [],
     [Stage.PROJECT_SUBMISSION]: [pages.myProjects, pages.newProject],
-    [Stage.PROJECT_SELECTION]: [pages.myProjects, pages.newProject],
+    [Stage.STUDENT_BIDDING]: [pages.myProjects, pages.newProject],
     [Stage.PROJECT_ALLOCATION]: [pages.myProjects],
     [Stage.ALLOCATION_ADJUSTMENT]: [pages.myProjects],
-    [Stage.ALLOCATION_PUBLICATION]: [pages.myProjects, pages.myReadings, pages.myMarking, ...myAllocationsTab],
+    [Stage.ALLOCATION_PUBLICATION]: [
+      pages.myProjects,
+      pages.myReadings,
+      pages.myMarking,
+      ...myAllocationsTab,
+    ],
   };
   return tabs[instance.stage];
 }
@@ -87,7 +92,7 @@ const studentOnlyTabs = (
   const tabs = {
     [Stage.SETUP]: [],
     [Stage.PROJECT_SUBMISSION]: [],
-    [Stage.PROJECT_SELECTION]: base,
+    [Stage.STUDENT_BIDDING]: base,
     [Stage.PROJECT_ALLOCATION]: base,
     [Stage.ALLOCATION_ADJUSTMENT]: base,
     [Stage.ALLOCATION_PUBLICATION]: myAllocationTab,

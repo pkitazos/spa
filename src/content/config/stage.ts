@@ -1,18 +1,48 @@
 import { Stage } from "@prisma/client";
 
-// TODO: names pending
 export const CHAPTER = {
-  PRE_PUBLICATION: {
-    SETUP: Stage.SETUP,
-    PROJECT_SUBMISSION: Stage.PROJECT_SUBMISSION,
-    PROJECT_SELECTION: Stage.PROJECT_SELECTION,
-    ADJUSTING_PROJECT_ALLOCATION: Stage.ALLOCATION_ADJUSTMENT,
-    ALLOCATION_PUBLICATION: Stage.ALLOCATION_PUBLICATION,
+  ALLOCATION: {
+    SETUP: {
+      id: Stage.SETUP,
+      displayName: "Setup",
+    },
+    PROJECT_SUBMISSION: {
+      id: Stage.PROJECT_SUBMISSION,
+      displayName: "Project Submission",
+    },
+    STUDENT_BIDDING: {
+      id: Stage.STUDENT_BIDDING,
+      displayName: "Student Bidding",
+    },
+    PROJECT_ALLOCATION: {
+      id: Stage.PROJECT_ALLOCATION,
+      displayName: "Project Allocation",
+    },
+    ALLOCATION_ADJUSTMENT: {
+      id: Stage.ALLOCATION_ADJUSTMENT,
+      displayName: "Allocation Adjustment",
+    },
+    ALLOCATION_PUBLICATION: {
+      id: Stage.ALLOCATION_PUBLICATION,
+      displayName: "Allocation Publication",
+    },
   },
-  PUBLICATION: {
-    READER_BIDDING: Stage.READER_BIDDING,
-    READER_ALLOCATION: Stage.READER_ALLOCATION,
-    MARKING: Stage.MARKING,
-    FINAL_GRADES_RELEASED: Stage.FINAL_GRADES_RELEASED,
+  MARKING: {
+    READER_BIDDING: {
+      id: Stage.READER_BIDDING,
+      displayName: "Reader Bidding",
+    },
+    READER_ALLOCATION: {
+      id: Stage.READER_ALLOCATION,
+      displayName: "Reader Allocation",
+    },
+    MARK_SUBMISSION: {
+      id: Stage.MARK_SUBMISSION,
+      displayName: "Mark Submission",
+    },
+    GRADE_PUBLICATION: {
+      id: Stage.GRADE_PUBLICATION,
+      displayName: "Grade Publication",
+    },
   },
 };

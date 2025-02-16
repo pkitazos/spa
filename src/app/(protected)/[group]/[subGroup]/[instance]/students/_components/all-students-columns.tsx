@@ -173,7 +173,7 @@ export function useAllStudentsColumns({
       if (
         someSelected &&
         role === Role.ADMIN &&
-        stageLte(stage, Stage.PROJECT_SELECTION)
+        stageLte(stage, Stage.STUDENT_BIDDING)
       )
         return (
           <div className="flex w-14 items-center justify-center">
@@ -256,7 +256,7 @@ export function useAllStudentsColumns({
               </DropdownMenuItem>
               <AccessControl
                 allowedRoles={[Role.ADMIN]}
-                allowedStages={previousStages(Stage.PROJECT_SELECTION)}
+                allowedStages={previousStages(Stage.STUDENT_BIDDING)}
               >
                 <DropdownMenuItem className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive">
                   <YesNoActionTrigger
@@ -278,7 +278,7 @@ export function useAllStudentsColumns({
 
   if (role !== Role.ADMIN) return userCols;
 
-  return stageLte(stage, Stage.PROJECT_SELECTION)
+  return stageLte(stage, Stage.STUDENT_BIDDING)
     ? [selectCol, ...userCols, actionsCol]
     : [...userCols, actionsCol];
 }

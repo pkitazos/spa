@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 export default async function Page({ params }: { params: InstanceParams }) {
   const stage = await api.institution.instance.currentStage({ params });
 
-  if (stageGt(stage, Stage.PROJECT_SELECTION)) {
+  if (stageGt(stage, Stage.STUDENT_BIDDING)) {
     return (
       <Unauthorised message="You really should not be submitting projects at this stage" />
     );

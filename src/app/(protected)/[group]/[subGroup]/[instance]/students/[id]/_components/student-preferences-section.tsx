@@ -36,7 +36,7 @@ export async function StudentPreferencesSection({
     <>
       <div className="-mb-2 mt-6 flex items-center justify-between">
         <SubHeading>Preferences</SubHeading>
-        <AccessControl allowedStages={[Stage.PROJECT_SELECTION]}>
+        <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
           <Link
             className={cn(
               buttonVariants({ variant: "outline" }),

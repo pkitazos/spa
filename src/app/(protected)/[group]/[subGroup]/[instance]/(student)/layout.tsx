@@ -24,7 +24,7 @@ export default async function Layout({
     );
   }
 
-  if (stageLt(stage, Stage.PROJECT_SELECTION)) {
+  if (stageLt(stage, Stage.STUDENT_BIDDING)) {
     return (
       <Unauthorised message="You are not allowed to access the platform at this time" />
     );

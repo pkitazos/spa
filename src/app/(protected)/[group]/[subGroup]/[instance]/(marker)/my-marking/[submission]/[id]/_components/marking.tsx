@@ -10,9 +10,7 @@ import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import { CurrentMarks, markingFormZ } from "@/lib/validations/marking-form";
 
 export function Marking({ project }: { project: CurrentMarks }) {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const params = useInstanceParams();
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const router = useRouter();
   const instancePath = formatParamsAsPath(params);
 

@@ -16,7 +16,7 @@ export default async function Layout({
   const stage = await api.institution.instance.currentStage({ params });
   const instancePath = formatParamsAsPath(params);
 
-  if (stageGt(stage, Stage.PROJECT_SELECTION)) redirect(`${instancePath}/`);
+  if (stageGt(stage, Stage.STUDENT_BIDDING)) redirect(`${instancePath}/`);
 
   return <>{children}</>;
 }

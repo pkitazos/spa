@@ -279,7 +279,7 @@ export function useAllProjectsColumns({
                     </DropdownMenuItem>
                     <AccessControl
                       allowedRoles={[Role.STUDENT]}
-                      allowedStages={[Stage.PROJECT_SELECTION]}
+                      allowedStages={[Stage.STUDENT_BIDDING]}
                     >
                       <StudentPreferenceActionSubMenu
                         changePreference={async (t) =>
@@ -291,7 +291,7 @@ export function useAllProjectsColumns({
                       allowedRoles={[Role.ADMIN]}
                       allowedStages={[
                         Stage.PROJECT_SUBMISSION,
-                        Stage.PROJECT_SELECTION,
+                        Stage.STUDENT_BIDDING,
                       ]}
                     >
                       <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
@@ -356,7 +356,7 @@ export function useAllProjectsColumns({
                   </DropdownMenuItem>
                   <AccessControl
                     allowedRoles={[Role.STUDENT]}
-                    allowedStages={[Stage.PROJECT_SELECTION]}
+                    allowedStages={[Stage.STUDENT_BIDDING]}
                     extraConditions={{ RBAC: { AND: !hasSelfDefinedProject } }}
                   >
                     <StudentPreferenceActionSubMenu
@@ -370,7 +370,7 @@ export function useAllProjectsColumns({
                     allowedRoles={[Role.ADMIN]}
                     allowedStages={[
                       Stage.PROJECT_SUBMISSION,
-                      Stage.PROJECT_SELECTION,
+                      Stage.STUDENT_BIDDING,
                     ]}
                     extraConditions={{
                       RBAC: { OR: supervisor.id === user.id },
@@ -405,13 +405,13 @@ export function useAllProjectsColumns({
     },
   ];
 
-  if (role === Role.STUDENT && stage === Stage.PROJECT_SELECTION) {
+  if (role === Role.STUDENT && stage === Stage.STUDENT_BIDDING) {
     return !hasSelfDefinedProject ? [selectCol, ...baseCols] : baseCols;
   }
 
   if (
     role === Role.ADMIN &&
-    (stage === Stage.PROJECT_SUBMISSION || stage === Stage.PROJECT_SELECTION)
+    (stage === Stage.PROJECT_SUBMISSION || stage === Stage.STUDENT_BIDDING)
   ) {
     return [selectCol, ...baseCols];
   }

@@ -181,7 +181,7 @@ export const preferenceRouter = createTRPCRouter({
         const { ok, message } = accessControl({
           ctx,
           allowedRoles: [Role.ADMIN, Role.STUDENT],
-          stageCheck: (s) => s === Stage.PROJECT_SELECTION,
+          stageCheck: (s) => s === Stage.STUDENT_BIDDING,
         });
         if (!ok) throw new Error(message);
 
@@ -218,7 +218,7 @@ export const preferenceRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input: { params, projectId, preferenceType } }) => {
-      if (ctx.instance.stage !== Stage.PROJECT_SELECTION) return;
+      if (ctx.instance.stage !== Stage.STUDENT_BIDDING) return;
       const student = ctx.session.user;
       const selfDefinedProject = await getSelfDefinedProject(
         ctx.db,
@@ -246,7 +246,7 @@ export const preferenceRouter = createTRPCRouter({
     )
     .mutation(
       async ({ ctx, input: { params, projectIds, preferenceType } }) => {
-        if (ctx.instance.stage !== Stage.PROJECT_SELECTION) return;
+        if (ctx.instance.stage !== Stage.STUDENT_BIDDING) return;
         const student = ctx.session.user;
         const selfDefinedProject = await getSelfDefinedProject(
           ctx.db,
@@ -289,7 +289,7 @@ export const preferenceRouter = createTRPCRouter({
         const { ok, message } = accessControl({
           ctx,
           allowedRoles: [Role.ADMIN, Role.STUDENT],
-          stageCheck: (s) => s === Stage.PROJECT_SELECTION,
+          stageCheck: (s) => s === Stage.STUDENT_BIDDING,
         });
         if (!ok) throw new Error(message);
 
@@ -410,7 +410,7 @@ export const preferenceRouter = createTRPCRouter({
         const { ok, message } = accessControl({
           ctx,
           allowedRoles: [Role.ADMIN, Role.STUDENT],
-          stageCheck: (s) => s === Stage.PROJECT_SELECTION,
+          stageCheck: (s) => s === Stage.STUDENT_BIDDING,
         });
         if (!ok) throw new Error(message);
 
@@ -483,7 +483,7 @@ export const preferenceRouter = createTRPCRouter({
         ctx,
         allowedRoles: [Role.ADMIN, Role.STUDENT],
         stageCheck: (s) =>
-          stageIn(s, [Stage.PROJECT_SELECTION, Stage.ALLOCATION_ADJUSTMENT]),
+          stageIn(s, [Stage.STUDENT_BIDDING, Stage.ALLOCATION_ADJUSTMENT]),
       });
       if (!ok) throw new Error(message);
 

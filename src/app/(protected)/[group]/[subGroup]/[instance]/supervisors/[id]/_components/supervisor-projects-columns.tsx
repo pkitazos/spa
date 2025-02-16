@@ -355,7 +355,7 @@ export function useSupervisorProjectsColumns({
                   </Link>
                 </DropdownMenuItem>
                 <AccessControl
-                  allowedStages={previousStages(Stage.PROJECT_SELECTION)}
+                  allowedStages={previousStages(Stage.STUDENT_BIDDING)}
                 >
                   <DropdownMenuItem className="group/item">
                     <Link

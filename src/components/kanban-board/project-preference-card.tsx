@@ -74,7 +74,7 @@ export function ProjectPreferenceCard({
         isOver && "outline outline-4 outline-muted-foreground/50",
       )}
     >
-      <AccessControl allowedStages={[Stage.PROJECT_SELECTION]}>
+      <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
         <Button
           {...attributes}
           {...listeners}
@@ -108,7 +108,7 @@ export function ProjectPreferenceCard({
               </Link>
             </Comp>
           </CardTitle>
-          <AccessControl allowedStages={[Stage.PROJECT_SELECTION]}>
+          <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
             <Button
               variant="ghost"
               size="icon"
