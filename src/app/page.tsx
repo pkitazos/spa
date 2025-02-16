@@ -5,7 +5,7 @@ import { UserInstances } from "@/components/user-instances";
 
 import { auth } from "@/lib/auth";
 
-import { app, metadataTitle } from "@/content/config/app";
+import { app, metadataTitle } from "@/config/meta";
 
 export const dynamic = "force-dynamic";
 

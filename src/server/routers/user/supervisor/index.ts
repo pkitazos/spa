@@ -7,10 +7,10 @@ import { supervisorCapacitiesSchema } from "@/lib/validations/supervisor-project
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
-import { computeProjectSubmissionTarget } from "@/server/utils/instance/submission-target";
 
 import { formatSupervisorRowProjects } from "./_utils/supervisor-row-projects";
 
+import { computeProjectSubmissionTarget } from "@/config/submission-target";
 import { User } from "@/data-objects/users/user";
 import { Stage } from "@/db/types";
 import { flagDtoSchema, tagDtoSchema, userDtoSchema } from "@/dto";

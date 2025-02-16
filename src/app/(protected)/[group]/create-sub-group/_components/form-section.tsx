@@ -22,7 +22,7 @@ import { api } from "@/lib/trpc/client";
 import { slugify } from "@/lib/utils/general/slugify";
 import { GroupParams } from "@/lib/validations/params";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function FormSection({
   takenNames,

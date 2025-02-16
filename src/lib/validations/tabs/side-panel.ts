@@ -2,7 +2,7 @@ import { AllocationInstance, Role, Stage } from "@prisma/client";
 
 import { TabGroup } from "./index";
 
-import { pages } from "@/content/pages";
+import { PAGES } from "@/config/pages";
 
 function adminOnlyTabs<
   T extends {
@@ -13,45 +13,45 @@ function adminOnlyTabs<
 >(instance: T) {
   const branchingTab = getInstanceBranchingTab(instance);
   const tabs = {
-    [Stage.SETUP]: [pages.addStudents, pages.addSupervisors],
+    [Stage.SETUP]: [PAGES.addStudents, PAGES.addSupervisors],
 
     [Stage.PROJECT_SUBMISSION]: [
-      pages.supervisorInvites,
-      pages.projectSubmissions,
-      pages.preAllocatedProjects,
-      pages.addStudents,
-      pages.addSupervisors,
+      PAGES.supervisorInvites,
+      PAGES.projectSubmissions,
+      PAGES.preAllocatedProjects,
+      PAGES.addStudents,
+      PAGES.addSupervisors,
     ],
     [Stage.PROJECT_SELECTION]: [
-      pages.studentInvites,
-      pages.preferenceSubmissions,
-      pages.lateProposals,
-      pages.preAllocatedProjects,
-      pages.addStudents,
-      pages.addSupervisors,
+      PAGES.studentInvites,
+      PAGES.preferenceSubmissions,
+      PAGES.lateProposals,
+      PAGES.preAllocatedProjects,
+      PAGES.addStudents,
+      PAGES.addSupervisors,
     ],
     [Stage.PROJECT_ALLOCATION]: [
-      pages.algorithms,
-      pages.results,
-      pages.preferenceStatistics,
-      pages.preferenceSubmissions,
-      pages.preAllocatedProjects,
+      PAGES.algorithms,
+      PAGES.results,
+      PAGES.preferenceStatistics,
+      PAGES.preferenceSubmissions,
+      PAGES.preAllocatedProjects,
     ],
     [Stage.ALLOCATION_ADJUSTMENT]: [
-      pages.manualChanges,
-      pages.randomAllocations,
-      pages.results,
-      pages.preferenceStatistics,
-      pages.preferenceSubmissions,
-      pages.preAllocatedProjects,
+      PAGES.manualChanges,
+      PAGES.randomAllocations,
+      PAGES.results,
+      PAGES.preferenceStatistics,
+      PAGES.preferenceSubmissions,
+      PAGES.preAllocatedProjects,
     ],
     [Stage.ALLOCATION_PUBLICATION]: [
-      pages.manageUserAccess,
-      pages.allocationOverview,
-      pages.exportToCSV,
+      PAGES.manageUserAccess,
+      PAGES.allocationOverview,
+      PAGES.exportToCSV,
       ...branchingTab,
-      pages.preferenceStatistics,
-      pages.preferenceSubmissions,
+      PAGES.preferenceStatistics,
+      PAGES.preferenceSubmissions,
     ],
   };
   return tabs[instance.stage];
@@ -59,16 +59,16 @@ function adminOnlyTabs<
 
 function supervisorOnlyTabs(instance: AllocationInstance) {
   const myAllocationsTab = instance.supervisorAllocationAccess
-    ? [pages.myAllocations]
+    ? [PAGES.myAllocations]
     : [];
 
   const tabs = {
     [Stage.SETUP]: [],
-    [Stage.PROJECT_SUBMISSION]: [pages.myProjects, pages.newProject],
-    [Stage.PROJECT_SELECTION]: [pages.myProjects, pages.newProject],
-    [Stage.PROJECT_ALLOCATION]: [pages.myProjects],
-    [Stage.ALLOCATION_ADJUSTMENT]: [pages.myProjects],
-    [Stage.ALLOCATION_PUBLICATION]: [pages.myProjects, ...myAllocationsTab],
+    [Stage.PROJECT_SUBMISSION]: [PAGES.myProjects, PAGES.newProject],
+    [Stage.PROJECT_SELECTION]: [PAGES.myProjects, PAGES.newProject],
+    [Stage.PROJECT_ALLOCATION]: [PAGES.myProjects],
+    [Stage.ALLOCATION_ADJUSTMENT]: [PAGES.myProjects],
+    [Stage.ALLOCATION_PUBLICATION]: [PAGES.myProjects, ...myAllocationsTab],
   };
   return tabs[instance.stage];
 }
@@ -77,10 +77,10 @@ const studentOnlyTabs = (
   instance: AllocationInstance,
   preAllocatedProject: boolean,
 ) => {
-  const base = preAllocatedProject ? [] : [pages.myPreferences];
+  const base = preAllocatedProject ? [] : [PAGES.myPreferences];
 
   const myAllocationTab = instance.studentAllocationAccess
-    ? [pages.myAllocation]
+    ? [PAGES.myAllocation]
     : [];
 
   const tabs = {
@@ -108,7 +108,7 @@ export function getTabs({
   if (roles.has(Role.ADMIN)) {
     tabs.push({
       title: "Admin",
-      tabs: [pages.stageControl, pages.settings],
+      tabs: [PAGES.stageControl, PAGES.settings],
     });
 
     tabs.push({
@@ -124,10 +124,10 @@ export function getTabs({
     tabs.push({
       title: "Supervisor",
       tabs: !isSecondRole
-        ? [pages.instanceTasks, ...base]
+        ? [PAGES.instanceTasks, ...base]
         : instance.stage === Stage.SETUP
           ? base
-          : [pages.supervisorTasks, ...base],
+          : [PAGES.supervisorTasks, ...base],
     });
   }
 
@@ -137,7 +137,7 @@ export function getTabs({
 
     tabs.push({
       title: "Student",
-      tabs: isSecondRole ? base : [pages.instanceTasks, ...base],
+      tabs: isSecondRole ? base : [PAGES.instanceTasks, ...base],
     });
   }
 
@@ -150,7 +150,7 @@ function getInstanceBranchingTab<
     forkedInstanceId: string | null;
   },
 >(instance: T) {
-  if (instance.parentInstanceId) return [pages.mergeInstance];
-  if (!instance.forkedInstanceId) return [pages.forkInstance];
+  if (instance.parentInstanceId) return [PAGES.mergeInstance];
+  if (!instance.forkedInstanceId) return [PAGES.forkInstance];
   return [];
 }

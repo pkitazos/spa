@@ -6,7 +6,7 @@ import {
   GreedyAlgorithm,
   GreedyGenAlgorithm,
   MinCostAlgorithm,
-} from "@/content/algorithms";
+} from "@/config/algorithms";
 
 // TODO: centralise built-in algorithm names
 

@@ -9,8 +9,8 @@ import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 
 import { api } from "@/lib/trpc/server";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { spacesLabels } from "@/content/spaces";
+import { app, metadataTitle } from "@/config/meta";
+import { spacesLabels } from "@/config/spaces";
 
 export const dynamic = "force-dynamic";
 

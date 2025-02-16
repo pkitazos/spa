@@ -40,7 +40,7 @@ import {
   ForkedInstanceDetails,
 } from "@/lib/validations/instance-form";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function ForkedInstanceForm({
   takenNames,

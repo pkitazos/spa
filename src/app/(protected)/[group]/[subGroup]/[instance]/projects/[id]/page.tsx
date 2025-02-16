@@ -24,8 +24,8 @@ import { StudentPreferenceType } from "@/lib/validations/student-preference";
 import { StudentPreferenceButton } from "./_components/student-preference-button";
 import { StudentPreferenceDataTable } from "./_components/student-preference-data-table";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 type PageParams = InstanceParams & { id: string };
 
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: { params: PageParams }) {
   return {
     title: metadataTitle([
       title,
-      pages.allProjects.title,
+      PAGES.allProjects.title,
       displayName,
       app.name,
     ]),

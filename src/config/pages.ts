@@ -1,4 +1,4 @@
-export const pages = {
+export const PAGES = {
   newGroup: {
     title: "New Group",
     href: "create-group",

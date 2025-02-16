@@ -16,8 +16,8 @@ import { AdminRemovalButton } from "./_components/admin-removal-button";
 import { DeleteConfirmation } from "./_components/delete-confirmation";
 import { FormButton } from "./_components/form-button";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { spacesLabels } from "@/content/spaces";
+import { app, metadataTitle } from "@/config/meta";
+import { spacesLabels } from "@/config/spaces";
 import { AdminLevel } from "@/db/types";
 
 export async function generateMetadata({ params }: { params: GroupParams }) {

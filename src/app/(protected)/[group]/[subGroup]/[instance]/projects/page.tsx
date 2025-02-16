@@ -7,14 +7,14 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { AllProjectsDataTable } from "./_components/all-projects-data-table";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([pages.allProjects.title, displayName, app.name]),
+    title: metadataTitle([PAGES.allProjects.title, displayName, app.name]),
   };
 }
 
@@ -34,7 +34,7 @@ export default async function Projects({ params }: { params: InstanceParams }) {
 
   return (
     <PageWrapper>
-      <Heading>{pages.allProjects.title}</Heading>
+      <Heading>{PAGES.allProjects.title}</Heading>
       <AllProjectsDataTable
         user={user}
         role={role}

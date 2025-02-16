@@ -32,7 +32,7 @@ import { Separator } from "./ui/separator";
 import { TimePicker } from "./ui/time-picker";
 import { SubHeading } from "./heading";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function InstanceForm({
   submissionButtonLabel,

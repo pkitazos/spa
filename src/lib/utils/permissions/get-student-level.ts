@@ -1,4 +1,4 @@
-import { projectFlags } from "@/content/config/flags";
+import { projectFlags } from "@/config/config/flags";
 
 /**
  *

@@ -38,7 +38,7 @@ import { User } from "@/lib/validations/auth";
 import { ProjectTableDataDto } from "@/lib/validations/dto/project";
 import { StudentPreferenceType } from "@/lib/validations/student-preference";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function useAllProjectsColumns({
   user,

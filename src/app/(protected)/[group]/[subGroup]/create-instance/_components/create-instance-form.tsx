@@ -11,7 +11,7 @@ import { slugify } from "@/lib/utils/general/slugify";
 import { ValidatedInstanceDetails } from "@/lib/validations/instance-form";
 import { SubGroupParams } from "@/lib/validations/params";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function CreateInstanceForm({
   params,

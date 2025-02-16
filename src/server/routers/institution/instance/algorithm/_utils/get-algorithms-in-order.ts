@@ -5,7 +5,7 @@ import {
   GreedyAlgorithm,
   GreedyGenAlgorithm,
   MinCostAlgorithm,
-} from "@/content/algorithms";
+} from "@/config/algorithms";
 
 export function getAlgorithmsInOrder<T extends { algName: string }>(
   algorithmData: T[],

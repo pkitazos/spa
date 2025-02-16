@@ -7,15 +7,15 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { CreateProjectsSection } from "./_components/send-allocations";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
     title: metadataTitle([
-      pages.exportToExternalSystem.title,
+      PAGES.exportToExternalSystem.title,
       displayName,
       app.name,
     ]),
