@@ -300,13 +300,14 @@ export class DAL {
     getSupervisorDetails: async (params: InstanceParams) => {
       const supervisors = await this.db.supervisorDetails.findMany({
         where: expand(params),
-        include: { userInInstance: { select: { user: true } } },
+        include: { userInInstance: { include: { user: true } } },
       });
 
       return supervisors.map(({ userInInstance, ...s }) => ({
         institutionId: userInInstance.user.id,
         fullName: userInInstance.user.name,
         email: userInInstance.user.email,
+        joined: userInInstance.joined,
         projectTarget: s.projectAllocationTarget,
         projectUpperQuota: s.projectAllocationUpperBound,
       }));
@@ -518,6 +519,16 @@ export class DAL {
           data: { joined: true },
         })
         .then(userInInstanceToDTO),
+
+    deleteInInstance: async (userId: string, params: InstanceParams) =>
+      await this.db.userInInstance.delete({
+        where: { instanceMembership: { ...expand(params), userId } },
+      }),
+
+    deleteManyInInstance: async (userIds: string[], params: InstanceParams) =>
+      await this.db.userInInstance.deleteMany({
+        where: { ...expand(params), userId: { in: userIds } },
+      }),
   };
 
   public superAdmin = {

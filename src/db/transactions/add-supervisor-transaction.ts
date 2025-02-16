@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { TRPCClientError } from "@trpc/client";
 
+import { expand } from "@/lib/utils/general/instance-params";
 import { NewSupervisor } from "@/lib/validations/add-users/new-user";
 import { InstanceParams } from "@/lib/validations/params";
 
@@ -10,7 +11,6 @@ import {
   createSupervisorDetails,
   findSupervisorDetails,
 } from "@/data-access/supervisor-details";
-import { createUserInInstance } from "@/data-access/user";
 
 export async function addSupervisorTx(
   db: PrismaClient,
@@ -31,8 +31,9 @@ export async function addSupervisorTx(
 
     await validateEmailGUIDMatch(tx, institutionId, email, fullName);
 
-    // ! this should accept the prisma client
-    await createUserInInstance(params, institutionId);
+    await db.userInInstance.create({
+      data: { ...expand(params), userId: institutionId },
+    });
 
     // ! this should accept the prisma client
     await createSupervisorDetails(params, institutionId, {

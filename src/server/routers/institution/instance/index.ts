@@ -7,59 +7,46 @@ import {
   newSupervisorSchema,
 } from "@/lib/validations/add-users/new-user";
 import {
+  createdInstanceSchema,
   forkedInstanceSchema,
   updatedInstanceSchema,
 } from "@/lib/validations/instance-form";
 import { instanceParamsSchema } from "@/lib/validations/params";
-import { getTabs } from "@/lib/validations/tabs/side-panel";
+import { tabGroupSchema } from "@/lib/validations/tabs";
 
-import {
-  createTRPCRouter,
-  instanceAdminProcedure,
-  instanceProcedure,
-  multiRoleAwareProcedure,
-  protectedProcedure,
-} from "@/server/trpc";
-import { getUserRole } from "@/server/utils/instance/user-role";
+import { procedure } from "@/server/middleware";
+import { createTRPCRouter } from "@/server/trpc";
 
-import { hasSelfDefinedProject } from "../../user/_utils/get-self-defined-project";
-
-import { addStudentTx } from "./_utils/add-student-transaction";
-import { addStudentsTx } from "./_utils/add-students-transaction";
-import { addSupervisorTx } from "./_utils/add-supervisor-transaction";
-import { addSupervisorsTx } from "./_utils/add-supervisors-transaction";
-import { editInstanceTx } from "./_utils/edit-instance-tx";
-import { forkInstanceTransaction } from "./_utils/fork/transaction";
 import { mergeInstanceTrx } from "./_utils/merge/transaction";
-import { getPreAllocatedStudents } from "./_utils/pre-allocated-students";
-import { removeStudentTx } from "./_utils/remove-student-transaction";
-import { removeStudentsTx } from "./_utils/remove-students-tx";
 import { algorithmRouter } from "./algorithm";
 import { externalSystemRouter } from "./external";
 import { matchingRouter } from "./matching";
 import { preferenceRouter } from "./preference";
 import { projectRouter } from "./project";
 
-import { pages } from "@/content/pages";
-import { getStudentDetailsWithUser } from "@/data-access/student-details";
-import { deleteUsersInInstance } from "@/data-access/user";
-import {
-  allStudentsUseCase,
-  checkInstanceExistsUseCase,
-  getEditFormDetailsUseCase,
-  getFlagTitlesUseCase,
-  getInstanceUseCase,
-  getProjectAllocationsUseCase,
-  getSelectedAlgorithmUseCase,
-  getStudentsUseCase,
-  getSupervisorDetailsUseCase,
-  getSupervisorsUseCase,
-  invitedStudentsUseCase,
-  invitedSupervisorsUseCase,
-  removeSupervisorsUseCase,
-  removeSupervisorUseCase,
-  updateStageUseCase,
-} from "@/interactors";
+import { PAGES } from "@/config/pages";
+import { AllocationInstance } from "@/data-objects/spaces/instance";
+import { addStudentTx } from "@/db/transactions/add-student";
+import { addStudentsTx } from "@/db/transactions/add-students";
+import { addSupervisorTx } from "@/db/transactions/add-supervisor-transaction";
+import { addSupervisorsTx } from "@/db/transactions/add-supervisors-transaction";
+import { editInstanceTx } from "@/db/transactions/edit-instance-tx";
+import { forkInstanceTransaction } from "@/db/transactions/fork/transaction";
+import { getPreAllocatedStudents } from "@/db/transactions/pre-allocated-students";
+import { removeStudentTx } from "@/db/transactions/remove-student-transaction";
+import { removeStudentsTx } from "@/db/transactions/remove-students-tx";
+import { Role } from "@/db/types";
+import { instanceDtoSchema, stageSchema } from "@/dto";
+import { supervisorDtoSchema } from "@/dto/supervisor";
+
+const tgc = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string(),
+  joined: z.boolean(),
+  level: z.number(),
+  preAllocated: z.boolean(),
+});
 
 // TODO: add stage checks to stage-specific procedures
 export const instanceRouter = createTRPCRouter({
@@ -69,71 +56,191 @@ export const instanceRouter = createTRPCRouter({
   external: externalSystemRouter,
   preference: preferenceRouter,
 
-  exists: instanceProcedure.query(
-    async ({
-      ctx: {
-        instance: { params },
-      },
-    }) => {
-      return checkInstanceExistsUseCase({ params });
-    },
-  ),
+  /**
+   * Check if an instance exists by ID
+   */
+  exists: procedure.instance.user
+    .output(z.boolean())
+    .query(async ({ ctx: { instance } }) => await instance.exists()),
 
-  get: instanceProcedure.query(async ({ input: { params } }) => {
-    return await getInstanceUseCase({ params });
-  }),
+  /**
+   * Get instance data by ID
+   * @throws if the instance doesn't exist
+   */
+  get: procedure.instance.user
+    .output(instanceDtoSchema)
+    .query(async ({ ctx: { instance } }) => await instance.get()),
 
-  currentStage: instanceProcedure.query(async ({ ctx }) => {
-    return ctx.instance.stage;
-  }),
+  /**
+   * Returns the current stage of an instance with the ID provided
+   * @throws if the instance doesn't exist
+   */
+  currentStage: procedure.instance.user
+    .output(stageSchema)
+    .query(async ({ ctx: { instance } }) => {
+      const { stage } = await instance.get();
+      return stage;
+    }),
 
-  setStage: instanceAdminProcedure
-    .input(
+  /**
+   * Set the current stage for the specified instance
+   */
+  setStage: procedure.instance.subgroupAdmin
+    .input(z.object({ stage: stageSchema }))
+    .output(z.void())
+    .mutation(
+      async ({ ctx: { instance }, input: { stage } }) =>
+        await instance.setStage(stage),
+    ),
+
+  // BREAKING returns undefined, and ID instead of alg name
+  /**
+   * Returns the ID and display name of the currently selected algorithm
+   * return empty strings if none is selected
+   */
+  selectedAlgorithm: procedure.instance.subgroupAdmin
+    .output(
+      z
+        .object({
+          id: z.string(),
+          displayName: z.string(),
+        })
+        .optional(),
+    )
+    .query(async ({ ctx: { instance } }) => {
+      const alg = await instance.getSelectedAlg();
+
+      if (!alg) return undefined;
+
+      const { id, displayName } = await alg.get();
+      return { id, displayName };
+    }),
+
+  // TODO do we have this schema (or parts of it) elsewhere?
+  /**
+   * return the allocations in this instance, in three views:
+   * by student, by supervisor, and by project
+   */
+  projectAllocations: procedure.instance.subgroupAdmin
+    .output(
       z.object({
-        stage: z.nativeEnum(Stage),
+        byStudent: z.array(
+          z.object({
+            student: z.object({
+              id: z.string(),
+              name: z.string(),
+              email: z.string(),
+              ranking: z.number(),
+            }),
+            project: z.object({
+              id: z.string(),
+              title: z.string(),
+            }),
+            supervisor: z.object({
+              id: z.string(),
+              name: z.string(),
+            }),
+          }),
+        ),
+        byProject: z.array(
+          z.object({
+            project: z.object({
+              id: z.string(),
+              title: z.string(),
+              capacityLowerBound: z.number(),
+              capacityUpperBound: z.number(),
+            }),
+            supervisor: z.object({
+              id: z.string(),
+              name: z.string(),
+            }),
+            student: z.object({
+              id: z.string(),
+              name: z.string(),
+              ranking: z.number(),
+            }),
+          }),
+        ),
+        bySupervisor: z.array(
+          z.object({
+            project: z.object({
+              id: z.string(),
+              title: z.string(),
+            }),
+            supervisor: z.object({
+              id: z.string(),
+              name: z.string(),
+              email: z.string(),
+              allocationLowerBound: z.number(),
+              allocationTarget: z.number(),
+              allocationUpperBound: z.number(),
+            }),
+            student: z.object({
+              id: z.string(),
+              name: z.string(),
+              ranking: z.number(),
+            }),
+          }),
+        ),
       }),
     )
-    .mutation(async ({ input: { stage }, ctx }) => {
-      await updateStageUseCase({ params: ctx.instance.params, stage });
+    .query(async ({ ctx }) => {
+      const allocationData = await ctx.instance.getAllocationData();
+      return allocationData.getViews();
     }),
 
-  selectedAlgorithm: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ ctx, input: { params } }) => {
-      return await getSelectedAlgorithmUseCase({
-        params,
-        selectedAlgName: ctx.instance.selectedAlgName,
-      });
+  // TODO review usage of this
+  // DEFINITELY it should use std. names
+  // MAYBE kill it and use other gets?
+  getEditFormDetails: procedure.instance.subgroupAdmin
+    .output(
+      createdInstanceSchema.extend({ parentInstanceId: z.string().optional() }),
+    )
+    .query(async ({ ctx: { instance } }) => {
+      const data = await instance.get();
+      const flags = await instance.getFlags();
+      const tags = await instance.getTags();
+      return {
+        ...data,
+        flags,
+        tags,
+        instanceName: data.displayName,
+        minPreferences: data.minStudentPreferences,
+        maxPreferences: data.maxStudentPreferences,
+        maxPreferencesPerSupervisor: data.maxStudentPreferencesPerSupervisor,
+        preferenceSubmissionDeadline: data.studentPreferenceSubmissionDeadline,
+      };
     }),
 
-  projectAllocations: instanceAdminProcedure.query(async ({ ctx }) => {
-    // return await ctx.instance.getAllocationData().getViews();
-    return await getProjectAllocationsUseCase({ params: ctx.instance.params });
-  }),
+  supervisors: procedure.instance.user
+    .output(z.array(supervisorDtoSchema))
+    .query(async ({ ctx: { instance } }) => await instance.getSupervisors()),
 
-  getEditFormDetails: instanceAdminProcedure.query(async ({ ctx }) => {
-    return await getEditFormDetailsUseCase({ params: ctx.instance.params });
-  }),
+  getSupervisors: procedure.instance.subgroupAdmin
+    .output(
+      z.array(
+        z.object({
+          institutionId: z.string(),
+          fullName: z.string(),
+          email: z.string(),
+          projectTarget: z.number(),
+          projectUpperQuota: z.number(),
+        }),
+      ),
+    )
+    .query(
+      async ({ ctx: { instance } }) => await instance.getSupervisorDetails(),
+    ),
 
-  supervisors: instanceProcedure.query(async ({ input: { params } }) => {
-    return await getSupervisorsUseCase({ params });
-  }),
-
-  students: instanceProcedure.query(async ({ input: { params } }) => {
-    return await allStudentsUseCase({ params });
-  }),
-
-  getSupervisors: instanceAdminProcedure.query(async ({ ctx }) => {
-    return await getSupervisorDetailsUseCase({ params: ctx.instance.params });
-  }),
-
-  addSupervisor: instanceAdminProcedure
+  // pin in these
+  addSupervisor: procedure.instance.subgroupAdmin
     .input(z.object({ newSupervisor: newSupervisorSchema }))
     .mutation(async ({ ctx, input: { newSupervisor } }) => {
       return await addSupervisorTx(ctx.db, newSupervisor, ctx.instance.params);
     }),
 
-  addSupervisors: instanceAdminProcedure
+  // pin in these
+  addSupervisors: procedure.instance.subgroupAdmin
     .input(z.object({ newSupervisors: z.array(newSupervisorSchema) }))
     .mutation(async ({ ctx, input: { newSupervisors } }) => {
       return await addSupervisorsTx(
@@ -143,43 +250,95 @@ export const instanceRouter = createTRPCRouter({
       );
     }),
 
-  removeSupervisor: instanceAdminProcedure
+  // TODO: rename to e.g. Delete user in instance
+  removeSupervisor: procedure.instance.subgroupAdmin
     .input(z.object({ supervisorId: z.string() }))
-    .mutation(async ({ ctx, input: { supervisorId } }) => {
-      await removeSupervisorUseCase({
-        params: ctx.instance.params,
-        supervisorId,
-      });
-    }),
+    .output(z.void())
+    .mutation(
+      async ({ ctx: { instance }, input: { supervisorId } }) =>
+        await instance.deleteUser(supervisorId),
+    ),
 
-  removeSupervisors: instanceAdminProcedure
+  removeSupervisors: procedure.instance.subgroupAdmin
     .input(z.object({ supervisorIds: z.array(z.string()) }))
-    .mutation(async ({ ctx, input: { supervisorIds } }) => {
-      await removeSupervisorsUseCase(
-        { deleteUsersInInstance },
-        { params: ctx.instance.params, supervisorIds },
-      );
+    .output(z.void())
+    .mutation(async ({ ctx: { instance }, input: { supervisorIds } }) =>
+      instance.deleteUsers(supervisorIds),
+    ),
+
+  invitedSupervisors: procedure.instance.subgroupAdmin
+    .output(
+      z.object({
+        supervisors: z.array(
+          z.object({
+            id: z.string(),
+            name: z.string(),
+            email: z.string(),
+            joined: z.boolean(),
+          }),
+        ),
+      }),
+    )
+    .query(async ({ ctx: { instance } }) => {
+      const invitedUsers = await instance.getSupervisorDetails();
+
+      return {
+        supervisors: invitedUsers.map((u) => ({
+          id: u.institutionId,
+          name: u.fullName,
+          email: u.email,
+          joined: u.joined,
+        })),
+      };
     }),
 
-  invitedSupervisors: instanceAdminProcedure.query(
-    async ({ ctx: { db, instance } }) => {
-      return await invitedSupervisorsUseCase(
-        { db, getStudentDetailsWithUser },
-        { params: instance.params },
-      );
-    },
-  ),
+  //  BREAKING output type changed
+  students: procedure.instance.user
+    .output(
+      z.array(
+        z.object({
+          level: z.number(),
+          projectAllocation: z
+            .object({
+              id: z.string(),
+              title: z.string(),
+            })
+            .optional(),
+          id: z.string(),
+          name: z.string(),
+          email: z.string(),
+        }),
+      ),
+    )
+    .query(async ({ ctx: { instance } }) => {
+      const studentData = await instance.getStudentDetails();
 
-  getStudents: instanceAdminProcedure
+      return studentData.map((u) => ({
+        id: u.institutionId,
+        name: u.fullName,
+        email: u.email,
+        joined: u.joined,
+        level: u.level,
+        projectAllocation: u.allocatedProject,
+      }));
+    }),
+
+  getStudents: procedure.instance.subgroupAdmin
     .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ ctx: { db }, input: { params } }) => {
-      return await getStudentsUseCase(
-        { db, getStudentDetailsWithUser },
-        { params },
-      );
-    }),
+    .output(
+      z.array(
+        z.object({
+          institutionId: z.string(),
+          fullName: z.string(),
+          email: z.string(),
+          level: z.number(),
+        }),
+      ),
+    )
+    .query(async ({ ctx: { instance } }) => await instance.getStudentDetails()),
 
-  addStudent: instanceAdminProcedure
+  // Pin
+  addStudent: procedure.instance.subgroupAdmin
     .input(
       z.object({
         params: instanceParamsSchema,
@@ -190,7 +349,8 @@ export const instanceRouter = createTRPCRouter({
       return await addStudentTx(ctx.db, newStudent, params);
     }),
 
-  addStudents: instanceAdminProcedure
+  // Pin
+  addStudents: procedure.instance.subgroupAdmin
     .input(
       z.object({
         params: instanceParamsSchema,
@@ -201,13 +361,15 @@ export const instanceRouter = createTRPCRouter({
       return await addStudentsTx(ctx.db, newStudents, params);
     }),
 
-  removeStudent: instanceAdminProcedure
+  // Pin
+  removeStudent: procedure.instance.subgroupAdmin
     .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
     .mutation(async ({ ctx, input: { params, studentId } }) => {
       await removeStudentTx(ctx.db, studentId, params);
     }),
 
-  removeStudents: instanceAdminProcedure
+  // Pin
+  removeStudents: procedure.instance.subgroupAdmin
     .input(
       z.object({
         params: instanceParamsSchema,
@@ -218,110 +380,159 @@ export const instanceRouter = createTRPCRouter({
       await removeStudentsTx(ctx.db, studentIds, params);
     }),
 
-  invitedStudents: instanceAdminProcedure
+  invitedStudents: procedure.instance.subgroupAdmin
     .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ ctx: { db }, input: { params } }) => {
-      return await invitedStudentsUseCase(
-        { db, getStudentDetailsWithUser, getPreAllocatedStudents },
-        { params },
-      );
+    .output(
+      z.object({
+        all: z.array(tgc),
+        incomplete: z.array(tgc),
+        preAllocated: z.array(tgc),
+      }),
+    )
+    .query(async ({ ctx: { instance, db }, input: { params } }) => {
+      const invitedStudents = await instance.getStudentDetails();
+
+      // Pin
+      const preAllocatedStudents = await getPreAllocatedStudents(db, params);
+
+      const all = invitedStudents.map((u) => ({
+        id: u.institutionId,
+        name: u.fullName,
+        email: u.email,
+        joined: u.joined,
+        level: u.level,
+        preAllocated: preAllocatedStudents.has(u.institutionId),
+      }));
+
+      return {
+        all,
+        incomplete: all.filter((s) => !s.joined && !s.preAllocated),
+        preAllocated: all.filter((s) => s.preAllocated),
+      };
     }),
 
-  edit: instanceAdminProcedure
+  // Pin
+  edit: procedure.instance.subgroupAdmin
     .input(
       z.object({
         params: instanceParamsSchema,
         updatedInstance: updatedInstanceSchema,
       }),
     )
+    .output(z.void())
     .mutation(async ({ ctx, input: { params, updatedInstance } }) => {
       await editInstanceTx(ctx.db, updatedInstance, params);
     }),
 
-  getHeaderTabs: protectedProcedure
+  getHeaderTabs: procedure.user
     .input(z.object({ params: instanceParamsSchema.partial() }))
     .query(async ({ ctx, input }) => {
       const result = instanceParamsSchema.safeParse(input.params);
+
+      // Pin consider moving this control flow to client
       if (!result.success) return { headerTabs: [], instancePath: "" };
 
-      const params = result.data;
+      const instance = new AllocationInstance(ctx.dal, result.data);
 
-      const instance = await getInstanceUseCase({ params });
-      const role = await getUserRole(ctx.db, params, ctx.session.user.id);
-      const instancePath = formatParamsAsPath(params);
+      const instanceData = await instance.get();
 
-      const adminTabs = [pages.allSupervisors, pages.allStudents];
+      const roles = await ctx.user.getRolesInInstance(instance.params);
 
-      if (role !== Role.ADMIN) {
+      const instancePath = formatParamsAsPath(instance.params);
+
+      if (!roles.has(Role.ADMIN)) {
         return {
-          headerTabs: [pages.instanceHome, pages.allProjects],
+          headerTabs: [PAGES.instanceHome, PAGES.allProjects],
           instancePath,
         };
       }
 
+      const adminTabs = [PAGES.allSupervisors, PAGES.allStudents];
+
       const headerTabs =
-        instance.stage === Stage.SETUP
-          ? [pages.instanceHome, ...adminTabs]
-          : [pages.instanceHome, pages.allProjects, ...adminTabs];
+        instanceData.stage === Stage.SETUP
+          ? [PAGES.instanceHome, ...adminTabs]
+          : [PAGES.instanceHome, PAGES.allProjects, ...adminTabs];
 
       return { headerTabs, instancePath };
     }),
 
-  getSidePanelTabs: multiRoleAwareProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ ctx, input: { params } }) => {
-      const user = ctx.session.user;
-
-      const forkedInstanceId = await ctx.db.allocationInstance.findFirst({
-        where: {
-          allocationGroupId: params.group,
-          allocationSubGroupId: params.subGroup,
-          parentInstanceId: params.instance,
-        },
-      });
-
-      const instance = {
-        ...ctx.instance,
-        forkedInstanceId: forkedInstanceId?.id ?? null,
-      };
-
-      const preAllocatedProject = await hasSelfDefinedProject(
-        ctx.db,
-        params,
-        user,
-        user.roles,
+  getSidePanelTabs: procedure.instance.user
+    .output(z.array(tabGroupSchema))
+    .query(async ({ ctx: { instance, user } }) => {
+      const { stage } = await instance.get();
+      const roles = await user.getRolesInInstance(instance.params);
+      const preAllocatedProject = await user.hasSelfDefinedProject(
+        instance.params,
       );
 
-      const tabs = getTabs({
-        roles: user.roles,
-        instance,
-        preAllocatedProject,
-      });
-      return tabs;
+      const tabGroups = [];
+
+      if (roles.has(Role.ADMIN)) {
+        tabGroups.push({
+          title: "Admin",
+          tabs: [PAGES.stageControl, PAGES.settings],
+        });
+
+        tabGroups.push({
+          title: "Stage-specific",
+          tabs: await instance.getAdminTabs(),
+        });
+      }
+
+      if (roles.has(Role.SUPERVISOR)) {
+        const isSecondRole = roles.size > 1;
+        const supervisorTabs = await instance.getSupervisorTabs();
+
+        if (!isSecondRole) {
+          supervisorTabs.unshift(PAGES.instanceTasks);
+        } else if (stage !== Stage.SETUP) {
+          supervisorTabs.unshift(PAGES.supervisorTasks);
+        }
+
+        tabGroups.push({
+          title: "Supervisor",
+          tabs: supervisorTabs,
+        });
+      }
+
+      if (roles.has(Role.STUDENT)) {
+        const isSecondRole = roles.size > 1;
+        const studentTabs = await instance.getStudentTabs(!preAllocatedProject);
+
+        tabGroups.push({
+          title: "Student",
+          tabs: isSecondRole
+            ? studentTabs
+            : [PAGES.instanceTasks, ...studentTabs],
+        });
+      }
+
+      return tabGroups;
     }),
 
-  fork: instanceAdminProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        newInstance: forkedInstanceSchema,
-      }),
-    )
+  // Pin
+  fork: procedure.instance
+    .inStage([Stage.ALLOCATION_PUBLICATION])
+    .subgroupAdmin.input(z.object({ newInstance: forkedInstanceSchema }))
+    .output(z.void())
     .mutation(async ({ ctx, input: { params, newInstance: forked } }) => {
-      if (ctx.instance.stage !== Stage.ALLOCATION_PUBLICATION) {
-        // TODO: throw error instead of returning
-        return;
-      }
       await forkInstanceTransaction(ctx.db, forked, params);
     }),
 
-  merge: instanceAdminProcedure
+  // Pin
+  merge: procedure.instance.subgroupAdmin
     .input(z.object({ params: instanceParamsSchema }))
+    .output(z.void())
     .mutation(async ({ ctx, input: { params } }) => {
       await mergeInstanceTrx(ctx.db, params);
     }),
 
-  getFlags: instanceProcedure.query(async ({ input: { params } }) => {
-    return await getFlagTitlesUseCase({ params });
-  }),
+  // TODO rename? e.g. getFlagTitles
+  getFlags: procedure.instance.user
+    .output(z.array(z.string()))
+    .query(async ({ ctx: { instance } }) => {
+      const flags = await instance.getFlags();
+      return flags.map((f) => f.title);
+    }),
 });

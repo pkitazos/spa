@@ -1,20 +1,28 @@
-// TODO This should be content
 import { PAGES } from "@/config/pages";
 
-export const supervisorTabs = [
+/**
+ * All the tabs visible to a supervisor (EVER)
+ */
+export const SUPERVISOR_TABS = [
   PAGES.allProjects,
   PAGES.myProjects,
   PAGES.newProject,
   PAGES.myAllocations,
 ];
 
-export const studentTabs = [
+/**
+ * All the tabs visible to a student (EVER)
+ */
+export const STUDENT_TABS = [
   PAGES.allProjects,
   PAGES.myPreferences,
   PAGES.myAllocation,
 ];
 
-export const adminTabs = [
+/**
+ * All the tabs visible to an admin (EVER)
+ */
+export const ADMIN_TABS = [
   PAGES.settings,
   PAGES.stageControl,
   PAGES.addSupervisors,

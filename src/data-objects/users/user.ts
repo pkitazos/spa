@@ -99,6 +99,14 @@ export class User extends DataObject {
     return new InstanceStudent(this.dal, this.id, instanceParams);
   }
 
+  public async hasSelfDefinedProject(instanceParams: InstanceParams) {
+    if (!(await this.isInstanceStudent(instanceParams))) return false;
+
+    return await this.toInstanceStudent(instanceParams).then((s) =>
+      s.hasSelfDefinedProject(),
+    );
+  }
+
   public isInstanceSupervisor(instanceParams: InstanceParams) {
     return this.dal.user.isInstanceSupervisor(this.id, instanceParams);
   }
