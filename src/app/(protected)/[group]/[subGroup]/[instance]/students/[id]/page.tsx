@@ -11,8 +11,8 @@ import { StudentDetailsCard } from "./_components/student-details-card";
 import { StudentPreferencesSection } from "./_components/student-preferences-section";
 import { StudentProjectSection } from "./_components/student-project-section";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 type PageParams = InstanceParams & { id: string };
 
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: PageParams }) {
   return {
     title: metadataTitle([
       name,
-      pages.allStudents.title,
+      PAGES.allStudents.title,
       displayName,
       app.name,
     ]),

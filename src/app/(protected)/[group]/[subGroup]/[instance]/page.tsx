@@ -9,7 +9,7 @@ import AdminPanel from "./(admin-panel)/admin-panel";
 import { StudentOverview } from "./(student)/student-overview";
 import { SupervisorOverview } from "./(supervisor)/supervisor-overview";
 
-import { app, metadataTitle } from "@/content/config/app";
+import { app, metadataTitle } from "@/config/meta";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });

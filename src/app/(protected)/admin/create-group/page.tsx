@@ -6,14 +6,14 @@ import { api } from "@/lib/trpc/server";
 
 import { FormSection } from "./_components/form-section";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
-import { spacesLabels } from "@/content/spaces";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+import { spacesLabels } from "@/config/spaces";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: metadataTitle([pages.newGroup.title, app.institution.name, app.name]),
+  title: metadataTitle([PAGES.newGroup.title, app.institution.name, app.name]),
 };
 
 export default async function Page() {

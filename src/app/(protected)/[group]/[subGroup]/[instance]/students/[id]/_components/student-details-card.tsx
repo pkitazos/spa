@@ -29,7 +29,7 @@ import {
 } from "@/lib/validations/dto/student";
 import { studentLevelSchema } from "@/lib/validations/student-level";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function StudentDetailsCard({
   student,

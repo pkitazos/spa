@@ -9,14 +9,14 @@ import { makeRequiredFlags } from "@/lib/utils/general/make-required-flags";
 import { stageGt } from "@/lib/utils/permissions/stage-check";
 import { InstanceParams } from "@/lib/validations/params";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([pages.newProject.title, displayName, app.name]),
+    title: metadataTitle([PAGES.newProject.title, displayName, app.name]),
   };
 }
 

@@ -54,7 +54,7 @@ import {
   useInstanceStage,
 } from "./params-context";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function ProjectForm({
   formInternalData: { takenTitles, flags, tags, students },

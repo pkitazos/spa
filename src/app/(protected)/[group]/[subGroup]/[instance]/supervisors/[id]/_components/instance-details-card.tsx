@@ -27,7 +27,7 @@ import {
   SupervisorInstanceCapacities,
 } from "@/lib/validations/supervisor-project-submission-details";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function InstanceDetailsCard({
   supervisor,

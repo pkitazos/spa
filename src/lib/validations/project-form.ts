@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { tagTypeSchema } from "@/components/tag/tag-input";
 
-import { projectFlags } from "@/content/config/flags";
+import { projectFlags } from "@/config/config/flags";
 
 // eslint-disable-next-line no-control-regex
 const ascii_pattern = /^[\x00-\x7F]+$/;

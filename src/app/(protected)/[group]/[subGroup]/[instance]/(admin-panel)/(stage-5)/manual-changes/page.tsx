@@ -6,14 +6,14 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { AdjustmentSpace, AllocDetailsProvider } from "./_components";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([pages.manualChanges.title, displayName, app.name]),
+    title: metadataTitle([PAGES.manualChanges.title, displayName, app.name]),
   };
 }
 export default async function Page({ params }: { params: InstanceParams }) {
@@ -24,7 +24,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
 
   return (
     <PanelWrapper className="mt-10 flex h-full">
-      <SubHeading className="mb-4">{pages.manualChanges.title}</SubHeading>
+      <SubHeading className="mb-4">{PAGES.manualChanges.title}</SubHeading>
       <AllocDetailsProvider
         students={students}
         projects={projects}

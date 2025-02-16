@@ -12,7 +12,7 @@ import { StudentDto } from "@/lib/validations/dto/student";
 
 import { useAllStudentsColumns } from "./all-students-columns";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function StudentsDataTable({
   role,

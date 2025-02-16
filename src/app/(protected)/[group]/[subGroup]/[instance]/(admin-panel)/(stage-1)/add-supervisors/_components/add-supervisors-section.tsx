@@ -19,18 +19,19 @@ import { CSVUploadButton } from "./csv-upload-button";
 import { FormSection } from "./form-section";
 import { useNewSupervisorColumns } from "./new-supervisor-columns";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function AddSupervisorsSection() {
   const router = useRouter();
   const params = useInstanceParams();
-  const utils = api.useUtils();
 
-  const { data, isLoading } = api.institution.instance.getSupervisors.useQuery({
+  const {
+    data,
+    isLoading,
+    refetch: refetchData,
+  } = api.institution.instance.getSupervisors.useQuery({
     params,
   });
-
-  const refetchData = () => utils.institution.instance.getSupervisors.refetch();
 
   const { mutateAsync: addSupervisorAsync } =
     api.institution.instance.addSupervisor.useMutation();

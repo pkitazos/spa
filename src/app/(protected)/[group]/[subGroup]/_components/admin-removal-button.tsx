@@ -9,7 +9,7 @@ import { YesNoAction } from "@/components/yes-no-action";
 import { api } from "@/lib/trpc/client";
 import { SubGroupParams } from "@/lib/validations/params";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function AdminRemovalButton({
   params,

@@ -11,14 +11,14 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { MyProjectsDataTable } from "./_components/my-projects-data-table";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([pages.myProjects.title, displayName, app.name]),
+    title: metadataTitle([PAGES.myProjects.title, displayName, app.name]),
   };
 }
 

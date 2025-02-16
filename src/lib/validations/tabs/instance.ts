@@ -1,36 +1,37 @@
-import { pages } from "@/content/pages";
+// TODO This should be content
+import { PAGES } from "@/config/pages";
 
 export const supervisorTabs = [
-  pages.allProjects,
-  pages.myProjects,
-  pages.newProject,
-  pages.myAllocations,
+  PAGES.allProjects,
+  PAGES.myProjects,
+  PAGES.newProject,
+  PAGES.myAllocations,
 ];
 
 export const studentTabs = [
-  pages.allProjects,
-  pages.myPreferences,
-  pages.myAllocation,
+  PAGES.allProjects,
+  PAGES.myPreferences,
+  PAGES.myAllocation,
 ];
 
 export const adminTabs = [
-  pages.settings,
-  pages.stageControl,
-  pages.addSupervisors,
-  pages.addStudents,
-  pages.supervisorInvites,
-  pages.projectSubmissions,
-  pages.preAllocatedProjects,
-  pages.studentInvites,
-  pages.preferenceSubmissions,
-  pages.lateProposals,
-  pages.algorithms,
-  pages.results,
-  pages.preferenceStatistics,
-  pages.manualChanges,
-  pages.allocationOverview,
-  pages.forkInstance,
-  pages.mergeInstance,
-  pages.exportToCSV,
-  pages.supervisorTasks,
+  PAGES.settings,
+  PAGES.stageControl,
+  PAGES.addSupervisors,
+  PAGES.addStudents,
+  PAGES.supervisorInvites,
+  PAGES.projectSubmissions,
+  PAGES.preAllocatedProjects,
+  PAGES.studentInvites,
+  PAGES.preferenceSubmissions,
+  PAGES.lateProposals,
+  PAGES.algorithms,
+  PAGES.results,
+  PAGES.preferenceStatistics,
+  PAGES.manualChanges,
+  PAGES.allocationOverview,
+  PAGES.forkInstance,
+  PAGES.mergeInstance,
+  PAGES.exportToCSV,
+  PAGES.supervisorTasks,
 ];

@@ -10,15 +10,15 @@ import { ByProjectDataTable } from "./_components/by-project-data-table";
 import { ByStudentDataTable } from "./_components/by-student-data-table";
 import { BySupervisorDataTable } from "./_components/by-supervisor-data-table";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
     title: metadataTitle([
-      pages.allocationOverview.title,
+      PAGES.allocationOverview.title,
       displayName,
       app.name,
     ]),

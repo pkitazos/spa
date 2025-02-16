@@ -11,7 +11,7 @@ import { SupervisorDto } from "@/lib/validations/dto/supervisor";
 
 import { useAllSupervisorsColumns } from "./all-supervisors-columns";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function SupervisorsDataTable({
   role,

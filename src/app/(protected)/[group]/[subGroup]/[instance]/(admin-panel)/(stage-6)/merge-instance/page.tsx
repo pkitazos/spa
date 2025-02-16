@@ -10,15 +10,15 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { MergeButton } from "./_components/merge-button";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
-import { spacesLabels } from "@/content/spaces";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+import { spacesLabels } from "@/config/spaces";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([pages.mergeInstance.title, displayName, app.name]),
+    title: metadataTitle([PAGES.mergeInstance.title, displayName, app.name]),
   };
 }
 
@@ -36,7 +36,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
 
   return (
     <PanelWrapper className="mb-10 mt-10 flex h-max w-full flex-col gap-8 px-12 pb-10">
-      <SubHeading>{pages.mergeInstance.title}</SubHeading>
+      <SubHeading>{PAGES.mergeInstance.title}</SubHeading>
       <p>
         You are about to merge {spacesLabels.instance.short}{" "}
         <span className="font-semibold">{forkedInstance.displayName}</span> into{" "}

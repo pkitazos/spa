@@ -3,13 +3,13 @@ import { PrismaClient } from "@prisma/client";
 import { InstanceParams } from "@/lib/validations/params";
 import { SupervisorProjectSubmissionDetails } from "@/lib/validations/supervisor-project-submission-details";
 
-import { computeProjectSubmissionTarget } from "@/server/utils/instance/submission-target";
+import { computeProjectSubmissionTarget } from "@/config/submission-target";
 
 export async function computeSubmissionDetails(
   db: PrismaClient,
   params: InstanceParams,
 ): Promise<SupervisorProjectSubmissionDetails[]> {
-  const data = await db.supervisorInstanceDetails.findMany({
+  const data = await db.supervisorDetails.findMany({
     where: {
       allocationGroupId: params.group,
       allocationSubGroupId: params.subGroup,

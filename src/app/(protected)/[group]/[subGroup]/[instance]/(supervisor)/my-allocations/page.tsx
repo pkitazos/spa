@@ -7,14 +7,14 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { AllocationCard } from "./_components/allocation-card";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([pages.myAllocations.title, displayName, app.name]),
+    title: metadataTitle([PAGES.myAllocations.title, displayName, app.name]),
   };
 }
 

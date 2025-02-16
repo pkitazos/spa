@@ -35,7 +35,7 @@ import {
 } from "@/lib/validations/add-admins/new-admin";
 import { SubGroupParams } from "@/lib/validations/params";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function FormButton({ params }: { params: SubGroupParams }) {
   const [open, setOpen] = useState(false);
