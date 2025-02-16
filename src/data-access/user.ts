@@ -21,43 +21,11 @@ import { db } from "@/db";
 // update userInInstances (might not be necessary ?) // ? usually done in a transaction
 // // delete userInInstances
 
-// TODO consistency
-export async function findUserInInstance(
-  params: InstanceParams,
-  userId: string,
-) {
-  return await db.userInInstance.findFirst({
-    where: { ...expand(params), userId },
-  });
-}
-
-export async function getUserInInstance(
-  params: InstanceParams,
-  userId: string,
-) {
-  return await db.userInInstance.findFirstOrThrow({
-    where: { ...expand(params), userId },
-  });
-}
-
 export async function createUserInInstance(
   params: InstanceParams,
   userId: string,
 ) {
   await db.userInInstance.create({ data: { ...expand(params), userId } });
-}
-
-type UserInInstanceData = { joined: boolean };
-
-export async function updateUserInInstance(
-  params: InstanceParams,
-  userId: string,
-  data: UserInInstanceData,
-) {
-  return await db.userInInstance.update({
-    where: { instanceMembership: { ...expand(params), userId } },
-    data,
-  });
 }
 
 export async function deleteUserInInstance(
@@ -67,32 +35,6 @@ export async function deleteUserInInstance(
   return await db.userInInstance.delete({
     where: { instanceMembership: { ...expand(params), userId } },
   });
-}
-
-export async function getAllUsersInInstance(params: InstanceParams) {
-  return db.userInInstance.findMany({ where: expand(params) });
-}
-
-export async function getUsersInInstance(
-  params: InstanceParams,
-  userIds: string[],
-) {
-  return await db.userInInstance.findMany({
-    where: { ...expand(params), userId: { in: userIds } },
-  });
-}
-
-export async function createUsersInInstance(
-  params: InstanceParams,
-  userIds: string[],
-) {
-  await db.userInInstance.createMany({
-    data: userIds.map((userId) => ({ ...expand(params), userId })),
-  });
-}
-
-export async function deleteAllUsersInInstances(params: InstanceParams) {
-  await db.userInInstance.deleteMany({ where: expand(params) });
 }
 
 export async function deleteUsersInInstance(

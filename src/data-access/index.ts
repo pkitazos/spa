@@ -20,7 +20,7 @@ import {
   tagToDTO,
   userInInstanceToDTO,
 } from "@/db/transformers";
-import { DB, PreferenceType } from "@/db/types";
+import { DB, PreferenceType, Stage } from "@/db/types";
 import {
   GroupDTO,
   InstanceDTO,
@@ -41,8 +41,8 @@ import {
   SupervisorCapacityDetails,
 } from "@/dto/supervisor_router";
 import { sortPreferenceType } from "@/lib/utils/preferences/sort";
-import { updateManyPreferenceTransaction } from "@/server/routers/user/student/_utils/update-many-preferences";
-import { updatePreferenceTransaction } from "@/server/routers/user/student/_utils/update-preference";
+import { updateManyPreferenceTransaction } from "@/db/transactions/update-many-preferences";
+import { updatePreferenceTransaction } from "@/db/transactions/update-preference";
 import { InstanceDisplayData } from "@/dto";
 import { SupervisorDTO } from "@/dto/supervisor";
 import { ValidatedInstanceDetails } from "@/lib/validations/instance-form";
@@ -276,6 +276,48 @@ export class DAL {
         })
         .then((data) => data.map(allocationInstanceToDTO)),
 
+    getSupervisors: async (
+      params: InstanceParams,
+    ): Promise<SupervisorDTO[]> => {
+      const supervisors = await this.db.supervisorDetails.findMany({
+        where: expand(params),
+        select: {
+          userInInstance: { select: { user: true } },
+          projectAllocationTarget: true,
+          projectAllocationUpperBound: true,
+        },
+      });
+
+      return supervisors.map(({ userInInstance, ...s }) => ({
+        id: userInInstance.user.id,
+        name: userInInstance.user.name,
+        email: userInInstance.user.email,
+        projectTarget: s.projectAllocationTarget,
+        projectUpperQuota: s.projectAllocationUpperBound,
+      }));
+    },
+
+    getSupervisorDetails: async (params: InstanceParams) => {
+      const supervisors = await this.db.supervisorDetails.findMany({
+        where: expand(params),
+        include: { userInInstance: { select: { user: true } } },
+      });
+
+      return supervisors.map(({ userInInstance, ...s }) => ({
+        institutionId: userInInstance.user.id,
+        fullName: userInInstance.user.name,
+        email: userInInstance.user.email,
+        projectTarget: s.projectAllocationTarget,
+        projectUpperQuota: s.projectAllocationUpperBound,
+      }));
+    },
+
+    getFlags: async (params: InstanceParams) =>
+      await this.db.flag.findMany({ where: expand(params) }),
+
+    getTags: async (params: InstanceParams) =>
+      await this.db.tag.findMany({ where: expand(params) }),
+
     toQualifiedPaths: async (
       instances: InstanceParams[],
     ): Promise<InstanceDisplayData[]> =>
@@ -311,6 +353,19 @@ export class DAL {
           })),
         ),
 
+    setStage: async (params: InstanceParams, stage: Stage) => {
+      this.db.allocationInstance.update({
+        where: {
+          instanceId: {
+            allocationGroupId: params.group,
+            allocationSubGroupId: params.subGroup,
+            id: params.instance,
+          },
+        },
+        data: { stage },
+      });
+    },
+
     setSupervisorProjectAllocationAccess: async (
       access: boolean,
       params: InstanceParams,
@@ -339,6 +394,11 @@ export class DAL {
       !!(await this.db.projectInInstance.findFirst({
         where: { projectId: params.projectId, ...expand(params) },
       })),
+  };
+
+  public algorithm = {
+    get: async (id: string) =>
+      await this.db.algorithmConfig.findFirstOrThrow({ where: { id } }),
   };
 
   public user = {

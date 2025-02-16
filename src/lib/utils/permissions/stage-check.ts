@@ -62,6 +62,19 @@ export function previousStages(maxStage: Stage): Stage[] {
 }
 
 /**
+ * Get stages in the specified range
+ * @param minStage The maximum stage to include in the returned array
+ * @param maxStage The minimum stage to include in the returned array
+ * @returns All stages between min and max (inclusive)
+ */
+export function stageRange(minStage: Stage, maxStage: Stage): Stage[] {
+  return stageSchema.options.filter(
+    (s) =>
+      stageOrd[s] <= stageOrd[maxStage] && stageOrd[s] >= stageOrd[minStage],
+  );
+}
+
+/**
  *
  * checks if the current stage is between the minimum and maximum stages
  * @param currentStage the current stage

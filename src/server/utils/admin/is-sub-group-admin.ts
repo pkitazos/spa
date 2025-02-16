@@ -1,8 +1,16 @@
-import { PrismaTransactionClient } from "@/db";
 import { SubGroupParams } from "@/lib/validations/params";
 
+import { TX } from "@/db/types";
+
+/**
+ * @deprecated
+ * @param db
+ * @param params
+ * @param userId
+ * @returns
+ */
 export async function isSubGroupAdmin(
-  db: PrismaTransactionClient,
+  db: TX,
   params: SubGroupParams,
   userId: string,
 ) {
