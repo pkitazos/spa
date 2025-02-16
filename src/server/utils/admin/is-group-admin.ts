@@ -2,6 +2,13 @@ import { GroupParams } from "@/lib/validations/params";
 
 import { TX } from "@/db/types";
 
+/**
+ * @deprecated
+ * @param db
+ * @param params
+ * @param userId
+ * @returns
+ */
 export async function isGroupAdmin(
   db: TX,
   params: GroupParams,

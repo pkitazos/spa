@@ -1,12 +1,12 @@
-import { PrismaClient, Role } from "@prisma/client";
-
 import { NewStudent } from "@/lib/validations/add-users/new-user";
 import { InstanceParams } from "@/lib/validations/params";
 
 import { checkUsersMembership } from "./check-users-membership";
 
+import { DB, Role } from "@/db/types";
+
 export async function addStudentsTx(
-  db: PrismaClient,
+  db: DB,
   newStudents: NewStudent[],
   { group, subGroup, instance }: InstanceParams,
 ) {
