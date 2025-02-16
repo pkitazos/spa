@@ -801,4 +801,58 @@ export const projectRouter = createTRPCRouter({
       if (student && rank) return { ...student, rank };
       return undefined;
     }),
+
+  /**
+   * Returns a list of details for supervisors containing:
+   * - their personal details,
+   * - their allocation target & count
+   * - their
+   */
+  supervisorSubmissionInfo: procedure.instance.subgroupAdmin
+    .output(
+      z.array(
+        supervisorProjectSubmissionDetailsSchema.extend({
+          targetMet: z.boolean(),
+        }),
+      ),
+    )
+    .query(async ({ ctx: { instance } }) => {
+      const instanceData = await instance.get();
+
+      const currentInstanceSubmissionDetails =
+        await instance.getSupervisorSubmissionDetails();
+
+      if (!instanceData.parentInstanceId) {
+        return currentInstanceSubmissionDetails.map((c) => ({
+          ...c,
+          targetMet: c.submittedProjectsCount >= c.submissionTarget,
+        }));
+      }
+
+      const parent = await instance.getParentInstance();
+      const parentInstanceSubmissionDetails =
+        await parent.getSupervisorSubmissionDetails();
+
+      const parentAllocationMap = parentInstanceSubmissionDetails.reduce(
+        (acc, val) => ({ ...acc, [val.userId]: val.submittedProjectsCount }),
+        {} as Record<string, number>,
+      );
+
+      return currentInstanceSubmissionDetails.map((f) => {
+        const newAllocatedCount =
+          f.allocatedCount + (parentAllocationMap[f.userId] ?? 0);
+
+        const newSubmissionTarget = computeProjectSubmissionTarget(
+          f.projectAllocationTarget,
+          newAllocatedCount,
+        );
+
+        return {
+          ...f,
+          allocatedCount: newAllocatedCount,
+          submissionTarget: newSubmissionTarget,
+          targetMet: f.submittedProjectsCount >= newSubmissionTarget,
+        };
+      });
+    }),
 });
