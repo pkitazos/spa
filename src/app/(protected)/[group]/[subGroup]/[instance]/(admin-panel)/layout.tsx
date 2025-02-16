@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
 
 import { Heading } from "@/components/heading";
-import SidePanel from "@/components/side-panel";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
@@ -23,20 +22,11 @@ export default async function Layout({
   }
 
   const instance = await api.institution.instance.get({ params });
-  const tabGroups = await api.institution.instance.getSidePanelTabs({
-    params,
-  });
 
   return (
-    <div className="grid w-full grid-cols-11">
-      <div className="col-span-2 mt-28 flex justify-center border-r pr-2.5">
-        <SidePanel tabGroups={tabGroups} />
-      </div>
-      <section className="col-span-9 max-w-6xl pb-32">
-        {/* <section className="col-span-11 max-w-6xl pb-32"> */}
-        <Heading>{instance.displayName}</Heading>
-        {children}
-      </section>
-    </div>
+    <section className="mr-12 w-full">
+      <Heading>{instance.displayName}</Heading>
+      {children}
+    </section>
   );
 }

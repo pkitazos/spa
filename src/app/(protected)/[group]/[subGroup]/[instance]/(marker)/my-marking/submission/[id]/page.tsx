@@ -8,6 +8,7 @@ import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
 import { cn } from "@/lib/utils";
+//import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import { InstanceParams } from "@/lib/validations/params";
 
 import { Marking } from "./_components/marking";
@@ -34,7 +35,10 @@ export default async function Marks({ params }: { params: PageParams }) {
   });
   if (!exists) notFound();
 
+  //const instancePath = formatParamsAsPath(params);
+
   const project = await api.project.getById({ projectId });
+  //const user = await api.user.get();
   const role = await api.user.role({ params });
 
   if (role !== Role.SUPERVISOR) {

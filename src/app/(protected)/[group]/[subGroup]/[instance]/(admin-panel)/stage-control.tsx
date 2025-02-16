@@ -48,7 +48,7 @@ export function StageControl({ stage }: { stage: Stage }) {
 
   return (
     <div className="mx-16 mt-12 flex justify-between px-6">
-      <ol className="grid grid-cols-2">
+      <ol className="grid w-full grid-cols-2">
         <div className="col-span-1 flex flex-col gap-7">
           {Object.values(CHAPTER.ALLOCATION).map((stage, i) => (
             <StageButton
@@ -66,7 +66,7 @@ export function StageControl({ stage }: { stage: Stage }) {
             <StageButton
               key={stage.id}
               title={stage.displayName}
-              num={i + 6}
+              num={i + Object.values(CHAPTER.ALLOCATION).length + 1}
               selectedIdx={selectedIdx}
               confirmedIdx={confirmedIdx}
               setSelectedIdx={setSelectedIdx}
@@ -75,7 +75,7 @@ export function StageControl({ stage }: { stage: Stage }) {
         </div>
       </ol>
       <Button
-        className="self-end"
+        className="w-40 self-end"
         disabled={selectedIdx === -1}
         onClick={() => handleConfirmation(selectedIdx)}
       >
