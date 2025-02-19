@@ -45,6 +45,10 @@ export function MarkingForm({
   const form = useForm({
     defaultValues: {
       marks: project?.marks ?? [],
+      finalComments: project?.finalComments ?? "",
+      prize: project?.prize ?? false,
+      markerId: project?.markerId ?? "",
+      studentId: project?.studentId ?? "",
     },
   });
 

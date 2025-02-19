@@ -67,7 +67,11 @@ export default async function Marks({ params }: { params: PageParams }) {
           project={{
             ...project,
             id: projectId,
-            marks: project.interimMarkSaved,
+            marks: [], // TODO: Fix
+            finalComments: "",
+            prize: false,
+            studentId: allocatedStudent ? allocatedStudent.id : "",
+            markerId: params.id,
           }}
         />
       </div>
