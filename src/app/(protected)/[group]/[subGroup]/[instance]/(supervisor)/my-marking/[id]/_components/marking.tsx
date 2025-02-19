@@ -24,6 +24,12 @@ export function Marking({ project }: { project: CurrentMarks }) {
         params,
         projectId: project.id,
         marks: data.marks,
+        finalComment: data.finalComments,
+        prize: data.prize,
+        markerId: data.markerId,
+        studentId: data.studentId,
+        draft: true,
+        flagId: "",
       }).then(() => {
         router.push(`${instancePath}/my-marking`);
         router.refresh();

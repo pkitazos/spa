@@ -10,6 +10,7 @@ import {
   FormDescription,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import {
@@ -21,6 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { CurrentMarks, UpdatedMarks } from "@/lib/validations/marking-form";
 
+import { Checkbox } from "./ui/checkbox";
 import {
   Command,
   CommandEmpty,
@@ -29,6 +31,7 @@ import {
   CommandItem,
   CommandList,
 } from "./ui/command";
+import { Textarea } from "./ui/textarea";
 import layoutData from "./layout.json";
 
 export function MarkingForm({
@@ -43,6 +46,10 @@ export function MarkingForm({
   const form = useForm({
     defaultValues: {
       marks: project?.marks ?? [],
+      finalComments: project?.finalComments ?? "",
+      prize: project?.prize ?? false,
+      markerId: project?.markerId ?? "",
+      studentId: project?.studentId ?? "",
     },
   });
 
@@ -82,65 +89,116 @@ export function MarkingForm({
         className="mt-10 flex w-full max-w-5xl flex-col gap-6"
       >
         {layoutData.layout.map((field) => (
-          <FormField
-            key={field.id}
-            control={form.control}
-            name={`marks.${field.id - 1}`}
-            render={({ field: formField }) => (
-              <FormItem>
-                <FormControl>
-                  <Popover open={open} onOpenChange={setOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={open}
-                        className="w-full justify-between"
-                      >
-                        {value !== null
-                          ? grades.find((grade) => grade.value === value)?.label
-                          : "Select grade..."}
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[200px] p-0">
-                      <Command>
-                        <CommandInput placeholder="Search grade..." />
-                        <CommandList>
-                          <CommandEmpty>No grade found.</CommandEmpty>
-                          <CommandGroup>
-                            {grades.map((grade) => (
-                              <CommandItem
-                                key={grade.value}
-                                onSelect={() => {
-                                  setValue(grade.value);
-                                  formField.onChange(grade.value);
-                                  setOpen(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    grade.value === value
-                                      ? "opacity-100"
-                                      : "opacity-0",
-                                  )}
-                                />
-                                {grade.label}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </FormControl>
-                <FormDescription>{field.description}</FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div key={field.id}>
+            <div>
+              <FormLabel htmlFor={`mark-${field.id}`}>{field.name}</FormLabel>
+              <FormDescription>{field.description}</FormDescription>
+            </div>
+            <br />
+            <div className="flex gap-4">
+              <FormField
+                control={form.control}
+                name={`marks.${field.id - 1}.1`}
+                render={({ field: formField }) => (
+                  <FormItem className="flex-3">
+                    <FormControl>
+                      <Popover open={open} onOpenChange={setOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={open}
+                            className="w-full justify-between"
+                          >
+                            {value !== null
+                              ? grades.find((grade) => grade.value === value)
+                                  ?.label
+                              : "Select grade..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[200px] p-0">
+                          <Command>
+                            <CommandInput placeholder="Search grade..." />
+                            <CommandList>
+                              <CommandEmpty>No grade found.</CommandEmpty>
+                              <CommandGroup>
+                                {grades.map((grade) => (
+                                  <CommandItem
+                                    key={grade.value}
+                                    onSelect={() => {
+                                      setValue(grade.value);
+                                      formField.onChange(grade.value);
+                                      setOpen(false);
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        grade.value === value
+                                          ? "opacity-100"
+                                          : "opacity-0",
+                                      )}
+                                    />
+                                    {grade.label}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                key={field.id}
+                control={form.control}
+                name={`marks.${field.id - 1}.2`}
+                render={() => (
+                  <FormItem className="flex-1">
+                    <FormControl>
+                      <Textarea placeholder="Justification." />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
         ))}
+
+        <FormField
+          key={`finalComments`}
+          control={form.control}
+          name="finalComments"
+          render={() => (
+            <FormItem>
+              <FormLabel htmlFor={`finalComments`}>Comments</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Final Comments." />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          key={`prize`}
+          control={form.control}
+          name="prize"
+          render={() => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Up For A Prize?</FormLabel>
+              </div>
+            </FormItem>
+          )}
+        />
+
         <div className="mt-16 flex justify-end gap-8">
           <Button variant="outline" size="lg">
             Save

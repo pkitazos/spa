@@ -200,20 +200,58 @@ export const projectRouter = createTRPCRouter({
     z.object({
       params: instanceParamsSchema,
       projectId: z.string(),
-      marks: z.array(z.number()),
+      marks: z.array(z.tuple([z.string(), z.number(), z.string()])), // (flagId, mark, justification)
+      finalComment: z.string(),
+      prize: z.boolean(),
+      markerId: z.string(),
+      studentId: z.string(),
+      draft: z.boolean(),
+      flagId: z.string()
     })
   )
   .mutation(
     async ({
       ctx, 
       input: {
-        projectId,
-        marks },
+        params: { group, subGroup, instance },
+        marks,
+        finalComment,
+        prize,
+        markerId,
+        studentId,
+        draft,
+        flagId },
       }) => {
-        await ctx.db.project.update({
-          where: { id: projectId },
-          data: { interimMarkSaved: marks },
-        });
+        for (const mark of marks) {
+          await ctx.db.componentScore.update({
+            where: { 
+              markerId_studentId_flagId_submissionId_allocationGroupId_allocationSubGroupId_allocationInstanceId: {
+                     markerId: markerId,
+                     studentId: studentId,
+                     flagId: mark[0],
+                     submissionId: "", // TODO: understand submissionId
+                     allocationGroupId: group,
+                     allocationSubGroupId: subGroup,
+                     allocationInstanceId: instance }},
+            data: { grade: mark[1],
+                    justification: mark[2],
+                    draft: draft
+            }
+          }) 
+        }
+
+        await ctx.db.markerSubmissionComments.create({
+          data: {summary: finalComment,
+                 recommendedForPrize: prize,
+                 markerId: markerId,
+                 studentId,
+                 flagId: flagId,
+                 submissionId: "",
+                 allocationGroupId: group,
+                 allocationSubGroupId: subGroup,
+                 allocationInstanceId: instance
+          }
+        })
       },
   ),
 
@@ -440,7 +478,6 @@ export const projectRouter = createTRPCRouter({
           tagOnProject: {
             select: { tag: { select: { id: true, title: true } } },
           },
-          interimMarkSaved: true,
         },
       });
 
@@ -454,7 +491,6 @@ export const projectRouter = createTRPCRouter({
           project.specialTechnicalRequirements ?? "",
         flags: project.flagOnProjects.map(({ flag }) => flag),
         tags: project.tagOnProject.map(({ tag }) => tag),
-        interimMarkSaved: project.interimMarkSaved,
       };
     }),
 
@@ -716,7 +752,6 @@ export const projectRouter = createTRPCRouter({
               preAllocatedStudentId,
               specialTechnicalRequirements,
               latestEditDateTime: new Date(),
-              interimMarkingDeadline: new Date(),
             },
           });
 
