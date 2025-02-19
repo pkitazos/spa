@@ -8,6 +8,10 @@ export const stageSchema = z.enum([
   Stage.PROJECT_ALLOCATION,
   Stage.ALLOCATION_ADJUSTMENT,
   Stage.ALLOCATION_PUBLICATION,
+  Stage.READER_BIDDING,
+  Stage.READER_ALLOCATION,
+  Stage.MARKING,
+  Stage.FINAL_GRADES_RELEASED,
 ]);
 
 export const supervisorStages: Stage[] = [Stage.SETUP];

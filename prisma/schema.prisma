@@ -43,6 +43,11 @@ enum PreferenceType {
     PREFERENCE
 }
 
+enum MarkerType {
+    SUPERVISOR
+    READER
+}
+
 model Invitation {
     email                String
     allocationGroupId    String @map("allocation_group_id")
@@ -131,6 +136,10 @@ model AllocationInstance {
     algorithms                   Algorithm[]
     flags                        Flag[]
     tags                         Tag[]
+    studentFlags                 FlagOnStudent[]
+    flagSubmissions              FlagSubmission[] // TODO: rename
+    componentScores              ComponentScore[]
+    finalGrades                  FinalGrade[]
 
     @@id(name: "instanceId", [allocationGroupId, allocationSubGroupId, id])
 }
@@ -160,6 +169,7 @@ model StudentDetails {
     // ---
     userInInstance           UserInInstance    @relation(name: "student_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, onUpdate: Cascade)
     preferences              SavedPreference[]
+    flagsOnStudent           FlagOnStudent[]
 
     @@id(name: "detailsId", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
 }
@@ -188,7 +198,6 @@ model Project {
     supervisorId                 String              @map("supervisor_id")
     preAllocatedStudentId        String?             @map("pre_allocated_student_id")
     specialTechnicalRequirements String?             @map("special_technical_requirements")
-    specialCircumstances         String?             @map("special_circumstances")
     latestEditDateTime           DateTime            @default(now()) @map("latest_edit_date_time")
     interimMark                  Int                 @default(0) @map("interim_mark")
     interimMarkSaved             Int[]               @default([]) @map("interim_mark_saved")
@@ -248,6 +257,7 @@ model ProjectAllocation {
     projectId               String                    @map("project_id")
     userId                  String                    @map("user_id")
     studentRanking          Int                       @map("student_ranking")
+    specialCircumstances    String?                   @map("special_circumstances")
     // ---
     allocationGroupId       String                    @map("allocation_group_id")
     allocationSubGroupId    String                    @map("allocation_sub_group_id")
@@ -276,6 +286,78 @@ model ProjectAllocationReader {
     @@id(name: "projectAllocationReaderId", [readerId, projectId, studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
 }
 
+// TODO: rename
+model FlagSubmission {
+    flagId               String             @map("flag_id")
+    title                String // e.g. "Interim Report", "Final Submission"
+    deadline             DateTime
+    weight               Int
+    // ---
+    allocationGroupId    String             @map("allocation_group_id")
+    allocationSubGroupId String             @map("allocation_sub_group_id")
+    allocationInstanceId String             @map("allocation_instance_id")
+    // ---
+    allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+
+    @@id(name: "flagSubmissionId", [flagId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("flag_submission")
+}
+
+model AssessmentComponent {
+    flagId               String     @map("flag_id")
+    submissionId         String     @map("submission_id")
+    title                String
+    description          String
+    weight               Int
+    layoutIndex          Int        @map("layout_index")
+    markerType           MarkerType @map("marker_type")
+    // ---
+    allocationGroupId    String     @map("allocation_group_id")
+    allocationSubGroupId String     @map("allocation_sub_group_id")
+    allocationInstanceId String     @map("allocation_instance_id")
+
+    @@id(name: "assessmentComponentId", [flagId, submissionId, markerType, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("assessment_component")
+}
+
+model ComponentScore {
+    id                   String             @id @default(uuid())
+    markerId             String             @map("marker_id")
+    studentId            String             @map("student_id")
+    flagId               String             @map("flag_id")
+    submissionId         String             @map("submission_id")
+    grade                Int
+    justification        String
+    draft                Boolean
+    markerType           MarkerType         @map("marker_type")
+    // ---
+    allocationGroupId    String             @map("allocation_group_id")
+    allocationSubGroupId String             @map("allocation_sub_group_id")
+    allocationInstanceId String             @map("allocation_instance_id")
+    // ---
+    allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+
+    @@unique([markerId, studentId, flagId, submissionId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("component_score")
+}
+
+// table collecting the component scores together and attaches a tick box to each component score (recommend for prize) + also an optional summary box
+
+model FinalGrade {
+    id                   String             @id @default(uuid())
+    studentId            String             @map("student_id")
+    grade                Int
+    // ---
+    allocationGroupId    String             @map("allocation_group_id")
+    allocationSubGroupId String             @map("allocation_sub_group_id")
+    allocationInstanceId String             @map("allocation_instance_id")
+    // ---
+    allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+
+    @@unique([studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("final_grade")
+}
+
 model Flag {
     id                   String             @id @default(uuid())
     title                String
@@ -287,7 +369,9 @@ model Flag {
     allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
     // ---
     flagOnProjects       FlagOnProject[]
+    flagOnStudents       FlagOnStudent[]
 
+    @@unique([id, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@unique([title, allocationGroupId, allocationSubGroupId, allocationInstanceId])
 }
 
@@ -298,6 +382,22 @@ model FlagOnProject {
     projectId String  @map("project_id")
 
     @@id([flagId, projectId])
+}
+
+model FlagOnStudent {
+    flag                 Flag               @relation(fields: [flagId], references: [id], onDelete: Cascade)
+    flagId               String             @map("flag_id")
+    student              StudentDetails     @relation(fields: [studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+    studentId            String             @map("student_id")
+    // ---
+    allocationGroupId    String             @map("allocation_group_id")
+    allocationSubGroupId String             @map("allocation_sub_group_id")
+    allocationInstanceId String             @map("allocation_instance_id")
+    // ---
+    allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+
+    @@id(name: "flagOnStudentId", map: "flag_on_student_id", [flagId, studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("flag_on_student")
 }
 
 model Tag {

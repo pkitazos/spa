@@ -1,6 +1,7 @@
 import { Role, Stage } from "@prisma/client";
 import { z } from "zod";
 
+import { expand } from "@/lib/utils/general/instance-params";
 import { nullable } from "@/lib/utils/general/nullable";
 import {
   getFlagFromStudentLevel,
@@ -177,92 +178,95 @@ export const projectRouter = createTRPCRouter({
     .input(
       z.object({
         params: instanceParamsSchema,
+        studentId: z.string(),
         projectId: z.string(),
         specialCircumstances: z.string().optional(),
-      })
+      }),
     )
     .mutation(
       async ({
-        ctx, 
-        input: {
-          projectId,
-          specialCircumstances },
-        }) => {
-          await ctx.db.project.update({
-            where: { id: projectId },
-            data: { specialCircumstances },
-          });
-        },
+        ctx,
+        input: { params, studentId, projectId, specialCircumstances },
+      }) => {
+        await ctx.db.projectAllocation.update({
+          where: {
+            allocationId: { projectId, userId: studentId, ...expand(params) },
+          },
+          data: { specialCircumstances },
+        });
+      },
     ),
 
   editMarks: instanceProcedure
-  .input(
-    z.object({
-      params: instanceParamsSchema,
-      projectId: z.string(),
-      marks: z.array(z.tuple([z.string(), z.number(), z.string()])), // (flagId, mark, justification)
-      finalComment: z.string(),
-      prize: z.boolean(),
-      markerId: z.string(),
-      studentId: z.string(),
-      draft: z.boolean(),
-      flagId: z.string()
-    })
-  )
-  .mutation(
-    async ({
-      ctx, 
-      input: {
-        params: { group, subGroup, instance },
-        marks,
-        finalComment,
-        prize,
-        markerId,
-        studentId,
-        draft,
-        flagId },
+    .input(
+      z.object({
+        params: instanceParamsSchema,
+        projectId: z.string(),
+        marks: z.array(z.tuple([z.string(), z.number(), z.string()])), // (flagId, mark, justification)
+        finalComment: z.string(),
+        prize: z.boolean(),
+        markerId: z.string(),
+        studentId: z.string(),
+        draft: z.boolean(),
+        flagId: z.string(),
+      }),
+    )
+    .mutation(
+      async ({
+        ctx,
+        input: {
+          params: { group, subGroup, instance },
+          marks,
+          finalComment,
+          prize,
+          markerId,
+          studentId,
+          draft,
+          flagId,
+        },
       }) => {
         for (const mark of marks) {
           await ctx.db.componentScore.update({
-            where: { 
-              markerId_studentId_flagId_submissionId_allocationGroupId_allocationSubGroupId_allocationInstanceId: {
-                     markerId: markerId,
-                     studentId: studentId,
-                     flagId: mark[0],
-                     submissionId: "", // TODO: understand submissionId
-                     allocationGroupId: group,
-                     allocationSubGroupId: subGroup,
-                     allocationInstanceId: instance }},
-            data: { grade: mark[1],
-                    justification: mark[2],
-                    draft: draft
-            }
-          }) 
+            where: {
+              markerId_studentId_flagId_submissionId_allocationGroupId_allocationSubGroupId_allocationInstanceId:
+                {
+                  markerId: markerId,
+                  studentId: studentId,
+                  flagId: mark[0],
+                  submissionId: "", // TODO: understand submissionId
+                  allocationGroupId: group,
+                  allocationSubGroupId: subGroup,
+                  allocationInstanceId: instance,
+                },
+            },
+            data: { grade: mark[1], justification: mark[2], draft: draft },
+          });
         }
 
         await ctx.db.markerSubmissionComments.create({
-          data: {summary: finalComment,
-                 recommendedForPrize: prize,
-                 markerId: markerId,
-                 studentId,
-                 flagId: flagId,
-                 submissionId: "",
-                 allocationGroupId: group,
-                 allocationSubGroupId: subGroup,
-                 allocationInstanceId: instance
-          }
-        })
+          data: {
+            summary: finalComment,
+            recommendedForPrize: prize,
+            markerId: markerId,
+            studentId,
+            flagId: flagId,
+            submissionId: "",
+            allocationGroupId: group,
+            allocationSubGroupId: subGroup,
+            allocationInstanceId: instance,
+          },
+        });
       },
-  ),
+    ),
 
-  getSpecialCircumstances: instanceProcedure  
-   .input(z.object({ params: instanceParamsSchema, projectId: z.string() }))
-   .query(async ({ ctx, input: { projectId } }) => {
+  getSpecialCircumstances: instanceProcedure
+    .input(z.object({ params: instanceParamsSchema, projectId: z.string() }))
+    .query(async ({ ctx, input: { projectId } }) => {
       const project = await ctx.db.project.findFirst({
         where: { id: projectId },
         select: { specialCircumstances: true },
       });
-  
+
       return project?.specialCircumstances ?? "";
     }),
 
@@ -889,13 +893,21 @@ export const projectRouter = createTRPCRouter({
     .query(async ({ ctx, input: { projectId } }) => {
       const allocation = await ctx.db.projectAllocation.findFirst({
         where: { projectId },
-        select: { student: { select: { user: true } }, studentRanking: true },
+        select: {
+          specialCircumstances: true,
+          student: { select: { user: true } },
+          studentRanking: true,
+        },
       });
 
       const student = allocation?.student?.user ?? undefined;
+      const specialCircumstances = allocation?.specialCircumstances ?? "";
       const rank = allocation?.studentRanking ?? undefined;
 
-      if (student && rank) return { ...student, rank };
-      return undefined;
+      console.log("from server", { student, rank, specialCircumstances });
+
+      if (!student || !rank || specialCircumstances === undefined)
+        return undefined;
+      return { ...student, rank, specialCircumstances };
     }),
 });
