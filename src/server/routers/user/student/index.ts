@@ -8,12 +8,12 @@ import { instanceParamsSchema } from "@/lib/validations/params";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
-import { getUnallocatedStudents } from "@/server/utils/instance/unallocated-students";
 
 import { preferenceRouter } from "./preference";
 
 import { InstanceStudent } from "@/data-objects/users/instance-student";
 import { InstanceSupervisor } from "@/data-objects/users/instance-supervisor";
+import { getUnallocatedStudents } from "@/db/transactions/unallocated-students";
 import { instanceToStudentPreferenceRestrictionsDTO } from "@/db/transformers";
 import {
   studentDetailsDtoSchema,
@@ -89,7 +89,7 @@ export const studentRouter = createTRPCRouter({
       };
     }),
 
-  // TODO: move to instance router
+  // MOVE to instance router
   allocationAccess: procedure.instance.user
     .output(z.boolean())
     .query(async ({ ctx: { instance } }) => {
@@ -97,12 +97,12 @@ export const studentRouter = createTRPCRouter({
       return studentAllocationAccess;
     }),
 
-  // TODO: move to instance router
+  // MOVE to instance router
   setAllocationAccess: procedure.instance.subGroupAdmin
     .input(z.object({ access: z.boolean() }))
     .output(z.boolean())
     .mutation(async ({ ctx: { instance }, input: { access } }) =>
-      instance.setStudentAccess(access),
+      instance.setStudentPublicationAccess(access),
     ),
 
   // TODO rename + split
@@ -119,7 +119,7 @@ export const studentRouter = createTRPCRouter({
     },
   ),
 
-  // TODO: move to instance router (a lot of these operations should really be on the instance object)
+  // MOVE to instance router (a lot of these operations should really be on the instance object)
   // they can also be on the student object and just use the same underlying dal methods
   // maybe not
   updateLevel: procedure.instance.subGroupAdmin
@@ -148,12 +148,13 @@ export const studentRouter = createTRPCRouter({
     .output(z.boolean())
     .query(async ({ ctx: { user } }) => await user.hasSelfDefinedProject()),
 
-  // TODO: move to instance router
+  // MOVE to instance router
   // this sucks actually
   preferenceRestrictions: procedure.instance.user
     .output(studentPreferenceRestrictionsDtoSchema)
     .query(
       async ({ ctx: { instance } }) =>
+        // ? should this be a method on the instance object
         await instance.get().then(instanceToStudentPreferenceRestrictionsDTO),
     ),
 
@@ -222,7 +223,7 @@ export const studentRouter = createTRPCRouter({
       await instance.deleteStudents(studentIds);
     }),
 
-  // TODO: move to instance router
+  // MOVE to instance router
   getUnallocated: procedure.instance.subGroupAdmin
     .input(z.object({ params: instanceParamsSchema }))
     .output(

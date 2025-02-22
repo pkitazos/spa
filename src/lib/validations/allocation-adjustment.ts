@@ -53,25 +53,12 @@ export type RowProject = {
   selected: boolean;
 };
 
-export type SupervisorAllocationData = {
-  userInInstance: {
-    supervisorProjects: {
-      id: string;
-      allocations: {
-        userId: string;
-      }[];
-    }[];
-  };
-  userId: string;
-  projectAllocationLowerBound: number;
-  projectAllocationTarget: number;
-  projectAllocationUpperBound: number;
-};
+export const supervisorDetailsSchema = z.object({
+  supervisorId: z.string(),
+  lowerBound: z.number(),
+  target: z.number(),
+  upperBound: z.number(),
+  projects: z.array(z.string()),
+});
 
-export type SupervisorDetails = {
-  supervisorId: string;
-  lowerBound: number;
-  target: number;
-  upperBound: number;
-  projects: string[];
-};
+export type SupervisorDetails = z.infer<typeof supervisorDetailsSchema>;

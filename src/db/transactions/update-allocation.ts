@@ -1,9 +1,10 @@
-import { PrismaTransactionClient } from "@/db";
 import { expand } from "@/lib/utils/general/instance-params";
 import { InstanceParams } from "@/lib/validations/params";
 
+import { TX } from "@/db/types";
+
 export async function updateAllocation(
-  tx: PrismaTransactionClient,
+  tx: TX,
   params: InstanceParams,
   studentId: string,
 ) {
