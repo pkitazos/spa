@@ -60,7 +60,7 @@ export const subGroupRouter = createTRPCRouter({
         await subGroup.createInstance(newInstance),
     ),
 
-  deleteInstance: procedure.instance.subgroupAdmin
+  deleteInstance: procedure.instance.subGroupAdmin
     .output(z.void())
     .mutation(async ({ ctx: { instance } }) => await instance.delete()),
 

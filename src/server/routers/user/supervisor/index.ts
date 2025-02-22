@@ -37,7 +37,7 @@ export const supervisorRouter = createTRPCRouter({
     }),
 
   // TODO stage check?
-  setAllocationAccess: procedure.instance.subgroupAdmin
+  setAllocationAccess: procedure.instance.subGroupAdmin
     .input(z.object({ access: z.boolean() }))
     .output(z.boolean())
     .mutation(
@@ -71,7 +71,7 @@ export const supervisorRouter = createTRPCRouter({
   // TODO rename
   // TODO change output schema
   // TODO move to instance router
-  instanceData: procedure.instance.subgroupAdmin
+  instanceData: procedure.instance.subGroupAdmin
     .input(z.object({ supervisorId: z.string() }))
     .output(
       // TODO compose don't extend
@@ -155,7 +155,7 @@ export const supervisorRouter = createTRPCRouter({
         await user.getProjects().then(formatSupervisorRowProjects),
     ),
 
-  updateInstanceCapacities: procedure.instance.subgroupAdmin
+  updateInstanceCapacities: procedure.instance.subGroupAdmin
     .input(
       z.object({
         supervisorId: z.string(),
@@ -172,7 +172,7 @@ export const supervisorRouter = createTRPCRouter({
 
   delete: procedure.instance
     .inStage(subsequentStages(Stage.PROJECT_ALLOCATION))
-    .subgroupAdmin.input(z.object({ supervisorId: z.string() }))
+    .subGroupAdmin.input(z.object({ supervisorId: z.string() }))
     .output(z.void())
     .mutation(
       async ({ ctx: { instance }, input: { supervisorId } }) =>
@@ -181,7 +181,7 @@ export const supervisorRouter = createTRPCRouter({
 
   deleteMany: procedure.instance
     .inStage(subsequentStages(Stage.PROJECT_ALLOCATION))
-    .subgroupAdmin.input(z.object({ supervisorIds: z.array(z.string()) }))
+    .subGroupAdmin.input(z.object({ supervisorIds: z.array(z.string()) }))
     .output(z.void())
     .mutation(
       async ({ ctx: { instance }, input: { supervisorIds } }) =>
