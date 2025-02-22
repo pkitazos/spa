@@ -40,7 +40,7 @@ A Big list of things we need to refactor:
 
   - [ ] institution.instance.algorithm (9)
   - [ ] institution.instance.matching (12)
-  - [ ] institution.instance.preference (5)
+  - [x] institution.instance.preference (4)
   - [ ] project (15)
   - [x] access-control (5)
 
