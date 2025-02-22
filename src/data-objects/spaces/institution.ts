@@ -1,11 +1,12 @@
 import { DataObject } from "../data-object";
 
 import { DAL } from "@/data-access";
+import { DB } from "@/db/types";
 import { InstanceDTO } from "@/dto";
 
 export class Institution extends DataObject {
-  constructor(dal: DAL) {
-    super(dal);
+  constructor(dal: DAL, db: DB) {
+    super(dal, db);
   }
 
   public async createGroup(groupName: string) {

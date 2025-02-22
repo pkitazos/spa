@@ -6,14 +6,15 @@ import { DataObject } from "../data-object";
 import { AllocationGroup } from "./group";
 
 import { DAL } from "@/data-access";
+import { DB } from "@/db/types";
 import { UserDTO } from "@/dto";
 
 export class AllocationSubGroup extends DataObject {
   public params: SubGroupParams;
   private _group: AllocationGroup | undefined;
 
-  constructor(dal: DAL, params: SubGroupParams) {
-    super(dal);
+  constructor(dal: DAL, db: DB, params: SubGroupParams) {
+    super(dal, db);
     this.params = params;
   }
 
@@ -29,25 +30,9 @@ export class AllocationSubGroup extends DataObject {
     return await this.dal.subGroup.get(this.params);
   }
 
-  public async getInstances() {
-    return await this.dal.subGroup.getInstances(this.params);
-  }
-
-  public async getAdmins(): Promise<UserDTO[]> {
-    return await this.dal.group.getAdmins(this.params);
-  }
-
-  public async getManagers(): Promise<UserDTO[]> {
-    const subGroupAdmins = await this.getAdmins();
-    const groupAdmins = await this.group.getAdmins();
-    const superAdmins = await this.dal.superAdmin.getAll();
-
-    // TODO distinct (nubs)
-    return [...subGroupAdmins, ...groupAdmins, ...superAdmins];
-  }
-
   get group() {
-    if (!this._group) this._group = new AllocationGroup(this.dal, this.params);
+    if (!this._group)
+      this._group = new AllocationGroup(this.dal, this.db, this.params);
     return this._group;
   }
 

@@ -99,14 +99,14 @@ const projectMiddleware = t.middleware(
 
 // We can use this as follows:
 
-const authedMiddleware = t.middleware(({ ctx: { dal, session }, next }) => {
+const authedMiddleware = t.middleware(({ ctx: { dal, db, session }, next }) => {
   if (!session || !session.user) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "User is not signed in",
     });
   }
-  const user = new User(dal, session.user.id);
+  const user = new User(dal, db, session.user.id);
   return next({ ctx: { user } });
 });
 

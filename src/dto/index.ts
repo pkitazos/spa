@@ -1,14 +1,27 @@
 import { z } from "zod";
 
-import { Stage } from "@/db/types";
+import { subsequentStages } from "@/lib/utils/permissions/stage-check";
+
+import { AdminLevel, Stage } from "@/db/types";
 
 export const stageSchema = z.enum([
   Stage.SETUP,
   Stage.PROJECT_SUBMISSION,
-  Stage.PROJECT_SELECTION,
+  Stage.STUDENT_BIDDING,
   Stage.PROJECT_ALLOCATION,
   Stage.ALLOCATION_ADJUSTMENT,
   Stage.ALLOCATION_PUBLICATION,
+  Stage.READER_BIDDING,
+  Stage.READER_ALLOCATION,
+  Stage.MARK_SUBMISSION,
+  Stage.GRADE_PUBLICATION,
+]);
+
+export const adminLevelSchema = z.enum([
+  AdminLevel.SUPER,
+  AdminLevel.GROUP,
+  AdminLevel.SUB_GROUP,
+  AdminLevel.NONE,
 ]);
 
 export const userDtoSchema = z.object({
@@ -96,3 +109,7 @@ export type InstanceDisplayData = z.infer<typeof instanceDisplayDataSchema>;
 export const supervisorStages: Stage[] = [Stage.SETUP];
 
 export const studentStages: Stage[] = [Stage.SETUP, Stage.PROJECT_SUBMISSION];
+
+export const readerStages: Stage[] = subsequentStages(
+  Stage.ALLOCATION_PUBLICATION,
+);

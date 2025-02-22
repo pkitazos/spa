@@ -3,13 +3,14 @@ import { GroupParams } from "@/lib/validations/params";
 import { DataObject } from "../data-object";
 
 import { DAL } from "@/data-access";
+import { DB } from "@/db/types";
 import { GroupDTO, SubGroupDTO, UserDTO } from "@/dto";
 
 export class AllocationGroup extends DataObject {
   public params: GroupParams;
 
-  constructor(dal: DAL, params: GroupParams) {
-    super(dal);
+  constructor(dal: DAL, db: DB, params: GroupParams) {
+    super(dal, db);
     this.params = params;
   }
 

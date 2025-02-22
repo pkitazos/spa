@@ -24,7 +24,7 @@ export default async function Layout({
   // if they are an admin in this instance, they should have access
   // if they are not an admin in this instance, they should have access if they are a supervisor or student in this instance
 
-  const memberAccess = await api.ac.memberAccess({ params });
+  const memberAccess = await api.ac.instanceMembership({ params });
   if (!memberAccess) {
     return (
       <Unauthorised

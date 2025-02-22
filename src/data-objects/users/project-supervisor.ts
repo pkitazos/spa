@@ -5,12 +5,13 @@ import { Project } from "../spaces/project";
 import { User } from "./user";
 
 import { DAL } from "@/data-access";
+import { DB } from "@/db/types";
 
 export class ProjectSupervisor extends User {
   project: Project;
 
-  constructor(dal: DAL, id: string, projectParams: ProjectParams) {
-    super(dal, id);
-    this.project = new Project(dal, projectParams);
+  constructor(dal: DAL, db: DB, id: string, projectParams: ProjectParams) {
+    super(dal, db, id);
+    this.project = new Project(dal, db, projectParams);
   }
 }
