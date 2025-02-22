@@ -16,7 +16,7 @@ import { ADMIN_TABS_BY_STAGE } from "@/config/side-panel-tabs/admin-tabs-by-stag
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
 import { DAL } from "@/data-access";
 import { allocationInstanceToDTO } from "@/db/transformers";
-import { Stage } from "@/db/types";
+import { DB, Stage } from "@/db/types";
 import { InstanceDisplayData, InstanceDTO } from "@/dto";
 
 export class AllocationInstance extends DataObject {
@@ -25,8 +25,8 @@ export class AllocationInstance extends DataObject {
   private _subgroup: AllocationSubGroup | undefined;
   private _data: InstanceDTO | undefined;
 
-  constructor(dal: DAL, params: InstanceParams) {
-    super(dal);
+  constructor(dal: DAL, db: DB, params: InstanceParams) {
+    super(dal, db);
     this.params = params;
   }
 
@@ -58,7 +58,7 @@ export class AllocationInstance extends DataObject {
 
     if (!parentInstanceId) throw new Error("No parent instance found");
 
-    return new AllocationInstance(this.dal, {
+    return new AllocationInstance(this.dal, this.db, {
       ...this.params,
       instance: parentInstanceId,
     });
@@ -75,7 +75,7 @@ export class AllocationInstance extends DataObject {
 
     if (!childData) return undefined;
 
-    const childInstance = new AllocationInstance(this.dal, {
+    const childInstance = new AllocationInstance(this.dal, this.db, {
       ...this.params,
       instance: childData.id,
     });
@@ -88,7 +88,7 @@ export class AllocationInstance extends DataObject {
   // TODO review the nullish behaviour here
   public async getSelectedAlg(): Promise<Algorithm | undefined> {
     const { selectedAlgName: id } = await this.get();
-    if (id) return new Algorithm(this.dal, id);
+    if (id) return new Algorithm(this.dal, this.db, id);
     else return undefined;
   }
 
@@ -145,13 +145,14 @@ export class AllocationInstance extends DataObject {
   }
 
   get group() {
-    if (!this._group) this._group = new AllocationGroup(this.dal, this.params);
+    if (!this._group)
+      this._group = new AllocationGroup(this.dal, this.db, this.params);
     return this._group;
   }
 
   get subGroup() {
     if (!this._subgroup)
-      this._subgroup = new AllocationSubGroup(this.dal, this.params);
+      this._subgroup = new AllocationSubGroup(this.dal, this.db, this.params);
     return this._subgroup;
   }
 
@@ -203,19 +204,23 @@ export class AllocationInstance extends DataObject {
   }
 
   public isSupervisor(userId: string) {
-    return new User(this.dal, userId).isInstanceSupervisor(this.params);
+    return new User(this.dal, this.db, userId).isInstanceSupervisor(
+      this.params,
+    );
   }
 
   public getSupervisor(userId: string) {
-    return new User(this.dal, userId).toInstanceSupervisor(this.params);
+    return new User(this.dal, this.db, userId).toInstanceSupervisor(
+      this.params,
+    );
   }
 
   public isStudent(userId: string) {
-    return new User(this.dal, userId).isInstanceStudent(this.params);
+    return new User(this.dal, this.db, userId).isInstanceStudent(this.params);
   }
 
   public getStudent(userId: string) {
-    return new User(this.dal, userId).toInstanceStudent(this.params);
+    return new User(this.dal, this.db, userId).toInstanceStudent(this.params);
   }
 
   // --- side panel tab methods
@@ -247,10 +252,14 @@ export class AllocationInstance extends DataObject {
     const tabs = {
       [Stage.SETUP]: [],
       [Stage.PROJECT_SUBMISSION]: [],
-      [Stage.PROJECT_SELECTION]: preferencesTab,
+      [Stage.STUDENT_BIDDING]: preferencesTab,
       [Stage.PROJECT_ALLOCATION]: preferencesTab,
       [Stage.ALLOCATION_ADJUSTMENT]: preferencesTab,
       [Stage.ALLOCATION_PUBLICATION]: allocationTab,
+      [Stage.READER_BIDDING]: allocationTab,
+      [Stage.READER_ALLOCATION]: allocationTab,
+      [Stage.MARK_SUBMISSION]: allocationTab,
+      [Stage.GRADE_PUBLICATION]: allocationTab,
     };
 
     return tabs[stage];
@@ -266,10 +275,14 @@ export class AllocationInstance extends DataObject {
     const tabs = {
       [Stage.SETUP]: [],
       [Stage.PROJECT_SUBMISSION]: [PAGES.myProjects, PAGES.newProject],
-      [Stage.PROJECT_SELECTION]: [PAGES.myProjects, PAGES.newProject],
+      [Stage.STUDENT_BIDDING]: [PAGES.myProjects, PAGES.newProject],
       [Stage.PROJECT_ALLOCATION]: [PAGES.myProjects],
       [Stage.ALLOCATION_ADJUSTMENT]: [PAGES.myProjects],
       [Stage.ALLOCATION_PUBLICATION]: [PAGES.myProjects, ...allocationsTab],
+      [Stage.READER_BIDDING]: [PAGES.myProjects, ...allocationsTab],
+      [Stage.READER_ALLOCATION]: [PAGES.myProjects, ...allocationsTab],
+      [Stage.MARK_SUBMISSION]: [PAGES.myProjects, ...allocationsTab],
+      [Stage.GRADE_PUBLICATION]: [PAGES.myProjects, ...allocationsTab],
     };
 
     return tabs[stage];

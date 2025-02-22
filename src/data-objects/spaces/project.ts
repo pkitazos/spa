@@ -7,6 +7,7 @@ import { AllocationInstance } from "./instance";
 import { AllocationSubGroup } from "./subgroup";
 
 import { DAL } from "@/data-access";
+import { DB } from "@/db/types";
 
 export class Project extends DataObject {
   public params: ProjectParams;
@@ -14,8 +15,8 @@ export class Project extends DataObject {
   private _subgroup: AllocationSubGroup | undefined;
   private _instance: AllocationInstance | undefined;
 
-  constructor(dal: DAL, params: ProjectParams) {
-    super(dal);
+  constructor(dal: DAL, db: DB, params: ProjectParams) {
+    super(dal, db);
     this.params = params;
   }
 
@@ -24,19 +25,20 @@ export class Project extends DataObject {
   }
 
   get group() {
-    if (!this._group) this._group = new AllocationGroup(this.dal, this.params);
+    if (!this._group)
+      this._group = new AllocationGroup(this.dal, this.db, this.params);
     return this._group;
   }
 
   get subGroup() {
     if (!this._subgroup)
-      this._subgroup = new AllocationSubGroup(this.dal, this.params);
+      this._subgroup = new AllocationSubGroup(this.dal, this.db, this.params);
     return this._subgroup;
   }
 
   get instance() {
     if (!this._instance)
-      this._instance = new AllocationInstance(this.dal, this.params);
+      this._instance = new AllocationInstance(this.dal, this.db, this.params);
     return this._instance;
   }
 }

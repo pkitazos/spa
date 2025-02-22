@@ -6,7 +6,7 @@ import { AllocationInstance } from "../spaces/instance";
 import { User } from "./user";
 
 import { DAL } from "@/data-access";
-import { PreferenceType } from "@/db/types";
+import { DB, PreferenceType } from "@/db/types";
 import { ProjectDTO } from "@/dto/project";
 import {
   StudentDetailsDTO,
@@ -18,9 +18,9 @@ import {
 export class InstanceStudent extends User {
   instance: AllocationInstance;
 
-  constructor(dal: DAL, id: string, params: InstanceParams) {
-    super(dal, id);
-    this.instance = new AllocationInstance(dal, params);
+  constructor(dal: DAL, db: DB, id: string, params: InstanceParams) {
+    super(dal, db, id);
+    this.instance = new AllocationInstance(dal, db, params);
   }
 
   public async get(): Promise<StudentDTO> {
