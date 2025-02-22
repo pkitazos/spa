@@ -10,12 +10,8 @@ import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
 import { AdminLevel } from "@/db/types";
-import {
-  adminLevelSchema,
-  readerStages,
-  studentStages,
-  supervisorStages,
-} from "@/dto";
+import { readerStages, studentStages, supervisorStages } from "@/dto";
+import { adminLevelSchema } from "@/db/types";
 
 export const accessControlRouter = createTRPCRouter({
   allAdminPanels: procedure.user.query(async ({ ctx: { user } }) => {

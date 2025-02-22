@@ -34,7 +34,8 @@ import { getPreAllocatedStudents } from "@/db/transactions/pre-allocated-student
 import { removeStudentTx } from "@/db/transactions/remove-student-transaction";
 import { removeStudentsTx } from "@/db/transactions/remove-students-tx";
 import { Role } from "@/db/types";
-import { instanceDtoSchema, stageSchema } from "@/dto";
+import { stageSchema } from "@/db/types";
+import { instanceDtoSchema } from "@/dto";
 import { supervisorDtoSchema } from "@/dto/supervisor";
 
 const tgc = z.object({

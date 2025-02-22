@@ -1,6 +1,5 @@
 import { PrismaClient, Stage } from "@prisma/client";
-
-import { InstanceParams } from "@/lib/validations/params";
+import { z } from "zod";
 
 export type PrismaTransactionClient = Omit<
   PrismaClient,
@@ -39,10 +38,14 @@ export type SystemRole = (typeof Role)[keyof typeof Role];
 export const stageOrd = {
   [Stage.SETUP]: 1,
   [Stage.PROJECT_SUBMISSION]: 2,
-  [Stage.PROJECT_SELECTION]: 3,
+  [Stage.STUDENT_BIDDING]: 3,
   [Stage.PROJECT_ALLOCATION]: 4,
   [Stage.ALLOCATION_ADJUSTMENT]: 5,
   [Stage.ALLOCATION_PUBLICATION]: 6,
+  [Stage.READER_BIDDING]: 7,
+  [Stage.READER_ALLOCATION]: 8,
+  [Stage.MARK_SUBMISSION]: 9,
+  [Stage.GRADE_PUBLICATION]: 10,
 } as const;
 
 export const AdminLevel = {
@@ -52,6 +55,9 @@ export const AdminLevel = {
   NONE: "NONE",
 } as const;
 
+/**
+ * @deprecated
+ */
 export type SystemAdminLevel = (typeof AdminLevel)[keyof typeof AdminLevel];
 
 export const adminLevelOrd = {
@@ -61,6 +67,26 @@ export const adminLevelOrd = {
   [AdminLevel.NONE]: 0,
 } as const;
 
-export { PreferenceType, Stage } from "@prisma/client";
+export const stageSchema = z.enum([
+  Stage.SETUP,
+  Stage.PROJECT_SUBMISSION,
+  Stage.STUDENT_BIDDING,
+  Stage.PROJECT_ALLOCATION,
+  Stage.ALLOCATION_ADJUSTMENT,
+  Stage.ALLOCATION_PUBLICATION,
+  Stage.READER_BIDDING,
+  Stage.READER_ALLOCATION,
+  Stage.MARK_SUBMISSION,
+  Stage.GRADE_PUBLICATION,
+]);
 
-export type __Instance<T> = T & InstanceParams;
+export const adminLevelSchema = z.enum([
+  AdminLevel.SUPER,
+  AdminLevel.GROUP,
+  AdminLevel.SUB_GROUP,
+  AdminLevel.NONE,
+]);
+
+export type AdminLevel = z.infer<typeof adminLevelSchema>;
+
+export { PreferenceType, Stage } from "@prisma/client";

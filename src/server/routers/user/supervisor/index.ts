@@ -25,8 +25,8 @@ export const supervisorRouter = createTRPCRouter({
     .input(z.object({ supervisorId: z.string() }))
     .output(z.boolean())
     .query(
-      async ({ ctx: { dal }, input: { supervisorId, params } }) =>
-        await new User(dal, supervisorId).isInstanceSupervisor(params),
+      async ({ ctx: { dal, db }, input: { supervisorId, params } }) =>
+        await new User(dal, db, supervisorId).isInstanceSupervisor(params),
     ),
 
   allocationAccess: procedure.instance.user

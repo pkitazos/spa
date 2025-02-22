@@ -176,8 +176,8 @@ export const studentRouter = createTRPCRouter({
         })
         .optional(),
     )
-    .query(async ({ ctx: { dal, instance }, input: { studentId } }) => {
-      const student = new InstanceStudent(dal, studentId, instance.params);
+    .query(async ({ ctx: { dal, db,  instance }, input: { studentId } }) => {
+      const student = new InstanceStudent(dal, db, studentId, instance.params);
 
       if (!(await student.hasAllocation())) return undefined;
 
@@ -185,6 +185,7 @@ export const studentRouter = createTRPCRouter({
 
       const supervisor = new InstanceSupervisor(
         dal,
+        db,
         project.supervisorId,
         instance.params,
       );
