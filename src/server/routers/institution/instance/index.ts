@@ -82,7 +82,7 @@ export const instanceRouter = createTRPCRouter({
   /**
    * Set the current stage for the specified instance
    */
-  setStage: procedure.instance.subgroupAdmin
+  setStage: procedure.instance.subGroupAdmin
     .input(z.object({ stage: stageSchema }))
     .output(z.void())
     .mutation(
@@ -95,7 +95,7 @@ export const instanceRouter = createTRPCRouter({
    * Returns the ID and display name of the currently selected algorithm
    * return empty strings if none is selected
    */
-  selectedAlgorithm: procedure.instance.subgroupAdmin
+  selectedAlgorithm: procedure.instance.subGroupAdmin
     .output(
       z
         .object({
@@ -118,7 +118,7 @@ export const instanceRouter = createTRPCRouter({
    * return the allocations in this instance, in three views:
    * by student, by supervisor, and by project
    */
-  projectAllocations: procedure.instance.subgroupAdmin
+  projectAllocations: procedure.instance.subGroupAdmin
     .output(
       z.object({
         byStudent: z.array(
@@ -189,7 +189,7 @@ export const instanceRouter = createTRPCRouter({
   // TODO review usage of this
   // DEFINITELY it should use std. names
   // MAYBE kill it and use other gets?
-  getEditFormDetails: procedure.instance.subgroupAdmin
+  getEditFormDetails: procedure.instance.subGroupAdmin
     .output(
       createdInstanceSchema.extend({ parentInstanceId: z.string().optional() }),
     )
@@ -213,7 +213,7 @@ export const instanceRouter = createTRPCRouter({
     .output(z.array(supervisorDtoSchema))
     .query(async ({ ctx: { instance } }) => await instance.getSupervisors()),
 
-  getSupervisors: procedure.instance.subgroupAdmin
+  getSupervisors: procedure.instance.subGroupAdmin
     .output(
       z.array(
         z.object({
@@ -230,14 +230,14 @@ export const instanceRouter = createTRPCRouter({
     ),
 
   // pin in these
-  addSupervisor: procedure.instance.subgroupAdmin
+  addSupervisor: procedure.instance.subGroupAdmin
     .input(z.object({ newSupervisor: newSupervisorSchema }))
     .mutation(async ({ ctx, input: { newSupervisor } }) => {
       return await addSupervisorTx(ctx.db, newSupervisor, ctx.instance.params);
     }),
 
   // pin in these
-  addSupervisors: procedure.instance.subgroupAdmin
+  addSupervisors: procedure.instance.subGroupAdmin
     .input(z.object({ newSupervisors: z.array(newSupervisorSchema) }))
     .mutation(async ({ ctx, input: { newSupervisors } }) => {
       return await addSupervisorsTx(
@@ -248,7 +248,7 @@ export const instanceRouter = createTRPCRouter({
     }),
 
   // TODO: rename to e.g. Delete user in instance
-  removeSupervisor: procedure.instance.subgroupAdmin
+  removeSupervisor: procedure.instance.subGroupAdmin
     .input(z.object({ supervisorId: z.string() }))
     .output(z.void())
     .mutation(
@@ -256,14 +256,14 @@ export const instanceRouter = createTRPCRouter({
         await instance.deleteUser(supervisorId),
     ),
 
-  removeSupervisors: procedure.instance.subgroupAdmin
+  removeSupervisors: procedure.instance.subGroupAdmin
     .input(z.object({ supervisorIds: z.array(z.string()) }))
     .output(z.void())
     .mutation(async ({ ctx: { instance }, input: { supervisorIds } }) =>
       instance.deleteUsers(supervisorIds),
     ),
 
-  invitedSupervisors: procedure.instance.subgroupAdmin
+  invitedSupervisors: procedure.instance.subGroupAdmin
     .output(
       z.object({
         supervisors: z.array(
@@ -320,7 +320,7 @@ export const instanceRouter = createTRPCRouter({
       }));
     }),
 
-  getStudents: procedure.instance.subgroupAdmin
+  getStudents: procedure.instance.subGroupAdmin
     .input(z.object({ params: instanceParamsSchema }))
     .output(
       z.array(
@@ -335,7 +335,7 @@ export const instanceRouter = createTRPCRouter({
     .query(async ({ ctx: { instance } }) => await instance.getStudentDetails()),
 
   // Pin
-  addStudent: procedure.instance.subgroupAdmin
+  addStudent: procedure.instance.subGroupAdmin
     .input(
       z.object({
         params: instanceParamsSchema,
@@ -347,7 +347,7 @@ export const instanceRouter = createTRPCRouter({
     }),
 
   // Pin
-  addStudents: procedure.instance.subgroupAdmin
+  addStudents: procedure.instance.subGroupAdmin
     .input(
       z.object({
         params: instanceParamsSchema,
@@ -359,14 +359,14 @@ export const instanceRouter = createTRPCRouter({
     }),
 
   // Pin
-  removeStudent: procedure.instance.subgroupAdmin
+  removeStudent: procedure.instance.subGroupAdmin
     .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
     .mutation(async ({ ctx, input: { params, studentId } }) => {
       await removeStudentTx(ctx.db, studentId, params);
     }),
 
   // Pin
-  removeStudents: procedure.instance.subgroupAdmin
+  removeStudents: procedure.instance.subGroupAdmin
     .input(
       z.object({
         params: instanceParamsSchema,
@@ -377,7 +377,7 @@ export const instanceRouter = createTRPCRouter({
       await removeStudentsTx(ctx.db, studentIds, params);
     }),
 
-  invitedStudents: procedure.instance.subgroupAdmin
+  invitedStudents: procedure.instance.subGroupAdmin
     .input(z.object({ params: instanceParamsSchema }))
     .output(
       z.object({
@@ -409,7 +409,7 @@ export const instanceRouter = createTRPCRouter({
     }),
 
   // Pin
-  edit: procedure.instance.subgroupAdmin
+  edit: procedure.instance.subGroupAdmin
     .input(
       z.object({
         params: instanceParamsSchema,
@@ -511,14 +511,14 @@ export const instanceRouter = createTRPCRouter({
   // Pin
   fork: procedure.instance
     .inStage([Stage.ALLOCATION_PUBLICATION])
-    .subgroupAdmin.input(z.object({ newInstance: forkedInstanceSchema }))
+    .subGroupAdmin.input(z.object({ newInstance: forkedInstanceSchema }))
     .output(z.void())
     .mutation(async ({ ctx, input: { params, newInstance: forked } }) => {
       await forkInstanceTransaction(ctx.db, forked, params);
     }),
 
   // Pin
-  merge: procedure.instance.subgroupAdmin
+  merge: procedure.instance.subGroupAdmin
     .input(z.object({ params: instanceParamsSchema }))
     .output(z.void())
     .mutation(async ({ ctx, input: { params } }) => {

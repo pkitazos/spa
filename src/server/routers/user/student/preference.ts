@@ -108,7 +108,7 @@ export const preferenceRouter = createTRPCRouter({
           user,
           instance,
           allowedRoles: [Role.ADMIN, Role.STUDENT],
-          stageCheck: (s) => s === Stage.PROJECT_SELECTION,
+          stageCheck: (s) => s === Stage.STUDENT_BIDDING,
         });
         if (!ok) throw new Error(message);
 
@@ -139,7 +139,7 @@ export const preferenceRouter = createTRPCRouter({
         input: { projectId, preferenceType },
       }) => {
         const { stage } = await instance.get();
-        if (stage !== Stage.PROJECT_SELECTION) return;
+        if (stage !== Stage.STUDENT_BIDDING) return;
 
         if (await user.hasSelfDefinedProject()) return;
 
@@ -164,7 +164,7 @@ export const preferenceRouter = createTRPCRouter({
         input: { projectIds, preferenceType },
       }) => {
         const { stage } = await instance.get();
-        if (stage !== Stage.PROJECT_SELECTION) return;
+        if (stage !== Stage.STUDENT_BIDDING) return;
 
         if (await user.hasSelfDefinedProject()) return;
 
@@ -195,7 +195,7 @@ export const preferenceRouter = createTRPCRouter({
           instance,
           user,
           allowedRoles: [Role.ADMIN, Role.STUDENT],
-          stageCheck: (s) => s === Stage.PROJECT_SELECTION,
+          stageCheck: (s) => s === Stage.STUDENT_BIDDING,
         });
         if (!ok) throw new Error(message);
 
@@ -256,7 +256,7 @@ export const preferenceRouter = createTRPCRouter({
         instance,
         user,
         allowedRoles: [Role.ADMIN, Role.STUDENT],
-        stageCheck: (s) => s === Stage.PROJECT_SELECTION,
+        stageCheck: (s) => s === Stage.STUDENT_BIDDING,
       });
       if (!ok) throw new Error(message);
 
@@ -283,7 +283,7 @@ export const preferenceRouter = createTRPCRouter({
         user,
         allowedRoles: [Role.ADMIN, Role.STUDENT],
         stageCheck: (s) =>
-          stageIn(s, [Stage.PROJECT_SELECTION, Stage.ALLOCATION_ADJUSTMENT]),
+          stageIn(s, [Stage.STUDENT_BIDDING, Stage.ALLOCATION_ADJUSTMENT]),
       });
       if (!ok) throw new Error(message);
 
@@ -292,7 +292,7 @@ export const preferenceRouter = createTRPCRouter({
       return { initialProjects: await student.getPreferenceBoardState() };
     }),
 
-  change: procedure.instance.subgroupAdmin
+  change: procedure.instance.subGroupAdmin
     .input(
       z.object({
         studentId: z.string(),
@@ -313,7 +313,7 @@ export const preferenceRouter = createTRPCRouter({
     ),
 
   // change rather than update? change what
-  changeSelected: procedure.instance.subgroupAdmin
+  changeSelected: procedure.instance.subGroupAdmin
     .input(
       z.object({
         studentId: z.string(),

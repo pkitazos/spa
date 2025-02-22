@@ -24,27 +24,31 @@ import { Stage } from "@/db/types";
 // Note that each type of space gets its own DTO, which you can find in:
 //      `data-objects/spaces`
 
-const institutionMiddleware = t.middleware(async ({ ctx: { dal }, next }) => {
-  const institution = new Institution(dal);
-  return next({ ctx: { institution } });
-});
+const institutionMiddleware = t.middleware(
+  async ({ ctx: { dal, db }, next }) => {
+    const institution = new Institution(dal, db);
+    return next({ ctx: { institution } });
+  },
+);
 
 /**
  * @requires a preceding `.input(z.object({ params: groupParamsSchema }))` or better
  */
-const groupMiddleware = t.middleware(async ({ ctx: { dal }, input, next }) => {
-  const { params } = z.object({ params: groupParamsSchema }).parse(input);
-  const group = new AllocationGroup(dal, params);
-  return next({ ctx: { group } });
-});
+const groupMiddleware = t.middleware(
+  async ({ ctx: { dal, db }, input, next }) => {
+    const { params } = z.object({ params: groupParamsSchema }).parse(input);
+    const group = new AllocationGroup(dal, db, params);
+    return next({ ctx: { group } });
+  },
+);
 
 /**
  * @requires a preceding `.input(z.object({ params: subGroupParamsSchema }))` or better
  */
 const subGroupMiddleware = t.middleware(
-  async ({ ctx: { dal }, input, next }) => {
+  async ({ ctx: { dal, db }, input, next }) => {
     const { params } = z.object({ params: subGroupParamsSchema }).parse(input);
-    const subGroup = new AllocationSubGroup(dal, params);
+    const subGroup = new AllocationSubGroup(dal, db, params);
     return next({ ctx: { subGroup } });
   },
 );
@@ -53,9 +57,9 @@ const subGroupMiddleware = t.middleware(
  * @requires a preceding `.input(z.object({ params: instanceParamsSchema }))`
  */
 const instanceMiddleware = t.middleware(
-  async ({ ctx: { dal }, input, next }) => {
+  async ({ ctx: { dal, db }, input, next }) => {
     const { params } = z.object({ params: instanceParamsSchema }).parse(input);
-    const instance = new AllocationInstance(dal, params);
+    const instance = new AllocationInstance(dal, db, params);
     return next({ ctx: { instance } });
   },
 );
@@ -86,9 +90,9 @@ const stageMiddleware = (allowedStages: Stage[]) =>
  * @requires a preceding `.input(z.object({ params: projectParamsSchema }))`
  */
 const projectMiddleware = t.middleware(
-  async ({ ctx: { dal }, input, next }) => {
+  async ({ ctx: { dal, db }, input, next }) => {
     const { params } = z.object({ params: projectParamsSchema }).parse(input);
-    const project = new Project(dal, params);
+    const project = new Project(dal, db, params);
     return next({ ctx: { project } });
   },
 );
@@ -299,7 +303,7 @@ export const procedure = {
     user: instanceProcedure.use(authedMiddleware),
     superAdmin: instanceProcedure.use(SuperAdminMiddleware),
     groupAdmin: instanceProcedure.use(GroupAdminMiddleware),
-    subgroupAdmin: instanceProcedure.use(SubGroupAdminMiddleware),
+    subGroupAdmin: instanceProcedure.use(SubGroupAdminMiddleware),
     student: instanceProcedure.use(instanceStudentMiddleware),
     supervisor: instanceProcedure.use(instanceSupervisorMiddleware),
 
@@ -314,7 +318,7 @@ export const procedure = {
         user: proc.use(authedMiddleware),
         superAdmin: proc.use(SuperAdminMiddleware),
         groupAdmin: proc.use(GroupAdminMiddleware),
-        subgroupAdmin: proc.use(SubGroupAdminMiddleware),
+        subGroupAdmin: proc.use(SubGroupAdminMiddleware),
         student: proc.use(instanceStudentMiddleware),
         supervisor: proc.use(instanceSupervisorMiddleware),
       };
@@ -325,7 +329,7 @@ export const procedure = {
     user: projectProcedure.use(authedMiddleware),
     superAdmin: projectProcedure.use(SuperAdminMiddleware),
     groupAdmin: projectProcedure.use(GroupAdminMiddleware),
-    subgroupAdmin: projectProcedure.use(SubGroupAdminMiddleware),
+    subGroupAdmin: projectProcedure.use(SubGroupAdminMiddleware),
     supervisor: projectProcedure.use(projectSupervisorMiddleware),
     reader: projectProcedure.use(projectReaderMiddleware),
 
@@ -341,7 +345,7 @@ export const procedure = {
         user: proc.use(authedMiddleware),
         superAdmin: proc.use(SuperAdminMiddleware),
         groupAdmin: proc.use(GroupAdminMiddleware),
-        subgroupAdmin: proc.use(SubGroupAdminMiddleware),
+        subGroupAdmin: proc.use(SubGroupAdminMiddleware),
         supervisor: proc.use(projectSupervisorMiddleware),
         reader: proc.use(projectReaderMiddleware),
       };

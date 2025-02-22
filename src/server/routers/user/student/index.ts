@@ -33,7 +33,7 @@ export const studentRouter = createTRPCRouter({
     ),
 
   // TODO: change output
-  getById: procedure.instance.subgroupAdmin
+  getById: procedure.instance.subGroupAdmin
     .input(z.object({ studentId: z.string() }))
     .output(
       studentDtoSchema.extend({
@@ -98,7 +98,7 @@ export const studentRouter = createTRPCRouter({
     }),
 
   // TODO: move to instance router
-  setAllocationAccess: procedure.instance.subgroupAdmin
+  setAllocationAccess: procedure.instance.subGroupAdmin
     .input(z.object({ access: z.boolean() }))
     .output(z.boolean())
     .mutation(async ({ ctx: { instance }, input: { access } }) =>
@@ -122,7 +122,7 @@ export const studentRouter = createTRPCRouter({
   // TODO: move to instance router (a lot of these operations should really be on the instance object)
   // they can also be on the student object and just use the same underlying dal methods
   // maybe not
-  updateLevel: procedure.instance.subgroupAdmin
+  updateLevel: procedure.instance.subGroupAdmin
     .input(
       z.object({
         studentId: z.string(),
@@ -176,7 +176,7 @@ export const studentRouter = createTRPCRouter({
         })
         .optional(),
     )
-    .query(async ({ ctx: { dal, db,  instance }, input: { studentId } }) => {
+    .query(async ({ ctx: { dal, db, instance }, input: { studentId } }) => {
       const student = new InstanceStudent(dal, db, studentId, instance.params);
 
       if (!(await student.hasAllocation())) return undefined;
@@ -199,7 +199,7 @@ export const studentRouter = createTRPCRouter({
       };
     }),
 
-  delete: procedure.instance.subgroupAdmin
+  delete: procedure.instance.subGroupAdmin
     .input(z.object({ studentId: z.string() }))
     .mutation(async ({ ctx: { instance }, input: { studentId } }) => {
       const { stage } = await instance.get();
@@ -211,7 +211,7 @@ export const studentRouter = createTRPCRouter({
     }),
 
   // TODO naming inconsistency (see supervisor deleteMany)
-  deleteSelected: procedure.instance.subgroupAdmin
+  deleteSelected: procedure.instance.subGroupAdmin
     .input(z.object({ studentIds: z.array(z.string()) }))
     .mutation(async ({ ctx: { instance }, input: { studentIds } }) => {
       const { stage } = await instance.get();
@@ -223,7 +223,7 @@ export const studentRouter = createTRPCRouter({
     }),
 
   // TODO: move to instance router
-  getUnallocated: procedure.instance.subgroupAdmin
+  getUnallocated: procedure.instance.subGroupAdmin
     .input(z.object({ params: instanceParamsSchema }))
     .output(
       z
