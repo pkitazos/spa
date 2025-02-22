@@ -10,6 +10,7 @@ export class StudentProjectAllocationData {
     this.allocationData = data;
   }
 
+  // TODO refactor into DAL
   static async fromDB(params: InstanceParams) {
     const data = await getAllAllocationData(params);
     return new StudentProjectAllocationData(data);

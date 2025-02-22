@@ -6,14 +6,16 @@ import {
   getFlagFromStudentLevel,
   getStudentLevelFromFlag,
 } from "@/lib/utils/permissions/get-student-level";
-import { stageGte } from "@/lib/utils/permissions/stage-check";
+import {
+  stageGte,
+  subsequentStages,
+} from "@/lib/utils/permissions/stage-check";
 import { sortPreferenceType } from "@/lib/utils/preferences/sort";
 import { User } from "@/lib/validations/auth";
 import { instanceParamsSchema } from "@/lib/validations/params";
 import { updatedProjectSchema } from "@/lib/validations/project-form";
 
 import { updateProjectAllocation } from "@/server/routers/project/_utils/project-allocation";
-import { createProjectFlags } from "@/server/routers/project/_utils/project-flags";
 import { createTRPCRouter } from "@/server/trpc";
 
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
@@ -21,30 +23,22 @@ import { procedure } from "@/server/middleware";
 import { supervisorProjectSubmissionDetailsSchema } from "@/lib/validations/supervisor-project-submission-details";
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
 import { flagDtoSchema, tagDtoSchema, userDtoSchema } from "@/dto";
+import { linkProjectFlags } from "@/server/routers/project/_utils/project-flags";
 
 export const projectRouter = createTRPCRouter({
-  exists: procedure.instance.user
-    .input(z.object({ params: instanceParamsSchema, projectId: z.string() }))
-    .query(async ({ ctx, input: { params, projectId } }) => {
-      return !!(await ctx.db.projectInInstance.findFirst({
-        where: { projectId, ...expand(params) },
-      }));
-    }),
+  exists: procedure.project.user
+    .output(z.boolean())
+    .query(async ({ ctx: { project } }) => await project.exists()),
 
-  edit: procedure.instance.user
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        projectId: z.string(),
-        updatedProject: updatedProjectSchema,
-      }),
-    )
+  // TODO rename? e.g. update?
+  edit: procedure.project
+    .inStage(subsequentStages(Stage.PROJECT_ALLOCATION))
+    .supervisor.input(z.object({ updatedProject: updatedProjectSchema }))
+    .output(z.void())
     .mutation(
       async ({
-        ctx,
+        ctx: { db, project },
         input: {
-          params: { group, subGroup, instance },
-          projectId,
           updatedProject: {
             title,
             description,
@@ -56,65 +50,48 @@ export const projectRouter = createTRPCRouter({
           },
         },
       }) => {
-        if (stageGte(ctx.instance.stage, Stage.PROJECT_ALLOCATION)) return;
-
         const newPreAllocatedStudentId = preAllocatedStudentId || undefined;
 
-        await ctx.db.$transaction(async (tx) => {
-          const prev = await tx.project.findFirstOrThrow({
-            where: { id: projectId },
+        await db.$transaction(async (tx) => {
+          const oldProjectData = await tx.projectDetails.findFirstOrThrow({
+            where: { id: project.params.projectId },
             select: { preAllocatedStudentId: true },
           });
 
-          if (!prev.preAllocatedStudentId) {
-            if (newPreAllocatedStudentId) {
-              await updateProjectAllocation(tx, {
-                group,
-                subGroup,
-                instance,
-                preAllocatedStudentId: newPreAllocatedStudentId,
-                projectId: projectId,
-              });
-            }
-          } else {
-            if (!newPreAllocatedStudentId) {
-              await tx.projectAllocation.delete({
-                where: {
-                  allocationId: {
-                    allocationGroupId: group,
-                    allocationSubGroupId: subGroup,
-                    allocationInstanceId: instance,
-                    projectId,
-                    userId: prev.preAllocatedStudentId,
-                  },
+          const prevPreAllocatedStudentId =
+            oldProjectData.preAllocatedStudentId;
+
+          const requiresDelete =
+            prevPreAllocatedStudentId && // if there is an old version
+            prevPreAllocatedStudentId !== newPreAllocatedStudentId; // and it doesn't match
+
+          const requiresCreate =
+            newPreAllocatedStudentId && // if there is a new student
+            prevPreAllocatedStudentId !== newPreAllocatedStudentId; // and it doesn't match
+
+          if (requiresDelete) {
+            await tx.studentProjectAllocation.delete({
+              where: {
+                studentProjectAllocationId: {
+                  allocationGroupId: project.params.group,
+                  allocationSubGroupId: project.params.subGroup,
+                  allocationInstanceId: project.params.instance,
+                  projectId: project.params.projectId,
+                  userId: prevPreAllocatedStudentId,
                 },
-              });
-            } else if (
-              prev.preAllocatedStudentId !== newPreAllocatedStudentId
-            ) {
-              await tx.projectAllocation.delete({
-                where: {
-                  allocationId: {
-                    allocationGroupId: group,
-                    allocationSubGroupId: subGroup,
-                    allocationInstanceId: instance,
-                    projectId,
-                    userId: prev.preAllocatedStudentId,
-                  },
-                },
-              });
-              await updateProjectAllocation(tx, {
-                group,
-                subGroup,
-                instance,
-                preAllocatedStudentId: newPreAllocatedStudentId,
-                projectId,
-              });
-            }
+              },
+            });
           }
 
-          await tx.project.update({
-            where: { id: projectId },
+          if (requiresCreate) {
+            await updateProjectAllocation(tx, {
+              ...project.params,
+              preAllocatedStudentId: newPreAllocatedStudentId,
+            });
+          }
+
+          await tx.projectDetails.update({
+            where: { id: project.params.projectId },
             data: {
               title: title,
               description: description,
@@ -128,23 +105,23 @@ export const projectRouter = createTRPCRouter({
 
           await tx.flagOnProject.deleteMany({
             where: {
-              projectId,
+              projectId: project.params.projectId,
               AND: { flag: { title: { notIn: flagTitles } } },
             },
           });
 
-          await createProjectFlags(
+          await linkProjectFlags(
             tx,
-            ctx.instance.params,
-            projectId,
+            project.instance.params,
+            project.params.projectId,
             flagTitles,
           );
 
           await tx.tag.createMany({
             data: tags.map((tag) => ({
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
+              allocationGroupId: project.params.group,
+              allocationSubGroupId: project.params.subGroup,
+              allocationInstanceId: project.params.instance,
               ...tag,
             })),
             skipDuplicates: true,
@@ -152,13 +129,16 @@ export const projectRouter = createTRPCRouter({
 
           await tx.tagOnProject.deleteMany({
             where: {
-              projectId,
+              projectId: project.params.projectId,
               AND: { tagId: { notIn: tags.map(({ id }) => id) } },
             },
           });
 
           await tx.tagOnProject.createMany({
-            data: tags.map(({ id }) => ({ tagId: id, projectId })),
+            data: tags.map(({ id }) => ({
+              tagId: id,
+              projectId: project.params.projectId,
+            })),
             skipDuplicates: true,
           });
         });
@@ -697,7 +677,7 @@ export const projectRouter = createTRPCRouter({
             });
           }
 
-          await createProjectFlags(
+          await linkProjectFlags(
             tx,
             ctx.instance.params,
             project.id,
