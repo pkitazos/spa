@@ -5,7 +5,7 @@ import { Role, Stage } from "@prisma/client";
 import { RBAC } from "./rbac";
 import { SBAC } from "./sbac";
 
-import { stageSchema } from "@/dto";
+import { stageSchema } from "@/db/types";
 
 export function AccessControl({
   children,

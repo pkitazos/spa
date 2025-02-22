@@ -2,27 +2,7 @@ import { z } from "zod";
 
 import { subsequentStages } from "@/lib/utils/permissions/stage-check";
 
-import { AdminLevel, Stage } from "@/db/types";
-
-export const stageSchema = z.enum([
-  Stage.SETUP,
-  Stage.PROJECT_SUBMISSION,
-  Stage.STUDENT_BIDDING,
-  Stage.PROJECT_ALLOCATION,
-  Stage.ALLOCATION_ADJUSTMENT,
-  Stage.ALLOCATION_PUBLICATION,
-  Stage.READER_BIDDING,
-  Stage.READER_ALLOCATION,
-  Stage.MARK_SUBMISSION,
-  Stage.GRADE_PUBLICATION,
-]);
-
-export const adminLevelSchema = z.enum([
-  AdminLevel.SUPER,
-  AdminLevel.GROUP,
-  AdminLevel.SUB_GROUP,
-  AdminLevel.NONE,
-]);
+import { Stage, stageSchema } from "@/db/types";
 
 export const userDtoSchema = z.object({
   id: z.string(),

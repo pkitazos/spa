@@ -11,7 +11,7 @@ import { api } from "@/lib/trpc/client";
 
 import { StageButton } from "./_components/stage-button";
 
-import { stageSchema } from "@/dto";
+import { stageSchema } from "@/db/types";
 
 export function StageControl({ stage }: { stage: Stage }) {
   const params = useInstanceParams();
