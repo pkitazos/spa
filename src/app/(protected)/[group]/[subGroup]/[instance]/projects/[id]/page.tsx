@@ -31,7 +31,9 @@ type PageParams = InstanceParams & { id: string };
 
 export async function generateMetadata({ params }: { params: PageParams }) {
   const { displayName } = await api.institution.instance.get({ params });
-  const { title } = await api.project.getById({ projectId: params.id });
+  const { title } = await api.project.getById({
+    params: { ...params, projectId: params.id },
+  });
 
   return {
     title: metadataTitle([

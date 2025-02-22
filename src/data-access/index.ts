@@ -391,9 +391,9 @@ export class DAL {
   };
 
   public project = {
-    exists: async (params: ProjectParams) =>
+    exists: async ({ projectId, ...params }: ProjectParams) =>
       !!(await this.db.projectInInstance.findFirst({
-        where: { projectId: params.projectId, ...expand(params) },
+        where: { projectId, ...expand(params) },
       })),
   };
 

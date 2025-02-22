@@ -1,4 +1,4 @@
-import { InstanceParams } from "@/lib/validations/params";
+import { InstanceParams, PageParams } from "@/lib/validations/params";
 
 // Both of these should probably be on the instance DO
 
@@ -15,5 +15,18 @@ export function toInstanceId(params: InstanceParams, instanceId?: string) {
     allocationGroupId: params.group,
     allocationSubGroupId: params.subGroup,
     id: instanceId ?? params.instance,
+  };
+}
+
+export function toProjectParams(params: InstanceParams, projectId: string) {
+  return { ...params, projectId };
+}
+
+export function toPP(params: PageParams) {
+  return {
+    group: params.group,
+    subGroup: params.subGroup,
+    instance: params.instance,
+    projectId: params.id,
   };
 }
