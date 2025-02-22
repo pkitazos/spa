@@ -1,4 +1,4 @@
-name: "spa"
+name: "allocation-app"
 
 services:
   db:
@@ -6,7 +6,7 @@ services:
     ports:
       - "127.0.0.1:6565:5432"
     volumes:
-      - spa-db-data:/var/lib/postgres/data/
+      - allocation-app-db-data:/var/lib/postgres/data/
     environment:
       POSTGRES_USER: "root"
       POSTGRES_PASSWORD: "1234"
@@ -21,11 +21,11 @@ services:
       retries: 5
 
     networks:
-      - spa-network
+      - allocation-app-network
 
 
 networks:
-  spa-network:
+  allocation-app-network:
 
 volumes:
-  spa-db-data:
+  allocation-app-db-data:

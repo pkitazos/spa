@@ -14,7 +14,7 @@
     "db:push": "eval $(grep '^DATABASE_URL' .env) && prisma db push",
     "db:drop": "eval $(grep '^DATABASE_URL' .env) && prisma migrate reset",
     "db:populate": "pnpm run db:push --force-reset && eval $(grep '^DATABASE_URL' .env) && tsx src/lib/scripts/seed.ts",
-    "docker:dev": "docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml up -d",
+    "docker:db": "docker compose -f docker/docker-compose.yml up -d",
     "docker:prod": "docker compose -f docker/docker-compose.yml -f docker/docker-compose.prod.override.yml up -d",
     "dev:patch": "tsx src/lib/scripts/patch.ts",
     "schema:change": "pnpm run db:generate && pnpm run db:push"
