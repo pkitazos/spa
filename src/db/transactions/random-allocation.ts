@@ -1,13 +1,13 @@
-import { PrismaClient } from "@prisma/client";
-
 import { expand } from "@/lib/utils/general/instance-params";
 import { getRandomInt } from "@/lib/utils/general/random";
 import { InstanceParams } from "@/lib/validations/params";
 
-import { updateAllocation } from "./update-allocation";
+import { DB } from "../types";
+
+import { updateAllocation } from "@/db/transactions/update-allocation";
 
 export async function randomAllocationTrx(
-  db: PrismaClient,
+  db: DB,
   params: InstanceParams,
   studentId: string,
 ) {

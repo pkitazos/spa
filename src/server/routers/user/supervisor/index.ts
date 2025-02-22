@@ -42,12 +42,12 @@ export const supervisorRouter = createTRPCRouter({
     .output(z.boolean())
     .mutation(
       async ({ ctx: { instance }, input: { access } }) =>
-        await instance.setSupervisorAccess(access),
+        await instance.setSupervisorPublicationAccess(access),
     ),
 
   // TODO split to e.g. displayname and DeadlineDetails
-  // TODO move
   // TODO rename
+  // move
   instancePage: procedure.instance.supervisor
     .input(z.object({ params: instanceParamsSchema }))
     .output(
@@ -70,7 +70,7 @@ export const supervisorRouter = createTRPCRouter({
 
   // TODO rename
   // TODO change output schema
-  // TODO move to instance router
+  // move to instance router
   instanceData: procedure.instance.subGroupAdmin
     .input(z.object({ supervisorId: z.string() }))
     .output(

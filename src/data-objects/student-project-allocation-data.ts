@@ -1,19 +1,50 @@
+import { expand } from "@/lib/utils/general/instance-params";
 import { InstanceParams } from "@/lib/validations/params";
 
-import { getAllAllocationData } from "@/data-access/allocation-data";
+import { DataObject } from "./data-object";
 
-export type AllocationDBData = Awaited<ReturnType<typeof getAllAllocationData>>;
+import { guidToMatric } from "@/config/guid-to-matric";
+import { DAL } from "@/data-access";
+import {
+  DB,
+  DB_ProjectDetails,
+  DB_ProjectInInstance,
+  DB_StudentDetails,
+  DB_StudentProjectAllocation,
+  DB_SupervisorDetails,
+  DB_User,
+  DB_UserInInstance,
+} from "@/db/types";
 
-export class StudentProjectAllocationData {
-  private allocationData: AllocationDBData;
-  constructor(data: AllocationDBData) {
+export class StudentProjectAllocationData extends DataObject {
+  private allocationData: hello[];
+
+  constructor(dal: DAL, db: DB, data: hello[]) {
+    super(dal, db);
+    this.db = db;
     this.allocationData = data;
   }
 
-  // TODO refactor into DAL
-  static async fromDB(params: InstanceParams) {
-    const data = await getAllAllocationData(params);
-    return new StudentProjectAllocationData(data);
+  static async fromDB(db: DB, params: InstanceParams) {
+    const data = await db.studentProjectAllocation.findMany({
+      where: expand(params),
+      include: {
+        student: { include: { userInInstance: { include: { user: true } } } },
+        project: {
+          include: {
+            details: true,
+            supervisor: {
+              include: { userInInstance: { include: { user: true } } },
+            },
+          },
+        },
+      },
+    });
+    return new StudentProjectAllocationData(
+      undefined as unknown as DAL,
+      db,
+      data,
+    );
   }
 
   public toStudentView() {
@@ -93,4 +124,41 @@ export class StudentProjectAllocationData {
       bySupervisor: this.toSupervisorView(),
     };
   }
+
+  public toExportData() {
+    return this.allocationData
+      .map(({ project: p, student, ...e }) => ({
+        project: {
+          id: p.projectId,
+          title: p.details.title,
+          description: p.details.description,
+          supervisor: p.supervisor.userInInstance.user,
+          specialTechnicalRequirements:
+            p.details.specialTechnicalRequirements ?? "",
+        },
+        student: {
+          id: student.userInInstance.user.id,
+          name: student.userInInstance.user.name,
+          matric: guidToMatric(student.userInInstance.user.id),
+          level: student.studentLevel,
+          email: student.userInInstance.user.email,
+          ranking: e.studentRanking,
+        },
+        supervisor: p.supervisor.userInInstance.user,
+      }))
+      .sort((a, b) => a.student.id.localeCompare(b.student.id));
+  }
 }
+
+// pin
+type hello = DB_StudentProjectAllocation & {
+  student: {
+    userInInstance: { user: DB_User } & DB_UserInInstance;
+  } & DB_StudentDetails;
+  project: {
+    details: DB_ProjectDetails;
+    supervisor: {
+      userInInstance: { user: DB_User } & DB_UserInInstance;
+    } & DB_SupervisorDetails;
+  } & DB_ProjectInInstance;
+};

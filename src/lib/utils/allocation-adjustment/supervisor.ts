@@ -1,20 +1,9 @@
 import {
   ProjectInfo,
-  SupervisorAllocationData,
   SupervisorDetails,
 } from "@/lib/validations/allocation-adjustment";
 
 import { getProjectInfo } from "./project";
-
-export function toSupervisorDetails(supervisorData: SupervisorAllocationData) {
-  return {
-    supervisorId: supervisorData.userId,
-    lowerBound: supervisorData.projectAllocationLowerBound,
-    target: supervisorData.projectAllocationTarget,
-    upperBound: supervisorData.projectAllocationUpperBound,
-    projects: supervisorData.userInInstance.supervisorProjects.map((e) => e.id),
-  };
-}
 
 export function getCurrentCapacity(
   allProjects: ProjectInfo[],
