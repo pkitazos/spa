@@ -19,10 +19,8 @@ import { createTRPCRouter } from "@/server/trpc";
 
 import { mergeInstanceTrx } from "./_utils/merge/transaction";
 import { algorithmRouter } from "./algorithm";
-import { externalSystemRouter } from "./external";
 import { matchingRouter } from "./matching";
 import { preferenceRouter } from "./preference";
-import { projectRouter } from "./project";
 
 import { PAGES } from "@/config/pages";
 import { AllocationInstance } from "@/data-objects/spaces/instance";
@@ -52,8 +50,6 @@ const tgc = z.object({
 export const instanceRouter = createTRPCRouter({
   matching: matchingRouter,
   algorithm: algorithmRouter,
-  project: projectRouter,
-  external: externalSystemRouter,
   preference: preferenceRouter,
 
   /**
@@ -432,7 +428,7 @@ export const instanceRouter = createTRPCRouter({
       // Pin consider moving this control flow to client
       if (!result.success) return { headerTabs: [], instancePath: "" };
 
-      const instance = new AllocationInstance(ctx.dal, result.data);
+      const instance = new AllocationInstance(ctx.dal, ctx.db, result.data);
 
       const instanceData = await instance.get();
 
