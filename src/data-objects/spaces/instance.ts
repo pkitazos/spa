@@ -113,7 +113,45 @@ export class AllocationInstance extends DataObject {
   }
 
   public async getStudentDetails() {
-    const students = await this.dal.db.studentDetails.findMany({
+    const students = await this.db.studentDetails.findMany({
+      where: expand(this.params),
+      include: {
+        userInInstance: { include: { user: true } },
+      },
+    });
+
+    return students.map((u) => ({
+      institutionId: u.userId,
+      fullName: u.userInInstance.user.name,
+      email: u.userInInstance.user.email,
+      joined: u.userInInstance.joined,
+      level: u.studentLevel,
+    }));
+  }
+
+  public async getStudentPreferenceDetails() {
+    const students = await this.db.studentDetails.findMany({
+      where: expand(this.params),
+      include: {
+        userInInstance: { include: { user: true } },
+        studentDraftPreferences: true,
+        studentSubmittedPreferences: true,
+      },
+    });
+
+    return students.map((u) => ({
+      institutionId: u.userId,
+      fullName: u.userInInstance.user.name,
+      email: u.userInInstance.user.email,
+      joined: u.userInInstance.joined,
+      level: u.studentLevel,
+      draftPreferences: u.studentDraftPreferences,
+      submittedPreferences: u.studentSubmittedPreferences,
+    }));
+  }
+
+  public async getStudentAllocationDetails() {
+    const students = await this.db.studentDetails.findMany({
       where: expand(this.params),
       include: {
         userInInstance: { include: { user: true } },
@@ -142,6 +180,32 @@ export class AllocationInstance extends DataObject {
       level: u.studentLevel,
       allocatedProject: u.projectAllocation?.project.details,
     }));
+  }
+
+  public async getSubmittedPreferences() {
+    return await this.db.studentSubmittedPreference
+      .findMany({
+        where: expand(this.params),
+        include: {
+          project: {
+            include: {
+              details: {
+                include: { tagsOnProject: { include: { tag: true } } },
+              },
+            },
+          },
+        },
+        orderBy: [{ projectId: "asc" }, { rank: "asc" }, { userId: "asc" }],
+      })
+      .then((data) =>
+        data.map((p) => ({
+          studentId: p.userId,
+          rank: p.rank,
+          project: { id: p.projectId, title: p.project.details.title },
+          supervisorId: p.project.supervisorId,
+          tags: p.project.details.tagsOnProject.map((t) => t.tag),
+        })),
+      );
   }
 
   get group() {
@@ -320,6 +384,22 @@ export class AllocationInstance extends DataObject {
         ),
       };
     });
+  }
+
+  public async getPreAllocatedStudentIds() {
+    const projectData = await this.db.projectInInstance.findMany({
+      where: {
+        ...expand(this.params),
+        details: { preAllocatedStudentId: { not: null } },
+      },
+      select: { details: { select: { preAllocatedStudentId: true } } },
+    });
+
+    return new Set(
+      projectData
+        .map((p) => p.details.preAllocatedStudentId)
+        .filter((p) => p !== null),
+    );
   }
 
   public async deleteUser(userId: string) {

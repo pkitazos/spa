@@ -265,7 +265,7 @@ export const projectRouter = createTRPCRouter({
     }),
 
   // TODO move db
-  getAllLateProposals: procedure.instance.subgroupAdmin
+  getAllLateProposals: procedure.instance.subGroupAdmin
     .output(
       z.array(
         z.object({
@@ -817,7 +817,7 @@ export const projectRouter = createTRPCRouter({
    * - their allocation target & count
    * - their
    */
-  supervisorSubmissionInfo: procedure.instance.subgroupAdmin
+  supervisorSubmissionInfo: procedure.instance.subGroupAdmin
     .output(
       z.array(
         supervisorProjectSubmissionDetailsSchema.extend({

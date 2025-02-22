@@ -25,7 +25,7 @@ import { updateAllocation } from "./algorithm/_utils/update-allocation";
 import { getPreAllocatedStudents } from "@/db/transactions/pre-allocated-students";
 
 export const matchingRouter = createTRPCRouter({
-  select: procedure.instance.subgroupAdmin
+  select: procedure.instance.subGroupAdmin
     .input(z.object({ algId: z.string() }))
     .output(z.void())
     .mutation(async ({ ctx, input: { algId, params } }) => {

@@ -30,7 +30,6 @@ import { addSupervisorTx } from "@/db/transactions/add-supervisor-transaction";
 import { addSupervisorsTx } from "@/db/transactions/add-supervisors-transaction";
 import { editInstanceTx } from "@/db/transactions/edit-instance-tx";
 import { forkInstanceTransaction } from "@/db/transactions/fork/transaction";
-import { getPreAllocatedStudents } from "@/db/transactions/pre-allocated-students";
 import { removeStudentTx } from "@/db/transactions/remove-student-transaction";
 import { removeStudentsTx } from "@/db/transactions/remove-students-tx";
 import { Role } from "@/db/types";
@@ -308,7 +307,7 @@ export const instanceRouter = createTRPCRouter({
       ),
     )
     .query(async ({ ctx: { instance } }) => {
-      const studentData = await instance.getStudentDetails();
+      const studentData = await instance.getStudentAllocationDetails();
 
       return studentData.map((u) => ({
         id: u.institutionId,
@@ -386,11 +385,10 @@ export const instanceRouter = createTRPCRouter({
         preAllocated: z.array(tgc),
       }),
     )
-    .query(async ({ ctx: { instance, db }, input: { params } }) => {
+    .query(async ({ ctx: { instance } }) => {
       const invitedStudents = await instance.getStudentDetails();
 
-      // Pin
-      const preAllocatedStudents = await getPreAllocatedStudents(db, params);
+      const preAllocatedStudents = await instance.getPreAllocatedStudentIds();
 
       const all = invitedStudents.map((u) => ({
         id: u.institutionId,
