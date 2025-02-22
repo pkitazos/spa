@@ -62,6 +62,12 @@ export class InstanceSupervisor extends User {
       .then((allocations) => allocations.length);
   }
 
+  public async countAllocations() {
+    return await this.getSupervisionAllocations().then(
+      (allocations) => allocations.length,
+    );
+  }
+
   public async setCapacityDetails(capacities: SupervisorCapacityDetails) {
     return await this.dal.supervisor.setCapacityDetails(
       this.id,

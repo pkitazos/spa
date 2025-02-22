@@ -8,6 +8,7 @@ import {
   SubGroupParams,
 } from "@/lib/validations/params";
 
+import { procedure } from "@/server/middleware";
 import {
   createTRPCRouter,
   instanceProcedure,
@@ -52,18 +53,16 @@ export const accessControlRouter = createTRPCRouter({
     return [...groupRoutes, ...subGroupRoutes];
   }),
 
-  adminInInstance: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema }))
+  adminInInstance: procedure.instance.user
     .output(z.boolean())
-    .query(async ({ ctx, input: { params } }) => {
-      return await checkAdminPermissions(ctx.db, params, ctx.session.user.id);
-    }),
+    .query(
+      async ({ ctx: { user, instance } }) =>
+        await user.isSubGroupAdminOrBetter(instance.params),
+    ),
 
-  getAdminLevelInSpace: protectedProcedure
+  getAdminLevelInSpace: procedure.user
     .input(z.object({ params: refinedSpaceParamsSchema }))
-    .query(async ({ ctx, input: { params } }) => {
-      const user = ctx.session.user;
-
+    .query(async ({ ctx: { dal }, input: { params } }) => {
       const superAdmin = await isSuperAdmin(ctx.db, user.id);
       if (superAdmin) return AdminLevel.SUPER;
 
@@ -119,8 +118,9 @@ export const accessControlRouter = createTRPCRouter({
    * If not an admin, it then checks if the user is directly associated with the instance in the database.
    *
    */
-  memberAccess: instanceProcedure
+  memberAccess: procedure.instance.user
     .input(z.object({ params: instanceParamsSchema }))
+    .output(z.boolean())
     .query(async ({ ctx, input: { params } }) => {
       const adminExists = await checkAdminPermissions(
         ctx.db,

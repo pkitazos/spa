@@ -2,7 +2,7 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { TX } from "@/db/types";
 
-export async function createProjectFlags(
+export async function linkProjectFlags(
   db: TX,
   params: InstanceParams,
   projectId: string,
