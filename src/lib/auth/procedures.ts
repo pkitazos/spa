@@ -54,7 +54,7 @@ export async function retrieveUser(user: ShibUser) {
       },
     });
     return newUser;
-  } catch (e) {
+  } catch (_) {
     throw new Error("No valid invite found for this user");
   }
 }
