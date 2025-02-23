@@ -25,8 +25,8 @@ export const userRouter = createTRPCRouter({
     .input(z.object({ userId: z.string() }))
     .output(userDtoSchema)
     .query(
-      async ({ ctx: { dal }, input: { userId } }) =>
-        await new User(dal, userId).toDTO(),
+      async ({ ctx: { dal, db }, input: { userId } }) =>
+        await new User(dal, db, userId).toDTO(),
     ),
 
   /**

@@ -22,8 +22,9 @@ export const groupRouter = createTRPCRouter({
 
   /**
    * returns true if the current user can access the specified group?
-   * TODO move
+   *
    */
+  // MOVE to ac
   access: procedure.group.user
     .output(z.boolean())
     .query(
@@ -81,12 +82,7 @@ export const groupRouter = createTRPCRouter({
    * @throws {TRPCClientError} If the user is already an admin or if there's a GUID/email mismatch during user creation.
    */
   addAdmin: adminProcedure
-    .input(
-      z.object({
-        params: groupParamsSchema,
-        newAdmin: newAdminSchema,
-      }),
-    )
+    .input(z.object({ params: groupParamsSchema, newAdmin: newAdminSchema }))
     .output(z.void())
     .mutation(
       async ({
