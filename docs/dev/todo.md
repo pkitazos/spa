@@ -6,13 +6,9 @@
 
 - [x] **access-control** <!-- ok -->
   - [x] **institution** <!-- ok -->
-  - [x] **institution.group** (2 remaining)
-    - [x] addAdmin <!-- todo -->
-    - [x] removeAdmin <!-- todo -->
+  - [x] **institution.group** (1 remaining)
     - [ ] access <!-- move -->
-  - [x] **institution.subGroup** (2 remaining)
-    - [x] addAdmin <!-- todo -->
-    - [x] removeAdmin <!-- todo -->
+  - [x] **institution.subGroup** <!-- ok -->
   - [x] **institution.instance** (10 remaining)
     - [ ] addSupervisor <!-- pin -->
     - [ ] addSupervisors <!-- pin -->
