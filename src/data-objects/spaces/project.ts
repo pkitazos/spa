@@ -1,3 +1,4 @@
+import { expand } from "@/lib/utils/general/instance-params";
 import { ProjectParams } from "@/lib/validations/params";
 
 import { DataObject } from "../data-object";
@@ -21,7 +22,9 @@ export class Project extends DataObject {
   }
 
   public async exists() {
-    return await this.dal.project.exists(this.params);
+    return !!(await this.db.projectInInstance.findFirst({
+      where: { projectId: this.params.projectId, ...expand(this.params) },
+    }));
   }
 
   get group() {

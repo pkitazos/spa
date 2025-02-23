@@ -13,15 +13,6 @@ export async function findSupervisorDetails(
   });
 }
 
-export async function getSupervisorDetails(
-  params: InstanceParams,
-  userId: string,
-) {
-  return db.supervisorDetails.findFirstOrThrow({
-    where: { ...expand(params), userId },
-  });
-}
-
 // TODO: make DTO
 type SupervisorDetailsData = {
   projectAllocationLowerBound: number;
@@ -36,25 +27,5 @@ export async function createSupervisorDetails(
 ) {
   await db.supervisorDetails.create({
     data: { ...expand(params), userId, ...data },
-  });
-}
-
-export async function updateSupervisorDetails(
-  params: InstanceParams,
-  userId: string,
-  data: Partial<SupervisorDetailsData>,
-) {
-  return db.supervisorDetails.update({
-    where: { supervisorDetailsId: { ...expand(params), userId } },
-    data,
-  });
-}
-
-export async function deleteSupervisorDetails(
-  params: InstanceParams,
-  userId: string,
-) {
-  return db.supervisorDetails.delete({
-    where: { supervisorDetailsId: { ...expand(params), userId } },
   });
 }

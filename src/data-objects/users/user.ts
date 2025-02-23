@@ -1,3 +1,4 @@
+import { expand } from "@/lib/utils/general/instance-params";
 import { relativeComplement } from "@/lib/utils/general/set-difference";
 import { ValidatedSegments } from "@/lib/validations/breadcrumbs";
 import {
@@ -21,6 +22,7 @@ import { SubGroupAdmin } from "./subgroup-admin";
 import { SuperAdmin } from "./super-admin";
 
 import { DAL } from "@/data-access";
+import { userInInstanceToDTO } from "@/db/transformers";
 import { DB, Role, SystemRole } from "@/db/types";
 import { UserDTO } from "@/dto";
 
@@ -43,7 +45,9 @@ export class User extends DataObject {
   }
 
   public async isSuperAdmin(): Promise<boolean> {
-    return await this.dal.user.isSuperAdmin(this.id);
+    return !!(await this.db.superAdmin.findFirst({
+      where: { userId: this.id },
+    }));
   }
 
   public async toSuperAdmin() {
@@ -52,7 +56,9 @@ export class User extends DataObject {
   }
 
   public async isGroupAdmin(groupParams: GroupParams): Promise<boolean> {
-    return await this.dal.user.isGroupAdmin(this.id, groupParams);
+    return !!(await this.db.groupAdmin.findFirst({
+      where: { userId: this.id, allocationGroupId: groupParams.group },
+    }));
   }
 
   public async isGroupAdminOrBetter(params: GroupParams): Promise<boolean> {
@@ -68,7 +74,13 @@ export class User extends DataObject {
   public async isSubGroupAdmin(
     subGroupParams: SubGroupParams,
   ): Promise<boolean> {
-    return await this.dal.user.isSubGroupAdmin(this.id, subGroupParams);
+    return !!(await this.db.subGroupAdmin.findFirst({
+      where: {
+        userId: this.id,
+        allocationSubGroupId: subGroupParams.subGroup,
+        allocationGroupId: subGroupParams.group,
+      },
+    }));
   }
 
   public async isSubGroupAdminOrBetter(
@@ -86,10 +98,10 @@ export class User extends DataObject {
     return new SubGroupAdmin(this.dal, this.db, this.id, subGroupParams);
   }
 
-  public async isInstanceStudent(
-    instanceParams: InstanceParams,
-  ): Promise<boolean> {
-    return await this.dal.user.isInstanceStudent(this.id, instanceParams);
+  public async isInstanceStudent(params: InstanceParams): Promise<boolean> {
+    return !!(await this.db.studentDetails.findFirst({
+      where: { ...expand(params), userId: this.id },
+    }));
   }
 
   public async toInstanceStudent(instanceParams: InstanceParams) {
@@ -107,8 +119,10 @@ export class User extends DataObject {
     );
   }
 
-  public isInstanceSupervisor(instanceParams: InstanceParams) {
-    return this.dal.user.isInstanceSupervisor(this.id, instanceParams);
+  public async isInstanceSupervisor(params: InstanceParams) {
+    return !!(await this.db.supervisorDetails.findFirst({
+      where: { ...expand(params), userId: this.id },
+    }));
   }
 
   public toInstanceSupervisor(instanceParams: InstanceParams) {
@@ -118,8 +132,10 @@ export class User extends DataObject {
     return new InstanceSupervisor(this.dal, this.db, this.id, instanceParams);
   }
 
-  public isInstanceReader(instanceParams: InstanceParams) {
-    return this.dal.user.isInstanceReader(this.id, instanceParams);
+  public async isInstanceReader(params: InstanceParams) {
+    return !!(await this.db.readerDetails.findFirst({
+      where: { ...expand(params), userId: this.id },
+    }));
   }
 
   public toInstanceReader(instanceParams: InstanceParams) {
@@ -137,12 +153,10 @@ export class User extends DataObject {
     );
   }
 
-  public isProjectSupervisor(projectParams: ProjectParams) {
-    // ? Should this first check that user is in-fact a supervisor in this instance or should it assume that the user is a supervisor in the instance?
-    // for now, I'm assuming that the user is a supervisor in the instance
-    // irrelevant; we just need to know if they supervise this project
-
-    return this.dal.user.isProjectSupervisor(this.id, projectParams);
+  public async isProjectSupervisor({ projectId, ...params }: ProjectParams) {
+    return !!(await this.db.projectInInstance.findFirst({
+      where: { projectId, ...expand(params), supervisorId: this.id },
+    }));
   }
 
   public toProjectSupervisor(projectParams: ProjectParams) {
@@ -152,10 +166,10 @@ export class User extends DataObject {
     return new ProjectSupervisor(this.dal, this.db, this.id, projectParams);
   }
 
-  public isProjectReader(projectParams: ProjectParams) {
-    // ? Should this first check that user is in-fact a reader in this instance or should it assume that the user is a reader in the instance?
-    // for now, I'm assuming that the user is a reader in the instance
-    return this.dal.user.isProjectReader(this.id, projectParams);
+  public async isProjectReader({ projectId, ...params }: ProjectParams) {
+    return !!(await this.db.readerProjectAllocation.findFirst({
+      where: { projectId, ...expand(params), userId: this.id },
+    }));
   }
 
   public toProjectReader(projectParams: ProjectParams) {
@@ -164,7 +178,6 @@ export class User extends DataObject {
     return new ProjectReader(this.dal, this.db, this.id, projectParams);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public async canAccessProject(_projectParams: ProjectParams) {
     // TODO @pkitazos spec for when you can access a project would be great
     return true;
@@ -190,21 +203,32 @@ export class User extends DataObject {
   }
 
   public async getManagedGroups() {
-    return await this.dal.user.getManagedGroups(this.id);
+    const groups = await this.db.allocationGroup.findMany({
+      where: { groupAdmins: { some: { userId: this.id } } },
+    });
+
+    return groups.map(({ displayName, id }) => ({
+      displayName: displayName,
+      path: `/${id}`,
+    }));
   }
 
+  // TODO REVIEW; I fixed the bug but I am not sure if I did it right
+  // TODO return type wth is that?
   public async getManagedSubGroups() {
-    return await this.db.groupAdmin
-      .findMany({
-        where: { userId: this.id },
-        select: { allocationGroup: true },
-      })
-      .then((data) =>
-        data.map((x) => ({
-          displayName: x.allocationGroup.displayName,
-          path: `/${x.allocationGroup.id}`,
-        })),
-      );
+    const subgroups = await this.db.allocationSubGroup.findMany({
+      where: {
+        OR: [
+          { subGroupAdmins: { some: { userId: this.id } } },
+          { allocationGroup: { groupAdmins: { some: { userId: this.id } } } },
+        ],
+      },
+    });
+
+    return subgroups.map(({ displayName, allocationGroupId, id }) => ({
+      displayName: displayName,
+      path: `/${allocationGroupId}/${id}`,
+    }));
   }
 
   public async getInstances() {
@@ -213,7 +237,7 @@ export class User extends DataObject {
         this.dal,
         this.db,
       ).getAllInstances();
-      return AllocationInstance.toQualifiedPaths(this.dal, instances);
+      return AllocationInstance.toQualifiedPaths(this.db, instances);
     }
 
     const groups = await this.dal.groupAdmin.getAllGroups(this.id);
@@ -244,7 +268,7 @@ export class User extends DataObject {
     );
 
     const allInstances = [...privilegedInstances, ...uniqueUnprivileged];
-    return await AllocationInstance.toQualifiedPaths(this.dal, allInstances);
+    return await AllocationInstance.toQualifiedPaths(this.db, allInstances);
   }
 
   public async authoriseBreadcrumbs(segments: string[]) {
@@ -275,40 +299,25 @@ export class User extends DataObject {
 
     // @pkitazos here's is a skeleton implementation - just needs you to implement the rules for when access is possible
     if (staticSegment) {
-      res.push({
-        segment: staticSegment,
-        access: true,
-      });
+      res.push({ segment: staticSegment, access: true });
     }
 
     if (id) {
       switch (staticSegment) {
         case "projects":
-          res.push({
-            segment: id,
-            access: true,
-          });
+          res.push({ segment: id, access: true });
           break;
 
         case "students":
-          res.push({
-            segment: id,
-            access: true,
-          });
+          res.push({ segment: id, access: true });
           break;
 
         case "supervisors":
-          res.push({
-            segment: id,
-            access: true,
-          });
+          res.push({ segment: id, access: true });
           break;
 
         case "readers":
-          res.push({
-            segment: id,
-            access: true,
-          });
+          res.push({ segment: id, access: true });
           break;
 
         default:
@@ -328,7 +337,12 @@ export class User extends DataObject {
     return this._data;
   }
 
-  public async joinInstance(instanceParams: InstanceParams) {
-    await this.dal.user.joinInstance(this.id, instanceParams);
+  public async joinInstance(params: InstanceParams) {
+    await this.db.userInInstance
+      .update({
+        where: { instanceMembership: { ...expand(params), userId: this.id } },
+        data: { joined: true },
+      })
+      .then(userInInstanceToDTO);
   }
 }

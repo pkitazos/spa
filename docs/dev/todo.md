@@ -8,7 +8,7 @@
   - [x] **institution** <!-- ok -->
   - [x] **institution.group** (2 remaining)
     - [ ] addAdmin <!-- todo -->
-    - [ ] removeAdmin <!-- todo -->
+    - [x] removeAdmin <!-- todo -->
   - [x] **institution.subGroup** (2 remaining)
     - [ ] addAdmin <!-- todo -->
     - [ ] removeAdmin <!-- todo -->

@@ -11,7 +11,10 @@ export class Algorithm extends DataObject {
     this.id = id;
   }
 
+  // TODO should return a DTO
   public async get() {
-    return this.dal.algorithm.get(this.id);
+    return await this.db.algorithmConfig.findFirstOrThrow({
+      where: { id: this.id },
+    });
   }
 }
