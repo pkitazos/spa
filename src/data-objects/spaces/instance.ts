@@ -33,10 +33,24 @@ export class AllocationInstance extends DataObject {
   }
 
   static async toQualifiedPaths(
-    dal: DAL,
+    db: DB,
     instances: InstanceDTO[],
   ): Promise<InstanceDisplayData[]> {
-    return await dal.instance.toQualifiedPaths(instances);
+    const instanceData = await db.allocationInstance.findMany({
+      where: { OR: instances.map((x) => toInstanceId(x)) },
+      include: { allocationSubGroup: { include: { allocationGroup: true } } },
+    });
+
+    return instanceData.map(
+      ({
+        allocationSubGroup: { allocationGroup: group, ...subGroup },
+        ...instance
+      }) => ({
+        group: { id: group.id, displayName: group.displayName },
+        subGroup: { id: subGroup.id, displayName: subGroup.displayName },
+        instance: { id: instance.id, displayName: instance.displayName },
+      }),
+    );
   }
 
   public async exists(): Promise<boolean> {
@@ -111,18 +125,20 @@ export class AllocationInstance extends DataObject {
   }
 
   public async getSupervisors(): Promise<SupervisorDTO[]> {
-    const supervisors = await this.db.supervisorDetails.findMany({
-      where: expand(this.params),
-      include: { userInInstance: { include: { user: true } } },
-    });
-
-    return supervisors.map(({ userInInstance, ...s }) => ({
-      id: userInInstance.user.id,
-      name: userInInstance.user.name,
-      email: userInInstance.user.email,
-      projectTarget: s.projectAllocationTarget,
-      projectUpperQuota: s.projectAllocationUpperBound,
-    }));
+    return await this.db.supervisorDetails
+      .findMany({
+        where: expand(this.params),
+        include: { userInInstance: { include: { user: true } } },
+      })
+      .then((supervisors) =>
+        supervisors.map(({ userInInstance, ...s }) => ({
+          id: userInInstance.user.id,
+          name: userInInstance.user.name,
+          email: userInInstance.user.email,
+          projectTarget: s.projectAllocationTarget,
+          projectUpperQuota: s.projectAllocationUpperBound,
+        })),
+      );
   }
 
   public async getSupervisorDetails() {
@@ -329,19 +345,37 @@ export class AllocationInstance extends DataObject {
     a.subGroup === b.subGroup &&
     a.instance === b.instance;
 
-  public async setStage(stage: Stage) {
-    this.dal.instance.setStage(this.params, stage);
+  public async setStage(stage: Stage): Promise<void> {
+    await this.db.allocationInstance.update({
+      where: { instanceId: toInstanceId(this.params) },
+      data: { stage },
+    });
   }
 
-  async setStudentPublicationAccess(_access: boolean): Promise<boolean> {
-    throw new Error("Method not implemented.");
+  /**
+   * set whether students can see their allocations
+   * @param access
+   * @returns the new access state
+   */
+  async setStudentPublicationAccess(access: boolean): Promise<boolean> {
+    await this.db.allocationInstance.update({
+      where: { instanceId: toInstanceId(this.params) },
+      data: { studentAllocationAccess: access },
+    });
+    return access;
   }
 
+  /**
+   * set whether supervisors can see their allocations
+   * @param access
+   * @returns the new access state
+   */
   async setSupervisorPublicationAccess(access: boolean): Promise<boolean> {
-    return await this.dal.instance.setSupervisorProjectAllocationAccess(
-      access,
-      this.params,
-    );
+    await this.db.allocationInstance.update({
+      where: { instanceId: toInstanceId(this.params) },
+      data: { supervisorAllocationAccess: access },
+    });
+    return access;
   }
 
   public isSupervisor(userId: string) {
@@ -434,7 +468,7 @@ export class AllocationInstance extends DataObject {
   public async getSupervisorSubmissionDetails(): Promise<
     SupervisorProjectSubmissionDetails[]
   > {
-    const data = await this.dal.db.supervisorDetails.findMany({
+    const data = await this.db.supervisorDetails.findMany({
       where: expand(this.params),
       include: {
         projects: { include: { studentAllocations: true } },
@@ -508,28 +542,40 @@ export class AllocationInstance extends DataObject {
     ]);
   }
 
-  public async deleteUser(userId: string) {
-    await this.dal.user.deleteInInstance(userId, this.params);
+  public async deleteUser(userId: string): Promise<void> {
+    await this.db.userInInstance.delete({
+      where: { instanceMembership: { ...expand(this.params), userId } },
+    });
   }
 
-  public async deleteUsers(userIds: string[]) {
-    await this.dal.user.deleteManyInInstance(userIds, this.params);
+  public async deleteUsers(userIds: string[]): Promise<void> {
+    await this.db.userInInstance.deleteMany({
+      where: { ...expand(this.params), userId: { in: userIds } },
+    });
   }
 
-  public async deleteStudent(studentId: string): Promise<void> {
-    return await this.dal.student.delete(studentId, this.params);
+  public async deleteStudent(userId: string): Promise<void> {
+    await this.db.studentDetails.delete({
+      where: { studentDetailsId: { userId, ...expand(this.params) } },
+    });
   }
 
-  public async deleteStudents(studentIds: string[]): Promise<void> {
-    return await this.dal.student.deleteMany(studentIds, this.params);
+  public async deleteStudents(userIds: string[]): Promise<void> {
+    await this.db.studentDetails.deleteMany({
+      where: { userId: { in: userIds }, ...expand(this.params) },
+    });
   }
 
-  public async deleteSupervisor(supervisorId: string): Promise<void> {
-    return await this.dal.supervisor.delete(supervisorId, this.params);
+  public async deleteSupervisor(userId: string): Promise<void> {
+    await this.db.supervisorDetails.delete({
+      where: { supervisorDetailsId: { userId, ...expand(this.params) } },
+    });
   }
 
-  public async deleteSupervisors(supervisorIds: string[]): Promise<void> {
-    return await this.dal.supervisor.deleteMany(supervisorIds, this.params);
+  public async deleteSupervisors(userIds: string[]): Promise<void> {
+    await this.db.supervisorDetails.deleteMany({
+      where: { userId: { in: userIds }, ...expand(this.params) },
+    });
   }
 
   public async deleteStudentAllocation(userId: string): Promise<void> {
@@ -542,6 +588,8 @@ export class AllocationInstance extends DataObject {
   }
 
   public async delete() {
-    await this.dal.instance.delete(this.params);
+    await this.db.allocationInstance.delete({
+      where: { instanceId: toInstanceId(this.params) },
+    });
   }
 }
