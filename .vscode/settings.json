@@ -52,6 +52,15 @@
       "italic": false
     },
     {
+      "tag": "warning",
+      "color": "#e7000b",
+      "strikethrough": false,
+      "underline": true,
+      "backgroundColor": "transparent",
+      "bold": false,
+      "italic": false
+    },
+    {
       "tag": "!",
       "color": "#FF2D00",
       "strikethrough": false,
@@ -96,7 +105,5 @@
       "bold": false,
       "italic": false
     }
-  ],
-  "window.zoomLevel": 2,
-  "editor.mouseWheelZoom": false
+  ]
 }
