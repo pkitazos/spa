@@ -5,8 +5,6 @@ import { expand } from "@/lib/utils/general/instance-params";
 import { NewStudent } from "@/lib/validations/add-users/new-user";
 import { InstanceParams } from "@/lib/validations/params";
 
-import { validateEmailGUIDMatch } from "@/server/utils/id-email-check";
-
 export async function addStudentTx(
   db: PrismaClient,
   { institutionId, fullName, email, level }: NewStudent,
@@ -17,8 +15,6 @@ export async function addStudentTx(
       where: { ...expand(params), userId: institutionId },
     });
     if (exists) throw new TRPCClientError("User is already a student");
-
-    await validateEmailGUIDMatch(tx, institutionId, email, fullName);
 
     await tx.userInInstance.create({
       data: { ...expand(params), userId: institutionId },

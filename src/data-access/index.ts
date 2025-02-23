@@ -56,12 +56,7 @@ export class DAL {
   public group = {
     create: async (groupName: string): Promise<GroupDTO> =>
       await this.db.allocationGroup
-        .create({
-          data: {
-            id: slugify(groupName),
-            displayName: groupName,
-          },
-        })
+        .create({ data: { id: slugify(groupName), displayName: groupName } })
         .then(allocationGroupToDTO),
 
     exists: async ({ group: id }: GroupParams): Promise<boolean> =>
@@ -81,9 +76,7 @@ export class DAL {
       group: allocationGroupId,
     }: GroupParams): Promise<SubGroupDTO[]> => {
       return await this.db.allocationSubGroup
-        .findMany({
-          where: { allocationGroupId },
-        })
+        .findMany({ where: { allocationGroupId } })
         .then((data) => data.map(allocationSubGroupToDTO));
     },
 
@@ -117,29 +110,19 @@ export class DAL {
     ): Promise<SubGroupDTO> =>
       this.db.allocationSubGroup
         .create({
-          data: {
-            displayName,
-            id: slugify(displayName),
-            allocationGroupId,
-          },
+          data: { displayName, id: slugify(displayName), allocationGroupId },
         })
         .then(allocationSubGroupToDTO),
 
     exists: async (params: SubGroupParams): Promise<boolean> =>
       !!(await this.db.allocationSubGroup.findFirst({
-        where: {
-          allocationGroupId: params.group,
-          id: params.subGroup,
-        },
+        where: { allocationGroupId: params.group, id: params.subGroup },
       })),
 
     get: async (params: SubGroupParams): Promise<SubGroupDTO> =>
       await this.db.allocationSubGroup
         .findFirstOrThrow({
-          where: {
-            allocationGroupId: params.group,
-            id: params.subGroup,
-          },
+          where: { allocationGroupId: params.group, id: params.subGroup },
         })
         .then(allocationSubGroupToDTO),
 
@@ -167,12 +150,7 @@ export class DAL {
     delete: async ({ group, subGroup }: SubGroupParams): Promise<SubGroupDTO> =>
       await this.db.allocationSubGroup
         .delete({
-          where: {
-            subGroupId: {
-              allocationGroupId: group,
-              id: subGroup,
-            },
-          },
+          where: { subGroupId: { allocationGroupId: group, id: subGroup } },
         })
         .then(allocationSubGroupToDTO),
   };
@@ -256,9 +234,7 @@ export class DAL {
     getForGroups: async (groups: GroupParams[]): Promise<InstanceDTO[]> =>
       await this.db.allocationInstance
         .findMany({
-          where: {
-            allocationGroupId: { in: groups.map((g) => g.group) },
-          },
+          where: { allocationGroupId: { in: groups.map((g) => g.group) } },
         })
         .then((data) => data.map(allocationInstanceToDTO)),
 
@@ -347,10 +323,7 @@ export class DAL {
               id: x.allocationSubGroup.id,
               displayName: x.allocationSubGroup.displayName,
             },
-            instance: {
-              id: x.id,
-              displayName: x.displayName,
-            },
+            instance: { id: x.id, displayName: x.displayName },
           })),
         ),
 
@@ -498,10 +471,7 @@ export class DAL {
 
     getAllInstances: async (userId: string): Promise<InstanceDTO[]> =>
       await this.db.userInInstance
-        .findMany({
-          where: { userId },
-          select: { allocationInstance: true },
-        })
+        .findMany({ where: { userId }, select: { allocationInstance: true } })
         .then((data) =>
           data.map((x) => allocationInstanceToDTO(x.allocationInstance)),
         ),
@@ -552,10 +522,7 @@ export class DAL {
 
     getAllGroups: async (userId: string): Promise<GroupDTO[]> =>
       await this.db.groupAdmin
-        .findMany({
-          where: { userId },
-          select: { allocationGroup: true },
-        })
+        .findMany({ where: { userId }, select: { allocationGroup: true } })
         .then((data) =>
           data.map((x) => allocationGroupToDTO(x.allocationGroup)),
         ),
@@ -583,10 +550,7 @@ export class DAL {
   public subGroupAdmin = {
     getAllSubgroups: async (userId: string): Promise<SubGroupDTO[]> =>
       await this.db.subGroupAdmin
-        .findMany({
-          where: { userId },
-          select: { allocationSubGroup: true },
-        })
+        .findMany({ where: { userId }, select: { allocationSubGroup: true } })
         .then((data) =>
           data.map((x) => allocationSubGroupToDTO(x.allocationSubGroup)),
         ),
@@ -694,12 +658,14 @@ export class DAL {
           orderBy: { score: "asc" },
         })
         .then((data) =>
-          data.sort(sortPreferenceType).map((x) => ({
-            project: projectDataToDTO(x.project),
-            supervisor: x.project.supervisor.userInInstance.user,
-            score: x.score,
-            type: x.type,
-          })),
+          data
+            .sort(sortPreferenceType)
+            .map((x) => ({
+              project: projectDataToDTO(x.project),
+              supervisor: x.project.supervisor.userInInstance.user,
+              score: x.score,
+              type: x.type,
+            })),
         );
     },
 
@@ -768,23 +734,13 @@ export class DAL {
       preferenceType: PreferenceType,
       updatedRank: number,
       params: InstanceParams,
-    ): Promise<{
-      project: ProjectDTO;
-      rank: number;
-    }> => {
+    ): Promise<{ project: ProjectDTO; rank: number }> => {
       return await this.db.studentDraftPreference
         .update({
           where: {
-            draftPreferenceId: {
-              projectId,
-              userId,
-              ...expand(params),
-            },
+            draftPreferenceId: { projectId, userId, ...expand(params) },
           },
-          data: {
-            type: preferenceType,
-            score: updatedRank,
-          },
+          data: { type: preferenceType, score: updatedRank },
           include: { project: { include: { details: true } } },
         })
         .then((data) => ({
@@ -986,9 +942,7 @@ export class DAL {
       params: InstanceParams,
     ): Promise<SupervisorCapacityDetails> =>
       await this.db.supervisorDetails
-        .findFirstOrThrow({
-          where: { userId, ...expand(params) },
-        })
+        .findFirstOrThrow({ where: { userId, ...expand(params) } })
         .then((x) => ({
           projectTarget: x.projectAllocationTarget,
           projectUpperQuota: x.projectAllocationUpperBound,
