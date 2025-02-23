@@ -20,9 +20,7 @@ export const institutionRouter = createTRPCRouter({
 
   superAdmins: procedure.superAdmin
     .output(z.array(userDtoSchema))
-    .query(
-      async ({ ctx: { institution } }) => await institution.getAllSuperAdmins(),
-    ),
+    .query(async ({ ctx: { institution } }) => await institution.getAdmins()),
 
   groups: procedure.superAdmin
     .output(z.array(groupDtoSchema))
