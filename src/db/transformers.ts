@@ -1,4 +1,4 @@
-// TODO move these to some other file
+// MOVE these to some other file
 
 import {
   DB_AllocationGroup,

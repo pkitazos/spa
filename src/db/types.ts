@@ -10,15 +10,32 @@ export type DB = PrismaClient;
 export type TX = PrismaTransactionClient;
 
 export type {
+  AlgorithmConfig as DB_AlgorithmConfig,
+  AlgorithmConfigInInstance as DB_AlgorithmConfigInInstance,
   AllocationGroup as DB_AllocationGroup,
   AllocationInstance as DB_AllocationInstance,
   AllocationSubGroup as DB_AllocationSubGroup,
+  AssessmentComponent as DB_AssessmentComponent,
+  ComponentScore as DB_ComponentScore,
+  FinalGrade as DB_FinalGrade,
   Flag as DB_Flag,
   FlagOnProject as DB_FlagOnProject,
+  FlagOnStudent as DB_FlagOnStudent,
+  GroupAdmin as DB_GroupAdmin,
+  MatchingPair as DB_MatchingPair,
+  MatchingResult as DB_MatchingResult,
   ProjectDetails as DB_ProjectDetails,
   ProjectInInstance as DB_ProjectInInstance,
+  ReaderDetails as DB_ReaderDetails,
+  ReaderDraftPreference as DB_ReaderDraftPreference,
+  ReaderProjectAllocation as DB_ReaderProjectAllocation,
+  ReaderSubmittedPreference as DB_ReaderSubmittedPreference,
   StudentDetails as DB_StudentDetails,
+  StudentDraftPreference as DB_StudentDraftPreference,
   StudentProjectAllocation as DB_StudentProjectAllocation,
+  StudentSubmittedPreference as DB_StudentSubmittedPreference,
+  SubGroupAdmin as DB_SubGroupAdmin,
+  SuperAdmin as DB_SuperAdmin,
   SupervisorDetails as DB_SupervisorDetails,
   Tag as DB_Tag,
   TagOnProject as DB_TagOnProject,
@@ -33,7 +50,7 @@ export const Role = {
   STUDENT: "STUDENT",
 } as const;
 
-export type SystemRole = (typeof Role)[keyof typeof Role];
+export type Role = (typeof Role)[keyof typeof Role];
 
 export const stageOrd = {
   [Stage.SETUP]: 1,
