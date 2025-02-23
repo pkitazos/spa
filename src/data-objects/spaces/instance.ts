@@ -1,4 +1,5 @@
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
+import { RandomAllocationDto } from "@/lib/validations/allocation/data-table-dto";
 import { InstanceParams } from "@/lib/validations/params";
 import { SupervisorProjectSubmissionDetails } from "@/lib/validations/supervisor-project-submission-details";
 import { TabType } from "@/lib/validations/tabs";
@@ -92,7 +93,7 @@ export class AllocationInstance extends DataObject {
 
   // TODO review the nullish behaviour here
   public async getSelectedAlg(): Promise<Algorithm | undefined> {
-    const { selectedAlgName: id } = await this.get();
+    const { selectedAlgConfigId: id } = await this.get();
     if (id) return new Algorithm(this.dal, this.db, id);
     else return undefined;
   }
@@ -221,6 +222,38 @@ export class AllocationInstance extends DataObject {
     }));
   }
 
+  public async getStudentSuitableProjects(
+    userId: string,
+  ): Promise<{ id: string; title: string; flag: FlagDTO[] }[]> {
+    const { studentFlags } = await this.db.studentDetails.findFirstOrThrow({
+      where: { ...expand(this.params), userId },
+      include: { studentFlags: true },
+    });
+
+    const suitableProjects = await this.db.projectInInstance.findMany({
+      where: {
+        ...expand(this.params),
+        details: {
+          flagsOnProject: {
+            some: { flagId: { in: studentFlags.map((f) => f.flagId) } },
+          },
+        },
+      },
+      include: {
+        details: { include: { flagsOnProject: { select: { flag: true } } } },
+        studentAllocations: true,
+      },
+    });
+
+    return suitableProjects
+      .filter((p) => p.studentAllocations.length === 0)
+      .map((p) => ({
+        id: p.projectId,
+        title: p.details.title,
+        flag: p.details.flagsOnProject.map((f) => f.flag),
+      }));
+  }
+
   public async getSubmittedPreferences() {
     const data = await this.db.studentSubmittedPreference.findMany({
       where: expand(this.params),
@@ -241,6 +274,42 @@ export class AllocationInstance extends DataObject {
       supervisorId: p.project.supervisorId,
       tags: p.project.details.tagsOnProject.map((t) => t.tag),
     }));
+  }
+
+  // BREAKING
+  public async getUnallocatedStudents(): Promise<RandomAllocationDto[]> {
+    const { selectedAlgConfigId } = await this.get();
+
+    const students = await this.db.studentDetails
+      .findMany({
+        where: expand(this.params),
+        include: {
+          userInInstance: { select: { user: true } },
+          projectAllocation: {
+            select: { project: { include: { details: true } } },
+          },
+        },
+      })
+      .then((d) =>
+        d.map((s) => ({
+          student: { ...s.userInInstance.user, level: s.studentLevel },
+          project: s.projectAllocation?.project
+            ? {
+                id: s.projectAllocation?.project.details.id,
+                title: s.projectAllocation?.project.details.title,
+              }
+            : undefined,
+        })),
+      );
+
+    const matchedStudentIds = await this.db.matchingResult
+      .findFirstOrThrow({
+        where: { ...expand(this.params), algConfigId: selectedAlgConfigId },
+        include: { matching: true },
+      })
+      .then((x) => new Set(x.matching.map((m) => m.userId)));
+
+    return students.filter((s) => !matchedStudentIds.has(s.student.id));
   }
 
   get group() {
