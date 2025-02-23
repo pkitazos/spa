@@ -55,11 +55,6 @@ export const AdminLevel = {
   NONE: "NONE",
 } as const;
 
-/**
- * @deprecated
- */
-export type SystemAdminLevel = (typeof AdminLevel)[keyof typeof AdminLevel];
-
 export const adminLevelOrd = {
   [AdminLevel.SUPER]: 3,
   [AdminLevel.GROUP]: 2,

@@ -7,11 +7,12 @@
 - [x] **access-control** <!-- ok -->
   - [x] **institution** <!-- ok -->
   - [x] **institution.group** (2 remaining)
-    - [ ] addAdmin <!-- todo -->
+    - [x] addAdmin <!-- todo -->
     - [x] removeAdmin <!-- todo -->
+    - [ ] access <!-- move -->
   - [x] **institution.subGroup** (2 remaining)
-    - [ ] addAdmin <!-- todo -->
-    - [ ] removeAdmin <!-- todo -->
+    - [x] addAdmin <!-- todo -->
+    - [x] removeAdmin <!-- todo -->
   - [x] **institution.instance** (10 remaining)
     - [ ] addSupervisor <!-- pin -->
     - [ ] addSupervisors <!-- pin -->
@@ -64,8 +65,16 @@
 ### other qol
 
 - [ ] lib/utils?
+  - [ ] some TLC to `expand(params)`
 - [ ] lib/validations
 - [ ] centralise / standardise transformers
+
+### DB:
+
+- [ ] standardise references to space params;
+      -> i.e. an instanceId should always be referred to as `allocationInstanceId`
+- [ ] same for userId (should always be userId)
+- [ ] add separate slug field to spaces (or we are doomed)
 
 ## From scratch
 

@@ -1,16 +1,12 @@
-import { TRPCClientError } from "@trpc/client";
 import { z } from "zod";
 
-import { newAdminSchema } from "@/lib/validations/add-admins/new-admin";
 import { createdInstanceSchema } from "@/lib/validations/instance-form";
-import { subGroupParamsSchema } from "@/lib/validations/params";
 
 import { procedure } from "@/server/middleware";
-import { adminProcedure, createTRPCRouter } from "@/server/trpc";
-import { isSubGroupAdmin } from "@/server/utils/admin/is-sub-group-admin";
-import { validateEmailGUIDMatch } from "@/server/utils/id-email-check";
+import { createTRPCRouter } from "@/server/trpc";
 
-import { subGroupDtoSchema } from "@/dto";
+import { subGroupDtoSchema, userDtoSchema } from "@/dto";
+import { AddAdminResult, AddAdminResultSchema } from "@/dto/add-admin-result";
 
 export const subGroupRouter = createTRPCRouter({
   exists: procedure.subgroup.user
@@ -35,15 +31,13 @@ export const subGroupRouter = createTRPCRouter({
       const { displayName } = await subGroup.get();
       const allocationInstances = await subGroup.getInstances();
 
-      // TODO think this is right...
       const subGroupAdmins = await subGroup.getAdmins();
 
       return { displayName, allocationInstances, subGroupAdmins };
     },
   ),
 
-  // TODO return a set
-  // BREAKING
+  // BREAKING return type change
   takenInstanceNames: procedure.subgroup.subgroupAdmin
     .output(z.set(z.string()))
     .query(
@@ -65,81 +59,32 @@ export const subGroupRouter = createTRPCRouter({
     .output(z.void())
     .mutation(async ({ ctx: { instance } }) => await instance.delete()),
 
-  // TODO: refactor after auth is implemented
-  /**
-   * Handles the form submission to add a new admin to a specified Sub-Group.
-   *
-   * @description
-   * 1. Checks if the user (identified by `institutionId`) is already an admin in the specified Sub-Group.
-   *    - If so, throws a `TRPCClientError` with the message "User is already an admin".
-   *
-   * 2. If the user is not already an admin:
-   *    - Attempts to find the user in the database based on `institutionId` and `email`.
-   *    - If the user is not found:
-   *      - Tries to create a new user with the provided `institutionId`, `name`, and `email`.
-   *      - If the user creation fails (e.g., due to a GUID/email mismatch), throws a `TRPCClientError` with the message "GUID and email do not match".
-   *
-   * 3. Finally, if the user exists (either found or newly created):
-   *    - Creates an `adminInSpace` record associating the user with the specified Sub-Group and admin level.
-   *
-   * @throws {TRPCClientError} If the user is already an admin or if there's a GUID/email mismatch during user creation.
-   */
-  addAdmin: adminProcedure
-    .input(z.object({ params: subGroupParamsSchema, newAdmin: newAdminSchema }))
+  // BREAKING input and output types changed
+  addAdmin: procedure.subgroup.groupAdmin
+    .input(z.object({ newAdmin: userDtoSchema }))
+    .output(AddAdminResultSchema)
     .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup },
-          newAdmin: { institutionId, name, email },
-        },
-      }) => {
-        await ctx.db.$transaction(async (tx) => {
-          const exists = await isSubGroupAdmin(
-            tx,
-            { group, subGroup },
-            institutionId,
-          );
-          if (exists) throw new TRPCClientError("User is already an admin");
+      async ({ ctx: { institution, subGroup }, input: { newAdmin } }) => {
+        const { id } = newAdmin;
+        const userIsGroupAdmin = await subGroup.isSubGroupAdmin(id);
 
-          const user = await validateEmailGUIDMatch(
-            tx,
-            institutionId,
-            email,
-            name,
-          );
+        if (userIsGroupAdmin) return AddAdminResult.PRE_EXISTING;
 
-          await tx.adminInSpace.create({
-            data: {
-              userId: user.id,
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              adminLevel: AdminLevel.SUB_GROUP,
-            },
-          });
-        });
+        const userExists = await institution.userExists(id);
+        if (!userExists) institution.createUser(newAdmin);
+
+        await subGroup.linkAdmin(id);
+
+        if (!userExists) return AddAdminResult.CREATED_NEW;
+
+        return AddAdminResult.OK;
       },
     ),
 
-  removeAdmin: adminProcedure
-    .input(z.object({ params: subGroupParamsSchema, userId: z.string() }))
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup },
-          userId,
-        },
-      }) => {
-        const { systemId } = await ctx.db.adminInSpace.findFirstOrThrow({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            userId,
-          },
-        });
-
-        await ctx.db.adminInSpace.delete({ where: { systemId } });
-      },
-    ),
+  removeAdmin: procedure.subgroup.groupAdmin
+    .input(z.object({ userId: z.string() }))
+    .output(z.void())
+    .mutation(async ({ ctx: { subGroup }, input: { userId } }) => {
+      await subGroup.unlinkAdmin(userId);
+    }),
 });
