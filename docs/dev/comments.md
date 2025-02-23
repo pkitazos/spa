@@ -21,3 +21,7 @@ a general todo comment, easy to search for.
 ## <span style="color:#a3e635">// ok</span>
 
 indicates something has been reviewed and it looks OK - we are safe to ignore it. If you come across one in the wild, its probably safe to remove it. These should only ever be temporary.
+
+## <span style="color:#e7000b;text-decoration-line: underline;font-weight:bold;">// WARNING</span>
+
+indicates a potential bug has been identified and likely needs to be fixed
