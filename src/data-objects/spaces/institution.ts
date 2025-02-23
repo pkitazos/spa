@@ -8,11 +8,18 @@ import {
   allocationInstanceToDTO,
 } from "@/db/transformers";
 import { DB } from "@/db/types";
-import { InstanceDTO } from "@/dto";
+import { InstanceDTO, UserDTO } from "@/dto";
 
 export class Institution extends DataObject {
+  createUser(data: UserDTO) {
+    this.db.user.create({ data });
+  }
   constructor(dal: DAL, db: DB) {
     super(dal, db);
+  }
+
+  public async userExists(id: string) {
+    return await this.db.user.findFirst({ where: { id } });
   }
 
   // WARNING bug see group.createSubroup

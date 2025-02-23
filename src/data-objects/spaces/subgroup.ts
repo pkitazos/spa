@@ -3,6 +3,7 @@ import { ValidatedInstanceDetails } from "@/lib/validations/instance-form";
 import { SubGroupParams } from "@/lib/validations/params";
 
 import { DataObject } from "../data-object";
+import { User } from "../users/user";
 
 import { AllocationGroup } from "./group";
 import { Institution } from "./institution";
@@ -56,6 +57,24 @@ export class AllocationSubGroup extends DataObject {
     return await this.db.allocationInstance
       .findMany({ where: subgroupExpand(this.params) })
       .then((data) => data.map(allocationInstanceToDTO));
+  }
+
+  public async isSubGroupAdmin(userId: string) {
+    return await new User(this.dal, this.db, userId).isSubGroupAdmin(
+      this.params,
+    );
+  }
+
+  public async linkAdmin(userId: string) {
+    await this.db.subGroupAdmin.create({
+      data: { userId, ...subgroupExpand(this.params) },
+    });
+  }
+
+  public async unlinkAdmin(userId: string) {
+    await this.db.subGroupAdmin.delete({
+      where: { subGroupAdminId: { userId, ...subgroupExpand(this.params) } },
+    });
   }
 
   public async getAdmins(): Promise<UserDTO[]> {

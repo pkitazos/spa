@@ -1,13 +1,10 @@
-import { TRPCClientError } from "@trpc/client";
 import { z } from "zod";
-
-import { newAdminSchema } from "@/lib/validations/add-admins/new-admin";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
-import { validateEmailGUIDMatch } from "@/server/utils/id-email-check";
 
 import { groupDtoSchema, subGroupDtoSchema, userDtoSchema } from "@/dto";
+import { AddAdminResult, AddAdminResultSchema } from "@/dto/add-admin-result";
 
 export const groupRouter = createTRPCRouter({
   exists: procedure.group.user
@@ -19,7 +16,7 @@ export const groupRouter = createTRPCRouter({
     .query(async ({ ctx: { group } }) => await group.get()),
 
   /**
-   * returns true if the current user can access the specified group?
+   * returns true if the current user can access the specified group
    *
    */
   // MOVE to ac
@@ -60,58 +57,31 @@ export const groupRouter = createTRPCRouter({
       await subGroup.delete();
     }),
 
-  // TODO: refactor after auth is implemented
-  /**
-   * Handles the form submission to add a new admin to a specified Group.
-   *
-   * @description
-   * 1. Checks if the user (identified by `institutionId`) is already an admin in the specified Group.
-   *    - If so, throws a `TRPCClientError` with the message "User is already an admin".
-   *
-   * 2. If the user is not already an admin:
-   *    - Attempts to find the user in the database based on `institutionId` and `email`.
-   *    - If the user is not found:
-   *      - Tries to create a new user with the provided `institutionId`, `name`, and `email`.
-   *      - If the user creation fails (e.g., due to a GUID/email mismatch), throws a `TRPCClientError` with the message "GUID and email do not match".
-   *
-   * 3. Finally, if the user exists (either found or newly created):
-   *    - Creates an `adminInSpace` record associating the user with the specified Group and admin level.
-   *
-   * @throws {TRPCClientError} If the user is already an admin or if there's a GUID/email mismatch during user creation.
-   */
+  // BREAKING input and return types changed
   addAdmin: procedure.group.superAdmin
-    .input(z.object({ newAdmin: newAdminSchema }))
-    .output(z.void())
-    .mutation(
-      async ({
-        ctx: { db, group },
-        input: {
-          newAdmin: { institutionId, name, email },
-        },
-      }) => {
-        group.addAdmin(institutionId);
-        const exists = await group.isGroupAdmin(institutionId);
-        if (exists) throw new TRPCClientError("User is already an admin");
+    .input(z.object({ newAdmin: userDtoSchema }))
+    .output(AddAdminResultSchema)
+    .mutation(async ({ ctx: { group, institution }, input: { newAdmin } }) => {
+      const { id } = newAdmin;
+      const userIsGroupAdmin = await group.isGroupAdmin(id);
 
-        await db.$transaction(async (tx) => {
-          const user = await validateEmailGUIDMatch(
-            tx,
-            institutionId,
-            email,
-            name,
-          );
-          await tx.groupAdmin.create({
-            data: { userId: user.id, allocationGroupId: group.params.group },
-          });
-        });
-      },
-    ),
+      if (userIsGroupAdmin) return AddAdminResult.PRE_EXISTING;
+
+      const userExists = await institution.userExists(id);
+      if (!userExists) institution.createUser(newAdmin);
+
+      await group.linkAdmin(id);
+
+      if (!userExists) return AddAdminResult.CREATED_NEW;
+
+      return AddAdminResult.OK;
+    }),
 
   removeAdmin: procedure.group.superAdmin
     .input(z.object({ userId: z.string() }))
     .output(z.void())
     .mutation(
       async ({ ctx: { group }, input: { userId } }) =>
-        await group.removeAdmin(userId),
+        await group.unlinkAdmin(userId),
     ),
 });

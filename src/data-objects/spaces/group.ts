@@ -24,22 +24,15 @@ export class AllocationGroup extends DataObject {
     this.params = params;
   }
 
-  public async addAdmin(userId: string) {
-    // check if the user exists
-    const exists = await this.dal.user.exists(userId);
-    if (!exists) throw new Error("User does not exist");
-
-    const isGroupAdmin = await this.dal.user.isGroupAdmin(userId, this.params);
-    if (isGroupAdmin) throw new Error("User is already a group admin");
-
-    return await this.dal.groupAdmin.create(userId, this.params);
-    // if they don't exist - create them
-    // add them as an admin
+  public async linkAdmin(userId: string) {
+    await this.db.groupAdmin.create({
+      data: { userId, allocationGroupId: this.params.group },
+    });
   }
 
-  public async removeAdmin(userId: string) {
+  public async unlinkAdmin(userId: string) {
     await this.db.groupAdmin.delete({
-      where: { groupAdminId: { allocationGroupId: this.params.group, userId } },
+      where: { groupAdminId: { userId, allocationGroupId: this.params.group } },
     });
   }
 
