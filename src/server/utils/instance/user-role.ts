@@ -4,7 +4,7 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { checkAdminPermissions } from "../admin/access";
 
-import { SystemRole } from "@/db/types";
+import { Role } from "@/db/types";
 import { TX } from "@/db/types";
 
 /**
@@ -40,7 +40,7 @@ export async function getAllUserRoles(
   params: InstanceParams,
   userId: string,
 ) {
-  const roles: SystemRole[] = [];
+  const roles: Role[] = [];
 
   const admin = await checkAdminPermissions(db, params, userId);
   if (admin) roles.push(Role.ADMIN);

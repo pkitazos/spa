@@ -26,7 +26,7 @@ import { getAllUserRoles, getUserRole } from "./utils/instance/user-role";
 
 import { DAL } from "@/data-access";
 import { db } from "@/db";
-import { Role, SystemRole } from "@/db/types";
+import { Role } from "@/db/types";
 
 /**
  * 1. CONTEXT
@@ -51,11 +51,7 @@ export const createTRPCContext = async (opts: {
 
   console.log(`>>> tRPC Request from ${source} by`, session.user, `at ${time}`);
 
-  return {
-    session,
-    db,
-    dal: new DAL(db),
-  };
+  return { session, db, dal: new DAL(db) };
 };
 
 /**
@@ -192,7 +188,7 @@ export const multiRoleAwareProcedure = instanceProcedure.use(
  * @deprecated - don't use this type, user Object methods instead
  */
 export type MultiRoleAwareContext = {
-  session: { user: User & { roles: Set<SystemRole> } };
+  session: { user: User & { roles: Set<Role> } };
   db: PrismaClient;
   instance: AllocationInstance;
 };

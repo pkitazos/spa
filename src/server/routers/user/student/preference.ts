@@ -7,9 +7,9 @@ import { studentPreferenceSchema } from "@/lib/validations/student-preference";
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
-import { AllocationInstance } from "@/data-objects/spaces/instance";
-import { User } from "@/data-objects/users/user";
-import { Role, SystemRole } from "@/db/types";
+import type { AllocationInstance } from "@/data-objects/spaces/instance";
+import type { User } from "@/data-objects/users/user";
+import { Role } from "@/db/types";
 import { PreferenceType, Stage } from "@/db/types";
 import { userDtoSchema } from "@/dto";
 
@@ -343,7 +343,7 @@ async function accessControl({
 }: {
   user: User;
   instance: AllocationInstance;
-  allowedRoles: SystemRole[keyof SystemRole][];
+  allowedRoles: Role[keyof Role][];
   stageCheck: (s: Stage) => boolean;
 }) {
   const userRoles = await user.getRolesInInstance(instance.params);

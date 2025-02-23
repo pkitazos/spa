@@ -23,7 +23,7 @@ import { SuperAdmin } from "./super-admin";
 
 import { DAL } from "@/data-access";
 import { userInInstanceToDTO } from "@/db/transformers";
-import { DB, Role, SystemRole } from "@/db/types";
+import { DB, Role } from "@/db/types";
 import { UserDTO } from "@/dto";
 
 export class User extends DataObject {
@@ -184,7 +184,7 @@ export class User extends DataObject {
   }
 
   public async getRolesInInstance(instanceParams: InstanceParams) {
-    const roles = new Set<SystemRole>();
+    const roles = new Set<Role>();
 
     if (await this.isSubGroupAdminOrBetter(instanceParams)) {
       roles.add(Role.ADMIN);
