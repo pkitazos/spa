@@ -3,8 +3,10 @@ import { z } from "zod";
 
 import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
 import { stageGte } from "@/lib/utils/permissions/stage-check";
-import { studentProjectAllocationDtoSchema } from "@/lib/validations/allocation/data-table-dto";
-import { instanceParamsSchema } from "@/lib/validations/params";
+import {
+  randomAllocationDtoSchema,
+  studentProjectAllocationDtoSchema,
+} from "@/lib/validations/allocation/data-table-dto";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
@@ -13,7 +15,6 @@ import { preferenceRouter } from "./preference";
 
 import { InstanceStudent } from "@/data-objects/users/instance-student";
 import { InstanceSupervisor } from "@/data-objects/users/instance-supervisor";
-import { getUnallocatedStudents } from "@/db/transactions/unallocated-students";
 import { instanceToStudentPreferenceRestrictionsDTO } from "@/db/transformers";
 import {
   studentDetailsDtoSchema,
@@ -123,12 +124,7 @@ export const studentRouter = createTRPCRouter({
   // they can also be on the student object and just use the same underlying dal methods
   // maybe not
   updateLevel: procedure.instance.subGroupAdmin
-    .input(
-      z.object({
-        studentId: z.string(),
-        level: z.number(),
-      }),
-    )
+    .input(z.object({ studentId: z.string(), level: z.number() }))
     .output(studentDetailsDtoSchema)
     .mutation(async ({ ctx: { instance }, input: { studentId, level } }) => {
       const student = await instance.getStudent(studentId);
@@ -225,39 +221,10 @@ export const studentRouter = createTRPCRouter({
 
   // MOVE to instance router
   getUnallocated: procedure.instance.subGroupAdmin
-    .input(z.object({ params: instanceParamsSchema }))
-    .output(
-      z
-        .array(
-          z.object({
-            student: z.object({
-              level: z.number(),
-              id: z.string(),
-              name: z.string(),
-              email: z.string(),
-            }),
-            project: z
-              .object({
-                projectId: z.string(),
-                allocationGroupId: z.string(),
-                allocationSubGroupId: z.string(),
-                allocationInstanceId: z.string(),
-                supervisorId: z.string(),
-              })
-              .optional(),
-          }),
-        )
-        .optional(),
-    )
-    .query(async ({ ctx: { dal, instance } }) => {
-      const { selectedAlgName } = await instance.get();
-      if (!selectedAlgName) return;
-
-      //  TODO: this needs to be moved to the dal
-      return await getUnallocatedStudents(
-        dal.db,
-        instance.params,
-        selectedAlgName,
-      );
+    .output(z.array(randomAllocationDtoSchema).optional())
+    .query(async ({ ctx: { instance } }) => {
+      const { selectedAlgConfigId } = await instance.get();
+      if (!selectedAlgConfigId) return;
+      return await instance.getUnallocatedStudents();
     }),
 });

@@ -54,7 +54,7 @@ export function allocationInstanceToDTO(
     instance: data.id,
     displayName: data.displayName,
     stage: data.stage,
-    selectedAlgName: data.selectedAlgName ?? undefined,
+    selectedAlgConfigId: data.selectedAlgConfigId ?? undefined,
     parentInstanceId: data.parentInstanceId ?? undefined,
     projectSubmissionDeadline: data.projectSubmissionDeadline,
     supervisorAllocationAccess: data.supervisorAllocationAccess,

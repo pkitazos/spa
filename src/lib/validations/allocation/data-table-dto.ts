@@ -60,7 +60,9 @@ export type StudentProjectAllocationDto = z.infer<
   typeof studentProjectAllocationDtoSchema
 >;
 
-export type RandomAllocationDto = {
-  student: { id: string; name: string; level: number };
-  project: { id: string; title: string } | undefined;
-};
+export const randomAllocationDtoSchema = z.object({
+  student: z.object({ id: z.string(), name: z.string(), level: z.number() }),
+  project: z.object({ id: z.string(), title: z.string() }).optional(),
+});
+
+export type RandomAllocationDto = z.infer<typeof randomAllocationDtoSchema>;
