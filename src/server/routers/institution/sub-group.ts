@@ -43,13 +43,14 @@ export const subGroupRouter = createTRPCRouter({
   ),
 
   // TODO return a set
+  // BREAKING
   takenInstanceNames: procedure.subgroup.subgroupAdmin
-    .output(z.array(z.string()))
+    .output(z.set(z.string()))
     .query(
       async ({ ctx: { subGroup } }) =>
         await subGroup
           .getInstances()
-          .then((data) => data.map((instance) => instance.displayName)),
+          .then((x) => new Set(x.map((i) => i.displayName))),
     ),
 
   createInstance: procedure.subgroup.subgroupAdmin
@@ -84,12 +85,7 @@ export const subGroupRouter = createTRPCRouter({
    * @throws {TRPCClientError} If the user is already an admin or if there's a GUID/email mismatch during user creation.
    */
   addAdmin: adminProcedure
-    .input(
-      z.object({
-        params: subGroupParamsSchema,
-        newAdmin: newAdminSchema,
-      }),
-    )
+    .input(z.object({ params: subGroupParamsSchema, newAdmin: newAdminSchema }))
     .mutation(
       async ({
         ctx,
@@ -143,9 +139,7 @@ export const subGroupRouter = createTRPCRouter({
           },
         });
 
-        await ctx.db.adminInSpace.delete({
-          where: { systemId },
-        });
+        await ctx.db.adminInSpace.delete({ where: { systemId } });
       },
     ),
 });

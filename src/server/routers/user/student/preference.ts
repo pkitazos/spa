@@ -70,7 +70,7 @@ export const preferenceRouter = createTRPCRouter({
       }));
     }),
 
-  // TODO: handle error client-side
+  // BREAKING
   getByProject: procedure.instance.student
     .output(z.record(z.string(), z.nativeEnum(PreferenceType)))
     .query(async ({ ctx: { user } }) => {
@@ -245,9 +245,6 @@ export const preferenceRouter = createTRPCRouter({
         (await user.getDraftPreference(projectId)) ?? "None",
     ),
 
-  /**
-   * TODO: check all references
-   */
   submit: procedure.instance.user
     .input(z.object({ studentId: z.string() }))
     .output(z.date().optional())
@@ -312,7 +309,7 @@ export const preferenceRouter = createTRPCRouter({
       },
     ),
 
-  // change rather than update? change what
+  //  ? change rather than update? change what
   changeSelected: procedure.instance.subGroupAdmin
     .input(
       z.object({
@@ -337,7 +334,7 @@ export const preferenceRouter = createTRPCRouter({
     ),
 });
 
-// TODO I like this but it should move...
+// MOVE
 async function accessControl({
   user,
   instance,

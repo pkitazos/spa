@@ -47,7 +47,7 @@ export const supervisorRouter = createTRPCRouter({
 
   // TODO split to e.g. displayname and DeadlineDetails
   // TODO rename
-  // move
+  // MOVE to instance router
   instancePage: procedure.instance.supervisor
     .input(z.object({ params: instanceParamsSchema }))
     .output(
@@ -70,7 +70,7 @@ export const supervisorRouter = createTRPCRouter({
 
   // TODO rename
   // TODO change output schema
-  // move to instance router
+  // MOVE to instance router
   instanceData: procedure.instance.subGroupAdmin
     .input(z.object({ supervisorId: z.string() }))
     .output(
