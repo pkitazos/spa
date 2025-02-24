@@ -1,5 +1,6 @@
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { RandomAllocationDto } from "@/lib/validations/allocation/data-table-dto";
+import { UpdatedInstance } from "@/lib/validations/instance-form";
 import { InstanceParams } from "@/lib/validations/params";
 import { SupervisorProjectSubmissionDetails } from "@/lib/validations/supervisor-project-submission-details";
 import { TabType } from "@/lib/validations/tabs";
@@ -18,8 +19,16 @@ import { computeProjectSubmissionTarget } from "@/config/submission-target";
 import { DAL } from "@/data-access";
 import { allocationInstanceToDTO } from "@/db/transformers";
 import { DB, Stage } from "@/db/types";
-import { FlagDTO, InstanceDisplayData, InstanceDTO, TagDTO } from "@/dto";
+import {
+  FlagDTO,
+  InstanceDisplayData,
+  InstanceDTO,
+  TagDTO,
+  UserDTO,
+} from "@/dto";
+import { StudentDTO } from "@/dto/student";
 import { SupervisorDTO } from "@/dto/supervisor";
+import { setDiff } from "@/lib/utils/general/set-difference";
 
 export class AllocationInstance extends DataObject {
   public params: InstanceParams;
@@ -124,6 +133,69 @@ export class AllocationInstance extends DataObject {
     return await this.db.tag.findMany({ where: expand(this.params) });
   }
 
+  /**
+   * TODO review
+   * idempotent i.e. DOES NOT FAIL ON REPEATED CALLS
+   * should it?
+   * @param user
+   */
+  public async linkUser(user: UserDTO) {
+    await this.db.userInInstance.upsert({
+      where: {
+        instanceMembership: { ...expand(this.params), userId: user.id },
+      },
+      create: { ...expand(this.params), userId: user.id },
+      update: {},
+    });
+  }
+
+  public async linkUsers(newSupervisors: UserDTO[]) {
+    await this.db.userInInstance.createMany({
+      data: newSupervisors.map((s) => ({
+        ...expand(this.params),
+        userId: s.id,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  async linkSupervisor(user: SupervisorDTO) {
+    await this.db.supervisorDetails.create({
+      data: {
+        ...expand(this.params),
+        projectAllocationLowerBound: 0,
+        projectAllocationTarget: user.projectTarget,
+        projectAllocationUpperBound: user.projectUpperQuota,
+        userId: user.id,
+      },
+    });
+  }
+
+  public async linkSupervisors(newSupervisors: SupervisorDTO[]) {
+    await this.db.supervisorDetails.createMany({
+      data: newSupervisors.map((user) => ({
+        ...expand(this.params),
+
+        projectAllocationLowerBound: 0,
+        projectAllocationTarget: user.projectTarget,
+        projectAllocationUpperBound: user.projectUpperQuota,
+        userId: user.id,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  public async linkStudents(newStudents: StudentDTO[]) {
+    await this.db.studentDetails.createMany({
+      data: newStudents.map((s) => ({
+        ...expand(this.params),
+        userId: s.id,
+        studentLevel: s.level,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
   public async getSupervisors(): Promise<SupervisorDTO[]> {
     return await this.db.supervisorDetails
       .findMany({
@@ -141,6 +213,7 @@ export class AllocationInstance extends DataObject {
       );
   }
 
+  // todo add return type
   public async getSupervisorDetails() {
     const supervisors = await this.db.supervisorDetails.findMany({
       where: expand(this.params),
@@ -398,6 +471,19 @@ export class AllocationInstance extends DataObject {
     return new User(this.dal, this.db, userId).toInstanceStudent(this.params);
   }
 
+  public async getStudents(): Promise<StudentDTO[]> {
+    const students = await this.db.studentDetails.findMany({
+      where: expand(this.params),
+      include: { userInInstance: { include: { user: true } } },
+    });
+
+    return students.map((s) => ({
+      ...s.userInInstance.user,
+      latestSubmissionDateTime: s.latestSubmissionDateTime ?? undefined,
+      level: s.studentLevel,
+    }));
+  }
+
   // --- side panel tab methods
 
   public async getAdminTabs() {
@@ -513,6 +599,66 @@ export class AllocationInstance extends DataObject {
     );
   }
 
+  public async edit({ flags, tags, ...updatedData }: UpdatedInstance) {
+    const currentInstanceFlags = await this.db.flag.findMany({
+      where: expand(this.params),
+    });
+
+    const newInstanceFlags = setDiff(flags, currentInstanceFlags, byTitle);
+    const staleInstanceFlagTitles = setDiff(
+      currentInstanceFlags,
+      flags,
+      byTitle,
+    ).map(byTitle);
+
+    const currentInstanceTags = await this.db.tag.findMany({
+      where: expand(this.params),
+    });
+
+    const newInstanceTags = setDiff(tags, currentInstanceTags, byTitle);
+    const staleInstanceTagTitles = setDiff(
+      currentInstanceTags,
+      tags,
+      byTitle,
+    ).map(byTitle);
+
+    await this.db.$transaction([
+      this.db.allocationInstance.update({
+        where: { instanceId: toInstanceId(this.params) },
+        data: updatedData,
+      }),
+
+      this.db.flag.deleteMany({
+        where: {
+          ...expand(this.params),
+          title: { in: staleInstanceFlagTitles },
+        },
+      }),
+
+      this.db.flag.createMany({
+        data: newInstanceFlags.map((f) => ({
+          ...expand(this.params),
+          title: f.title,
+          description: "",
+        })),
+      }),
+
+      this.db.tag.deleteMany({
+        where: {
+          ...expand(this.params),
+          title: { in: staleInstanceTagTitles },
+        },
+      }),
+
+      this.db.tag.createMany({
+        data: newInstanceTags.map((t) => ({
+          ...expand(this.params),
+          title: t.title,
+        })),
+      }),
+    ]);
+  }
+
   public async selectAlg(algId: string): Promise<void> {
     const preAllocatedStudentIds = await this.getPreAllocatedStudentIds().then(
       (data) => Array.from(data),
@@ -542,18 +688,54 @@ export class AllocationInstance extends DataObject {
     ]);
   }
 
-  public async deleteUser(userId: string): Promise<void> {
+  public async unlinkUser(userId: string): Promise<void> {
     await this.db.userInInstance.delete({
       where: { instanceMembership: { ...expand(this.params), userId } },
     });
   }
 
-  public async deleteUsers(userIds: string[]): Promise<void> {
+  public async unlinkUsers(userIds: string[]): Promise<void> {
     await this.db.userInInstance.deleteMany({
       where: { ...expand(this.params), userId: { in: userIds } },
     });
   }
 
+  public async unlinkStudent(userId: string) {
+    await this.db.$transaction([
+      this.db.projectDetails.updateMany({
+        where: {
+          preAllocatedStudentId: userId,
+          // TODO check me on this;
+          projectInInstance: { every: expand(this.params) },
+        },
+        data: { preAllocatedStudentId: null },
+      }),
+      this.db.userInInstance.delete({
+        where: { instanceMembership: { ...expand(this.params), userId } },
+      }),
+    ]);
+  }
+
+  public async unlinkStudents(studentIds: string[]) {
+    await this.db.$transaction([
+      this.db.projectDetails.updateMany({
+        where: {
+          preAllocatedStudentId: { in: studentIds },
+          // TODO check me on this;
+          projectInInstance: { every: expand(this.params) },
+        },
+        data: { preAllocatedStudentId: null },
+      }),
+      this.db.userInInstance.deleteMany({
+        where: { ...expand(this.params), userId: { in: studentIds } },
+      }),
+    ]);
+  }
+
+  /**
+   * ?? @deprecated? use unlink instead?
+   * @param userId
+   */
   public async deleteStudent(userId: string): Promise<void> {
     await this.db.studentDetails.delete({
       where: { studentDetailsId: { userId, ...expand(this.params) } },
@@ -593,3 +775,6 @@ export class AllocationInstance extends DataObject {
     });
   }
 }
+
+// MOVE not sure where though
+const byTitle = <T extends { title: string }>({ title }: T) => title;

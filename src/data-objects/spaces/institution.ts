@@ -11,9 +11,6 @@ import { DB } from "@/db/types";
 import { InstanceDTO, UserDTO } from "@/dto";
 
 export class Institution extends DataObject {
-  createUser(data: UserDTO) {
-    this.db.user.create({ data });
-  }
   constructor(dal: DAL, db: DB) {
     super(dal, db);
   }
@@ -46,5 +43,17 @@ export class Institution extends DataObject {
   public async getAllInstances(): Promise<InstanceDTO[]> {
     const instances = await this.db.allocationInstance.findMany();
     return instances.map(allocationInstanceToDTO);
+  }
+
+  public async createUser(data: UserDTO) {
+    this.db.user.create({ data });
+  }
+
+  public async createUsers(users: UserDTO[]) {
+    this.db.user.createMany({ data: users, skipDuplicates: true });
+  }
+
+  public async getUsers(): Promise<UserDTO[]> {
+    return await this.db.user.findMany();
   }
 }
