@@ -116,6 +116,7 @@ model AllocationInstance {
     id                                  String
     displayName                         String                      @map("display_name")
     stage                               Stage                       @default(SETUP)
+    // ---
     selectedAlgConfigId                 String?                     @map("selected_alg_config_id") // BREAKING fixup
     parentInstanceId                    String?                     @map("parent_instance_id")
     // supervisor details
@@ -166,7 +167,7 @@ model StudentDetails {
     studentFlags                FlagOnStudent[]
     studentDraftPreferences     StudentDraftPreference[]
     studentSubmittedPreferences StudentSubmittedPreference[]
-    MatchingPair                MatchingPair[]
+    matchingPairs               MatchingPair[]
 
     @@id(name: "studentDetailsId", map: "student_details_id", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@map("student_details")
@@ -482,7 +483,7 @@ model AlgorithmConfig {
 
 model AlgorithmConfigInInstance {
     algConfigId          String             @map("alg_config_id")
-    matchingResultId     String             @map("matching_result_id")
+    matchingResultId     String?            @map("matching_result_id")
     matchingResult       MatchingResult?    @relation(fields: [matchingResultId], references: [id], onDelete: Cascade)
     // ---
     allocationGroupId    String             @map("allocation_group_id")

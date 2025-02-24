@@ -15,7 +15,7 @@ import { User } from "@/lib/validations/auth";
 import { instanceParamsSchema } from "@/lib/validations/params";
 import { updatedProjectSchema } from "@/lib/validations/project-form";
 
-import { updateProjectAllocation } from "@/server/routers/project/_utils/project-allocation";
+import { updateProjectAllocation } from "@/db/transactions/project-allocation";
 import { createTRPCRouter } from "@/server/trpc";
 
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
@@ -23,7 +23,7 @@ import { procedure } from "@/server/middleware";
 import { supervisorProjectSubmissionDetailsSchema } from "@/lib/validations/supervisor-project-submission-details";
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
 import { flagDtoSchema, tagDtoSchema, userDtoSchema } from "@/dto";
-import { linkProjectFlags } from "@/server/routers/project/_utils/project-flags";
+import { linkProjectFlags } from "@/db/transactions/project-flags";
 
 export const projectRouter = createTRPCRouter({
   exists: procedure.project.user
@@ -592,11 +592,7 @@ export const projectRouter = createTRPCRouter({
             allocationSubGroupId: subGroup,
             allocationInstanceId: instance,
           },
-          select: {
-            id: true,
-            title: true,
-            flagOnProjects: true,
-          },
+          select: { id: true, title: true, flagOnProjects: true },
         });
 
         const allTags = await ctx.db.tag.findMany({
@@ -605,11 +601,7 @@ export const projectRouter = createTRPCRouter({
             allocationSubGroupId: subGroup,
             allocationInstanceId: instance,
           },
-          select: {
-            id: true,
-            title: true,
-            tagOnProject: true,
-          },
+          select: { id: true, title: true, tagOnProject: true },
         });
 
         return {

@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Role } from "@prisma/client";
-
-import { PrismaTransactionClient } from "@/db";
 import { expand } from "@/lib/utils/general/instance-params";
 import { InstanceParams } from "@/lib/validations/params";
 
 import { MergeMarkedData } from "./mark";
 
+import { Role } from "@/db/types";
+import { TX } from "@/db/types";
+
 export async function copy(
-  tx: PrismaTransactionClient,
+  tx: TX,
   parentInstanceId: string,
   params: InstanceParams,
   markedData: MergeMarkedData,
@@ -118,7 +118,7 @@ async function generateStudentDetailsRecords(
 }
 
 async function createNewStudents(
-  tx: PrismaTransactionClient,
+  tx: TX,
   params: InstanceParams, // parent instance params
   students: MergeMarkedData["newStudents"],
 ) {
@@ -158,7 +158,7 @@ async function generateSupervisorDetailsRecords(
 }
 
 async function createNewSupervisors(
-  tx: PrismaTransactionClient,
+  tx: TX,
   params: InstanceParams, // parent instance params
   supervisors: MergeMarkedData["newSupervisors"],
 ) {
@@ -178,7 +178,7 @@ async function createNewSupervisors(
 }
 
 async function createNewFlags(
-  tx: PrismaTransactionClient,
+  tx: TX,
   params: InstanceParams, // parent instance params,
   flags: MergeMarkedData["newFlags"],
 ) {
@@ -191,7 +191,7 @@ async function createNewFlags(
 }
 
 async function createNewTags(
-  tx: PrismaTransactionClient,
+  tx: TX,
   params: InstanceParams, // parent instance params,
   tags: MergeMarkedData["newTags"],
 ) {
@@ -216,7 +216,7 @@ async function generateProjectRecords(
 }
 
 async function createUpdatedProjects(
-  tx: PrismaTransactionClient,
+  tx: TX,
   params: InstanceParams, // parent instance params
   projects: MergeMarkedData["updatedProjects"],
 ) {
@@ -249,7 +249,7 @@ async function createUpdatedProjects(
 }
 
 async function createNewProjects(
-  tx: PrismaTransactionClient,
+  tx: TX,
   params: InstanceParams, // parent instance params
   projects: MergeMarkedData["newProjects"],
 ) {
@@ -280,7 +280,7 @@ function generateTitleMap<T extends { id: string; title: string }>(
 }
 
 async function generateFlagMap(
-  tx: PrismaTransactionClient,
+  tx: TX,
   params: InstanceParams,
   flagOnProjects: MergeMarkedData["newFlagOnProjects"],
 ) {
@@ -295,7 +295,7 @@ async function generateFlagMap(
 }
 
 async function generateTagMap(
-  tx: PrismaTransactionClient,
+  tx: TX,
   params: InstanceParams,
   tagOnProjects: MergeMarkedData["newTagOnProjects"],
 ) {
@@ -310,7 +310,7 @@ async function generateTagMap(
 }
 
 async function createNewFlagOnProjects(
-  tx: PrismaTransactionClient,
+  tx: TX,
   flagOnProjects: MergeMarkedData["newFlagOnProjects"],
   projectMap: Record<string, string>,
   flagMap: Record<string, string>,
@@ -324,7 +324,7 @@ async function createNewFlagOnProjects(
 }
 
 async function createNewTagOnProjects(
-  tx: PrismaTransactionClient,
+  tx: TX,
   tagOnProjects: MergeMarkedData["newTagOnProjects"],
   projectMap: Record<string, string>,
   tagMap: Record<string, string>,
@@ -338,7 +338,7 @@ async function createNewTagOnProjects(
 }
 
 async function createUpdatedPreferences(
-  tx: PrismaTransactionClient,
+  tx: TX,
   params: InstanceParams, // parent instance params
   students: MergeMarkedData["newStudents"] & MergeMarkedData["updatedStudents"],
   projectMap: Record<string, string>,
@@ -364,7 +364,7 @@ async function createUpdatedPreferences(
 }
 
 async function createUpdatedProjectAllocations(
-  tx: PrismaTransactionClient,
+  tx: TX,
   params: InstanceParams, // parent instance params
   projects: MergeMarkedData["newAllocations"],
   projectMap: Record<string, string>,
