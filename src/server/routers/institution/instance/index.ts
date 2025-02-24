@@ -3,10 +3,6 @@ import { z } from "zod";
 
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import {
-  newStudentSchema,
-  newSupervisorSchema,
-} from "@/lib/validations/add-users/new-user";
-import {
   createdInstanceSchema,
   forkedInstanceSchema,
   updatedInstanceSchema,
@@ -24,17 +20,12 @@ import { preferenceRouter } from "./preference";
 
 import { PAGES } from "@/config/pages";
 import { AllocationInstance } from "@/data-objects/spaces/instance";
-import { addStudentTx } from "@/db/transactions/add-student";
-import { addStudentsTx } from "@/db/transactions/add-students";
-import { addSupervisorTx } from "@/db/transactions/add-supervisor-transaction";
-import { addSupervisorsTx } from "@/db/transactions/add-supervisors-transaction";
-import { editInstanceTx } from "@/db/transactions/edit-instance-tx";
 import { forkInstanceTransaction } from "@/db/transactions/fork/transaction";
-import { removeStudentTx } from "@/db/transactions/remove-student-transaction";
-import { removeStudentsTx } from "@/db/transactions/remove-students-tx";
 import { Role } from "@/db/types";
 import { stageSchema } from "@/db/types";
 import { instanceDtoSchema } from "@/dto";
+import { LinkUserResult, LinkUserResultSchema } from "@/dto/link-user-result";
+import { studentDtoSchema } from "@/dto/student";
 import { supervisorDtoSchema } from "@/dto/supervisor";
 
 const tgc = z.object({
@@ -95,14 +86,7 @@ export const instanceRouter = createTRPCRouter({
    * return empty strings if none is selected
    */
   selectedAlgorithm: procedure.instance.subGroupAdmin
-    .output(
-      z
-        .object({
-          id: z.string(),
-          displayName: z.string(),
-        })
-        .optional(),
-    )
+    .output(z.object({ id: z.string(), displayName: z.string() }).optional())
     .query(async ({ ctx: { instance } }) => {
       const alg = await instance.getSelectedAlg();
 
@@ -128,14 +112,8 @@ export const instanceRouter = createTRPCRouter({
               email: z.string(),
               ranking: z.number(),
             }),
-            project: z.object({
-              id: z.string(),
-              title: z.string(),
-            }),
-            supervisor: z.object({
-              id: z.string(),
-              name: z.string(),
-            }),
+            project: z.object({ id: z.string(), title: z.string() }),
+            supervisor: z.object({ id: z.string(), name: z.string() }),
           }),
         ),
         byProject: z.array(
@@ -146,10 +124,7 @@ export const instanceRouter = createTRPCRouter({
               capacityLowerBound: z.number(),
               capacityUpperBound: z.number(),
             }),
-            supervisor: z.object({
-              id: z.string(),
-              name: z.string(),
-            }),
+            supervisor: z.object({ id: z.string(), name: z.string() }),
             student: z.object({
               id: z.string(),
               name: z.string(),
@@ -159,10 +134,7 @@ export const instanceRouter = createTRPCRouter({
         ),
         bySupervisor: z.array(
           z.object({
-            project: z.object({
-              id: z.string(),
-              title: z.string(),
-            }),
+            project: z.object({ id: z.string(), title: z.string() }),
             supervisor: z.object({
               id: z.string(),
               name: z.string(),
@@ -228,23 +200,59 @@ export const instanceRouter = createTRPCRouter({
       async ({ ctx: { instance } }) => await instance.getSupervisorDetails(),
     ),
 
-  // pin in these
+  // BREAKING input/output type changed
   addSupervisor: procedure.instance.subGroupAdmin
-    .input(z.object({ newSupervisor: newSupervisorSchema }))
-    .mutation(async ({ ctx, input: { newSupervisor } }) => {
-      return await addSupervisorTx(ctx.db, newSupervisor, ctx.instance.params);
-    }),
+    .input(z.object({ newSupervisor: supervisorDtoSchema }))
+    .output(LinkUserResultSchema)
+    .mutation(
+      async ({ ctx: { instance, institution }, input: { newSupervisor } }) => {
+        if (await instance.isSupervisor(newSupervisor.id)) {
+          return LinkUserResult.PRE_EXISTING;
+        }
 
-  // pin in these
+        const userExists = institution.userExists(newSupervisor.id);
+
+        if (!userExists) institution.createUser(newSupervisor);
+
+        await instance.linkUser(newSupervisor);
+        await instance.linkSupervisor(newSupervisor);
+
+        if (!userExists) return LinkUserResult.CREATED_NEW;
+        else return LinkUserResult.OK;
+      },
+    ),
+
+  // BREAKING input/output type changed
   addSupervisors: procedure.instance.subGroupAdmin
-    .input(z.object({ newSupervisors: z.array(newSupervisorSchema) }))
-    .mutation(async ({ ctx, input: { newSupervisors } }) => {
-      return await addSupervisorsTx(
-        ctx.db,
-        newSupervisors,
-        ctx.instance.params,
-      );
-    }),
+    .input(z.object({ newSupervisors: z.array(supervisorDtoSchema) }))
+    .output(z.array(LinkUserResultSchema))
+    .mutation(
+      async ({ ctx: { instance, institution }, input: { newSupervisors } }) => {
+        const existingSupervisorIds = await instance
+          .getSupervisors()
+          .then((data) => data.map(({ id }) => id));
+
+        const existingUserIds = await institution
+          .getUsers()
+          .then((data) => data.map(({ id }) => id));
+
+        await institution.createUsers(newSupervisors);
+
+        await instance.linkUsers(newSupervisors);
+
+        await instance.linkSupervisors(newSupervisors);
+
+        return newSupervisors.map((s) => {
+          if (existingSupervisorIds.includes(s.id)) {
+            return LinkUserResult.PRE_EXISTING;
+          }
+          if (existingUserIds.includes(s.id)) {
+            return LinkUserResult.CREATED_NEW;
+          }
+          return LinkUserResult.OK;
+        });
+      },
+    ),
 
   // TODO: rename to e.g. Delete user in instance
   removeSupervisor: procedure.instance.subGroupAdmin
@@ -252,14 +260,14 @@ export const instanceRouter = createTRPCRouter({
     .output(z.void())
     .mutation(
       async ({ ctx: { instance }, input: { supervisorId } }) =>
-        await instance.deleteUser(supervisorId),
+        await instance.unlinkUser(supervisorId),
     ),
 
   removeSupervisors: procedure.instance.subGroupAdmin
     .input(z.object({ supervisorIds: z.array(z.string()) }))
     .output(z.void())
     .mutation(async ({ ctx: { instance }, input: { supervisorIds } }) =>
-      instance.deleteUsers(supervisorIds),
+      instance.unlinkUsers(supervisorIds),
     ),
 
   invitedSupervisors: procedure.instance.subGroupAdmin
@@ -295,10 +303,7 @@ export const instanceRouter = createTRPCRouter({
         z.object({
           level: z.number(),
           projectAllocation: z
-            .object({
-              id: z.string(),
-              title: z.string(),
-            })
+            .object({ id: z.string(), title: z.string() })
             .optional(),
           id: z.string(),
           name: z.string(),
@@ -320,7 +325,6 @@ export const instanceRouter = createTRPCRouter({
     }),
 
   getStudents: procedure.instance.subGroupAdmin
-    .input(z.object({ params: instanceParamsSchema }))
     .output(
       z.array(
         z.object({
@@ -333,47 +337,73 @@ export const instanceRouter = createTRPCRouter({
     )
     .query(async ({ ctx: { instance } }) => await instance.getStudentDetails()),
 
-  // Pin
+  // BREAKING input/output types changed
   addStudent: procedure.instance.subGroupAdmin
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        newStudent: newStudentSchema,
-      }),
-    )
-    .mutation(async ({ ctx, input: { params, newStudent } }) => {
-      return await addStudentTx(ctx.db, newStudent, params);
-    }),
+    .input(z.object({ newStudent: studentDtoSchema }))
+    .output(LinkUserResultSchema)
+    .mutation(
+      async ({ ctx: { instance, institution }, input: { newStudent } }) => {
+        if (await instance.isStudent(newStudent.id)) {
+          return LinkUserResult.PRE_EXISTING;
+        }
 
-  // Pin
+        const userExists = institution.userExists(newStudent.id);
+
+        if (!userExists) institution.createUser(newStudent);
+
+        await instance.linkUser(newStudent);
+        // TODO @pkitazos am I allowed to do this?
+        await instance.linkStudents([newStudent]);
+
+        if (!userExists) return LinkUserResult.CREATED_NEW;
+        else return LinkUserResult.OK;
+      },
+    ),
+
+  // BREAKING input/output types changed
   addStudents: procedure.instance.subGroupAdmin
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        newStudents: z.array(newStudentSchema),
-      }),
-    )
-    .mutation(async ({ ctx, input: { params, newStudents } }) => {
-      return await addStudentsTx(ctx.db, newStudents, params);
-    }),
+    .input(z.object({ newStudents: z.array(studentDtoSchema) }))
+    .output(z.array(LinkUserResultSchema))
+    .mutation(
+      async ({ ctx: { instance, institution }, input: { newStudents } }) => {
+        const existingStudentIds = await instance
+          .getStudents()
+          .then((data) => data.map(({ id }) => id));
 
-  // Pin
+        const existingUserIds = await institution
+          .getUsers()
+          .then((data) => data.map(({ id }) => id));
+
+        await institution.createUsers(newStudents);
+
+        await instance.linkUsers(newStudents);
+
+        await instance.linkStudents(newStudents);
+
+        return newStudents.map((s) => {
+          if (existingStudentIds.includes(s.id)) {
+            return LinkUserResult.PRE_EXISTING;
+          }
+          if (existingUserIds.includes(s.id)) {
+            return LinkUserResult.CREATED_NEW;
+          }
+          return LinkUserResult.OK;
+        });
+      },
+    ),
+
   removeStudent: procedure.instance.subGroupAdmin
-    .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
-    .mutation(async ({ ctx, input: { params, studentId } }) => {
-      await removeStudentTx(ctx.db, studentId, params);
+    .input(z.object({ studentId: z.string() }))
+    .output(z.void())
+    .mutation(async ({ ctx: { instance }, input: { studentId } }) => {
+      await instance.unlinkStudent(studentId);
     }),
 
-  // Pin
   removeStudents: procedure.instance.subGroupAdmin
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        studentIds: z.array(z.string()),
-      }),
-    )
-    .mutation(async ({ ctx, input: { params, studentIds } }) => {
-      await removeStudentsTx(ctx.db, studentIds, params);
+    .input(z.object({ studentIds: z.array(z.string()) }))
+    .output(z.void())
+    .mutation(async ({ ctx: { instance }, input: { studentIds } }) => {
+      await instance.unlinkStudents(studentIds);
     }),
 
   invitedStudents: procedure.instance.subGroupAdmin
@@ -406,17 +436,11 @@ export const instanceRouter = createTRPCRouter({
       };
     }),
 
-  // Pin
   edit: procedure.instance.subGroupAdmin
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        updatedInstance: updatedInstanceSchema,
-      }),
-    )
+    .input(z.object({ updatedInstance: updatedInstanceSchema }))
     .output(z.void())
-    .mutation(async ({ ctx, input: { params, updatedInstance } }) => {
-      await editInstanceTx(ctx.db, updatedInstance, params);
+    .mutation(async ({ ctx: { instance }, input: { updatedInstance } }) => {
+      instance.edit(updatedInstance);
     }),
 
   getHeaderTabs: procedure.user
@@ -424,7 +448,7 @@ export const instanceRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const result = instanceParamsSchema.safeParse(input.params);
 
-      // Pin consider moving this control flow to client
+      // TODO consider moving this control flow to client
       if (!result.success) return { headerTabs: [], instancePath: "" };
 
       const instance = new AllocationInstance(ctx.dal, ctx.db, result.data);
@@ -485,10 +509,7 @@ export const instanceRouter = createTRPCRouter({
           supervisorTabs.unshift(PAGES.supervisorTasks);
         }
 
-        tabGroups.push({
-          title: "Supervisor",
-          tabs: supervisorTabs,
-        });
+        tabGroups.push({ title: "Supervisor", tabs: supervisorTabs });
       }
 
       if (roles.has(Role.STUDENT)) {
@@ -517,7 +538,6 @@ export const instanceRouter = createTRPCRouter({
 
   // Pin
   merge: procedure.instance.subGroupAdmin
-    .input(z.object({ params: instanceParamsSchema }))
     .output(z.void())
     .mutation(async ({ ctx, input: { params } }) => {
       await mergeInstanceTrx(ctx.db, params);

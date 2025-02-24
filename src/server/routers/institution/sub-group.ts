@@ -6,7 +6,7 @@ import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
 import { subGroupDtoSchema, userDtoSchema } from "@/dto";
-import { AddAdminResult, AddAdminResultSchema } from "@/dto/add-admin-result";
+import { LinkUserResult, LinkUserResultSchema } from "@/dto/link-user-result";
 
 export const subGroupRouter = createTRPCRouter({
   exists: procedure.subgroup.user
@@ -62,22 +62,22 @@ export const subGroupRouter = createTRPCRouter({
   // BREAKING input and output types changed
   addAdmin: procedure.subgroup.groupAdmin
     .input(z.object({ newAdmin: userDtoSchema }))
-    .output(AddAdminResultSchema)
+    .output(LinkUserResultSchema)
     .mutation(
       async ({ ctx: { institution, subGroup }, input: { newAdmin } }) => {
         const { id } = newAdmin;
         const userIsGroupAdmin = await subGroup.isSubGroupAdmin(id);
 
-        if (userIsGroupAdmin) return AddAdminResult.PRE_EXISTING;
+        if (userIsGroupAdmin) return LinkUserResult.PRE_EXISTING;
 
         const userExists = await institution.userExists(id);
         if (!userExists) institution.createUser(newAdmin);
 
         await subGroup.linkAdmin(id);
 
-        if (!userExists) return AddAdminResult.CREATED_NEW;
+        if (!userExists) return LinkUserResult.CREATED_NEW;
 
-        return AddAdminResult.OK;
+        return LinkUserResult.OK;
       },
     ),
 
