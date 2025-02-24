@@ -41,11 +41,11 @@ import { StudentDto } from "@/lib/validations/dto/student";
 import { Role, Stage } from "@/db/types";
 
 export function useAllStudentsColumns({
-  role,
+  roles,
   deleteStudent,
   deleteSelectedStudents,
 }: {
-  role: Role;
+  roles: Set<Role>;
   deleteStudent: (id: string) => Promise<void>;
   deleteSelectedStudents: (ids: string[]) => Promise<void>;
 }): ColumnDef<StudentDto>[] {
@@ -174,7 +174,7 @@ export function useAllStudentsColumns({
 
       if (
         someSelected &&
-        role === Role.ADMIN &&
+        roles.has(Role.ADMIN) &&
         stageLte(stage, Stage.STUDENT_BIDDING)
       )
         return (
@@ -278,7 +278,7 @@ export function useAllStudentsColumns({
     ),
   };
 
-  if (role !== Role.ADMIN) return userCols;
+  if (!roles.has(Role.ADMIN)) return userCols;
 
   return stageLte(stage, Stage.STUDENT_BIDDING)
     ? [selectCol, ...userCols, actionsCol]

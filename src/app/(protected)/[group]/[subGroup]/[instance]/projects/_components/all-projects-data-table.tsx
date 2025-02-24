@@ -1,5 +1,4 @@
 "use client";
-import { PreferenceType, Role } from "@prisma/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -21,16 +20,18 @@ import { StudentPreferenceType } from "@/lib/validations/student-preference";
 
 import { useAllProjectsColumns } from "./all-projects-columns";
 
+import { PreferenceType, Role } from "@/db/types";
+
 export function AllProjectsDataTable({
   data,
   user,
-  role,
+  roles,
   projectPreferences,
   hasSelfDefinedProject,
 }: {
   data: ProjectTableDataDto[];
   user: User;
-  role: Role;
+  roles: Set<Role>;
   projectPreferences: Record<string, PreferenceType>;
   hasSelfDefinedProject: boolean;
 }) {
@@ -75,11 +76,9 @@ export function AllProjectsDataTable({
     projectId: string,
   ) {
     void toast.promise(
-      changePreferenceAsync({
-        params,
-        preferenceType,
-        projectId,
-      }).then(() => router.refresh()),
+      changePreferenceAsync({ params, preferenceType, projectId }).then(() =>
+        router.refresh(),
+      ),
       {
         loading: "Updating project preference...",
         error: "Something went wrong",
@@ -140,7 +139,7 @@ export function AllProjectsDataTable({
 
   const columns = useAllProjectsColumns({
     user,
-    role,
+    roles,
     projectPreferences,
     hasSelfDefinedProject,
     deleteProject: handleDelete,

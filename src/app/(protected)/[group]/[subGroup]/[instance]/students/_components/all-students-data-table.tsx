@@ -1,5 +1,5 @@
 "use client";
-import { Role } from "@prisma/client";
+
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -13,12 +13,13 @@ import { StudentDto } from "@/lib/validations/dto/student";
 import { useAllStudentsColumns } from "./all-students-columns";
 
 import { spacesLabels } from "@/config/spaces";
+import { Role } from "@/db/types";
 
 export function StudentsDataTable({
-  role,
+  roles,
   data,
 }: {
-  role: Role;
+  roles: Set<Role>;
   data: StudentDto[];
 }) {
   const params = useInstanceParams();
@@ -51,7 +52,7 @@ export function StudentsDataTable({
   }
 
   const columns = useAllStudentsColumns({
-    role,
+    roles,
     deleteStudent: handleDelete,
     deleteSelectedStudents: handleDeleteSelected,
   });

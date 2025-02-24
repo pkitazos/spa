@@ -34,6 +34,7 @@ import {
 } from "@/components/yes-no-action";
 
 import { cn } from "@/lib/utils";
+import { stageIn } from "@/lib/utils/permissions/stage-check";
 import { User } from "@/lib/validations/auth";
 import { ProjectTableDataDto } from "@/lib/validations/dto/project";
 import { StudentPreferenceType } from "@/lib/validations/student-preference";
@@ -43,7 +44,7 @@ import { PreferenceType, Role, Stage } from "@/db/types";
 
 export function useAllProjectsColumns({
   user,
-  role,
+  roles,
   projectPreferences,
   hasSelfDefinedProject,
   deleteProject,
@@ -52,7 +53,7 @@ export function useAllProjectsColumns({
   changeSelectedPreferences,
 }: {
   user: User;
-  role: Role;
+  roles: Set<Role>;
   projectPreferences: Record<string, PreferenceType>;
   hasSelfDefinedProject: boolean;
   deleteProject: (id: string) => Promise<void>;
@@ -107,7 +108,7 @@ export function useAllProjectsColumns({
           },
         },
       }) =>
-        role === Role.ADMIN ? (
+        roles.has(Role.ADMIN) ? (
           <Link
             className={buttonVariants({ variant: "link" })}
             href={`${instancePath}/supervisors/${id}`}
@@ -135,8 +136,8 @@ export function useAllProjectsColumns({
         <div className="flex flex-col gap-2">
           {flags.length > 2 ? (
             <>
-              <Badge className="w-fit" key={flags[0].id}>
-                {flags[0].title}
+              <Badge className="w-fit" key={flags[0]!.id}>
+                {flags[0]!.title}
               </Badge>
               <WithTooltip
                 side="right"
@@ -184,8 +185,8 @@ export function useAllProjectsColumns({
         <div className="flex flex-col gap-2">
           {tags.length > 2 ? (
             <>
-              <Badge variant="outline" className="w-fit" key={tags[0].id}>
-                {tags[0].title}
+              <Badge variant="outline" className="w-fit" key={tags[0]!.id}>
+                {tags[0]!.title}
               </Badge>
               <WithTooltip
                 side="right"
@@ -406,13 +407,13 @@ export function useAllProjectsColumns({
     },
   ];
 
-  if (role === Role.STUDENT && stage === Stage.STUDENT_BIDDING) {
+  if (roles.has(Role.STUDENT) && stage === Stage.STUDENT_BIDDING) {
     return !hasSelfDefinedProject ? [selectCol, ...baseCols] : baseCols;
   }
 
   if (
-    role === Role.ADMIN &&
-    (stage === Stage.PROJECT_SUBMISSION || stage === Stage.STUDENT_BIDDING)
+    roles.has(Role.ADMIN) &&
+    stageIn(stage, [Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING])
   ) {
     return [selectCol, ...baseCols];
   }

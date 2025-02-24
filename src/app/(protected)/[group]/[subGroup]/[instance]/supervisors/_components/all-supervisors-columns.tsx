@@ -1,4 +1,3 @@
-import { Role, Stage } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
@@ -39,11 +38,11 @@ import { SupervisorDto } from "@/lib/validations/dto/supervisor";
 import { Role, Stage } from "@/db/types";
 
 export function useAllSupervisorsColumns({
-  role,
+  roles,
   deleteSupervisor,
   deleteSelectedSupervisors,
 }: {
-  role: Role;
+  roles: Set<Role>;
   deleteSupervisor: (id: string) => Promise<void>;
   deleteSelectedSupervisors: (ids: string[]) => Promise<void>;
 }): ColumnDef<SupervisorDto>[] {
@@ -142,7 +141,7 @@ export function useAllSupervisorsColumns({
 
       if (
         someSelected &&
-        role === Role.ADMIN &&
+        roles.has(Role.ADMIN) &&
         stageLt(stage, Stage.PROJECT_ALLOCATION)
       )
         return (
@@ -259,7 +258,7 @@ export function useAllSupervisorsColumns({
     ),
   };
 
-  if (role !== Role.ADMIN) return userCols;
+  if (!roles.has(Role.ADMIN)) return userCols;
 
   return stageLte(stage, Stage.STUDENT_BIDDING)
     ? [selectCol, ...userCols, actionsCol]
