@@ -1,3 +1,5 @@
+// MOVE to data object
+
 export function formatProfile(profile: number[]) {
   while (profile[profile.length - 1] === 0) profile.pop();
   return profile.length === 0 ? "-" : `(${profile.join(", ")})`;

@@ -40,7 +40,7 @@ import {
   SupervisionAllocationDto,
   SupervisorCapacityDetails,
 } from "@/dto/supervisor_router";
-import { sortPreferenceType } from "@/lib/utils/preferences/sort";
+import { sortPreferenceType } from "@/lib/utils/sorting/by-preference-type";
 import { updateManyPreferenceTransaction } from "@/db/transactions/update-many-preferences";
 import { updatePreferenceTransaction } from "@/db/transactions/update-preference";
 import { InstanceDisplayData } from "@/dto";

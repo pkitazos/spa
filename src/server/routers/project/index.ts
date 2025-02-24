@@ -10,7 +10,7 @@ import {
   stageGte,
   subsequentStages,
 } from "@/lib/utils/permissions/stage-check";
-import { sortPreferenceType } from "@/lib/utils/preferences/sort";
+import { sortPreferenceType } from "@/lib/utils/sorting/by-preference-type";
 import { User } from "@/lib/validations/auth";
 import { instanceParamsSchema } from "@/lib/validations/params";
 import { updatedProjectSchema } from "@/lib/validations/project-form";
