@@ -4,7 +4,7 @@ We have better comments configured with some extra comment classes. When the plu
 
 ## <span style="color:#FCD34D">// BREAKING</span>
 
-indicates that an API has changed and mau need review at it's call sites.
+indicates that an API has changed and may need review at it's call sites.
 
 ## <span style="color:#DB2777">// pin</span>
 
