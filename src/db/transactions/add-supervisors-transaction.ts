@@ -53,10 +53,7 @@ export async function addSupervisorsTx(
 
     return {
       successFullyAdded: validatedNewUsers.length,
-      errors: errors.map(([u, e]) => ({
-        msg: e,
-        user: u,
-      })),
+      errors: errors.map(([u, e]) => ({ msg: e, user: u })),
     };
   });
 }

@@ -1,4 +1,3 @@
-import { Stage } from "@prisma/client";
 import { z } from "zod";
 
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
@@ -13,7 +12,6 @@ import { tabGroupSchema } from "@/lib/validations/tabs";
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
-import { mergeInstanceTrx } from "./_utils/merge/transaction";
 import { algorithmRouter } from "./algorithm";
 import { matchingRouter } from "./matching";
 import { preferenceRouter } from "./preference";
@@ -21,7 +19,8 @@ import { preferenceRouter } from "./preference";
 import { PAGES } from "@/config/pages";
 import { AllocationInstance } from "@/data-objects/spaces/instance";
 import { forkInstanceTransaction } from "@/db/transactions/fork/transaction";
-import { Role } from "@/db/types";
+import { mergeInstanceTrx } from "@/db/transactions/merge/transaction";
+import { Role, Stage } from "@/db/types";
 import { stageSchema } from "@/db/types";
 import { instanceDtoSchema } from "@/dto";
 import { LinkUserResult, LinkUserResultSchema } from "@/dto/link-user-result";
@@ -451,7 +450,7 @@ export const instanceRouter = createTRPCRouter({
       // TODO consider moving this control flow to client
       if (!result.success) return { headerTabs: [], instancePath: "" };
 
-      const instance = new AllocationInstance(ctx.dal, ctx.db, result.data);
+      const instance = new AllocationInstance(ctx.db, result.data);
 
       const instanceData = await instance.get();
 

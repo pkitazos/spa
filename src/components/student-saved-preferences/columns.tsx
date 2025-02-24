@@ -1,4 +1,3 @@
-import { Role } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 
@@ -9,6 +8,8 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 import { SavedPreferenceDto } from "@/lib/validations/dto/preference";
 
 import { useInstanceRoles } from "../params-context";
+
+import { Role } from "@/db/types";
 
 export function useSavedPreferencesColumns(): ColumnDef<SavedPreferenceDto>[] {
   const roles = useInstanceRoles();

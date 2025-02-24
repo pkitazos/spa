@@ -10,16 +10,9 @@
     - [ ] access <!-- move -->
   - [x] **institution.subGroup** <!-- ok -->
   - [x] **institution.instance** (10 remaining)
-    - [x] addSupervisor <!-- pin -->
-    - [x] addSupervisors <!-- pin -->
-    - [x] addStudent <!-- pin -->
-    - [x] addStudents <!-- pin -->
-    - [x] removeStudent <!-- pin -->
-    - [x] removeStudents <!-- pin -->
-    - [x] edit <!-- pin -->
     - [ ] fork <!-- pin -->
     - [ ] merge <!-- pin -->
-    - [ ] getHeaderTabs <!-- TODO -->
+    - [ ] getHeaderTabs <!-- todo -->
     - [ ] **institution.instance.algorithm** (9 remaining)
       - [ ] run
       - [ ] takenNames

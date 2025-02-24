@@ -1,16 +1,12 @@
-import { Role } from "@prisma/client";
-
-import { PrismaTransactionClient } from "@/db";
 import { expand } from "@/lib/utils/general/instance-params";
 import { relativeComplement } from "@/lib/utils/general/set-difference";
 import { setIntersection } from "@/lib/utils/general/set-intersection";
 import { compareTitle } from "@/lib/utils/sorting/by-title";
 import { InstanceParams } from "@/lib/validations/params";
 
-export async function mark(
-  tx: PrismaTransactionClient,
-  params: InstanceParams,
-) {
+import { Role, TX } from "@/db/types";
+
+export async function mark(tx: TX, params: InstanceParams) {
   const forkedInstanceDetails = await getInstanceDetails(tx, params);
   const parentInstanceDetails = await getInstanceDetails(tx, {
     ...params,
@@ -54,10 +50,7 @@ export async function mark(
 
 export type MergeMarkedData = Awaited<ReturnType<typeof mark>>;
 
-async function getInstanceDetails(
-  tx: PrismaTransactionClient,
-  params: InstanceParams,
-) {
+async function getInstanceDetails(tx: TX, params: InstanceParams) {
   const { users, projects, flags, tags, ...data } =
     await tx.allocationInstance.findFirstOrThrow({
       where: {
@@ -75,10 +68,7 @@ async function getInstanceDetails(
             },
             studentDetails: {
               where: expand(params),
-              select: {
-                studentLevel: true,
-                latestSubmissionDateTime: true,
-              },
+              select: { studentLevel: true, latestSubmissionDateTime: true },
             },
           },
         },
