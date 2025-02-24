@@ -4,7 +4,6 @@ import { InstanceParams } from "@/lib/validations/params";
 import { DataObject } from "./data-object";
 
 import { guidToMatric } from "@/config/guid-to-matric";
-import { DAL } from "@/data-access";
 import {
   DB,
   DB_ProjectDetails,
@@ -19,8 +18,8 @@ import {
 export class StudentProjectAllocationData extends DataObject {
   private allocationData: hello[];
 
-  constructor(dal: DAL, db: DB, data: hello[]) {
-    super(dal, db);
+  constructor(db: DB, data: hello[]) {
+    super(db);
     this.db = db;
     this.allocationData = data;
   }
@@ -40,11 +39,8 @@ export class StudentProjectAllocationData extends DataObject {
         },
       },
     });
-    return new StudentProjectAllocationData(
-      undefined as unknown as DAL,
-      db,
-      data,
-    );
+
+    return new StudentProjectAllocationData(db, data);
   }
 
   public toStudentView() {

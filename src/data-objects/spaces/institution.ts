@@ -2,7 +2,6 @@ import { slugify } from "@/lib/utils/general/slugify";
 
 import { DataObject } from "../data-object";
 
-import { DAL } from "@/data-access";
 import {
   allocationGroupToDTO,
   allocationInstanceToDTO,
@@ -11,8 +10,8 @@ import { DB } from "@/db/types";
 import { InstanceDTO, UserDTO } from "@/dto";
 
 export class Institution extends DataObject {
-  constructor(dal: DAL, db: DB) {
-    super(dal, db);
+  constructor(db: DB) {
+    super(db);
   }
 
   public async userExists(id: string) {

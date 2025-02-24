@@ -32,13 +32,14 @@ export class AllocationSubGroup extends DataObject {
   private _institution: Institution | undefined;
   private _group: AllocationGroup | undefined;
 
-  constructor(dal: DAL, db: DB, params: SubGroupParams) {
-    super(dal, db);
+  constructor(db: DB, params: SubGroupParams) {
+    super(db);
     this.params = params;
   }
 
   public async createInstance(newInstance: ValidatedInstanceDetails) {
-    return this.dal.instance.create(this.params, newInstance);
+    // TODO refactor
+    return await new DAL(this.db).instance.create(this.params, newInstance);
   }
 
   public async exists() {
@@ -60,9 +61,7 @@ export class AllocationSubGroup extends DataObject {
   }
 
   public async isSubGroupAdmin(userId: string) {
-    return await new User(this.dal, this.db, userId).isSubGroupAdmin(
-      this.params,
-    );
+    return await new User(this.db, userId).isSubGroupAdmin(this.params);
   }
 
   public async linkAdmin(userId: string) {
@@ -101,14 +100,12 @@ export class AllocationSubGroup extends DataObject {
   }
 
   get institution() {
-    if (!this._institution)
-      this._institution = new Institution(this.dal, this.db);
+    if (!this._institution) this._institution = new Institution(this.db);
     return this._institution;
   }
 
   get group() {
-    if (!this._group)
-      this._group = new AllocationGroup(this.dal, this.db, this.params);
+    if (!this._group) this._group = new AllocationGroup(this.db, this.params);
     return this._group;
   }
 }
