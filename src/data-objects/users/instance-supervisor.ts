@@ -10,10 +10,11 @@ import { SupervisorCapacityDetails } from "@/dto/supervisor_router";
 
 export class InstanceSupervisor extends User {
   instance: AllocationInstance;
-
+  dal: DAL;
   constructor(dal: DAL, db: DB, id: string, params: InstanceParams) {
-    super(dal, db, id);
-    this.instance = new AllocationInstance(dal, db, params);
+    super(db, id);
+    this.dal = dal;
+    this.instance = new AllocationInstance(db, params);
   }
 
   public async toDTO() {

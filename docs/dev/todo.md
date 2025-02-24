@@ -64,6 +64,8 @@
   - [ ] some TLC to `expand(params)`
 - [ ] lib/validations
 - [ ] centralise / standardise transformers
+- [ ] middleware errors need to be filled in properly (currently using placeholder text)
+- [ ] lots of middleware comments need to be stripped (Eventually)
 
 ### DB:
 

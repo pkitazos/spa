@@ -24,31 +24,27 @@ import { Stage } from "@/db/types";
 // Note that each type of space gets its own DTO, which you can find in:
 //      `data-objects/spaces`
 
-const institutionMiddleware = t.middleware(
-  async ({ ctx: { dal, db }, next }) => {
-    const institution = new Institution(dal, db);
-    return next({ ctx: { institution } });
-  },
-);
+const institutionMiddleware = t.middleware(async ({ ctx: { db }, next }) => {
+  const institution = new Institution(db);
+  return next({ ctx: { institution } });
+});
 
 /**
  * @requires a preceding `.input(z.object({ params: groupParamsSchema }))` or better
  */
-const groupMiddleware = t.middleware(
-  async ({ ctx: { dal, db }, input, next }) => {
-    const { params } = z.object({ params: groupParamsSchema }).parse(input);
-    const group = new AllocationGroup(dal, db, params);
-    return next({ ctx: { group } });
-  },
-);
+const groupMiddleware = t.middleware(async ({ ctx: { db }, input, next }) => {
+  const { params } = z.object({ params: groupParamsSchema }).parse(input);
+  const group = new AllocationGroup(db, params);
+  return next({ ctx: { group } });
+});
 
 /**
  * @requires a preceding `.input(z.object({ params: subGroupParamsSchema }))` or better
  */
 const subGroupMiddleware = t.middleware(
-  async ({ ctx: { dal, db }, input, next }) => {
+  async ({ ctx: { db }, input, next }) => {
     const { params } = z.object({ params: subGroupParamsSchema }).parse(input);
-    const subGroup = new AllocationSubGroup(dal, db, params);
+    const subGroup = new AllocationSubGroup(db, params);
     return next({ ctx: { subGroup } });
   },
 );
@@ -57,9 +53,9 @@ const subGroupMiddleware = t.middleware(
  * @requires a preceding `.input(z.object({ params: instanceParamsSchema }))`
  */
 const instanceMiddleware = t.middleware(
-  async ({ ctx: { dal, db }, input, next }) => {
+  async ({ ctx: { db }, input, next }) => {
     const { params } = z.object({ params: instanceParamsSchema }).parse(input);
-    const instance = new AllocationInstance(dal, db, params);
+    const instance = new AllocationInstance(db, params);
     return next({ ctx: { instance } });
   },
 );
@@ -89,13 +85,11 @@ const stageMiddleware = (allowedStages: Stage[]) =>
 /**
  * @requires a preceding `.input(z.object({ params: projectParamsSchema }))`
  */
-const projectMiddleware = t.middleware(
-  async ({ ctx: { dal, db }, input, next }) => {
-    const { params } = z.object({ params: projectParamsSchema }).parse(input);
-    const project = new Project(dal, db, params);
-    return next({ ctx: { project } });
-  },
-);
+const projectMiddleware = t.middleware(async ({ ctx: { db }, input, next }) => {
+  const { params } = z.object({ params: projectParamsSchema }).parse(input);
+  const project = new Project(db, params);
+  return next({ ctx: { project } });
+});
 
 // Next, Lets consider the authenticated (permission protected) middlewares:
 // DTOs should be created for different kinds of users. These are in:
@@ -103,14 +97,14 @@ const projectMiddleware = t.middleware(
 
 // We can use this as follows:
 
-const authedMiddleware = t.middleware(({ ctx: { dal, db, session }, next }) => {
+const authedMiddleware = t.middleware(({ ctx: { db, session }, next }) => {
   if (!session || !session.user) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "User is not signed in",
     });
   }
-  const user = new User(dal, db, session.user.id);
+  const user = new User(db, session.user.id);
   return next({ ctx: { user } });
 });
 
@@ -145,9 +139,7 @@ const GroupAdminMiddleware = authedMiddleware.unstable_pipe(
       });
     }
 
-    return next({
-      ctx: { user: await user.toGroupAdmin(params) },
-    });
+    return next({ ctx: { user: await user.toGroupAdmin(params) } });
   },
 );
 
@@ -167,9 +159,7 @@ const SubGroupAdminMiddleware = authedMiddleware.unstable_pipe(
       });
     }
 
-    return next({
-      ctx: { user: await user.toSubGroupAdmin(params) },
-    });
+    return next({ ctx: { user: await user.toSubGroupAdmin(params) } });
   },
 );
 
@@ -187,9 +177,7 @@ const instanceStudentMiddleware = authedMiddleware.unstable_pipe(
       });
     }
 
-    return next({
-      ctx: { user: await user.toInstanceStudent(params) },
-    });
+    return next({ ctx: { user: await user.toInstanceStudent(params) } });
   },
 );
 
@@ -207,9 +195,7 @@ const instanceSupervisorMiddleware = authedMiddleware.unstable_pipe(
       });
     }
 
-    return next({
-      ctx: { user: await user.toInstanceSupervisor(params) },
-    });
+    return next({ ctx: { user: await user.toInstanceSupervisor(params) } });
   },
 );
 
@@ -226,9 +212,7 @@ const projectSupervisorMiddleware = authedMiddleware.unstable_pipe(
         message: "User does not supervise this project",
       });
     }
-    return next({
-      ctx: { user: await user.toProjectSupervisor(params) },
-    });
+    return next({ ctx: { user: await user.toProjectSupervisor(params) } });
   },
 );
 
@@ -245,9 +229,7 @@ const projectReaderMiddleware = authedMiddleware.unstable_pipe(
         message: "User does not supervise this project",
       });
     }
-    return next({
-      ctx: { user: await user.toProjectReader(params) },
-    });
+    return next({ ctx: { user: await user.toProjectReader(params) } });
   },
 );
 

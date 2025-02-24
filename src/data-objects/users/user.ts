@@ -30,18 +30,18 @@ export class User extends DataObject {
   id: string;
   private _data: UserDTO | undefined;
 
-  constructor(dal: DAL, db: DB, id: string) {
-    super(dal, db);
+  constructor(db: DB, id: string) {
+    super(db);
     this.id = id;
   }
 
-  static fromDTO(dal: DAL, db: DB, data: UserDTO) {
-    const user = new User(dal, db, data.id);
+  static fromDTO(db: DB, data: UserDTO) {
+    const user = new User(db, data.id);
     user._data = data;
   }
 
   public toUser() {
-    return new User(this.dal, this.db, this.id);
+    return new User(this.db, this.id);
   }
 
   public async isSuperAdmin(): Promise<boolean> {
@@ -52,7 +52,7 @@ export class User extends DataObject {
 
   public async toSuperAdmin() {
     if (!(await this.isSuperAdmin())) throw new Error("unauthorised");
-    return new SuperAdmin(this.dal, this.db, this.id);
+    return new SuperAdmin(this.db, this.id);
   }
 
   public async isGroupAdmin(groupParams: GroupParams): Promise<boolean> {
@@ -68,7 +68,7 @@ export class User extends DataObject {
   public async toGroupAdmin(groupParams: GroupParams) {
     if (!(await this.isGroupAdmin(groupParams)))
       throw new Error("unauthorised");
-    return new GroupAdmin(this.dal, this.db, this.id, groupParams);
+    return new GroupAdmin(new DAL(this.db), this.db, this.id, groupParams);
   }
 
   public async isSubGroupAdmin(
@@ -95,7 +95,7 @@ export class User extends DataObject {
   public async toSubGroupAdmin(subGroupParams: SubGroupParams) {
     if (!(await this.isSubGroupAdmin(subGroupParams)))
       throw new Error("unauthorised");
-    return new SubGroupAdmin(this.dal, this.db, this.id, subGroupParams);
+    return new SubGroupAdmin(this.db, this.id, subGroupParams);
   }
 
   public async isInstanceStudent(params: InstanceParams): Promise<boolean> {
@@ -108,7 +108,12 @@ export class User extends DataObject {
     if (!(await this.isInstanceStudent(instanceParams)))
       throw new Error("unauthorised");
 
-    return new InstanceStudent(this.dal, this.db, this.id, instanceParams);
+    return new InstanceStudent(
+      new DAL(this.db),
+      this.db,
+      this.id,
+      instanceParams,
+    );
   }
 
   public async hasSelfDefinedProject(instanceParams: InstanceParams) {
@@ -129,7 +134,12 @@ export class User extends DataObject {
     if (!this.isInstanceSupervisor(instanceParams))
       throw new Error("User is not a supervisor in this instance");
 
-    return new InstanceSupervisor(this.dal, this.db, this.id, instanceParams);
+    return new InstanceSupervisor(
+      new DAL(this.db),
+      this.db,
+      this.id,
+      instanceParams,
+    );
   }
 
   public async isInstanceReader(params: InstanceParams) {
@@ -141,7 +151,7 @@ export class User extends DataObject {
   public toInstanceReader(instanceParams: InstanceParams) {
     if (!this.isInstanceReader(instanceParams)) throw new Error("unauthorised");
 
-    return new InstanceReader(this.dal, this.db, this.id, instanceParams);
+    return new InstanceReader(this.db, this.id, instanceParams);
   }
 
   public async isInstanceMember(params: InstanceParams) {
@@ -163,7 +173,7 @@ export class User extends DataObject {
     if (!this.isProjectSupervisor(projectParams))
       throw new Error("unauthorised");
 
-    return new ProjectSupervisor(this.dal, this.db, this.id, projectParams);
+    return new ProjectSupervisor(this.db, this.id, projectParams);
   }
 
   public async isProjectReader({ projectId, ...params }: ProjectParams) {
@@ -172,10 +182,12 @@ export class User extends DataObject {
     }));
   }
 
-  public toProjectReader(projectParams: ProjectParams) {
-    if (!this.isProjectReader(projectParams)) throw new Error("unauthorised");
+  public async toProjectReader(projectParams: ProjectParams) {
+    if (!(await this.isProjectReader(projectParams))) {
+      throw new Error("unauthorised");
+    }
 
-    return new ProjectReader(this.dal, this.db, this.id, projectParams);
+    return new ProjectReader(this.db, this.id, projectParams);
   }
 
   public async canAccessProject(_projectParams: ProjectParams) {
@@ -233,17 +245,16 @@ export class User extends DataObject {
 
   public async getInstances() {
     if (await this.isSuperAdmin()) {
-      const instances = await new Institution(
-        this.dal,
-        this.db,
-      ).getAllInstances();
+      const instances = await new Institution(this.db).getAllInstances();
       return AllocationInstance.toQualifiedPaths(this.db, instances);
     }
 
-    const groups = await this.dal.groupAdmin.getAllGroups(this.id);
-    const groupAdminInstances = await this.dal.instance.getForGroups(groups);
+    const dal = new DAL(this.db);
 
-    const subGroups = await this.dal.subGroupAdmin.getAllSubgroups(this.id);
+    const groups = await dal.groupAdmin.getAllGroups(this.id);
+    const groupAdminInstances = await dal.instance.getForGroups(groups);
+
+    const subGroups = await dal.subGroupAdmin.getAllSubgroups(this.id);
 
     const uniqueSubGroups = relativeComplement(
       subGroups,
@@ -252,14 +263,14 @@ export class User extends DataObject {
     );
 
     const subGroupAdminInstances =
-      await this.dal.instance.getForGroups(uniqueSubGroups);
+      await dal.instance.getForGroups(uniqueSubGroups);
 
     const privilegedInstances = [
       ...groupAdminInstances,
       ...subGroupAdminInstances,
     ];
 
-    const unprivilegedInstances = await this.dal.user.getAllInstances(this.id);
+    const unprivilegedInstances = await dal.user.getAllInstances(this.id);
 
     const uniqueUnprivileged = relativeComplement(
       unprivilegedInstances,
@@ -332,7 +343,9 @@ export class User extends DataObject {
 
   public async toDTO(): Promise<UserDTO> {
     if (!this._data) {
-      this._data = await this.dal.user.get(this.id);
+      this._data = await this.db.user.findFirstOrThrow({
+        where: { id: this.id },
+      });
     }
     return this._data;
   }

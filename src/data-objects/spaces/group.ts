@@ -7,7 +7,6 @@ import { User } from "../users/user";
 
 import { Institution } from "./institution";
 
-import { DAL } from "@/data-access";
 import {
   allocationGroupToDTO,
   allocationSubGroupToDTO,
@@ -19,8 +18,8 @@ export class AllocationGroup extends DataObject {
   public params: GroupParams;
   private _institution: Institution | undefined;
 
-  constructor(dal: DAL, db: DB, params: GroupParams) {
-    super(dal, db);
+  constructor(db: DB, params: GroupParams) {
+    super(db);
     this.params = params;
   }
 
@@ -95,7 +94,7 @@ export class AllocationGroup extends DataObject {
   }
 
   isGroupAdmin(userId: string) {
-    return new User(this.dal, this.db, userId).isGroupAdmin(this.params);
+    return new User(this.db, userId).isGroupAdmin(this.params);
   }
 
   public async delete() {
@@ -105,8 +104,7 @@ export class AllocationGroup extends DataObject {
   }
 
   get institution() {
-    if (!this._institution)
-      this._institution = new Institution(this.dal, this.db);
+    if (!this._institution) this._institution = new Institution(this.db);
     return this._institution;
   }
 }
