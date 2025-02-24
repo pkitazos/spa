@@ -2,7 +2,6 @@
 import { Fragment } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { PreferenceType, Stage } from "@prisma/client";
 import { GripVerticalIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -20,6 +19,8 @@ import {
 
 import { Badge } from "../ui/badge";
 import { WithTooltip } from "../ui/tooltip-wrapper";
+
+import { PreferenceType, Stage } from "@/db/types";
 
 export function ProjectPreferenceCard({
   project,
@@ -74,7 +75,7 @@ export function ProjectPreferenceCard({
         isOver && "outline outline-4 outline-muted-foreground/50",
       )}
     >
-      <AccessControl allowedStages={[Stage.PROJECT_SELECTION]}>
+      <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
         <Button
           {...attributes}
           {...listeners}
@@ -108,7 +109,7 @@ export function ProjectPreferenceCard({
               </Link>
             </Comp>
           </CardTitle>
-          <AccessControl allowedStages={[Stage.PROJECT_SELECTION]}>
+          <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
             <Button
               variant="ghost"
               size="icon"

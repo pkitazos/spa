@@ -13,7 +13,7 @@ export const ADMIN_TABS_BY_STAGE: Record<Stage, TabType[]> = {
     PAGES.addStudents,
     PAGES.addSupervisors,
   ],
-  [Stage.PROJECT_SELECTION]: [
+  [Stage.STUDENT_BIDDING]: [
     PAGES.studentInvites,
     PAGES.preferenceSubmissions,
     PAGES.lateProposals,
@@ -44,4 +44,8 @@ export const ADMIN_TABS_BY_STAGE: Record<Stage, TabType[]> = {
     PAGES.preferenceStatistics,
     PAGES.preferenceSubmissions,
   ],
+  [Stage.READER_BIDDING]: [],
+  [Stage.READER_ALLOCATION]: [],
+  [Stage.MARK_SUBMISSION]: [],
+  [Stage.GRADE_PUBLICATION]: [],
 };

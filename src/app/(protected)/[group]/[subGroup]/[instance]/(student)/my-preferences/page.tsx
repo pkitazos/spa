@@ -1,5 +1,3 @@
-import { Role, Stage } from "@prisma/client";
-
 import { AccessControl } from "@/components/access-control";
 import { Heading } from "@/components/heading";
 import { BoardDetailsProvider } from "@/components/kanban-board/store";
@@ -18,6 +16,7 @@ import { KanbanBoardSection } from "./_components/kanban-board-section";
 
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
+import { Role, Stage } from "@/db/types";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
@@ -64,7 +63,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
     <>
       <Heading>{PAGES.myPreferences.title}</Heading>
       <PanelWrapper className="mt-10 h-full">
-        <AccessControl allowedStages={[Stage.PROJECT_SELECTION]}>
+        <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
           <SubmissionArea
             title="Submit your preference list"
             studentId={user.id}

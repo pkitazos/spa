@@ -1,5 +1,3 @@
-import { Stage } from "@prisma/client";
-
 import { Heading } from "@/components/heading";
 import { PageWrapper } from "@/components/page-wrapper";
 import { CreateProjectForm } from "@/components/pages/create-project-form";
@@ -12,6 +10,7 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
+import { Stage } from "@/db/types";
 
 type PageParams = InstanceParams & { id: string };
 
@@ -32,7 +31,7 @@ export async function generateMetadata({ params }: { params: PageParams }) {
 
 export default async function Page({ params }: { params: PageParams }) {
   const stage = await api.institution.instance.currentStage({ params });
-  if (stageGt(stage, Stage.PROJECT_SELECTION)) {
+  if (stageGt(stage, Stage.STUDENT_BIDDING)) {
     return (
       <Unauthorised message="You can't access this resource at this time" />
     );

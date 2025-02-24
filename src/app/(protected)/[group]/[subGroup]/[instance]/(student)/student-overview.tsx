@@ -1,5 +1,4 @@
 import { ReactNode } from "react";
-import { Stage } from "@prisma/client";
 import { format } from "date-fns";
 import Link from "next/link";
 
@@ -17,6 +16,8 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import Layout from "./layout";
 
+import { Stage } from "@/db/types";
+
 export async function StudentOverview({ params }: { params: InstanceParams }) {
   const stage = await api.institution.instance.currentStage({ params });
 
@@ -24,16 +25,12 @@ export async function StudentOverview({ params }: { params: InstanceParams }) {
     displayName,
     preferenceSubmissionDeadline: deadline,
     deadlineTimeZoneOffset: timeZoneOffset,
-  } = await api.user.student.overviewData({
-    params,
-  });
+  } = await api.user.student.overviewData({ params });
 
   const { minPreferences, maxPreferences } =
-    await api.user.student.preferenceRestrictions({
-      params,
-    });
+    await api.user.student.preferenceRestrictions({ params });
 
-  if (stage === Stage.PROJECT_SELECTION) {
+  if (stage === Stage.STUDENT_BIDDING) {
     const preAllocatedProject = await api.user.student.isPreAllocated({
       params,
     });

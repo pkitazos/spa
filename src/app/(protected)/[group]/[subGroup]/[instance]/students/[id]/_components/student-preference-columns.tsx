@@ -1,5 +1,5 @@
 "use client";
-import { PreferenceType, Stage } from "@prisma/client";
+
 import { ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
@@ -28,15 +28,11 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 import { previousStages, stageLt } from "@/lib/utils/permissions/stage-check";
 import { StudentPreferenceType } from "@/lib/validations/student-preference";
 
+import { PreferenceType, Stage } from "@/db/types";
+
 export type PreferenceData = {
-  project: {
-    id: string;
-    title: string;
-  };
-  supervisor: {
-    name: string;
-    id: string;
-  };
+  project: { id: string; title: string };
+  supervisor: { name: string; id: string };
   type: PreferenceType;
   rank: number;
 };
@@ -240,7 +236,7 @@ export function useStudentPreferencesColumns({
               </Link>
             </DropdownMenuItem>
             <AccessControl
-              allowedStages={previousStages(Stage.PROJECT_SELECTION)}
+              allowedStages={previousStages(Stage.STUDENT_BIDDING)}
             >
               <StudentPreferenceActionSubMenu
                 defaultType={type}

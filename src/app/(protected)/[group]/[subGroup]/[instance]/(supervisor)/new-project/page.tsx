@@ -1,5 +1,3 @@
-import { Stage } from "@prisma/client";
-
 import { Heading } from "@/components/heading";
 import { CreateProjectForm } from "@/components/pages/create-project-form";
 import { Unauthorised } from "@/components/unauthorised";
@@ -11,6 +9,7 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
+import { Stage } from "@/db/types";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
@@ -23,7 +22,7 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 export default async function Page({ params }: { params: InstanceParams }) {
   const stage = await api.institution.instance.currentStage({ params });
 
-  if (stageGt(stage, Stage.PROJECT_SELECTION)) {
+  if (stageGt(stage, Stage.STUDENT_BIDDING)) {
     return (
       <Unauthorised message="You really should not be submitting projects at this stage" />
     );

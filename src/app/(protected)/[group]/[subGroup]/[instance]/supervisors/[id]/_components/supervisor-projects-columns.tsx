@@ -1,4 +1,3 @@
-import { Stage } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
@@ -38,6 +37,8 @@ import {
   stageLt,
 } from "@/lib/utils/permissions/stage-check";
 import { SupervisorProjectDto } from "@/lib/validations/dto/project";
+
+import { Stage } from "@/db/types";
 
 export function useSupervisorProjectsColumns({
   deleteProject,
@@ -355,7 +356,7 @@ export function useSupervisorProjectsColumns({
                   </Link>
                 </DropdownMenuItem>
                 <AccessControl
-                  allowedStages={previousStages(Stage.PROJECT_SELECTION)}
+                  allowedStages={previousStages(Stage.STUDENT_BIDDING)}
                 >
                   <DropdownMenuItem className="group/item">
                     <Link

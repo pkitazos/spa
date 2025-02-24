@@ -1,5 +1,4 @@
 import { ReactNode } from "react";
-import { Role, Stage } from "@prisma/client";
 
 import SidePanel from "@/components/side-panel";
 import { Unauthorised } from "@/components/unauthorised";
@@ -7,6 +6,8 @@ import { Unauthorised } from "@/components/unauthorised";
 import { api } from "@/lib/trpc/server";
 import { stageLt } from "@/lib/utils/permissions/stage-check";
 import { InstanceParams } from "@/lib/validations/params";
+
+import { Role, Stage } from "@/db/types";
 
 export default async function Layout({
   params,
@@ -24,7 +25,7 @@ export default async function Layout({
     );
   }
 
-  if (stageLt(stage, Stage.PROJECT_SELECTION)) {
+  if (stageLt(stage, Stage.STUDENT_BIDDING)) {
     return (
       <Unauthorised message="You are not allowed to access the platform at this time" />
     );

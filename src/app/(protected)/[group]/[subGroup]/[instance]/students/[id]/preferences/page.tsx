@@ -1,4 +1,3 @@
-import { Stage } from "@prisma/client";
 import { notFound } from "next/navigation";
 
 import { AccessControl } from "@/components/access-control";
@@ -15,16 +14,15 @@ import { PageParams } from "@/lib/validations/params";
 
 import { CurrentBoardState } from "./_components/current-board-state";
 
+import { Stage } from "@/db/types";
+
 export default async function Page({ params }: { params: PageParams }) {
   const studentId = params.id;
-  const exists = await api.user.student.exists({
-    params,
-    studentId,
-  });
+  const exists = await api.user.student.exists({ params, studentId });
   if (!exists) notFound();
 
   const stage = await api.institution.instance.currentStage({ params });
-  if (stage !== Stage.PROJECT_SELECTION) {
+  if (stage !== Stage.STUDENT_BIDDING) {
     return (
       <Unauthorised message="You are not allowed to access this resource at this time" />
     );
@@ -54,7 +52,7 @@ export default async function Page({ params }: { params: PageParams }) {
         <p>Preferences</p>
         <p className="text-3xl text-muted-foreground">for {student.name}</p>
       </Heading>
-      <AccessControl allowedStages={[Stage.PROJECT_SELECTION]}>
+      <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
         <section className="flex flex-col gap-3">
           <SubmissionArea
             title="Submit student preference list"

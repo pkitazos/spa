@@ -1,5 +1,5 @@
 "use client";
-import { Stage } from "@prisma/client";
+
 import { useParams } from "next/navigation";
 
 import { AccessControl } from "@/components/access-control";
@@ -13,6 +13,8 @@ import { PageParams } from "@/lib/validations/params";
 import { KanbanBoardSection } from "./kanban-board-section";
 import { NewPreferenceButton } from "./new-preference-button";
 
+import { Stage } from "@/db/types";
+
 export function CurrentBoardState({
   availableProjects,
   initialProjects,
@@ -24,7 +26,7 @@ export function CurrentBoardState({
   return (
     <BoardDetailsProvider projects={initialProjects}>
       <section className="flex w-full max-w-7xl flex-col">
-        <AccessControl allowedStages={[Stage.PROJECT_SELECTION]}>
+        <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
           <Card className="my-4">
             <CardContent className="flex items-center justify-between pt-6">
               <p className="font-medium">
