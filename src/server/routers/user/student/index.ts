@@ -140,6 +140,7 @@ export const studentRouter = createTRPCRouter({
       return student.getLatestSubmissionDateTime();
     }),
 
+  // BREAKING output type
   isPreAllocated: procedure.instance.student
     .output(z.boolean())
     .query(async ({ ctx: { user } }) => await user.hasSelfDefinedProject()),

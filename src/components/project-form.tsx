@@ -2,7 +2,6 @@
 import { ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Role, Stage, Tag } from "@prisma/client";
 import { Check, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 
@@ -55,6 +54,8 @@ import {
 } from "./params-context";
 
 import { spacesLabels } from "@/config/spaces";
+import { Role, Stage } from "@/db/types";
+import { TagDTO } from "@/dto";
 
 export function ProjectForm({
   formInternalData: { takenTitles, flags, tags, students },
@@ -284,7 +285,7 @@ export function ProjectForm({
                     inputFieldPosition="top"
                     setTags={(newTags) => {
                       setSelectedTags(newTags);
-                      form.setValue("tags", newTags as [Tag, ...Tag[]]);
+                      form.setValue("tags", newTags as TagDTO[]);
                     }}
                     className="sm:min-w-[450px]"
                     {...field}
@@ -317,8 +318,7 @@ export function ProjectForm({
           allowedRoles={[Role.ADMIN, Role.SUPERVISOR]}
           extraConditions={{
             SBAC: {
-              OR:
-                stage === Stage.PROJECT_SELECTION && userRoles.has(Role.ADMIN),
+              OR: stage === Stage.STUDENT_BIDDING && userRoles.has(Role.ADMIN),
             },
           }}
         >
@@ -348,7 +348,7 @@ export function ProjectForm({
         <div className="flex justify-between">
           <AccessControl
             allowedRoles={[Role.ADMIN]}
-            allowedStages={[Stage.PROJECT_SUBMISSION, Stage.PROJECT_SELECTION]}
+            allowedStages={[Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING]}
           >
             <FormField
               control={form.control}
@@ -388,8 +388,7 @@ export function ProjectForm({
             extraConditions={{
               SBAC: {
                 OR:
-                  stage === Stage.PROJECT_SELECTION &&
-                  userRoles.has(Role.ADMIN),
+                  stage === Stage.STUDENT_BIDDING && userRoles.has(Role.ADMIN),
               },
             }}
           >

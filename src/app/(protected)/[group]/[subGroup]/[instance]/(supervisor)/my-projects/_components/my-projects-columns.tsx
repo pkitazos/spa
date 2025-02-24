@@ -1,4 +1,3 @@
-import { Stage } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
@@ -29,6 +28,8 @@ import {
 
 import { cn } from "@/lib/utils";
 import { stageGt } from "@/lib/utils/permissions/stage-check";
+
+import { Stage } from "@/db/types";
 
 export type SupervisorProjectDataDto = {
   id: string;
@@ -258,6 +259,6 @@ export function useMyProjectColumns({
     ),
   };
 
-  if (stageGt(stage, Stage.PROJECT_SELECTION)) return userCols;
+  if (stageGt(stage, Stage.STUDENT_BIDDING)) return userCols;
   return [selectCol, ...userCols, actionCol];
 }

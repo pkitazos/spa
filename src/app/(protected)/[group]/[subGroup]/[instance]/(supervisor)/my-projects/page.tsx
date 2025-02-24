@@ -1,5 +1,3 @@
-import { Stage } from "@prisma/client";
-
 import { AccessControl } from "@/components/access-control";
 import { Heading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
@@ -13,6 +11,7 @@ import { MyProjectsDataTable } from "./_components/my-projects-data-table";
 
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
+import { Stage } from "@/db/types";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
@@ -35,7 +34,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
       <Heading>My Projects</Heading>
       <PanelWrapper className="pt-6">
         <AccessControl
-          allowedStages={[Stage.PROJECT_SUBMISSION, Stage.PROJECT_SELECTION]}
+          allowedStages={[Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING]}
         >
           <Card className="flex justify-between px-10 py-5">
             <h2

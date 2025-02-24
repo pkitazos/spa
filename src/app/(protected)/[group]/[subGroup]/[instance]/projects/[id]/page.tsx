@@ -1,4 +1,3 @@
-import { Role, Stage } from "@prisma/client";
 import { FlagIcon, TagIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -26,6 +25,7 @@ import { StudentPreferenceDataTable } from "./_components/student-preference-dat
 
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
+import { Role, Stage } from "@/db/types";
 
 type PageParams = InstanceParams & { id: string };
 
@@ -47,10 +47,7 @@ export async function generateMetadata({ params }: { params: PageParams }) {
 
 export default async function Project({ params }: { params: PageParams }) {
   const projectId = params.id;
-  const exists = await api.project.exists({
-    params,
-    projectId: params.id,
-  });
+  const exists = await api.project.exists({ params, projectId: params.id });
   if (!exists) notFound();
 
   const instancePath = formatParamsAsPath(params);
@@ -104,7 +101,7 @@ export default async function Project({ params }: { params: PageParams }) {
         {project.title}
         <AccessControl
           allowedRoles={[Role.STUDENT]}
-          allowedStages={[Stage.PROJECT_SELECTION]}
+          allowedStages={[Stage.STUDENT_BIDDING]}
           extraConditions={{ RBAC: { AND: !preAllocated } }}
         >
           <StudentPreferenceButton
@@ -114,7 +111,7 @@ export default async function Project({ params }: { params: PageParams }) {
         </AccessControl>
         <AccessControl
           allowedRoles={[Role.ADMIN]}
-          allowedStages={previousStages(Stage.PROJECT_SELECTION)}
+          allowedStages={previousStages(Stage.STUDENT_BIDDING)}
           extraConditions={{ RBAC: { OR: project.supervisor.id === user.id } }}
         >
           <Link

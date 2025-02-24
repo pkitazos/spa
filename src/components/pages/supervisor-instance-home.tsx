@@ -18,14 +18,10 @@ export async function SupervisorInstanceHome({
   const {
     projectSubmissionDeadline: deadline,
     deadlineTimeZoneOffset: timeZoneOffset,
-  } = await api.user.supervisor.instancePage({
-    params,
-  });
+  } = await api.user.supervisor.instancePage({ params });
 
   const { currentSubmissionCount, submissionTarget } =
-    await api.user.supervisor.projectStats({
-      params,
-    });
+    await api.user.supervisor.projectStats({ params });
 
   if (stage === Stage.PROJECT_SUBMISSION) {
     return (
@@ -68,7 +64,7 @@ export async function SupervisorInstanceHome({
   });
 
   if (
-    stage === Stage.PROJECT_SELECTION ||
+    stage === Stage.STUDENT_BIDDING ||
     stage === Stage.PROJECT_ALLOCATION ||
     stage === Stage.ALLOCATION_ADJUSTMENT ||
     (stage === Stage.ALLOCATION_PUBLICATION && !allocationAccess)

@@ -1,4 +1,3 @@
-import { Stage } from "@prisma/client";
 import { PenIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -14,6 +13,8 @@ import { cn } from "@/lib/utils";
 import { PageParams } from "@/lib/validations/params";
 
 import { StudentPreferenceDataTable } from "./student-preference-data-table";
+
+import { Stage } from "@/db/types";
 
 export async function StudentPreferencesSection({
   params,
@@ -36,7 +37,7 @@ export async function StudentPreferencesSection({
     <>
       <div className="-mb-2 mt-6 flex items-center justify-between">
         <SubHeading>Preferences</SubHeading>
-        <AccessControl allowedStages={[Stage.PROJECT_SELECTION]}>
+        <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
           <Link
             className={cn(
               buttonVariants({ variant: "outline" }),

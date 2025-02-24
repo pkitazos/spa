@@ -101,4 +101,4 @@ export const adminLevelSchema = z.enum([
 
 export type AdminLevel = z.infer<typeof adminLevelSchema>;
 
-export { PreferenceType, Stage } from "@prisma/client";
+export { AlgorithmFlag, PreferenceType, Stage } from "@prisma/client";
