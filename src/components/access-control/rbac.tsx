@@ -1,10 +1,11 @@
 "use client";
 import { ReactNode } from "react";
-import { Role } from "@prisma/client";
 
 import { api } from "@/lib/trpc/client";
 
 import { useInstanceParams } from "../params-context";
+
+import { Role } from "@/db/types";
 
 export function RBAC({
   children,
@@ -18,10 +19,13 @@ export function RBAC({
   OR?: boolean;
 }) {
   const params = useInstanceParams();
-  const { data: userRole, isSuccess } = api.user.role.useQuery({ params });
+  const allowedRolesSet = new Set(allowedRoles);
 
+  const { data: userRoles, isSuccess } = api.user.roles.useQuery({ params });
   if (!isSuccess) return <></>;
-  if (OR || (AND && allowedRoles.includes(userRole))) return <>{children}</>;
+
+  const userAllowed = allowedRolesSet.intersection(userRoles).size > 0;
+  if (OR || (AND && userAllowed)) return <>{children}</>;
 
   return <></>;
 }

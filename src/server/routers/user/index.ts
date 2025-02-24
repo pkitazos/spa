@@ -1,10 +1,9 @@
 import { z } from "zod";
 
 import { validatedSegmentsSchema } from "@/lib/validations/breadcrumbs";
-import { instanceParamsSchema } from "@/lib/validations/params";
 
 import { procedure } from "@/server/middleware";
-import { createTRPCRouter, roleAwareProcedure } from "@/server/trpc";
+import { createTRPCRouter } from "@/server/trpc";
 
 import { studentRouter } from "./student";
 import { supervisorRouter } from "./supervisor";
@@ -25,16 +24,9 @@ export const userRouter = createTRPCRouter({
     .input(z.object({ userId: z.string() }))
     .output(userDtoSchema)
     .query(
-      async ({ ctx: { dal, db }, input: { userId } }) =>
-        await new User(dal, db, userId).toDTO(),
+      async ({ ctx: { db }, input: { userId } }) =>
+        await new User(db, userId).toDTO(),
     ),
-
-  /**
-   * @deprecated users can have multiple roles in an instance - use `roles` instead
-   */
-  role: roleAwareProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ ctx }) => ctx.session.user.role),
 
   roles: procedure.instance.user
     .output(z.set(z.nativeEnum(Role)))

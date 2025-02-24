@@ -1,10 +1,11 @@
 import { ReactNode } from "react";
-import { Role } from "@prisma/client";
 
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
 import { InstanceParams } from "@/lib/validations/params";
+
+import { Role } from "@/db/types";
 
 export default async function Layout({
   params,
@@ -13,9 +14,9 @@ export default async function Layout({
   params: InstanceParams;
   children: ReactNode;
 }) {
-  const role = await api.user.role({ params });
+  const roles = await api.user.roles({ params });
 
-  if (role !== Role.ADMIN) {
+  if (!roles.has(Role.ADMIN)) {
     return (
       <Unauthorised message="You need to be an admin to access this page" />
     );

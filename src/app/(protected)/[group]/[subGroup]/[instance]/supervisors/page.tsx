@@ -18,13 +18,13 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 }
 
 export default async function Page({ params }: { params: InstanceParams }) {
-  const role = await api.user.role({ params });
+  const roles = await api.user.roles({ params });
   const data = await api.institution.instance.supervisors({ params });
 
   return (
     <PageWrapper>
       <Heading>All Supervisors</Heading>
-      <SupervisorsDataTable role={role} data={data} />
+      <SupervisorsDataTable roles={roles} data={data} />
     </PageWrapper>
   );
 }

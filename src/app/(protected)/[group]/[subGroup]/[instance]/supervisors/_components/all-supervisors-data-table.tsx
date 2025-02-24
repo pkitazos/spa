@@ -1,5 +1,4 @@
 "use client";
-import { Role } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -12,12 +11,13 @@ import { SupervisorDto } from "@/lib/validations/dto/supervisor";
 import { useAllSupervisorsColumns } from "./all-supervisors-columns";
 
 import { spacesLabels } from "@/config/spaces";
+import { Role } from "@/db/types";
 
 export function SupervisorsDataTable({
-  role,
+  roles,
   data,
 }: {
-  role: Role;
+  roles: Set<Role>;
   data: SupervisorDto[];
 }) {
   const params = useInstanceParams();
@@ -52,7 +52,7 @@ export function SupervisorsDataTable({
   }
 
   const columns = useAllSupervisorsColumns({
-    role: role,
+    role: roles,
     deleteSupervisor: handleDelete,
     deleteSelectedSupervisors: handleDeleteSelected,
   });

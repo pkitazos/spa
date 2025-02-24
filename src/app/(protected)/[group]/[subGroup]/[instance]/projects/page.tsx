@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 
 export default async function Projects({ params }: { params: InstanceParams }) {
   const user = await auth();
-  const role = await api.user.role({ params });
+  const roles = await api.user.roles({ params });
   const projects = await api.project.getAllForUser({ params, userId: user.id });
 
   // TODO: should only be run if user has role student
@@ -37,7 +37,7 @@ export default async function Projects({ params }: { params: InstanceParams }) {
       <Heading>{PAGES.allProjects.title}</Heading>
       <AllProjectsDataTable
         user={user}
-        role={role}
+        roles={roles}
         data={projects}
         projectPreferences={preferencesByProject}
         hasSelfDefinedProject={hasSelfDefinedProject}

@@ -67,12 +67,12 @@ export default async function Project({ params }: { params: PageParams }) {
 
   const project = await api.project.getById({ projectId });
   const user = await api.user.get();
-  const role = await api.user.role({ params });
+  const roles = await api.user.roles({ params });
 
   let preAllocated = false;
   let preferenceStatus: StudentPreferenceType = "None";
 
-  if (role === Role.STUDENT) {
+  if (roles.has(Role.STUDENT)) {
     preAllocated = !!(await api.user.student.isPreAllocated({ params }));
     preferenceStatus = await api.user.student.preference.getForProject({
       params,
@@ -142,7 +142,7 @@ export default async function Project({ params }: { params: PageParams }) {
           </section>
         </div>
         <div className="w-1/4">
-          <ProjectDetailsCard project={project} role={role} />
+          <ProjectDetailsCard project={project} roles={roles} />
         </div>
       </div>
 
@@ -173,36 +173,43 @@ export default async function Project({ params }: { params: PageParams }) {
 }
 
 function ProjectDetailsCard({
-  role,
+  roles,
   project,
 }: {
-  role: Role;
+  roles: Set<Role>;
   project: ProjectDto;
 }) {
   return (
     <Card className="w-full max-w-sm border-none bg-accent">
       <CardContent className="flex flex-col gap-10 pt-5">
-        <div className="flex items-center space-x-4">
-          <UserIcon className="h-6 w-6 text-blue-500" />
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">
-              Supervisor
-            </h3>
-            {role === Role.ADMIN ? (
-              <Link
-                className={cn(
-                  buttonVariants({ variant: "link" }),
-                  "p-0 text-lg",
-                )}
-                href={`../supervisors/${project.supervisor.id}`}
-              >
-                {project.supervisor.name}
-              </Link>
-            ) : (
-              <p className="text-lg font-semibold">{project.supervisor.name}</p>
-            )}
+        <AccessControl
+          allowedRoles={[Role.ADMIN, Role.STUDENT]}
+          // extraConditions={{ RBAC: { OR: project.supervisor.id === user.id } }}
+        >
+          <div className="flex items-center space-x-4">
+            <UserIcon className="h-6 w-6 text-blue-500" />
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Supervisor
+              </h3>
+              {roles.has(Role.ADMIN) ? (
+                <Link
+                  className={cn(
+                    buttonVariants({ variant: "link" }),
+                    "p-0 text-lg",
+                  )}
+                  href={`../supervisors/${project.supervisor.id}`}
+                >
+                  {project.supervisor.name}
+                </Link>
+              ) : (
+                <p className="text-lg font-semibold">
+                  {project.supervisor.name}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        </AccessControl>
         <div className={cn(project.flags.length === 0 && "hidden")}>
           <div className="mb-2 flex items-center space-x-4">
             <FlagIcon className="h-6 w-6 text-fuchsia-500" />

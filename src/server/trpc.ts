@@ -7,13 +7,13 @@
  * need to use are documented accordingly near the end.
  */
 
-import { AllocationInstance, PrismaClient, User } from "@prisma/client";
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { z, ZodError } from "zod";
 
 import { auth } from "@/lib/auth";
 import { now } from "@/lib/utils/date/now";
+import { toInstanceId } from "@/lib/utils/general/instance-params";
 import { Session } from "@/lib/validations/auth";
 import {
   instanceParamsSchema,
@@ -21,8 +21,6 @@ import {
 } from "@/lib/validations/params";
 
 import { checkAdminPermissions } from "./utils/admin/access";
-import { getInstance } from "./utils/instance";
-import { getAllUserRoles, getUserRole } from "./utils/instance/user-role";
 
 import { DAL } from "@/data-access";
 import { db } from "@/db";
@@ -97,16 +95,6 @@ export const createTRPCRouter = t.router;
 
 /**
  * @deprecated - use the procedures from the middleware file
- * Public (unauthenticated) procedure
- *
- * This is the base piece you use to build new queries and mutations on your tRPC API. It does not
- * guarantee that a user querying is authorized, but you can still access user session data if they
- * are logged in.
- */
-export const publicProcedure = t.procedure;
-
-/**
- * @deprecated - use the procedures from the middleware file
  * Middleware that enforces users are logged in before running the procedure.
  */
 const authedMiddleware = t.middleware(({ ctx: { session }, next }) => {
@@ -135,63 +123,15 @@ export const protectedProcedure = t.procedure.use(authedMiddleware);
  * Middleware that fetches the instance from the database and adds it to the context.
  */
 export const instanceMiddleware = authedMiddleware.unstable_pipe(
-  async ({ ctx, input, next }) => {
+  async ({ input, next }) => {
     const { params } = z.object({ params: instanceParamsSchema }).parse(input);
-    const instance = await getInstance(ctx.db, params);
+    const instance = await db.allocationInstance.findFirstOrThrow({
+      where: toInstanceId(params),
+    });
 
     return next({ ctx: { instance: { params, ...instance } } });
   },
 );
-
-/**
- * @deprecated - use the procedures from the middleware file
- * Middleware that fetches the user's role in the instance from the database and adds it to the context.
- */
-const userRoleMiddleware = instanceMiddleware.unstable_pipe(
-  async ({ ctx, next }) => {
-    const role = await getUserRole(
-      ctx.db,
-      ctx.instance.params,
-      ctx.session.user.id,
-    );
-
-    return next({ ctx: { session: { user: { ...ctx.session.user, role } } } });
-  },
-);
-
-/**
- * @deprecated - use the procedures from the middleware file
- * Procedure containing the current instance in its context.
- */
-export const instanceProcedure = protectedProcedure
-  .input(z.object({ params: instanceParamsSchema }))
-  .use(instanceMiddleware);
-
-/**
- * Procedure aware of the current user's role.
- */
-export const roleAwareProcedure = instanceProcedure.use(userRoleMiddleware);
-
-/**
- * @deprecated - use the procedures from the middleware file
- *
- */
-export const multiRoleAwareProcedure = instanceProcedure.use(
-  async ({ ctx, next }) => {
-    const user = ctx.session.user;
-    const roles = await getAllUserRoles(ctx.db, ctx.instance.params, user.id);
-    return next({ ctx: { session: { user: { ...user, roles } } } });
-  },
-);
-
-/**
- * @deprecated - don't use this type, user Object methods instead
- */
-export type MultiRoleAwareContext = {
-  session: { user: User & { roles: Set<Role> } };
-  db: PrismaClient;
-  instance: AllocationInstance;
-};
 
 /**
  * @deprecated - use the procedures from the middleware file
