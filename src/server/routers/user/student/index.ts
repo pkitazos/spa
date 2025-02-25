@@ -13,7 +13,6 @@ import { createTRPCRouter } from "@/server/trpc";
 
 import { preferenceRouter } from "./preference";
 
-import { InstanceStudent } from "@/data-objects/users/instance-student";
 import { InstanceSupervisor } from "@/data-objects/users/instance-supervisor";
 import { instanceToStudentPreferenceRestrictionsDTO } from "@/db/transformers";
 import {
@@ -174,15 +173,14 @@ export const studentRouter = createTRPCRouter({
         })
         .optional(),
     )
-    .query(async ({ ctx: { dal, db, instance }, input: { studentId } }) => {
-      const student = new InstanceStudent(dal, db, studentId, instance.params);
+    .query(async ({ ctx: { db, instance }, input: { studentId } }) => {
+      const student = await instance.getStudent(studentId);
 
       if (!(await student.hasAllocation())) return undefined;
 
       const { project, studentRanking } = await student.getAllocation();
 
       const supervisor = new InstanceSupervisor(
-        dal,
         db,
         project.supervisorId,
         instance.params,
@@ -205,7 +203,7 @@ export const studentRouter = createTRPCRouter({
         throw new Error("Cannot delete student at this stage");
       }
 
-      await instance.deleteStudent(studentId);
+      await instance.unlinkStudent(studentId);
     }),
 
   // TODO naming inconsistency (see supervisor deleteMany)
@@ -217,7 +215,7 @@ export const studentRouter = createTRPCRouter({
         throw new Error("Cannot delete students at this stage");
       }
 
-      await instance.deleteStudents(studentIds);
+      await instance.unlinkStudents(studentIds);
     }),
 
   // MOVE to instance router
