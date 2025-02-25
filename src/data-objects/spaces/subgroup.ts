@@ -1,4 +1,7 @@
+import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
+import { slugify } from "@/lib/utils/general/slugify";
 import { uniqueById } from "@/lib/utils/list-unique";
+import { builtInAlgorithms } from "@/lib/validations/algorithm";
 import { ValidatedInstanceDetails } from "@/lib/validations/instance-form";
 import { SubGroupParams } from "@/lib/validations/params";
 
@@ -8,7 +11,6 @@ import { User } from "../users/user";
 import { AllocationGroup } from "./group";
 import { Institution } from "./institution";
 
-import { DAL } from "@/data-access";
 import {
   allocationInstanceToDTO,
   allocationSubGroupToDTO,
@@ -38,8 +40,51 @@ export class AllocationSubGroup extends DataObject {
   }
 
   public async createInstance(newInstance: ValidatedInstanceDetails) {
-    // TODO refactor
-    return await new DAL(this.db).instance.create(this.params, newInstance);
+    const instanceSlug = slugify(newInstance.instanceName);
+
+    const params = { ...this.params, instance: instanceSlug };
+
+    await this.db.$transaction(async (tx) => {
+      await tx.allocationInstance.create({
+        data: {
+          ...toInstanceId(params),
+          displayName: newInstance.instanceName,
+          minStudentPreferences: newInstance.minPreferences,
+          maxStudentPreferences: newInstance.maxPreferences,
+          maxStudentPreferencesPerSupervisor:
+            newInstance.maxPreferencesPerSupervisor,
+          studentPreferenceSubmissionDeadline:
+            newInstance.preferenceSubmissionDeadline,
+          projectSubmissionDeadline: newInstance.projectSubmissionDeadline,
+          minReaderPreferences: 0, //todo
+          maxReaderPreferences: 10, //todo
+          readerPreferenceSubmissionDeadline: new Date(),
+        },
+      });
+
+      await tx.flag.createMany({
+        data: newInstance.flags.map(({ title }) => ({
+          ...expand(params),
+          title,
+          description: "", // TODO
+        })),
+      });
+
+      await tx.tag.createMany({
+        data: newInstance.tags.map(({ title }) => ({
+          title,
+          ...expand(params),
+        })),
+      });
+
+      await tx.algorithmConfig.createMany({
+        data: builtInAlgorithms.map((a) => ({
+          ...a,
+          matchingResultData: JSON.stringify({}),
+          ...expand(params),
+        })),
+      });
+    });
   }
 
   public async exists() {
