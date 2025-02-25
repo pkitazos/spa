@@ -43,6 +43,16 @@ export class StudentProjectAllocationData extends DataObject {
     return new StudentProjectAllocationData(db, data);
   }
 
+  public toRecord() {
+    return this.allocationData.reduce(
+      (acc, { projectId, userId }) => ({
+        ...acc,
+        [projectId]: [...(acc[projectId] ?? []), userId],
+      }),
+      {} as Record<string, string[]>,
+    );
+  }
+
   public toStudentView() {
     return this.allocationData
       .map((allocation) => ({

@@ -45,7 +45,6 @@ import { updateManyPreferenceTransaction } from "@/db/transactions/update-many-p
 import { updatePreferenceTransaction } from "@/db/transactions/update-preference";
 import { InstanceDisplayData } from "@/dto";
 import { SupervisorDTO } from "@/dto/supervisor";
-import { ValidatedInstanceDetails } from "@/lib/validations/instance-form";
 
 export class DAL {
   db: DB;
@@ -156,68 +155,6 @@ export class DAL {
   };
 
   public instance = {
-    // TODO unfuck
-    create: async (
-      { group, subGroup }: SubGroupParams,
-      {
-        instanceName,
-        minPreferences,
-        maxPreferences,
-        maxPreferencesPerSupervisor,
-        preferenceSubmissionDeadline,
-        projectSubmissionDeadline,
-        flags,
-        tags,
-      }: ValidatedInstanceDetails,
-    ) => {
-      const instance = slugify(instanceName);
-
-      await this.db.$transaction(async (tx) => {
-        await tx.allocationInstance.create({
-          data: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            id: instance,
-            displayName: instanceName,
-            minPreferences,
-            maxPreferences,
-            maxPreferencesPerSupervisor,
-            preferenceSubmissionDeadline,
-            projectSubmissionDeadline,
-            tags: { createMany: { data } },
-          },
-        });
-
-        await tx.flag.createMany({
-          data: flags.map(({ title }) => ({
-            title,
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          })),
-        });
-
-        await tx.tag.createMany({
-          data: tags.map(({ title }) => ({
-            title,
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          })),
-        });
-
-        await tx.algorithm.createMany({
-          data: builtInAlgorithms.map((a) => ({
-            ...a,
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            matchingResultData: JSON.stringify({}),
-          })),
-        });
-      });
-    },
-
     exists: async (params: InstanceParams): Promise<boolean> =>
       !!(await this.db.allocationInstance.findFirst({ where: expand(params) })),
 

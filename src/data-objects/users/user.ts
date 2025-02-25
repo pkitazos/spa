@@ -68,7 +68,7 @@ export class User extends DataObject {
   public async toGroupAdmin(groupParams: GroupParams) {
     if (!(await this.isGroupAdmin(groupParams)))
       throw new Error("unauthorised");
-    return new GroupAdmin(new DAL(this.db), this.db, this.id, groupParams);
+    return new GroupAdmin(this.db, this.id, groupParams);
   }
 
   public async isSubGroupAdmin(
@@ -108,12 +108,7 @@ export class User extends DataObject {
     if (!(await this.isInstanceStudent(instanceParams)))
       throw new Error("unauthorised");
 
-    return new InstanceStudent(
-      new DAL(this.db),
-      this.db,
-      this.id,
-      instanceParams,
-    );
+    return new InstanceStudent(this.db, this.id, instanceParams);
   }
 
   public async hasSelfDefinedProject(instanceParams: InstanceParams) {
@@ -134,12 +129,7 @@ export class User extends DataObject {
     if (!this.isInstanceSupervisor(instanceParams))
       throw new Error("User is not a supervisor in this instance");
 
-    return new InstanceSupervisor(
-      new DAL(this.db),
-      this.db,
-      this.id,
-      instanceParams,
-    );
+    return new InstanceSupervisor(this.db, this.id, instanceParams);
   }
 
   public async isInstanceReader(params: InstanceParams) {
@@ -214,6 +204,8 @@ export class User extends DataObject {
     return roles;
   }
 
+  // TODO return type
+  // that formatting should live elsewhere
   public async getManagedGroups() {
     const groups = await this.db.allocationGroup.findMany({
       where: { groupAdmins: { some: { userId: this.id } } },
@@ -250,6 +242,8 @@ export class User extends DataObject {
     }
 
     const dal = new DAL(this.db);
+
+    this.getManagedGroups();
 
     const groups = await dal.groupAdmin.getAllGroups(this.id);
     const groupAdminInstances = await dal.instance.getForGroups(groups);

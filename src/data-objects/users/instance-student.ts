@@ -1,3 +1,5 @@
+import { expand } from "@/lib/utils/general/instance-params";
+import { sortPreferenceType } from "@/lib/utils/preferences/sort";
 import { ProjectPreferenceCardDto } from "@/lib/validations/board";
 import { InstanceParams } from "@/lib/validations/params";
 
@@ -5,7 +7,13 @@ import { AllocationInstance } from "../spaces/instance";
 
 import { User } from "./user";
 
-import { DAL } from "@/data-access";
+import { updateManyPreferenceTransaction } from "@/db/transactions/update-many-preferences";
+import { updatePreferenceTransaction } from "@/db/transactions/update-preference";
+import {
+  projectDataToDTO,
+  studentDetailsToDto,
+  studentToDTO,
+} from "@/db/transformers";
 import { DB, PreferenceType } from "@/db/types";
 import { ProjectDTO } from "@/dto/project";
 import {
@@ -17,88 +25,141 @@ import {
 
 export class InstanceStudent extends User {
   instance: AllocationInstance;
-  dal: DAL;
 
-  constructor(dal: DAL, db: DB, id: string, params: InstanceParams) {
+  constructor(db: DB, id: string, params: InstanceParams) {
     super(db, id);
-    this.dal = dal;
     this.instance = new AllocationInstance(db, params);
   }
 
   public async get(): Promise<StudentDTO> {
-    return await this.dal.student.get(this.id, this.instance.params);
+    return await this.db.studentDetails
+      .findFirstOrThrow({
+        where: { userId: this.id, ...expand(this.instance.params) },
+        include: { userInInstance: { include: { user: true } } },
+      })
+      .then(studentToDTO);
   }
 
   public async getDetails(): Promise<StudentDetailsDTO> {
-    return await this.dal.student.getStudentDetails(
-      this.id,
-      this.instance.params,
-    );
+    return await this.db.studentDetails
+      .findFirstOrThrow({
+        where: { userId: this.id, ...expand(this.instance.params) },
+      })
+      .then(studentDetailsToDto);
   }
 
   public async hasSelfDefinedProject(): Promise<boolean> {
-    return await this.dal.student.hasSelfDefinedProject(
-      this.id,
-      this.instance.params,
-    );
+    return !!(await this.db.projectInInstance.findFirst({
+      where: {
+        details: { preAllocatedStudentId: this.id },
+        ...expand(this.instance.params),
+      },
+    }));
   }
 
   public async hasAllocation(): Promise<boolean> {
-    return await this.dal.student.hasAllocatedProject(
-      this.id,
-      this.instance.params,
-    );
+    return !!(await this.db.studentProjectAllocation.findFirst({
+      where: { userId: this.id, ...expand(this.instance.params) },
+    }));
   }
 
   public async getAllocation(): Promise<{
     project: ProjectDTO;
     studentRanking: number;
   }> {
-    return await this.dal.student.getAllocatedProject(
-      this.id,
-      this.instance.params,
-    );
+    return await this.db.studentProjectAllocation
+      .findFirstOrThrow({
+        where: { userId: this.id, ...expand(this.instance.params) },
+        include: { project: { include: { details: true } } },
+      })
+      .then((x) => ({
+        project: projectDataToDTO(x.project),
+        studentRanking: x.studentRanking,
+      }));
   }
 
   public async getLatestSubmissionDateTime(): Promise<Date | undefined> {
-    return await this.dal.student
-      .getStudentDetails(this.id, this.instance.params)
-      .then((x) => x.latestSubmissionDateTime);
+    const { latestSubmissionDateTime } = await this.getDetails();
+
+    return latestSubmissionDateTime;
   }
 
   public async getDraftPreference(
     projectId: string,
   ): Promise<PreferenceType | undefined> {
-    return await this.dal.student.getDraftPreference(
-      this.id,
-      projectId,
-      this.instance.params,
-    );
+    return await this.db.studentDraftPreference
+      .findFirst({
+        where: { userId: this.id, projectId, ...expand(this.instance.params) },
+        select: { type: true },
+      })
+      .then((x) => x?.type);
   }
 
   public async getAllDraftPreferences(): Promise<StudentDraftPreferenceDTO[]> {
-    return await this.dal.student.getDraftPreferences(
-      this.id,
-      this.instance.params,
-    );
+    return await this.db.studentDraftPreference
+      .findMany({
+        where: { userId: this.id, ...expand(this.instance.params) },
+        select: {
+          type: true,
+          score: true,
+          project: {
+            include: {
+              details: true,
+              supervisor: {
+                select: { userInInstance: { select: { user: true } } },
+              },
+            },
+          },
+        },
+        orderBy: { score: "asc" },
+      })
+      .then((data) =>
+        data
+          .sort(sortPreferenceType)
+          .map((x) => ({
+            project: projectDataToDTO(x.project),
+            supervisor: x.project.supervisor.userInInstance.user,
+            score: x.score,
+            type: x.type,
+          })),
+      );
   }
 
   public async getSubmittedPreferences(): Promise<
     StudentSubmittedPreferenceDTO[]
   > {
-    return await this.dal.student.getSubmittedPreferences(
-      this.id,
-      this.instance.params,
-    );
+    return await this.db.studentDetails
+      .findFirstOrThrow({
+        where: { userId: this.id, ...expand(this.instance.params) },
+        include: {
+          studentSubmittedPreferences: {
+            include: {
+              project: {
+                include: {
+                  details: true,
+                  supervisor: {
+                    include: { userInInstance: { include: { user: true } } },
+                  },
+                },
+              },
+            },
+            orderBy: { rank: "asc" },
+          },
+        },
+      })
+      .then((data) =>
+        data.studentSubmittedPreferences.map((x) => ({
+          project: projectDataToDTO(x.project),
+          rank: x.rank,
+          supervisor: x.project.supervisor.userInInstance.user,
+        })),
+      );
   }
 
   public async getPreferenceBoardState(): Promise<
     Record<PreferenceType, ProjectPreferenceCardDto[]>
   > {
-    const res = await this.dal.student.getDraftPreferences(
-      this.id,
-      this.instance.params,
-    );
+    const res = await this.getAllDraftPreferences();
 
     const allProjects = res.map((e) => ({
       id: e.project.id,
@@ -122,23 +183,30 @@ export class InstanceStudent extends User {
   }
 
   public async setStudentLevel(level: number): Promise<StudentDetailsDTO> {
-    return await this.dal.student.setStudentLevel(
-      this.id,
-      level,
-      this.instance.params,
-    );
+    return await this.db.studentDetails
+      .update({
+        where: {
+          studentDetailsId: {
+            userId: this.id,
+            ...expand(this.instance.params),
+          },
+        },
+        data: { studentLevel: level },
+      })
+      .then(studentDetailsToDto);
   }
 
   public async updateDraftPreferenceType(
     projectId: string,
     preferenceType: PreferenceType | undefined,
   ): Promise<void> {
-    return await this.dal.student.setDraftPreferenceType(
-      this.id,
+    // TODO fix
+    return await updatePreferenceTransaction(this.db, {
+      userId: this.id,
       projectId,
       preferenceType,
-      this.instance.params,
-    );
+      params: this.instance.params,
+    });
   }
 
   public async updateDraftPreferenceRank(
@@ -146,31 +214,75 @@ export class InstanceStudent extends User {
     updatedRank: number,
     preferenceType: PreferenceType,
   ): Promise<{ project: ProjectDTO; rank: number }> {
-    return await this.dal.student.setDraftPreference(
-      this.id,
-      projectId,
-      preferenceType,
-      updatedRank,
-      this.instance.params,
-    );
+    return await this.db.studentDraftPreference
+      .update({
+        where: {
+          draftPreferenceId: {
+            projectId,
+            userId: this.id,
+            ...expand(this.instance.params),
+          },
+        },
+        data: { type: preferenceType, score: updatedRank },
+        include: { project: { include: { details: true } } },
+      })
+      .then((data) => ({
+        project: projectDataToDTO(data.project),
+        rank: updatedRank,
+      }));
   }
 
   public async updateManyDraftPreferenceTypes(
     projectIds: string[],
     preferenceType: PreferenceType | undefined,
   ): Promise<void> {
-    return await this.dal.student.setManyDraftPreferenceTypes(
-      this.id,
+    // TODO fix
+    return await updateManyPreferenceTransaction(this.db, {
+      userId: this.id,
+      params: this.instance.params,
       projectIds,
       preferenceType,
-      this.instance.params,
-    );
+    });
   }
 
   public async submitPreferences(): Promise<Date> {
-    return await this.dal.student.submitPreferences(
-      this.id,
-      this.instance.params,
-    );
+    const newSubmissionDateTime = new Date();
+
+    await this.db.$transaction(async (tx) => {
+      const preferences = await tx.studentDraftPreference.findMany({
+        where: {
+          userId: this.id,
+          type: PreferenceType.PREFERENCE,
+          ...expand(this.instance.params),
+        },
+        select: { projectId: true, score: true },
+        orderBy: { score: "asc" },
+      });
+
+      await tx.studentSubmittedPreference.deleteMany({
+        where: { userId: this.id, ...expand(this.instance.params) },
+      });
+
+      await tx.studentSubmittedPreference.createMany({
+        data: preferences.map(({ projectId }, i) => ({
+          projectId,
+          rank: i + 1,
+          userId: this.id,
+          ...expand(this.instance.params),
+        })),
+      });
+
+      await tx.studentDetails.update({
+        where: {
+          studentDetailsId: {
+            userId: this.id,
+            ...expand(this.instance.params),
+          },
+        },
+        data: { latestSubmissionDateTime: newSubmissionDateTime },
+      });
+    });
+
+    return newSubmissionDateTime;
   }
 }

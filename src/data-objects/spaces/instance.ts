@@ -77,7 +77,7 @@ export class AllocationInstance extends DataObject {
     return this._data!;
   }
 
-  public async getStudentProjectAllocation(): Promise<StudentProjectAllocationData> {
+  public async getAllocationData(): Promise<StudentProjectAllocationData> {
     return await StudentProjectAllocationData.fromDB(this.db, this.params);
   }
 
@@ -113,15 +113,18 @@ export class AllocationInstance extends DataObject {
     return childInstance;
   }
 
+  public async getAlgorithms() {
+    return await this.db.algorithmConfigInInstance.findMany({
+      where: expand(this.params),
+      include: { algorithmConfig: true },
+    });
+  }
+
   // TODO review the nullish behaviour here
   public async getSelectedAlg(): Promise<Algorithm | undefined> {
     const { selectedAlgConfigId: id } = await this.get();
     if (id) return new Algorithm(this.db, id);
     else return undefined;
-  }
-
-  public async getAllocationData(): Promise<StudentProjectAllocationData> {
-    return await StudentProjectAllocationData.fromDB(this.db, this.params);
   }
 
   public async getFlags(): Promise<FlagDTO[]> {
@@ -130,6 +133,17 @@ export class AllocationInstance extends DataObject {
 
   public async getTags(): Promise<TagDTO[]> {
     return await this.db.tag.findMany({ where: expand(this.params) });
+  }
+
+  public async getProjectDetails() {
+    return await this.db.projectInInstance.findMany({
+      where: expand(this.params),
+      include: {
+        details: { include: { flagsOnProject: { include: { flag: true } } } },
+        supervisor: true,
+        studentAllocations: true,
+      },
+    });
   }
 
   /**
@@ -699,7 +713,6 @@ export class AllocationInstance extends DataObject {
       this.db.projectDetails.updateMany({
         where: {
           preAllocatedStudentId: userId,
-          // TODO check me on this;
           projectInInstance: { every: expand(this.params) },
         },
         data: { preAllocatedStudentId: null },
@@ -715,7 +728,6 @@ export class AllocationInstance extends DataObject {
       this.db.projectDetails.updateMany({
         where: {
           preAllocatedStudentId: { in: studentIds },
-          // TODO check me on this;
           projectInInstance: { every: expand(this.params) },
         },
         data: { preAllocatedStudentId: null },
@@ -724,22 +736,6 @@ export class AllocationInstance extends DataObject {
         where: { ...expand(this.params), userId: { in: studentIds } },
       }),
     ]);
-  }
-
-  /**
-   * ?? @deprecated? use unlink instead?
-   * @param userId
-   */
-  public async deleteStudent(userId: string): Promise<void> {
-    await this.db.studentDetails.delete({
-      where: { studentDetailsId: { userId, ...expand(this.params) } },
-    });
-  }
-
-  public async deleteStudents(userIds: string[]): Promise<void> {
-    await this.db.studentDetails.deleteMany({
-      where: { userId: { in: userIds }, ...expand(this.params) },
-    });
   }
 
   public async deleteSupervisor(userId: string): Promise<void> {
