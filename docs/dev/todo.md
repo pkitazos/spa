@@ -25,7 +25,7 @@
       - [ ] allSupervisorResults
     - [x] **institution.instance.preference** <!-- ok -->
     - [ ] **institution.instance.matching** (4 remaining)
-      - [ ] rowData <!-- todo -->
+      - [x] rowData <!-- todo -->
       - [ ] updateAllocation <!-- todo -->
       - [ ] getRandomAllocation <!-- pin -->
       - [ ] getRandomAllocationForAll <!-- pin -->
