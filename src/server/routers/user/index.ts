@@ -54,6 +54,7 @@ export const userRouter = createTRPCRouter({
       const groups = await user.getManagedGroups();
       const subGroups = await user.getManagedSubGroups();
 
+      // TODO does this need to be nubs'ed?
       return [...groups, ...subGroups];
     }),
 

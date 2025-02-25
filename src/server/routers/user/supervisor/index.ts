@@ -11,7 +11,6 @@ import { createTRPCRouter } from "@/server/trpc";
 import { formatSupervisorRowProjects } from "./_utils/supervisor-row-projects";
 
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
-import { User } from "@/data-objects/users/user";
 import { Stage } from "@/db/types";
 import { flagDtoSchema, tagDtoSchema, userDtoSchema } from "@/dto";
 import { studentDtoSchema } from "@/dto/student";
@@ -25,8 +24,8 @@ export const supervisorRouter = createTRPCRouter({
     .input(z.object({ supervisorId: z.string() }))
     .output(z.boolean())
     .query(
-      async ({ ctx: { dal, db }, input: { supervisorId, params } }) =>
-        await new User(dal, db, supervisorId).isInstanceSupervisor(params),
+      async ({ ctx: { instance }, input: { supervisorId } }) =>
+        await instance.isSupervisor(supervisorId),
     ),
 
   allocationAccess: procedure.instance.user
