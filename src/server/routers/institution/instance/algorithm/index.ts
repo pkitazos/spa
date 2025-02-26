@@ -1,16 +1,15 @@
-import { Role } from "@prisma/client";
 import { z } from "zod";
 
 import { expand } from "@/lib/utils/general/instance-params";
 import {
-  AlgorithmResultDto,
-  algorithmSchema,
-  builtInAlgSchema,
+  algorithmDtoSchema,
+  AlgorithmResultDTO,
+  builtInAlgorithms,
 } from "@/lib/validations/algorithm";
 import {
   blankResult,
   MatchingDetailsDto,
-  matchingResultSchema,
+  matchingServiceResponseSchema,
   SupervisorMatchingDetailsDto,
 } from "@/lib/validations/matching";
 import { instanceParamsSchema } from "@/lib/validations/params";
@@ -18,178 +17,108 @@ import { instanceParamsSchema } from "@/lib/validations/params";
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter, instanceAdminProcedure } from "@/server/trpc";
 
-import { applyModifiers } from "./_utils/apply-modifiers";
-import { executeMatchingAlgorithm } from "./_utils/execute-matching-algorithm";
 import {
   extractMatchingDetails,
   parseMatchingResult,
 } from "./_utils/extract-matching-details";
 import { getAlgorithmsInOrder } from "./_utils/get-algorithms-in-order";
-import { getBuiltInAlgorithm } from "./_utils/get-built-in-algorithm";
-import { getMatchingData } from "./_utils/get-matching-data";
 
-import { getSupervisorPreAllocatedProjects } from "@/db/transactions/supervisor-pre-allocations";
+import { Role } from "@/db/types";
 
 export const algorithmRouter = createTRPCRouter({
+  // BREAKING input/output type changed
   run: procedure.instance.subGroupAdmin
-    .input(z.object({ algorithm: algorithmSchema }))
-    .output(
-      z.object({ totalStudents: z.number(), matchedStudents: z.number() }),
-    )
-    .mutation(async ({ ctx: { instance, db }, input: { algorithm } }) => {
-      const matchingData = await getMatchingData(db, ctx.instance).then(
-        (data) => applyModifiers(data, algorithm),
-      );
+    .input(z.object({ algConfigId: z.string() }))
+    .output(z.object({ total: z.number(), matched: z.number() }))
+    .mutation(async ({ ctx: { instance }, input: { algConfigId } }) => {
+      const alg = instance.getAlgorithm(algConfigId); // ? this feels weird
 
-      const matchingResults = await executeMatchingAlgorithm({
-        algorithm,
-        matchingData,
-      });
-
-      const builtInAlg = getBuiltInAlgorithm(algorithm.algName);
-
-      if (builtInAlg) {
-        await ctx.db.algorithm.upsert({
-          where: {
-            algorithmId: {
-              algName: algorithm.algName,
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-            },
-          },
-          update: { matchingResultData: JSON.stringify(matchingResults) },
-          create: {
-            ...builtInAlg,
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            matchingResultData: JSON.stringify(matchingResults),
-          },
-        });
-      } else {
-        await ctx.db.algorithm.update({
-          where: {
-            algorithmId: {
-              algName: algorithm.algName,
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-            },
-          },
-          data: { matchingResultData: JSON.stringify(matchingResults) },
-        });
-      }
-
-      return {
-        totalStudents: matchingData.students.length,
-        matchedStudents: matchingResults.size,
-      };
+      const matchingData = await instance.getMatchingData();
+      return await alg.run(matchingData);
     }),
 
   // BREAKING return type is now set
+  // ! same problem as with renaming allocation instances
   takenNames: procedure.instance.subGroupAdmin
     .output(z.set(z.string()))
     .query(async ({ ctx: { instance } }) => {
       const takenNames = await instance.getAlgorithms();
 
       return new Set(
-        takenNames.map(({ algorithmConfig: { algName } }) => algName),
+        takenNames.map(({ algorithmConfig: { displayName } }) => displayName),
       );
     }),
 
   create: procedure.instance.subGroupAdmin
-    .input(z.object({ data: algorithmSchema }))
+    .input(z.object({ data: algorithmDtoSchema }))
     .output(z.void())
     .mutation(async ({ ctx, input: { params, data } }) => {
+      // instance.createAlgorithm
       await ctx.db.algorithmConfig.create({
         data: {
           ...data,
-          algorithmInInstances: {
-            create: { ...expand(params), matchingResultId: "// TODO" },
-          },
+          algorithmInInstances: { create: { ...expand(params) } },
         },
       });
     }),
 
-  // TODO review?
   delete: procedure.instance.subGroupAdmin
     .input(z.object({ algId: z.string() }))
     .mutation(async ({ ctx, input: { algId: id } }) => {
+      // instance.deleteAlgorithm
       await ctx.db.algorithmConfig.delete({ where: { id } });
     }),
 
   getAll: procedure.instance.subGroupAdmin
     .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
+    .query(async ({ ctx, input: { params } }) => {
+      // instance.getAllAlgorithms
+      const customAlgorithms = await ctx.db.algorithmConfigInInstance.findMany({
+        where: {
+          ...expand(params),
+          algConfigId: { notIn: builtInAlgorithms.map((a) => a.id) },
         },
-      }) => {
-        const customAlgorithms = await ctx.db.algorithm.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            NOT: builtInAlgSchema.options.map((algName) => ({ algName })),
-          },
-        });
+      });
 
-        const allAlgorithms = getAlgorithmsInOrder(customAlgorithms);
+      const allAlgorithms = getAlgorithmsInOrder(customAlgorithms);
 
-        return allAlgorithms.map((a) => ({
-          algName: a.algName,
-          displayName: a.displayName,
-          description: a.description ?? "",
-          targetModifier: a.targetModifier,
-          upperBoundModifier: a.upperBoundModifier,
-          maxRank: a.maxRank,
-          flags: [a.flag1, a.flag2, a.flag3].filter((f) => f !== null),
-        }));
-      },
-    ),
+      return allAlgorithms.map((a) => ({
+        algName: a.algName,
+        displayName: a.displayName,
+        description: a.description ?? "",
+        targetModifier: a.targetModifier,
+        upperBoundModifier: a.upperBoundModifier,
+        maxRank: a.maxRank,
+        flags: [a.flag1, a.flag2, a.flag3].filter((f) => f !== null),
+      }));
+    }),
 
   getAllSummaryResults: instanceAdminProcedure
     .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const algorithmData = await ctx.db.algorithm.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          },
-          select: {
-            algName: true,
-            displayName: true,
-            matchingResultData: true,
-          },
-          orderBy: { algName: "asc" },
-        });
+    .query(async ({ ctx, input: { params } }) => {
+      // instance.getSummaryResults
+      // internally this does a bunch of algorithm.getSummaryResults
+      const algorithmData = await ctx.db.algorithmConfigInInstance.findMany({
+        where: expand(params),
+        select: { algName: true, displayName: true, matchingResultData: true },
+        orderBy: { algName: "asc" },
+      });
 
-        const resultsByAlgName = new Map<string, AlgorithmResultDto>();
+      const resultsByAlgName = new Map<string, AlgorithmResultDTO>();
 
-        for (const {
-          algName,
-          displayName,
-          matchingResultData: data,
-        } of algorithmData) {
-          const { weight, size, profile, cost } = parseMatchingResult(data);
-          const dto = { algName, displayName, weight, size, profile, cost };
-          resultsByAlgName.set(algName, dto);
-        }
+      for (const {
+        algName,
+        displayName,
+        matchingResultData: data,
+      } of algorithmData) {
+        const { weight, size, profile, cost } = parseMatchingResult(data);
+        const dto = { algName, displayName, weight, size, profile, cost };
+        resultsByAlgName.set(algName, dto);
+      }
 
-        const algs = getAlgorithmsInOrder(algorithmData);
-        return algs.map((a) => resultsByAlgName.get(a.algName)!);
-      },
-    ),
+      const algs = getAlgorithmsInOrder(algorithmData);
+      return algs.map((a) => resultsByAlgName.get(a.algName)!);
+    }),
 
   singleResult: instanceAdminProcedure
     .input(z.object({ params: instanceParamsSchema, algName: z.string() }))
@@ -201,6 +130,7 @@ export const algorithmRouter = createTRPCRouter({
           params: { group, subGroup, instance },
         },
       }) => {
+        // algorithm.getResults
         const res = await ctx.db.algorithm.findFirst({
           where: {
             algName,
@@ -213,7 +143,7 @@ export const algorithmRouter = createTRPCRouter({
 
         if (!res) return blankResult;
 
-        const result = matchingResultSchema.safeParse(
+        const result = matchingServiceResponseSchema.safeParse(
           JSON.parse(res.matchingResultData as string),
         );
 
@@ -232,6 +162,8 @@ export const algorithmRouter = createTRPCRouter({
           params: { group, subGroup, instance },
         },
       }) => {
+        // instance.getStudentResults
+        // internally this does a bunch of algorithm.getStudentResults
         const algorithmData = await ctx.db.algorithm.findMany({
           where: {
             allocationGroupId: group,
@@ -308,6 +240,8 @@ export const algorithmRouter = createTRPCRouter({
           params: { group, subGroup, instance },
         },
       }) => {
+        // instance.getSupervisorResults
+        // internally this does a bunch of algorithm.getSupervisorResults
         const algorithmData = await ctx.db.algorithm.findMany({
           where: {
             allocationGroupId: group,
@@ -322,12 +256,24 @@ export const algorithmRouter = createTRPCRouter({
           orderBy: { algName: "asc" },
         });
 
-        const supervisorPreAllocations =
-          await getSupervisorPreAllocatedProjects(ctx.db, {
-            group,
-            subGroup,
-            instance,
-          });
+        const supervisorPreAllocations = await ctx.db.project
+          .findMany({
+            where: {
+              allocationGroupId: group,
+              allocationSubGroupId: subGroup,
+              allocationInstanceId: instance,
+              preAllocatedStudentId: { not: null },
+            },
+          })
+          .then((data) =>
+            data.reduce(
+              (acc, val) => {
+                acc[val.supervisorId] = (acc[val.supervisorId] ?? 0) + 1;
+                return acc;
+              },
+              {} as Record<string, number>,
+            ),
+          );
 
         const supervisors = await ctx.db.supervisorInstanceDetails
           .findMany({

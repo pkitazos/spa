@@ -7,7 +7,8 @@ import {
   MinCostAlgorithm,
 } from "@/config/algorithms";
 
-export function getAlgorithmsInOrder<T extends { algName: string }>(
+// TODO: should be displayed in the order they were created, except the built-in ones which should be displayed first
+export function getAlgorithmsInOrder<T extends { displayName: string }>(
   algorithmData: T[],
 ) {
   const builtInAlgs = [
@@ -20,8 +21,8 @@ export function getAlgorithmsInOrder<T extends { algName: string }>(
   const customAlgs = relativeComplement(
     algorithmData,
     builtInAlgs,
-    (a, b) => a.algName === b.algName,
-  ).sort((a, b) => a.algName.localeCompare(b.algName));
+    (a, b) => a.displayName === b.displayName,
+  ).sort((a, b) => a.displayName.localeCompare(b.displayName));
 
   return [...builtInAlgs, ...customAlgs];
 }

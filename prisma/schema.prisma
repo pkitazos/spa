@@ -466,7 +466,6 @@ model TagOnProject {
 
 model AlgorithmConfig {
     id                 String         @id @default(uuid())
-    algName            String         @map("alg_name")
     displayName        String         @map("display_name")
     description        String?
     targetModifier     Int            @default(0) @map("target_modifier")
@@ -483,8 +482,6 @@ model AlgorithmConfig {
 
 model AlgorithmConfigInInstance {
     algConfigId          String             @map("alg_config_id")
-    matchingResultId     String?            @map("matching_result_id")
-    matchingResult       MatchingResult?    @relation(fields: [matchingResultId], references: [id], onDelete: Cascade)
     // ---
     allocationGroupId    String             @map("allocation_group_id")
     allocationSubGroupId String             @map("allocation_sub_group_id")
@@ -492,34 +489,36 @@ model AlgorithmConfigInInstance {
     // ---
     allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
     algorithmConfig      AlgorithmConfig    @relation(fields: [algConfigId], references: [id], onDelete: Cascade)
+    matchingResult       MatchingResult?    @relation(map: "alg_config_in_instance")
 
     @@id(name: "algConfigInInstanceId", map: "alg_config_in_instance_id", [algConfigId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@map("algorithm_config_in_instance")
 }
 
 model MatchingResult {
-    id                        String                      @id @default(uuid())
-    modifiedAt                DateTime                    @updatedAt @map("modified_at")
+    id                        String                    @id @default(uuid())
+    modifiedAt                DateTime                  @updatedAt @map("modified_at")
     // details 
     profile                   Int[]
     degree                    Int
     size                      Int
     weight                    Int
     cost                      Int
-    costSq                    Int                         @map("cost_sq")
-    maxLecAbsDiff             Int                         @map("max_lec_abs_diff")
-    sumLecAbsDiff             Int                         @map("sum_lec_abs_diff")
+    costSq                    Int                       @map("cost_sq")
+    maxLecAbsDiff             Int                       @map("max_lec_abs_diff")
+    sumLecAbsDiff             Int                       @map("sum_lec_abs_diff")
     matching                  MatchingPair[]
     ranks                     Int[]
     // ---
-    allocationGroupId         String                      @map("allocation_group_id")
-    allocationSubGroupId      String                      @map("allocation_sub_group_id")
-    allocationInstanceId      String                      @map("allocation_instance_id")
-    algConfigId               String                      @map("algorithm_config_id")
+    allocationGroupId         String                    @map("allocation_group_id")
+    allocationSubGroupId      String                    @map("allocation_sub_group_id")
+    allocationInstanceId      String                    @map("allocation_instance_id")
+    algConfigId               String                    @map("algorithm_config_id")
     // ---
-    allocationInstance        AllocationInstance          @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
-    algorithmConfigInInstance AlgorithmConfigInInstance[]
+    allocationInstance        AllocationInstance        @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+    algorithmConfigInInstance AlgorithmConfigInInstance @relation(map: "alg_config_in_instance", fields: [algConfigId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [algConfigId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
 
+    @@unique(name: "algConfigInInstanceId", [algConfigId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@map("matching_result")
 }
 

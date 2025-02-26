@@ -1,51 +1,63 @@
-import { TRPCClientError } from "@trpc/client";
 import axios from "axios";
 
-import { Algorithm, builtInAlgSchema } from "@/lib/validations/algorithm";
+import { AlgorithmDTO, builtInAlgSchema } from "@/lib/validations/algorithm";
 import {
-  MatchingDataDto,
+  MatchingDataDTO,
   MatchingDataWithArgs,
-  serverResponseSchema,
+  matchingServiceResponseSchema,
 } from "@/lib/validations/matching";
 
-import { generateArgs } from "./generate-args";
-
+import { AlgorithmFlag } from "@/db/types";
+import { AlgorithmRunResult } from "@/dto/algorithm-run-result";
 import { env } from "@/env";
 
-export async function executeMatchingAlgorithm({
-  algorithm: { algName, flag1, flag2, flag3 },
-  matchingData,
-}: {
-  algorithm: Algorithm;
-  matchingData: MatchingDataDto | MatchingDataWithArgs;
-}) {
-  const endpoint = builtInAlgSchema.safeParse(algName).success ? algName : "";
+export async function executeMatchingAlgorithm(
+  algorithm: AlgorithmDTO,
+  matchingData: MatchingDataDTO | MatchingDataWithArgs,
+) {
+  let endpoint = algorithm.id;
 
-  if (endpoint === "") {
-    matchingData = {
-      ...matchingData,
-      args: generateArgs({ flag1, flag2, flag3 }),
-    };
+  if (!builtInAlgSchema.options.includes(algorithm.id)) {
+    endpoint = "";
+    matchingData = { ...matchingData, args: generateArgs(algorithm) };
   }
 
   const result = await axios
     .post(`${env.SERVER_URL}/${endpoint}`, matchingData)
-    .then((res) => serverResponseSchema.safeParse(res.data));
+    .then((res) => matchingServiceResponseSchema.safeParse(res.data));
 
   if (!result.success) {
-    throw new TRPCClientError(
-      "Matching server did not return a valid response",
-    );
+    return {
+      status: AlgorithmRunResult.ERR,
+      error: "Matching server did not return a valid response",
+    };
   }
 
   const serverResponse = result.data;
   if (serverResponse.status === 400) {
-    throw new TRPCClientError("Infeasible");
+    return {
+      status: AlgorithmRunResult.INFEASIBLE,
+      error: "Matching result is infeasible",
+    };
   }
 
   if (!serverResponse.data) {
-    throw new TRPCClientError("Matching server did not return any data");
+    return {
+      status: AlgorithmRunResult.EMPTY,
+      error: "Matching server did not return any data",
+    };
   }
 
-  return serverResponse.data;
+  return { status: AlgorithmRunResult.OK, data: serverResponse };
+}
+
+const toArg = (flag: AlgorithmFlag) => `-${flag.toLowerCase()}`;
+
+function generateArgs(algorithm: AlgorithmDTO) {
+  const args = ["-na", "3", toArg(algorithm.flag1), "1"];
+
+  if (algorithm.flag2) args.push(...[toArg(algorithm.flag2), "2"]);
+  if (algorithm.flag3) args.push(...[toArg(algorithm.flag3), "3"]);
+
+  return args;
 }

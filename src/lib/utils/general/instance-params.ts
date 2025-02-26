@@ -1,4 +1,8 @@
-import { InstanceParams, PageParams } from "@/lib/validations/params";
+import {
+  AlgorithmInstanceParams,
+  InstanceParams,
+  PageParams,
+} from "@/lib/validations/params";
 
 // TODO Both of these should probably be on the instance DO
 
@@ -16,6 +20,10 @@ export function toInstanceId(params: InstanceParams, instanceId?: string) {
     allocationSubGroupId: params.subGroup,
     id: instanceId ?? params.instance,
   };
+}
+
+export function toAlgCIIID(params: AlgorithmInstanceParams) {
+  return { algConfigId: params.algConfigId, ...expand(params) };
 }
 
 export function toProjectParams(params: InstanceParams, projectId: string) {
