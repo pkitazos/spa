@@ -1,9 +1,9 @@
-import { Algorithm } from "@/lib/validations/algorithm";
-import { MatchingDataDto } from "@/lib/validations/matching";
+import { AlgorithmDTO } from "@/lib/validations/algorithm";
+import { MatchingDataDTO } from "@/lib/validations/matching";
 
 export function applyModifiers(
-  { students, supervisors, projects }: MatchingDataDto,
-  { maxRank, targetModifier, upperBoundModifier }: Algorithm,
+  { students, supervisors, projects }: MatchingDataDTO,
+  { maxRank, targetModifier, upperBoundModifier }: AlgorithmDTO,
 ) {
   return {
     projects,

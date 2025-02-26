@@ -1,5 +1,6 @@
-import { AlgorithmFlag } from "@prisma/client";
 import { z } from "zod";
+
+import { matchingServiceResponseSchema } from "./matching";
 
 import {
   GenerousAlgorithm,
@@ -7,6 +8,7 @@ import {
   GreedyGenAlgorithm,
   MinCostAlgorithm,
 } from "@/config/algorithms";
+import { AlgorithmFlag } from "@/db/types";
 
 // TODO: centralise built-in algorithm names
 
@@ -20,29 +22,6 @@ export const allFlags = [
   { label: "MINCOST", value: AlgorithmFlag.MINCOST },
   { label: "MINSQCOST", value: AlgorithmFlag.MINSQCOST },
 ] as const;
-
-export const builtInAlgSchema = z.enum([
-  "generous",
-  "greedy",
-  "minimum-cost",
-  "greedy-generous",
-]);
-
-export type BuiltInAlg = z.infer<typeof builtInAlgSchema>;
-
-export const algorithmSchema = z.object({
-  algName: z.string(),
-  displayName: z.string(),
-  description: z.string(),
-  flag1: algorithmFlagSchema,
-  flag2: algorithmFlagSchema.nullable(),
-  flag3: algorithmFlagSchema.nullable(),
-  targetModifier: z.coerce.number().int().nonnegative(),
-  upperBoundModifier: z.coerce.number().int().nonnegative(),
-  maxRank: z.number().int().min(-1),
-});
-
-export type Algorithm = z.infer<typeof algorithmSchema>;
 
 // TODO: derive this from existing algorithmSchema
 export function buildNewAlgorithmSchema(takenNames: string[]) {
@@ -64,32 +43,31 @@ export function buildNewAlgorithmSchema(takenNames: string[]) {
     flag3: algorithmFlagSchema.optional(),
     targetModifier: z.coerce.number().int().nonnegative(),
     upperBoundModifier: z.coerce.number().int().nonnegative(),
-    maxRank: z.coerce.number().int().min(-1), //TODO: don't allow 0
+    maxRank: z.coerce.number().int().positive().or(z.literal(-1)),
   });
 }
 
-const algorithmDtoSchema = z.object({
-  algName: z.string(),
+export const algorithmDtoSchema = z.object({
+  id: z.string(),
   displayName: z.string(),
-  description: z.string(),
-  flags: z.array(z.nativeEnum(AlgorithmFlag)),
+  description: z.string().optional(),
+  flag1: algorithmFlagSchema,
+  flag2: algorithmFlagSchema.optional(),
+  flag3: algorithmFlagSchema.optional(),
   targetModifier: z.number(),
   upperBoundModifier: z.number(),
   maxRank: z.number(),
 });
 
-export type AlgorithmDto = z.infer<typeof algorithmDtoSchema>;
+export type AlgorithmDTO = z.infer<typeof algorithmDtoSchema>;
 
+// BREAKING
 export const algorithmResultDtoSchema = z.object({
-  algName: z.string(),
-  displayName: z.string(),
-  weight: z.number(),
-  size: z.number(),
-  cost: z.number(),
-  profile: z.array(z.number()),
+  algorithm: algorithmDtoSchema,
+  matchingResults: matchingServiceResponseSchema,
 });
 
-export type AlgorithmResultDto = z.infer<typeof algorithmResultDtoSchema>;
+export type AlgorithmResultDTO = z.infer<typeof algorithmResultDtoSchema>;
 
 export const builtInAlgorithms = [
   GenerousAlgorithm,
@@ -97,3 +75,12 @@ export const builtInAlgorithms = [
   MinCostAlgorithm,
   GreedyGenAlgorithm,
 ];
+
+export const builtInAlgSchema = z.enum([
+  GenerousAlgorithm.id,
+  GreedyAlgorithm.id,
+  MinCostAlgorithm.id,
+  GreedyGenAlgorithm.id,
+]);
+
+export type BuiltInAlg = z.infer<typeof builtInAlgSchema>;

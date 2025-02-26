@@ -1,8 +1,6 @@
 import { z } from "zod";
 
-export const groupParamsSchema = z.object({
-  group: z.string(),
-});
+export const groupParamsSchema = z.object({ group: z.string() });
 
 export const subGroupParamsSchema = z.object({
   group: z.string(),
@@ -47,3 +45,12 @@ export type RefinedSpaceParams = z.infer<typeof refinedSpaceParamsSchema>;
 export type PageParams = InstanceParams & { id: string };
 
 export type SearchParams = { [key: string]: string | string[] | undefined };
+
+//  ---
+
+export type AlgorithmInstanceParams = {
+  algConfigId: string;
+  group: string;
+  subGroup: string;
+  instance: string;
+};

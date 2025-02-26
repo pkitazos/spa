@@ -22,7 +22,7 @@ import {
 } from "@/components/yes-no-action";
 
 import { api } from "@/lib/trpc/client";
-import { AlgorithmDto } from "@/lib/validations/algorithm";
+import { AlgorithmDTO } from "@/lib/validations/algorithm";
 
 import { useAlgorithmUtils } from "./algorithm-context";
 import { RunAlgorithmButton } from "./run-algorithm-button";
@@ -52,7 +52,7 @@ export function useAlgorithmColumns() {
     );
   }
 
-  const columnHelper = createColumnHelper<AlgorithmDto>();
+  const columnHelper = createColumnHelper<AlgorithmDTO>();
 
   const columns = [
     columnHelper.display({
@@ -60,7 +60,7 @@ export function useAlgorithmColumns() {
       header: "",
       cell: ({
         row: {
-          original: { algName, displayName, description },
+          original: { name: algName, displayName, description },
         },
       }) => {
         if (description !== "") {

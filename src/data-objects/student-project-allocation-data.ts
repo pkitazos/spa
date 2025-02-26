@@ -16,9 +16,9 @@ import {
 } from "@/db/types";
 
 export class StudentProjectAllocationData extends DataObject {
-  private allocationData: hello[];
+  private allocationData: DB_Data[];
 
-  constructor(db: DB, data: hello[]) {
+  constructor(db: DB, data: DB_Data[]) {
     super(db);
     this.db = db;
     this.allocationData = data;
@@ -157,7 +157,7 @@ export class StudentProjectAllocationData extends DataObject {
 }
 
 // pin
-type hello = DB_StudentProjectAllocation & {
+type DB_Data = DB_StudentProjectAllocation & {
   student: {
     userInInstance: { user: DB_User } & DB_UserInInstance;
   } & DB_StudentDetails;

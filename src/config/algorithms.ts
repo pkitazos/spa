@@ -1,11 +1,11 @@
-import { AlgorithmFlag } from "@prisma/client";
+import { AlgorithmDTO } from "@/lib/validations/algorithm";
 
-import { Algorithm } from "@/lib/validations/algorithm";
+import { AlgorithmFlag } from "@/db/types";
 
 // TODO: change algName to id
 
 export const GenerousAlgorithm = {
-  algName: "generous",
+  id: "generous",
   displayName: "Generous",
   description:
     "Produces a matching that has maximum cardinality, and subject to this, minimises the number of Rth choices, and subject to this, minimises the number of (R-1)th choices, etc., where R is the maximum length of a preference list.",
@@ -15,10 +15,10 @@ export const GenerousAlgorithm = {
   targetModifier: 0,
   upperBoundModifier: 0,
   maxRank: -1,
-} satisfies Algorithm;
+} as const satisfies AlgorithmDTO;
 
 export const GreedyAlgorithm = {
-  algName: "greedy",
+  id: "greedy",
   displayName: "Greedy",
   description:
     "Produces a matching that has maximum cardinality, and subject to this, maximises the number of first choices, and subject to this, maximises the number of second choices, etc.",
@@ -28,10 +28,10 @@ export const GreedyAlgorithm = {
   targetModifier: 0,
   upperBoundModifier: 0,
   maxRank: -1,
-} satisfies Algorithm;
+} as const satisfies AlgorithmDTO;
 
 export const MinCostAlgorithm = {
-  algName: "minimum-cost",
+  id: "minimum-cost",
   displayName: "Minimum Cost",
   description:
     "Produces a maximum cardinality matching that has minimum cost, where the cost of a matching is the sum, taken over all matched students, of the rank of each student's assigned project in their preference list.",
@@ -41,10 +41,10 @@ export const MinCostAlgorithm = {
   targetModifier: 0,
   upperBoundModifier: 0,
   maxRank: -1,
-} satisfies Algorithm;
+} as const satisfies AlgorithmDTO;
 
 export const GreedyGenAlgorithm = {
-  algName: "greedy-generous",
+  id: "greedy-generous",
   displayName: "Greedy-Generous",
   description:
     "Produces a greedy maximum matching relative to the first k elements on every student's preference list, where k is the maximum integer such that some agent obtains their kth choice project in a generous maximum matching.",
@@ -54,4 +54,4 @@ export const GreedyGenAlgorithm = {
   targetModifier: 0,
   upperBoundModifier: 0,
   maxRank: -1,
-} satisfies Algorithm;
+} as const satisfies AlgorithmDTO;

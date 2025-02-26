@@ -6,7 +6,9 @@ import { InstanceParams } from "@/lib/validations/params";
 import { SupervisorProjectSubmissionDetails } from "@/lib/validations/supervisor-project-submission-details";
 import { TabType } from "@/lib/validations/tabs";
 
-import { Algorithm } from "../algorithm";
+import { collectMatchingData } from "@/server/routers/institution/instance/algorithm/_utils/get-matching-data";
+
+import { MatchingAlgorithm } from "../algorithm";
 import { DataObject } from "../data-object";
 import { StudentProjectAllocationData } from "../student-project-allocation-data";
 import { User } from "../users/user";
@@ -112,6 +114,12 @@ export class AllocationInstance extends DataObject {
 
     return childInstance;
   }
+  // ---------------------------------------------------------------------------
+
+  public async getMatchingData() {
+    const instanceData = await this.get();
+    return await collectMatchingData(this.db, instanceData);
+  }
 
   public async getAlgorithms() {
     return await this.db.algorithmConfigInInstance.findMany({
@@ -120,12 +128,19 @@ export class AllocationInstance extends DataObject {
     });
   }
 
-  // TODO review the nullish behaviour here
-  public async getSelectedAlg(): Promise<Algorithm | undefined> {
-    const { selectedAlgConfigId: id } = await this.get();
-    if (id) return new Algorithm(this.db, id);
-    else return undefined;
+  public getAlgorithm(algConfigId: string): MatchingAlgorithm {
+    return new MatchingAlgorithm(this.db, { algConfigId, ...this.params });
   }
+
+  // TODO review the nullish behaviour here
+  public async getSelectedAlg(): Promise<MatchingAlgorithm | undefined> {
+    const { selectedAlgConfigId: algConfigId } = await this.get();
+
+    if (!algConfigId) return undefined;
+    return new MatchingAlgorithm(this.db, { algConfigId, ...this.params });
+  }
+
+  // ---------------------------------------------------------------------------
 
   public async getFlags(): Promise<FlagDTO[]> {
     return await this.db.flag.findMany({ where: expand(this.params) });

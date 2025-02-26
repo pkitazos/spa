@@ -23,7 +23,7 @@ import {
   formatSize,
   formatWeight,
 } from "@/lib/utils/algorithm-results/format";
-import { AlgorithmResultDto } from "@/lib/validations/algorithm";
+import { AlgorithmResultDTO } from "@/lib/validations/algorithm";
 
 import { useAlgorithmUtils } from "./algorithm-context";
 
@@ -33,7 +33,7 @@ export function useAlgorithmResultColumns({
 }: {
   selectedAlgName: string | undefined;
   setSelectedAlgName: Dispatch<SetStateAction<string | undefined>>;
-}): ColumnDef<AlgorithmResultDto>[] {
+}): ColumnDef<AlgorithmResultDTO>[] {
   const params = useInstanceParams();
   const router = useRouter();
 
@@ -64,12 +64,8 @@ export function useAlgorithmResultColumns({
     );
   }
 
-  const columns: ColumnDef<AlgorithmResultDto>[] = [
-    {
-      id: "Name",
-      accessorFn: (a) => a.displayName,
-      header: "Name",
-    },
+  const columns: ColumnDef<AlgorithmResultDTO>[] = [
+    { id: "Name", accessorFn: (a) => a.displayName, header: "Name" },
     {
       id: "Weight",
       accessorFn: (a) => a.weight,

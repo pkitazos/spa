@@ -1,6 +1,9 @@
 import { Prisma } from "@prisma/client";
 
-import { blankResult, matchingResultSchema } from "@/lib/validations/matching";
+import {
+  blankResult,
+  matchingServiceResponseSchema,
+} from "@/lib/validations/matching";
 
 export function extractMatchingDetails(
   allStudents: { id: string; name: string | null }[],
@@ -42,6 +45,8 @@ export function extractMatchingDetails(
 }
 
 export function parseMatchingResult(data: Prisma.JsonValue) {
-  const res = matchingResultSchema.safeParse(JSON.parse(data as string));
+  const res = matchingServiceResponseSchema.safeParse(
+    JSON.parse(data as string),
+  );
   return res.success ? res.data : blankResult;
 }
