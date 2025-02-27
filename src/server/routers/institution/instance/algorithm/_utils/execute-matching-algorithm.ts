@@ -41,14 +41,16 @@ export async function executeMatchingAlgorithm(
     };
   }
 
-  if (!serverResponse.data) {
+  const data = serverResponse.data;
+
+  if (!data) {
     return {
       status: AlgorithmRunResult.EMPTY,
       error: "Matching server did not return any data",
     };
   }
 
-  return { status: AlgorithmRunResult.OK, data: serverResponse };
+  return { status: AlgorithmRunResult.OK, data };
 }
 
 const toArg = (flag: AlgorithmFlag) => `-${flag.toLowerCase()}`;
