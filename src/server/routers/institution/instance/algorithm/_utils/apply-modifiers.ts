@@ -1,6 +1,7 @@
 import { AlgorithmDTO } from "@/lib/validations/algorithm";
 import { MatchingDataDTO } from "@/lib/validations/matching";
 
+// TODO: add docs + figure out where this was used
 export function applyModifiers(
   { students, supervisors, projects }: MatchingDataDTO,
   { maxRank, targetModifier, upperBoundModifier }: AlgorithmDTO,
@@ -29,11 +30,11 @@ export function applyModifiers(
   };
 }
 
-function adjustTarget(unstableTarget: number, targetModifier: number) {
+export function adjustTarget(unstableTarget: number, targetModifier: number) {
   return Math.max(unstableTarget + targetModifier, 0);
 }
 
-function adjustUpperBound(
+export function adjustUpperBound(
   unstableUpperBound: number,
   upperBoundModifier: number,
 ) {

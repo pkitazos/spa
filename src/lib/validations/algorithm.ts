@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { matchingServiceResponseSchema } from "./matching";
+import { matchingResultDtoSchema } from "./matching";
 
 import {
   GenerousAlgorithm,
@@ -50,6 +50,7 @@ export function buildNewAlgorithmSchema(takenNames: string[]) {
 export const algorithmDtoSchema = z.object({
   id: z.string(),
   displayName: z.string(),
+  createdAt: z.date(),
   description: z.string().optional(),
   flag1: algorithmFlagSchema,
   flag2: algorithmFlagSchema.optional(),
@@ -64,12 +65,12 @@ export type AlgorithmDTO = z.infer<typeof algorithmDtoSchema>;
 // BREAKING
 export const algorithmResultDtoSchema = z.object({
   algorithm: algorithmDtoSchema,
-  matchingResults: matchingServiceResponseSchema,
+  matchingResults: matchingResultDtoSchema,
 });
 
 export type AlgorithmResultDTO = z.infer<typeof algorithmResultDtoSchema>;
 
-export const builtInAlgorithms = [
+export const builtInAlgorithms: AlgorithmDTO[] = [
   GenerousAlgorithm,
   GreedyAlgorithm,
   MinCostAlgorithm,

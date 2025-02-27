@@ -7,24 +7,16 @@
  * need to use are documented accordingly near the end.
  */
 
-import { initTRPC, TRPCError } from "@trpc/server";
+import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
-import { z, ZodError } from "zod";
+import { ZodError } from "zod";
 
 import { auth } from "@/lib/auth";
 import { now } from "@/lib/utils/date/now";
-import { toInstanceId } from "@/lib/utils/general/instance-params";
 import { Session } from "@/lib/validations/auth";
-import {
-  instanceParamsSchema,
-  refinedSpaceParamsSchema,
-} from "@/lib/validations/params";
-
-import { checkAdminPermissions } from "./utils/admin/access";
 
 import { DAL } from "@/data-access";
 import { db } from "@/db";
-import { Role } from "@/db/types";
 
 /**
  * 1. CONTEXT
@@ -92,75 +84,3 @@ export const createCallerFactory = t.createCallerFactory;
  * @see https://trpc.io/docs/router
  */
 export const createTRPCRouter = t.router;
-
-/**
- * @deprecated - use the procedures from the middleware file
- * Middleware that enforces users are logged in before running the procedure.
- */
-const authedMiddleware = t.middleware(({ ctx: { session }, next }) => {
-  if (!session || !session.user) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "User is not signed in",
-    });
-  }
-  return next({ ctx: { session: { user: session.user } } });
-});
-
-/**
- * @deprecated - use the procedures from the middleware file
- * Protected (authenticated) procedure
- *
- * If you want a query or mutation to ONLY be accessible to logged in users, use this. It verifies
- * the session is valid and guarantees `ctx.session.user` is not null.
- *
- * @see https://trpc.io/docs/procedures
- */
-export const protectedProcedure = t.procedure.use(authedMiddleware);
-
-/**
- * @deprecated - use the procedures from the middleware file
- * Middleware that fetches the instance from the database and adds it to the context.
- */
-export const instanceMiddleware = authedMiddleware.unstable_pipe(
-  async ({ input, next }) => {
-    const { params } = z.object({ params: instanceParamsSchema }).parse(input);
-    const instance = await db.allocationInstance.findFirstOrThrow({
-      where: toInstanceId(params),
-    });
-
-    return next({ ctx: { instance: { params, ...instance } } });
-  },
-);
-
-/**
- * @deprecated - use the procedures from the middleware file
- * Procedure that enforces the user is a admin.
- */
-export const adminProcedure = protectedProcedure
-  .input(z.object({ params: refinedSpaceParamsSchema }))
-  .use(async ({ ctx, input, next }) => {
-    const user = ctx.session.user;
-    const membership = await checkAdminPermissions(
-      ctx.db,
-      input.params,
-      user.id,
-    );
-
-    if (!membership) {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "User is not an Admin",
-      });
-    }
-
-    return next({ ctx: { session: { user: { ...user, role: Role.ADMIN } } } });
-  });
-
-/**
- * @deprecated - use the procedures from the middleware file
- * Procedure that enforces the user is an Instance admin.
- */
-export const instanceAdminProcedure = adminProcedure
-  .input(z.object({ params: instanceParamsSchema }))
-  .use(instanceMiddleware);

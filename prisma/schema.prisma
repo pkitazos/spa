@@ -467,6 +467,7 @@ model TagOnProject {
 model AlgorithmConfig {
     id                 String         @id @default(uuid())
     displayName        String         @map("display_name")
+    createdAt          DateTime       @default(now()) @map("created_at")
     description        String?
     targetModifier     Int            @default(0) @map("target_modifier")
     upperBoundModifier Int            @default(0) @map("upper_bound_modifier")
