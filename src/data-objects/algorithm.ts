@@ -59,7 +59,7 @@ export class MatchingAlgorithm extends DataObject {
     const res = await executeMatchingAlgorithm(alg, matchingData);
 
     if (res.status === AlgorithmRunResult.OK) {
-      const data = res.data.data!; // TODO: idk how discriminated unions work @JakeTrevor
+      const { data } = res;
 
       const matchingResult = {
         profile: data.profile,
@@ -82,20 +82,27 @@ export class MatchingAlgorithm extends DataObject {
           studentRanking: x.preference_rank,
         }));
 
-      // @JakeTrevor Could make this a non-interactive transaction by adding the algorithmConfigId to the MatchingPairs
-      await this.db.$transaction(async (tx) => {
-        const { id: matchingResultId } = await tx.matchingResult.upsert({
+      await this.db.$transaction([
+        this.db.matchingPair.deleteMany({
+          where: {
+            matchingResult: {
+              algorithmConfigInInstance: toAlgCIIID(this.params),
+            },
+          },
+        }),
+
+        this.db.matchingResult.upsert({
           where: { algConfigInInstanceId: toAlgCIIID(this.params) },
           update: matchingResult,
-          create: { ...toAlgCIIID(this.params), ...matchingResult },
-        });
-
-        await tx.matchingPair.deleteMany({ where: { matchingResultId } });
-
-        await tx.matchingPair.createMany({
-          data: matchingPairs.map((x) => ({ ...x, matchingResultId })),
-        });
-      });
+          create: {
+            ...toAlgCIIID(this.params),
+            ...matchingResult,
+            matching: {
+              createMany: { data: matchingPairs, skipDuplicates: true },
+            },
+          },
+        }),
+      ]);
 
       return {
         total: matchingData.students.length,
