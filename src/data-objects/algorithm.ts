@@ -52,65 +52,61 @@ export class MatchingAlgorithm extends DataObject {
     return this._instance!;
   }
 
-  public async run(
-    matchingData: MatchingDataDTO,
-  ): Promise<{ total: number; matched: number }> {
+  // so something like this?
+  public async run(matchingData: MatchingDataDTO): Promise<AlgorithmRunResult> {
     const alg = await this.getConfig();
     const res = await executeMatchingAlgorithm(alg, matchingData);
 
-    if (res.status === AlgorithmRunResult.OK) {
-      const { data } = res;
+    if (res.status !== AlgorithmRunResult.OK) return res.status;
 
-      const matchingResult = {
-        profile: data.profile,
-        degree: data.degree,
-        size: data.size,
-        weight: data.weight,
-        cost: data.cost,
-        costSq: data.costSq,
-        maxLecAbsDiff: data.maxLecAbsDiff,
-        sumLecAbsDiff: data.sumLecAbsDiff,
-        ranks: data.ranks,
-      };
+    const { data } = res;
 
-      const matchingPairs = data.matching
-        .filter((x) => x.project_id !== "0")
-        .map((x) => ({
-          ...expand(this.params),
-          userId: x.student_id,
-          projectId: x.project_id,
-          studentRanking: x.preference_rank,
-        }));
+    const matchingResult = {
+      profile: data.profile,
+      degree: data.degree,
+      size: data.size,
+      weight: data.weight,
+      cost: data.cost,
+      costSq: data.costSq,
+      maxLecAbsDiff: data.maxLecAbsDiff,
+      sumLecAbsDiff: data.sumLecAbsDiff,
+      ranks: data.ranks,
+    };
 
-      await this.db.$transaction([
-        this.db.matchingPair.deleteMany({
-          where: {
-            matchingResult: {
-              algorithmConfigInInstance: toAlgCIIID(this.params),
-            },
+    const matchingPairs = data.matching
+      .filter((x) => x.project_id !== "0")
+      .map((x) => ({
+        ...expand(this.params),
+        userId: x.student_id,
+        projectId: x.project_id,
+        studentRanking: x.preference_rank,
+      }));
+
+    await this.db.$transaction([
+      this.db.matchingPair.deleteMany({
+        where: {
+          matchingResult: {
+            algorithmConfigInInstance: toAlgCIIID(this.params),
           },
-        }),
+        },
+      }),
 
-        this.db.matchingResult.upsert({
-          where: { algConfigInInstanceId: toAlgCIIID(this.params) },
-          update: matchingResult,
-          create: {
-            ...toAlgCIIID(this.params),
-            ...matchingResult,
-            matching: {
-              createMany: { data: matchingPairs, skipDuplicates: true },
-            },
+      this.db.matchingResult.upsert({
+        where: { algConfigInInstanceId: toAlgCIIID(this.params) },
+        update: matchingResult,
+        create: {
+          ...toAlgCIIID(this.params),
+          ...matchingResult,
+          matching: {
+            createMany: { data: matchingPairs, skipDuplicates: true },
           },
-        }),
-      ]);
+        },
+      }),
+    ]);
 
-      return {
-        total: matchingData.students.length,
-        matched: matchingPairs.length,
-      };
-    }
+    this._results = { ...matchingResult, matching: matchingPairs };
 
-    throw new Error(`Matching algorithm failed: ${res.error}`);
+    return AlgorithmRunResult.OK;
   }
 
   /**
