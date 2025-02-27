@@ -3,7 +3,11 @@ import { z } from "zod";
 import { projectDtoSchema } from "./project";
 import { userDtoSchema } from ".";
 
-import { PreferenceType } from "@/db/types";
+import { DB_StudentDetails, PreferenceType } from "@/db/types";
+
+export function toStudentDTO(data: DB_StudentDetails): StudentDTO {
+  return studentDtoSchema.parse(data);
+}
 
 export const studentDtoSchema = userDtoSchema.extend({
   level: z.number(),

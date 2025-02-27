@@ -1,3 +1,4 @@
+// MOVE
 // TODO: Refactor this file to use the new DTOs
 import { StudentDTO } from "@/dto/student";
 import {
@@ -52,7 +53,7 @@ export function formatSupervisorRowProjects(
       return {
         ...rest,
         allocatedStudentId: preAllocatedStudentId,
-        allocatedStudentName: allocatedStudents[idx].name,
+        allocatedStudentName: allocatedStudents[idx]!.name,
       };
     }
 

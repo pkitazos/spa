@@ -22,7 +22,7 @@ export function toInstanceId(params: InstanceParams, instanceId?: string) {
   };
 }
 
-export function toAlgCIIID(params: AlgorithmInstanceParams) {
+export function toAlgID(params: AlgorithmInstanceParams) {
   return { algConfigId: params.algConfigId, ...expand(params) };
 }
 

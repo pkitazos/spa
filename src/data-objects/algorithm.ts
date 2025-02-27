@@ -1,4 +1,4 @@
-import { expand, toAlgCIIID } from "@/lib/utils/general/instance-params";
+import { expand, toAlgID } from "@/lib/utils/general/instance-params";
 import { AlgorithmDTO } from "@/lib/validations/algorithm";
 import { MatchingDataDTO, MatchingResultDTO } from "@/lib/validations/matching";
 import { AlgorithmInstanceParams } from "@/lib/validations/params";
@@ -8,7 +8,7 @@ import { executeMatchingAlgorithm } from "@/server/routers/institution/instance/
 import { DataObject } from "./data-object";
 
 import { allocationInstanceToDTO } from "@/db/transformers";
-import { DB } from "@/db/types";
+import { DB, DB_AlgorithmConfig } from "@/db/types";
 import { InstanceDTO } from "@/dto";
 import { AlgorithmRunResult } from "@/dto/algorithm-run-result";
 
@@ -24,21 +24,11 @@ export class MatchingAlgorithm extends DataObject {
     this.params = params;
   }
 
-  public async getConfig(): Promise<AlgorithmDTO> {
+  public async get(): Promise<AlgorithmDTO> {
     if (!this._config) {
       this._config = await this.db.algorithmConfig
         .findFirstOrThrow({ where: { id: this.params.algConfigId } })
-        .then((x) => ({
-          id: x.id,
-          displayName: x.displayName,
-          description: x.description ?? undefined,
-          flag1: x.flag1,
-          flag2: x.flag2 ?? undefined,
-          flag3: x.flag3 ?? undefined,
-          targetModifier: x.targetModifier,
-          upperBoundModifier: x.upperBoundModifier,
-          maxRank: x.maxRank,
-        }));
+        .then(toAlgorithmDTO);
     }
     return this._config!;
   }
@@ -52,9 +42,8 @@ export class MatchingAlgorithm extends DataObject {
     return this._instance!;
   }
 
-  // so something like this?
   public async run(matchingData: MatchingDataDTO): Promise<AlgorithmRunResult> {
-    const alg = await this.getConfig();
+    const alg = await this.get();
     const res = await executeMatchingAlgorithm(alg, matchingData);
 
     if (res.status !== AlgorithmRunResult.OK) return res.status;
@@ -85,17 +74,15 @@ export class MatchingAlgorithm extends DataObject {
     await this.db.$transaction([
       this.db.matchingPair.deleteMany({
         where: {
-          matchingResult: {
-            algorithmConfigInInstance: toAlgCIIID(this.params),
-          },
+          matchingResult: { algorithmConfigInInstance: toAlgID(this.params) },
         },
       }),
 
       this.db.matchingResult.upsert({
-        where: { algConfigInInstanceId: toAlgCIIID(this.params) },
+        where: { algConfigInInstanceId: toAlgID(this.params) },
         update: matchingResult,
         create: {
-          ...toAlgCIIID(this.params),
+          ...toAlgID(this.params),
           ...matchingResult,
           matching: {
             createMany: { data: matchingPairs, skipDuplicates: true },
@@ -139,3 +126,17 @@ export class MatchingAlgorithm extends DataObject {
     return this._results!;
   }
 }
+
+// MOVE
+export const toAlgorithmDTO = (a: DB_AlgorithmConfig): AlgorithmDTO => ({
+  id: a.id,
+  displayName: a.displayName,
+  description: a.description ?? undefined,
+  createdAt: a.createdAt,
+  flag1: a.flag1,
+  flag2: a.flag2 ?? undefined,
+  flag3: a.flag3 ?? undefined,
+  maxRank: a.maxRank,
+  targetModifier: a.targetModifier,
+  upperBoundModifier: a.upperBoundModifier,
+});

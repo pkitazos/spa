@@ -1,5 +1,6 @@
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { setDiff } from "@/lib/utils/general/set-difference";
+import { AlgorithmDTO } from "@/lib/validations/algorithm";
 import { RandomAllocationDto } from "@/lib/validations/allocation/data-table-dto";
 import { UpdatedInstance } from "@/lib/validations/instance-form";
 import { InstanceParams } from "@/lib/validations/params";
@@ -8,7 +9,7 @@ import { TabType } from "@/lib/validations/tabs";
 
 import { collectMatchingData } from "@/server/routers/institution/instance/algorithm/_utils/get-matching-data";
 
-import { MatchingAlgorithm } from "../algorithm";
+import { MatchingAlgorithm, toAlgorithmDTO } from "../algorithm";
 import { DataObject } from "../data-object";
 import { StudentProjectAllocationData } from "../student-project-allocation-data";
 import { User } from "../users/user";
@@ -116,16 +117,38 @@ export class AllocationInstance extends DataObject {
   }
   // ---------------------------------------------------------------------------
 
+  public async createAlgorithm(
+    data: Omit<AlgorithmDTO, "id">,
+  ): Promise<AlgorithmDTO> {
+    return await this.db.algorithmConfig
+      .create({
+        data: {
+          displayName: data.displayName,
+          description: data.description ?? null,
+          flag1: data.flag1,
+          flag2: data.flag2 ?? null,
+          flag3: data.flag3 ?? null,
+          maxRank: data.maxRank,
+          targetModifier: data.targetModifier,
+          upperBoundModifier: data.upperBoundModifier,
+          algorithmInInstances: { create: expand(this.params) },
+        },
+      })
+      .then(toAlgorithmDTO);
+  }
+
   public async getMatchingData() {
     const instanceData = await this.get();
     return await collectMatchingData(this.db, instanceData);
   }
 
-  public async getAlgorithms() {
-    return await this.db.algorithmConfigInInstance.findMany({
+  public async getAllAlgorithms(): Promise<AlgorithmDTO[]> {
+    const algs = await this.db.algorithmConfigInInstance.findMany({
       where: expand(this.params),
       include: { algorithmConfig: true },
     });
+
+    return algs.map((a) => toAlgorithmDTO(a.algorithmConfig));
   }
 
   public getAlgorithm(algConfigId: string): MatchingAlgorithm {
@@ -280,6 +303,27 @@ export class AllocationInstance extends DataObject {
         allocatedTo: p.studentAllocations.map((a) => a.userId),
       })),
     }));
+  }
+
+  public async getSupervisorPreAllocations(): Promise<Record<string, number>> {
+    const supervisorPreAllocations = await this.db.projectInInstance
+      .findMany({
+        where: {
+          ...expand(this.params),
+          details: { preAllocatedStudentId: { not: null } },
+        },
+      })
+      .then((data) =>
+        data.reduce(
+          (acc, val) => {
+            acc[val.supervisorId] = (acc[val.supervisorId] ?? 0) + 1;
+            return acc;
+          },
+          {} as Record<string, number>,
+        ),
+      );
+
+    return supervisorPreAllocations;
   }
 
   public async getStudentDetails() {

@@ -5,6 +5,7 @@ import {
   matchingServiceResponseSchema,
 } from "@/lib/validations/matching";
 
+// TODO: add docs + figure out where this was used
 export function extractMatchingDetails(
   allStudents: { id: string; name: string | null }[],
   allProjects: { id: string; title: string }[],

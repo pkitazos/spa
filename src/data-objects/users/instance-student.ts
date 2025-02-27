@@ -1,5 +1,5 @@
 import { expand } from "@/lib/utils/general/instance-params";
-import { sortPreferenceType } from "@/lib/utils/preferences/sort";
+import { sortPreferenceType } from "@/lib/utils/sorting/by-preference-type";
 import { ProjectPreferenceCardDto } from "@/lib/validations/board";
 import { InstanceParams } from "@/lib/validations/params";
 
