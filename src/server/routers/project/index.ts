@@ -1,7 +1,7 @@
-/* eslint-disable simple-import-sort/imports */
 import { Stage } from "@prisma/client";
 import { z } from "zod";
 
+import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import {
   getFlagFromStudentLevel,
   getStudentLevelFromFlag,
@@ -14,23 +14,22 @@ import { sortPreferenceType } from "@/lib/utils/sorting/by-preference-type";
 import { User } from "@/lib/validations/auth";
 import { instanceParamsSchema } from "@/lib/validations/params";
 import { updatedProjectSchema } from "@/lib/validations/project-form";
+import { supervisorProjectSubmissionDetailsSchema } from "@/lib/validations/supervisor-project-submission-details";
 
-import { updateProjectAllocation } from "@/db/transactions/project-allocation";
+import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
-import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
-import { procedure } from "@/server/middleware";
-import { supervisorProjectSubmissionDetailsSchema } from "@/lib/validations/supervisor-project-submission-details";
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
-import { flagDtoSchema, tagDtoSchema, userDtoSchema } from "@/dto";
+import { updateProjectAllocation } from "@/db/transactions/project-allocation";
 import { linkProjectFlags } from "@/db/transactions/project-flags";
+import { flagDtoSchema, tagDtoSchema, userDtoSchema } from "@/dto";
 
 export const projectRouter = createTRPCRouter({
   exists: procedure.project.user
     .output(z.boolean())
     .query(async ({ ctx: { project } }) => await project.exists()),
 
-  // TODO rename? e.g. update?
+  // pin
   edit: procedure.project
     .inStage(subsequentStages(Stage.PROJECT_ALLOCATION))
     .supervisor.input(z.object({ updatedProject: updatedProjectSchema }))
@@ -50,6 +49,7 @@ export const projectRouter = createTRPCRouter({
           },
         },
       }) => {
+        project.update(updatedProject);
         const newPreAllocatedStudentId = preAllocatedStudentId || undefined;
 
         await db.$transaction(async (tx) => {
@@ -76,7 +76,6 @@ export const projectRouter = createTRPCRouter({
                   allocationGroupId: project.params.group,
                   allocationSubGroupId: project.params.subGroup,
                   allocationInstanceId: project.params.instance,
-                  projectId: project.params.projectId,
                   userId: prevPreAllocatedStudentId,
                 },
               },
@@ -145,7 +144,7 @@ export const projectRouter = createTRPCRouter({
       },
     ),
 
-  // TODO move db
+  // ok
   getAllForStudentPreferences: procedure.instance.user
     .input(z.object({ studentId: z.string() }))
     .output(
@@ -157,43 +156,29 @@ export const projectRouter = createTRPCRouter({
         }),
       ),
     )
-    .query(async ({ ctx: { instance, db }, input: { studentId } }) => {
-      const projectData = await db.projectInInstance.findMany({
-        where: {
-          ...expand(instance.params),
-          details: { preAllocatedStudentId: null },
-        },
-        include: {
-          details: { include: { flagsOnProject: { include: { flag: true } } } },
-        },
-      });
+    .query(async ({ ctx: { instance }, input: { studentId } }) => {
+      const projectData = await instance.getProjectDetails();
+      const student = await instance.getStudent(studentId);
+      const studentData = await student.getDetails();
 
-      const allProjects = projectData.map((p) => ({
-        id: p.projectId,
-        title: p.details.title,
-        flags: p.details.flagsOnProject.map(({ flag }) => flag),
-      }));
-
-      const student = await db.studentDetails.findFirstOrThrow({
-        where: { ...expand(instance.params), userId: studentId },
-        select: { studentLevel: true },
-      });
-
-      const preferences = await db.studentDraftPreference.findMany({
-        where: { ...expand(instance.params), userId: studentId },
-        select: { projectId: true },
-      });
+      const preferences = await student.getAllDraftPreferences();
 
       const preferenceIds = new Set(
-        preferences.map(({ projectId }) => projectId),
+        preferences.map(({ project: { id } }) => id),
       );
 
-      return allProjects.filter(({ id, flags }) => {
-        if (preferenceIds.has(id)) return false;
-        return flags.some(
-          (f) => getStudentLevelFromFlag(f) === student.studentLevel,
-        );
-      });
+      return projectData
+        .filter(({ projectId, details: { flagsOnProject } }) => {
+          if (preferenceIds.has(projectId)) return false;
+          return flagsOnProject.some(({ flag }) =>
+            studentData.flags.includes(flag),
+          );
+        })
+        .map((p) => ({
+          id: p.projectId,
+          title: p.details.title,
+          flags: p.details.flagsOnProject.map((f) => f.flag),
+        }));
     }),
 
   // TODO move db
@@ -214,7 +199,8 @@ export const projectRouter = createTRPCRouter({
       ),
     )
     .query(async ({ ctx: { instance, db }, input: { userId } }) => {
-      const projectData = await db.projectInInstance.findMany({
+      const projectData = await instance.getProjectDetails();
+      await db.projectInInstance.findMany({
         where: expand(instance.params),
         include: {
           supervisor: {
@@ -241,13 +227,9 @@ export const projectRouter = createTRPCRouter({
         preAllocatedStudentId: details.preAllocatedStudentId ?? undefined,
       }));
 
-      const student = await ctx.db.studentDetails.findFirst({
-        where: {
-          allocationGroupId: params.group,
-          allocationSubGroupId: params.subGroup,
-          allocationInstanceId: params.instance,
-          userId,
-        },
+      const student = await (await instance.getStudent(userId)).getDetails();
+      await db.studentDetails.findFirst({
+        where: { ...expand(instance.params), userId },
         select: {
           studentLevel: true,
           userInInstance: { select: { role: true } },
@@ -321,7 +303,7 @@ export const projectRouter = createTRPCRouter({
     )
     .query(async ({ ctx: { instance, db } }) => {
       return await db.$transaction(async (tx) => {
-        const students = await tx.studentDetails
+        const studentIdMap = await tx.studentDetails
           .findMany({
             where: expand(instance.params),
             select: { userInInstance: { select: { user: true } } },
@@ -368,7 +350,7 @@ export const projectRouter = createTRPCRouter({
             capacityUpperBound: p.details.capacityUpperBound,
             latestEditDateTime: p.details.latestEditDateTime,
             preAllocatedStudentId: p.details.preAllocatedStudentId!,
-            student: students[p.details.preAllocatedStudentId!]!,
+            student: studentIdMap[p.details.preAllocatedStudentId!]!,
             supervisor: p.supervisor.userInInstance.user,
             tags: p.details.tagsOnProject.map(({ tag }) => tag),
             flags: p.details.flagsOnProject.map(({ flag }) => flag),
@@ -377,41 +359,38 @@ export const projectRouter = createTRPCRouter({
     }),
 
   // TODO move db
-  getById: procedure.project.user.query(
-    async ({ ctx, input: { projectId } }) => {
-      const { supervisor, details } =
-        await ctx.db.projectInInstance.findFirstOrThrow({
-          where: { projectId },
-          include: {
-            supervisor: {
-              include: { userInInstance: { include: { user: true } } },
-            },
-            details: {
-              include: {
-                flagsOnProject: {
-                  select: { flag: { select: { id: true, title: true } } },
-                },
-                tagsOnProject: {
-                  select: { tag: { select: { id: true, title: true } } },
-                },
+  getById: procedure.project.user.query(async ({ ctx, input: { params } }) => {
+    const { supervisor, details } =
+      await ctx.db.projectInInstance.findFirstOrThrow({
+        where: params,
+        include: {
+          supervisor: {
+            include: { userInInstance: { include: { user: true } } },
+          },
+          details: {
+            include: {
+              flagsOnProject: {
+                select: { flag: { select: { id: true, title: true } } },
+              },
+              tagsOnProject: {
+                select: { tag: { select: { id: true, title: true } } },
               },
             },
           },
-        });
+        },
+      });
 
-      return {
-        title: details.title,
-        description: details.description,
-        supervisor: supervisor.userInInstance.user,
-        capacityUpperBound: details.capacityUpperBound,
-        preAllocatedStudentId: details.preAllocatedStudentId,
-        specialTechnicalRequirements:
-          details.specialTechnicalRequirements ?? "",
-        flags: details.flagsOnProject.map(({ flag }) => flag),
-        tags: details.tagsOnProject.map(({ tag }) => tag),
-      };
-    },
-  ),
+    return {
+      title: details.title,
+      description: details.description,
+      supervisor: supervisor.userInInstance.user,
+      capacityUpperBound: details.capacityUpperBound,
+      preAllocatedStudentId: details.preAllocatedStudentId,
+      specialTechnicalRequirements: details.specialTechnicalRequirements ?? "",
+      flags: details.flagsOnProject.map(({ flag }) => flag),
+      tags: details.tagsOnProject.map(({ tag }) => tag),
+    };
+  }),
 
   getIsForked: procedure.project.user.query(
     async ({

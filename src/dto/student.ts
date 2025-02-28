@@ -1,10 +1,11 @@
 import { z } from "zod";
 
 import { projectDtoSchema } from "./project";
-import { userDtoSchema } from ".";
+import { flagDtoSchema, userDtoSchema } from ".";
 
 import { DB_StudentDetails, PreferenceType } from "@/db/types";
 
+//move to db/transformers
 export function toStudentDTO(data: DB_StudentDetails): StudentDTO {
   return studentDtoSchema.parse(data);
 }
@@ -20,10 +21,12 @@ export const studentDetailsDtoSchema = z.object({
   studentId: z.string(),
   level: z.number(),
   latestSubmissionDateTime: z.date().optional(),
+  flags: z.array(flagDtoSchema),
 });
 
 export type StudentDetailsDTO = z.infer<typeof studentDetailsDtoSchema>;
 
+//really, a slice of instance - so just use that
 export const studentPreferenceRestrictionsDtoSchema = z.object({
   minPreferences: z.number(),
   maxPreferences: z.number(),

@@ -33,9 +33,9 @@ import {
   stageLt,
   stageLte,
 } from "@/lib/utils/permissions/stage-check";
-import { SupervisorDto } from "@/lib/validations/dto/supervisor";
 
 import { Role, Stage } from "@/db/types";
+import { SupervisorDTO } from "@/dto/user/supervisor";
 
 export function useAllSupervisorsColumns({
   roles,
@@ -45,12 +45,12 @@ export function useAllSupervisorsColumns({
   roles: Set<Role>;
   deleteSupervisor: (id: string) => Promise<void>;
   deleteSelectedSupervisors: (ids: string[]) => Promise<void>;
-}): ColumnDef<SupervisorDto>[] {
+}): ColumnDef<SupervisorDTO>[] {
   const stage = useInstanceStage();
 
-  const selectCol = getSelectColumn<SupervisorDto>();
+  const selectCol = getSelectColumn<SupervisorDTO>();
 
-  const userCols: ColumnDef<SupervisorDto>[] = [
+  const userCols: ColumnDef<SupervisorDTO>[] = [
     {
       id: "GUID",
       accessorFn: (s) => s.id,
@@ -94,7 +94,7 @@ export function useAllSupervisorsColumns({
     },
     {
       id: "Target",
-      accessorFn: (s) => s.projectTarget,
+      accessorFn: (s) => s.allocationTarget,
       header: ({ column }) => (
         <DataTableColumnHeader
           className="w-24"
@@ -103,12 +103,12 @@ export function useAllSupervisorsColumns({
         />
       ),
       cell: ({ row: { original: s } }) => (
-        <p className="w-24 text-center">{s.projectTarget}</p>
+        <p className="w-24 text-center">{s.allocationTarget}</p>
       ),
     },
     {
       id: "Upper Quota",
-      accessorFn: (s) => s.projectUpperQuota,
+      accessorFn: (s) => s.allocationUpperBound,
       header: ({ column }) => (
         <DataTableColumnHeader
           className="w-28"
@@ -117,12 +117,12 @@ export function useAllSupervisorsColumns({
         />
       ),
       cell: ({ row: { original: s } }) => (
-        <p className="w-28 text-center">{s.projectUpperQuota}</p>
+        <p className="w-28 text-center">{s.allocationUpperBound}</p>
       ),
     },
   ];
 
-  const actionsCol: ColumnDef<SupervisorDto> = {
+  const actionsCol: ColumnDef<SupervisorDTO> = {
     accessorKey: "actions",
     id: "Actions",
     header: ({ table }) => {
