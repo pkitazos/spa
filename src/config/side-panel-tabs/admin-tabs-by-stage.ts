@@ -40,7 +40,7 @@ export const ADMIN_TABS_BY_STAGE: Record<Stage, TabType[]> = {
     PAGES.manageUserAccess,
     PAGES.allocationOverview,
     PAGES.exportToCSV,
-    // Note: branch tab injected in side-panel/admin-only tabs
+    // ! Note: branch tab injected in side-panel/admin-only tabs
     PAGES.preferenceStatistics,
     PAGES.preferenceSubmissions,
   ],

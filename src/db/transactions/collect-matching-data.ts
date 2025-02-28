@@ -1,5 +1,6 @@
 import { expand } from "@/lib/utils/general/instance-params";
 
+import { toAlgorithmDTO } from "@/data-objects/algorithm";
 import { DB } from "@/db/types";
 import { InstanceDTO } from "@/dto";
 
@@ -11,17 +12,7 @@ export async function collectMatchingData(db: DB, instanceData: InstanceDTO) {
   const { maxRank, targetModifier, upperBoundModifier } =
     await db.algorithmConfig
       .findFirstOrThrow({ where: { id: instanceData.selectedAlgConfigId } })
-      .then((x) => ({
-        id: x.id,
-        displayName: x.displayName,
-        description: x.description ?? undefined,
-        flag1: x.flag1,
-        flag2: x.flag2 ?? undefined,
-        flag3: x.flag3 ?? undefined,
-        targetModifier: x.targetModifier,
-        upperBoundModifier: x.upperBoundModifier,
-        maxRank: x.maxRank,
-      }));
+      .then(toAlgorithmDTO);
 
   const preAllocations = await db.projectInInstance
     .findMany({

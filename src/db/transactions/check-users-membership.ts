@@ -1,6 +1,6 @@
 import { Err, OK, Result } from "@/lib/utils/general/result";
 
-import { TX } from "@/db/types";
+import { TX } from "../types";
 
 export function checkMembership<T>(
   newUsers: T[],
