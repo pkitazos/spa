@@ -21,7 +21,7 @@ import { sortAlgorithms } from "./_utils/get-algorithms-in-order";
 
 import { toAlgorithmDTO } from "@/data-objects/algorithm";
 import { projectDataToDTO, supervisorToDTO } from "@/db/transformers";
-import { userDtoSchema } from "@/dto";
+import { UserDTO, userDtoSchema } from "@/dto";
 import { AlgorithmRunResult } from "@/dto/algorithm-run-result";
 import { projectDetailsDtoSchema } from "@/dto/project";
 import { studentDtoSchema, toStudentDTO } from "@/dto/student";
@@ -189,15 +189,17 @@ export const algorithmRouter = createTRPCRouter({
     .output(
       z.object({
         firstNonEmpty: z.string().or(z.undefined()),
-        results: z.object({
-          algorithm: algorithmDtoSchema,
-          data: z.array(
-            z.object({
-              supervisor: userDtoSchema,
-              matchingDetails: supervisorMatchingDetailsDtoSchema2,
-            }),
-          ),
-        }),
+        results: z.array(
+          z.object({
+            algorithm: algorithmDtoSchema,
+            data: z.array(
+              z.object({
+                supervisor: userDtoSchema,
+                matchingDetails: supervisorMatchingDetailsDtoSchema2,
+              }),
+            ),
+          }),
+        ),
       }),
     )
     .query(async ({ ctx: { instance, db } }) => {
@@ -260,7 +262,7 @@ export const algorithmRouter = createTRPCRouter({
               const totalCount = algAllocationCount + preAllocationCount;
 
               return {
-                supervisor: s,
+                supervisor: s satisfies UserDTO,
                 matchingDetails: {
                   // the supervisor's target that was given to the algorithm
                   projectTarget: adjustTarget(s.projectTarget, targetModifier),
