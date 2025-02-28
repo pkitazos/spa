@@ -12,6 +12,7 @@ module.exports = {
     // increase the severity of rules so they are auto-fixable
     "simple-import-sort/imports": "error",
     "simple-import-sort/exports": "error",
+    "@typescript-eslint/no-floating-promises": "error",
   },
   overrides: [
     // override "simple-import-sort" config
