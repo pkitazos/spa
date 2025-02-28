@@ -349,6 +349,7 @@ export class User extends DataObject {
       .update({
         where: { instanceMembership: { ...expand(params), userId: this.id } },
         data: { joined: true },
+        include: { user: true },
       })
       .then(userInInstanceToDTO);
   }
