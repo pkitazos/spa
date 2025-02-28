@@ -19,11 +19,11 @@ import { createTRPCRouter } from "@/server/trpc";
 import { adjustTarget, adjustUpperBound } from "./_utils/apply-modifiers";
 import { sortAlgorithms } from "./_utils/get-algorithms-in-order";
 
-import { toAlgorithmDTO } from "@/data-objects/algorithm";
+import { toAlgorithmDTO } from "@/db/transformers";
 import { projectDataToDTO, supervisorToDTO } from "@/db/transformers";
 import { userDtoSchema } from "@/dto";
 import { AlgorithmRunResult } from "@/dto/algorithm-run-result";
-import { projectDetailsDtoSchema } from "@/dto/project";
+import { projectDtoSchema } from "@/dto/project";
 import { studentDtoSchema, toStudentDTO } from "@/dto/student";
 
 export const algorithmRouter = createTRPCRouter({
@@ -134,7 +134,7 @@ export const algorithmRouter = createTRPCRouter({
             matchingPairs: z.array(
               z.object({
                 student: studentDtoSchema,
-                project: projectDetailsDtoSchema,
+                project: projectDtoSchema,
                 studentRanking: z.number(),
               }),
             ),
@@ -153,7 +153,16 @@ export const algorithmRouter = createTRPCRouter({
               matching: {
                 include: {
                   student: true,
-                  project: { include: { details: true } },
+                  project: {
+                    include: {
+                      details: {
+                        include: {
+                          flagsOnProject: { include: { flag: true } },
+                          tagsOnProject: { include: { tag: true } },
+                        },
+                      },
+                    },
+                  },
                 },
               },
             },

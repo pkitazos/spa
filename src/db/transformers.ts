@@ -1,16 +1,19 @@
 // MOVE these to some other file
 
+import { ProjectDTO } from "@/dto/project";
 import {
   DB_AllocationGroup,
   DB_AllocationInstance,
   DB_AllocationSubGroup,
   DB_Flag,
+  DB_FlagOnProject,
   DB_FlagOnStudent,
   DB_ProjectDetails,
   DB_ProjectInInstance,
   DB_StudentDetails,
   DB_SupervisorDetails,
   DB_Tag,
+  DB_TagOnProject,
   DB_User,
   DB_UserInInstance,
 } from "./types";
@@ -23,14 +26,16 @@ import {
   SubGroupDTO,
   TagDTO,
 } from "@/dto";
-import { ProjectDTO } from "@/dto/project";
 import {
   StudentDetailsDTO,
-  StudentDTO,
   StudentPreferenceRestrictionsDTO,
 } from "@/dto/student";
 import { SupervisorDetailsDTO } from "@/dto/supervisor";
 import { SupervisorDTO } from "@/dto/supervisor_router";
+import { undefined } from "@/data-objects/algorithm";
+import { AlgorithmDTO } from "@/lib/validations/algorithm";
+import { AlgorithmConfig as DB_AlgorithmConfig } from "@prisma/client";
+import { StudentDTO } from "@/dto/user/student";
 
 export function allocationGroupToDTO(data: DB_AllocationGroup): GroupDTO {
   return { group: data.id, displayName: data.displayName };
@@ -98,14 +103,17 @@ export function supervisorDetailsToDTO(
 export function studentToDTO(
   data: DB_StudentDetails & {
     userInInstance: DB_UserInInstance & { user: DB_User };
+    studentFlags: (DB_FlagOnStudent & { flag: DB_Flag })[];
   },
 ): StudentDTO {
   return {
     id: data.userId,
     name: data.userInInstance.user.name,
     email: data.userInInstance.user.email,
+    joined: data.userInInstance.joined,
     level: data.studentLevel,
-    latestSubmissionDateTime: data.latestSubmissionDateTime ?? undefined,
+    latestSubmission: data.latestSubmissionDateTime ?? undefined,
+    flags: data.studentFlags.map((f) => f.flag),
   };
 }
 
@@ -134,7 +142,12 @@ export function instanceToStudentPreferenceRestrictionsDTO(
 }
 
 export function projectDataToDTO(
-  data: DB_ProjectInInstance & { details: DB_ProjectDetails },
+  data: DB_ProjectInInstance & {
+    details: DB_ProjectDetails & {
+      flagsOnProject: (DB_FlagOnProject & { flag: DB_Flag })[];
+      tagsOnProject: (DB_TagOnProject & { tag: DB_Tag })[];
+    };
+  },
 ): ProjectDTO {
   return {
     id: data.details.id,
@@ -146,7 +159,8 @@ export function projectDataToDTO(
     latestEditDateTime: data.details.latestEditDateTime,
     capacityLowerBound: data.details.capacityLowerBound,
     capacityUpperBound: data.details.capacityUpperBound,
-    supervisorId: data.supervisorId,
+    flags: data.details.flagsOnProject.map((f) => flagToDTO(f.flag)),
+    tags: data.details.tagsOnProject.map((t) => tagToDTO(t.tag)),
   };
 }
 
@@ -166,8 +180,17 @@ export function userInInstanceToDTO(
     name: data.user.name,
     email: data.user.email,
     joined: data.joined,
-    group: data.allocationGroupId,
-    subGroup: data.allocationSubGroupId,
-    instance: data.allocationInstanceId,
   };
 }
+export const toAlgorithmDTO = (a: DB_AlgorithmConfig): AlgorithmDTO => ({
+  id: a.id,
+  displayName: a.displayName,
+  description: a.description ?? undefined,
+  createdAt: a.createdAt,
+  flag1: a.flag1,
+  flag2: a.flag2 ?? undefined,
+  flag3: a.flag3 ?? undefined,
+  maxRank: a.maxRank,
+  targetModifier: a.targetModifier,
+  upperBoundModifier: a.upperBoundModifier,
+});

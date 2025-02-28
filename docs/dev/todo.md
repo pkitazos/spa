@@ -25,26 +25,17 @@
       - [ ] allSupervisorResults
     - [x] **institution.instance.preference** <!-- ok -->
     - [ ] **institution.instance.matching** (4 remaining)
-      - [x] rowData <!-- todo -->
+      - [x] rowData <!-- move -->
       - [ ] updateAllocation <!-- todo -->
       - [ ] getRandomAllocation <!-- pin -->
       - [ ] getRandomAllocationForAll <!-- pin -->
-- [ ] **project** (16 remaining)
+- [ ] **project** (7 remaining)
   - [ ] edit
-  - [ ] getAllForStudentPreferences
   - [ ] getAllForUser
   - [ ] getAllLateProposals
-  - [ ] getAllPreAllocated
-  - [ ] getById
-  - [ ] getIsForked
-  - [ ] getUserAccess
   - [ ] getAllStudentPreferences
-  - [ ] delete
-  - [ ] deleteSelected
   - [ ] details
-  - [ ] create
   - [ ] getFormDetails
-  - [ ] getAllocation
   - [ ] supervisorSubmissionInfo
 - [x] **user** <!-- ok -->
   - [x] **user.student** <!-- ok -->
@@ -74,3 +65,4 @@
 
 - [ ] tests
 - [ ] docs
+- [ ] logs

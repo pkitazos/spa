@@ -2,6 +2,7 @@ import {
   AlgorithmInstanceParams,
   InstanceParams,
   PageParams,
+  ProjectParams,
 } from "@/lib/validations/params";
 
 // TODO Both of these should probably be on the instance DO
@@ -26,6 +27,7 @@ export function toAlgID(params: AlgorithmInstanceParams) {
   return { algConfigId: params.algConfigId, ...expand(params) };
 }
 
+// TODO figure this out later
 export function toProjectParams(params: InstanceParams, projectId: string) {
   return { ...params, projectId };
 }
@@ -37,4 +39,8 @@ export function toPP(params: PageParams) {
     instance: params.instance,
     projectId: params.id,
   };
+}
+
+export function toPP2(params: ProjectParams) {
+  return { ...expand(params), projectId: params.projectId };
 }

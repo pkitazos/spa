@@ -1,17 +1,15 @@
-import { Stage } from "@prisma/client";
+import { PreferenceType, Stage } from "@prisma/client";
 import { z } from "zod";
 
-import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
+import { expand, toPP2 } from "@/lib/utils/general/instance-params";
 import {
   getFlagFromStudentLevel,
   getStudentLevelFromFlag,
 } from "@/lib/utils/permissions/get-student-level";
 import {
-  stageGte,
+  previousStages,
   subsequentStages,
 } from "@/lib/utils/permissions/stage-check";
-import { sortPreferenceType } from "@/lib/utils/sorting/by-preference-type";
-import { User } from "@/lib/validations/auth";
 import { instanceParamsSchema } from "@/lib/validations/params";
 import { updatedProjectSchema } from "@/lib/validations/project-form";
 import { supervisorProjectSubmissionDetailsSchema } from "@/lib/validations/supervisor-project-submission-details";
@@ -23,8 +21,14 @@ import { computeProjectSubmissionTarget } from "@/config/submission-target";
 import { updateProjectAllocation } from "@/db/transactions/project-allocation";
 import { linkProjectFlags } from "@/db/transactions/project-flags";
 import { flagDtoSchema, tagDtoSchema, userDtoSchema } from "@/dto";
+import { projectDtoSchema } from "@/dto/project";
+import { Role } from "@/db/types";
+import { studentDtoSchema } from "@/dto/student";
+import { supervisorDtoSchema } from "@/dto/supervisor";
+import { projectDataToDTO, studentToDTO } from "@/db/transformers";
 
 export const projectRouter = createTRPCRouter({
+  // ok
   exists: procedure.project.user
     .output(z.boolean())
     .query(async ({ ctx: { project } }) => await project.exists()),
@@ -145,6 +149,7 @@ export const projectRouter = createTRPCRouter({
     ),
 
   // ok
+  // TODO rename + review output type
   getAllForStudentPreferences: procedure.instance.user
     .input(z.object({ studentId: z.string() }))
     .output(
@@ -158,9 +163,9 @@ export const projectRouter = createTRPCRouter({
     )
     .query(async ({ ctx: { instance }, input: { studentId } }) => {
       const projectData = await instance.getProjectDetails();
+
       const student = await instance.getStudent(studentId);
       const studentData = await student.getDetails();
-
       const preferences = await student.getAllDraftPreferences();
 
       const preferenceIds = new Set(
@@ -181,7 +186,7 @@ export const projectRouter = createTRPCRouter({
         }));
     }),
 
-  // TODO move db
+  // MOVE db
   getAllForUser: procedure.instance.user
     .input(z.object({ userId: z.string() }))
     .output(
@@ -247,6 +252,7 @@ export const projectRouter = createTRPCRouter({
     }),
 
   // TODO move db
+  // ok
   getAllLateProposals: procedure.instance.subGroupAdmin
     .output(
       z.array(
@@ -281,87 +287,25 @@ export const projectRouter = createTRPCRouter({
       }));
     }),
 
-  // TODO move db
-  getAllPreAllocated: procedure.instance.user
-    .output(
+  // BREAKING output type
+  getAllPreAllocated: procedure.instance
+    .inStage(subsequentStages(Stage.PROJECT_SUBMISSION))
+    .subGroupAdmin.output(
       z.array(
         z.object({
-          id: z.string(),
-          title: z.string(),
-          description: z.string(),
-          specialTechnicalRequirements: z.string(),
-          capacityLowerBound: z.number(),
-          capacityUpperBound: z.number(),
-          preAllocatedStudentId: z.string(),
-          student: userDtoSchema,
-          supervisor: userDtoSchema,
-          latestEditDateTime: z.date(),
-          tags: z.array(tagDtoSchema),
-          flags: z.array(flagDtoSchema),
+          project: projectDtoSchema,
+          supervisor: supervisorDtoSchema,
+          student: studentDtoSchema,
         }),
       ),
     )
-    .query(async ({ ctx: { instance, db } }) => {
-      return await db.$transaction(async (tx) => {
-        const studentIdMap = await tx.studentDetails
-          .findMany({
-            where: expand(instance.params),
-            select: { userInInstance: { select: { user: true } } },
-          })
-          .then((data) =>
-            data
-              .map(({ userInInstance }) => userInInstance.user)
-              .reduce(
-                (acc, val) => {
-                  acc[val.id] = val;
-                  return acc;
-                },
-                {} as Record<string, User>,
-              ),
-          );
+    .query(async ({ ctx: { instance } }) => await instance.getPreAllocations()),
 
-        const projects = await tx.projectInInstance.findMany({
-          where: {
-            ...expand(instance.params),
-            details: { preAllocatedStudentId: { not: null } },
-          },
-          include: {
-            supervisor: {
-              include: { userInInstance: { include: { user: true } } },
-            },
-            details: {
-              include: {
-                tagsOnProject: { select: { tag: true } },
-                flagsOnProject: { select: { flag: true } },
-              },
-            },
-          },
-        });
-
-        return projects
-          .filter((p) => p.details.preAllocatedStudentId !== null)
-          .map((p) => ({
-            id: p.projectId,
-            title: p.details.title,
-            description: p.details.description,
-            specialTechnicalRequirements:
-              p.details.specialTechnicalRequirements ?? "",
-            capacityLowerBound: p.details.capacityLowerBound,
-            capacityUpperBound: p.details.capacityUpperBound,
-            latestEditDateTime: p.details.latestEditDateTime,
-            preAllocatedStudentId: p.details.preAllocatedStudentId!,
-            student: studentIdMap[p.details.preAllocatedStudentId!]!,
-            supervisor: p.supervisor.userInInstance.user,
-            tags: p.details.tagsOnProject.map(({ tag }) => tag),
-            flags: p.details.flagsOnProject.map(({ flag }) => flag),
-          }));
-      });
-    }),
-
-  // TODO move db
-  getById: procedure.project.user.query(async ({ ctx, input: { params } }) => {
-    const { supervisor, details } =
-      await ctx.db.projectInInstance.findFirstOrThrow({
+  // ok
+  getById: procedure.project.user
+    .output(projectDtoSchema)
+    .query(async ({ ctx, input: { params } }) => {
+      const data = await ctx.db.projectInInstance.findFirstOrThrow({
         where: params,
         include: {
           supervisor: {
@@ -369,29 +313,17 @@ export const projectRouter = createTRPCRouter({
           },
           details: {
             include: {
-              flagsOnProject: {
-                select: { flag: { select: { id: true, title: true } } },
-              },
-              tagsOnProject: {
-                select: { tag: { select: { id: true, title: true } } },
-              },
+              flagsOnProject: { include: { flag: true } },
+              tagsOnProject: { include: { tag: true } },
             },
           },
         },
       });
 
-    return {
-      title: details.title,
-      description: details.description,
-      supervisor: supervisor.userInInstance.user,
-      capacityUpperBound: details.capacityUpperBound,
-      preAllocatedStudentId: details.preAllocatedStudentId,
-      specialTechnicalRequirements: details.specialTechnicalRequirements ?? "",
-      flags: details.flagsOnProject.map(({ flag }) => flag),
-      tags: details.tagsOnProject.map(({ tag }) => tag),
-    };
-  }),
+      return projectDataToDTO(data);
+    }),
 
+  // ok
   getIsForked: procedure.project.user.query(
     async ({
       ctx: { instance, db },
@@ -406,7 +338,7 @@ export const projectRouter = createTRPCRouter({
           projectId,
           OR: [
             expand(instance.params),
-            toInstanceId(instance.params, parentInstanceId),
+            expand(instance.params, parentInstanceId),
           ],
         },
       });
@@ -415,145 +347,126 @@ export const projectRouter = createTRPCRouter({
     },
   ),
 
-  // TODO: convert output to discriminated union
-
-  getUserAccess: procedure.instance.user
+  // MOVE to ac
+  // ok
+  getUserAccess: procedure.project.user
     .input(z.object({ params: instanceParamsSchema, projectId: z.string() }))
-    .query(async ({ ctx, input: { params, projectId } }) => {
-      const user = ctx.session.user;
+    .output(
+      z.discriminatedUnion("access", [
+        z.object({ access: z.literal(true) }),
+        z.object({ access: z.literal(false), error: z.string() }),
+      ]),
+    )
+    .query(async ({ ctx: { user, instance, project } }) => {
+      if (await user.isInstanceStaff(instance.params)) {
+        return { access: true };
+      } else if (await user.isInstanceStudent(instance.params)) {
+        const student = await user.toInstanceStudent(instance.params);
 
-      const allowedRoles = new Set([Role.ADMIN, Role.SUPERVISOR]);
-      if (user.roles.isSubsetOf(allowedRoles)) {
-        return { access: true, studentFlagLabel: "" };
+        const { flags: studentFlags } = await student.get();
+        const studentFlagSet = new Set(studentFlags);
+
+        const projectFlags = await project.getFlags();
+        const projectFlagsSet = new Set(projectFlags);
+
+        if (studentFlagSet.intersection(projectFlagsSet).size !== 0) {
+          return { access: true };
+        } else {
+          return {
+            access: false,
+            error: "Student not eligible for this project",
+          };
+        }
       }
 
-      const { flagOnProjects, preAllocatedStudentId } =
-        await ctx.db.project.findFirstOrThrow({
-          where: {
-            id: projectId,
-            allocationGroupId: params.group,
-            allocationSubGroupId: params.subGroup,
-            allocationInstanceId: params.instance,
-          },
-          select: {
-            preAllocatedStudentId: true,
-            flagOnProjects: { select: { flag: true } },
-          },
-        });
-
-      if (preAllocatedStudentId) {
-        return {
-          access: preAllocatedStudentId === user.id,
-          studentFlagLabel: "",
-        };
-      }
-
-      const student = await ctx.db.studentDetails.findFirst({
-        where: {
-          allocationGroupId: params.group,
-          allocationSubGroupId: params.subGroup,
-          allocationInstanceId: params.instance,
-          userId: ctx.session.user.id,
-        },
-      });
-
-      if (!student) return { access: true, studentFlagLabel: "" };
-
-      const access = flagOnProjects.some(
-        ({ flag }) => getStudentLevelFromFlag(flag) === student.studentLevel,
-      );
-
-      return {
-        access,
-        studentFlagLabel: getFlagFromStudentLevel(student.studentLevel),
-      };
+      return { access: false, error: "Not a member of this instance" };
     }),
 
-  getAllStudentPreferences: procedure.instance.user
-    .input(z.object({ params: instanceParamsSchema, projectId: z.string() }))
-    .query(async ({ ctx, input: { projectId } }) => {
-      const studentData = await ctx.db.preference.findMany({
-        where: { projectId },
-        select: {
-          student: {
-            select: {
-              user: { select: { id: true, name: true } },
-              studentDetails: { select: { studentLevel: true } },
-              studentPreferences: {
-                select: { projectId: true, rank: true },
-                orderBy: { rank: "asc" },
+  //getStudentPreferencesForId
+  getAllStudentPreferences: procedure.project.user
+    .output(
+      z.array(
+        z.object({
+          student: studentDtoSchema,
+          preference: z.object({
+            type: z.nativeEnum(PreferenceType),
+            rank: z.number(),
+          }),
+        }),
+      ),
+    )
+    .query(async ({ ctx: { instance, project, db }, input: { projectId } }) => {
+      const hello = await db.projectInInstance.findFirstOrThrow({
+        where: toPP2(project.params),
+        include: {
+          inStudentDraftPreferences: {
+            include: {
+              student: {
+                include: { userInInstance: { include: { user: true } } },
               },
             },
           },
-          rank: true,
-          type: true,
+          inStudentSubmittedPreferences: {
+            include: {
+              student: {
+                include: { userInInstance: { include: { user: true } } },
+              },
+            },
+          },
         },
       });
 
-      return studentData
-        .sort((a, b) => a.rank - b.rank)
-        .sort(sortPreferenceType)
-        .map(({ student, ...s }) => ({
-          ...s,
-          id: student.user.id,
-          name: student.user.name,
-          level: student.studentDetails[0].studentLevel, // TODO: move preference relation to studentDetails table
-          rank:
-            student.studentPreferences
-              .map((s) => s.projectId)
-              .findIndex((p) => p === projectId) + 1,
-        }));
+      const hello2 = hello.inStudentDraftPreferences.map((x) => x.student);
+
+      const hello3 = hello.inStudentSubmittedPreferences.map((x) => x.student);
+      // const studentData = await ctx.db.studentDraftPreference.findMany({
+      //   where: { projectId },
+      //   select: {
+      //     student: {
+      //       select: {
+      //         user: { select: { id: true, name: true } },
+      //         studentDetails: { select: { studentLevel: true } },
+      //         studentPreferences: {
+      //           select: { projectId: true, rank: true },
+      //           orderBy: { rank: "asc" },
+      //         },
+      //       },
+      //     },
+      //     rank: true,
+      //     type: true,
+      //   },
+      // });
+
+      // return studentData
+      //   .sort((a, b) => a.rank - b.rank)
+      //   .sort(sortPreferenceType)
+      //   .map(({ student, ...s }) => ({
+      //     ...s,
+      //     id: student.user.id,
+      //     name: student.user.name,
+      //     level: student.studentDetails[0].studentLevel,
+      //     rank:
+      //       student.studentPreferences
+      //         .map((s) => s.projectId)
+      //         .findIndex((p) => p === projectId) + 1,
+      //   }));
     }),
 
-  delete: procedure.instance.user
-    .input(z.object({ params: instanceParamsSchema, projectId: z.string() }))
+  // ok
+  // TODO: @JakeTrevor admins should also be able to delete projects
+  delete: procedure.project
+    .inStage(previousStages(Stage.PROJECT_ALLOCATION))
+    .supervisor.output(z.void())
+    .mutation(async ({ ctx: { project } }) => await project.delete()),
+
+  // ok
+  // supervisor or admin
+  deleteSelected: procedure.instance
+    .inStage(previousStages(Stage.PROJECT_ALLOCATION))
+    .user.input(z.object({ projectIds: z.array(z.string()) }))
     .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          projectId,
-        },
-      }) => {
-        if (stageGte(ctx.instance.stage, Stage.PROJECT_ALLOCATION)) return;
-
-        await ctx.db.project.delete({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            id: projectId,
-          },
-        });
-      },
-    ),
-
-  deleteSelected: procedure.instance.user
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        projectIds: z.array(z.string()),
-      }),
-    )
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          projectIds,
-        },
-      }) => {
-        if (stageGte(ctx.instance.stage, Stage.PROJECT_ALLOCATION)) return;
-
-        await ctx.db.project.deleteMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            id: { in: projectIds },
-          },
-        });
-      },
+      async ({ ctx: { instance }, input: { projectIds } }) =>
+        await instance.deleteProjects(projectIds),
     ),
 
   details: procedure.user
@@ -594,90 +507,60 @@ export const projectRouter = createTRPCRouter({
       },
     ),
 
-  create: procedure.instance.user
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        newProject: updatedProjectSchema,
-        supervisorId: z.string(),
-      }),
+  // ok
+  // TODO: change input type
+  create: procedure.instance
+    .inStage([Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING])
+    .user.input(
+      z.object({ newProject: updatedProjectSchema, supervisorId: z.string() }),
     )
+    .output(z.void())
     .mutation(
       async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          supervisorId,
-          newProject: {
-            title,
-            description,
-            flagTitles,
-            tags,
-            capacityUpperBound,
-            preAllocatedStudentId,
-            specialTechnicalRequirements,
-          },
-        },
+        ctx: { instance, db },
+        input: { supervisorId, newProject },
       }) => {
-        if (stageGte(ctx.instance.stage, Stage.PROJECT_ALLOCATION)) return;
-
-        await ctx.db.$transaction(async (tx) => {
-          const project = await tx.project.create({
+        await db.$transaction(async (tx) => {
+          const project = await tx.projectDetails.create({
             data: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              supervisorId: supervisorId,
-              title,
-              description,
+              title: newProject.title,
+              description: newProject.description,
               capacityLowerBound: 0,
-              capacityUpperBound,
-              preAllocatedStudentId,
-              specialTechnicalRequirements,
+              capacityUpperBound: newProject.capacityUpperBound,
+              preAllocatedStudentId: newProject.preAllocatedStudentId || null,
+              specialTechnicalRequirements:
+                newProject.specialTechnicalRequirements ?? null,
               latestEditDateTime: new Date(),
+              projectInInstance: {
+                create: { ...expand(instance.params), supervisorId },
+              },
             },
           });
 
-          if (preAllocatedStudentId && preAllocatedStudentId !== "") {
-            await updateProjectAllocation(tx, {
-              group,
-              subGroup,
-              instance,
-              preAllocatedStudentId,
-              projectId: project.id,
+          // TODO: disallow empty string
+          if (
+            newProject.preAllocatedStudentId &&
+            newProject.preAllocatedStudentId !== ""
+          ) {
+            db.studentProjectAllocation.create({
+              data: {
+                ...expand(instance.params),
+                userId: newProject.preAllocatedStudentId,
+                projectId: project.id,
+                studentRanking: 1,
+              },
             });
           }
 
           await linkProjectFlags(
             tx,
-            ctx.instance.params,
+            instance.params,
             project.id,
-            flagTitles,
+            newProject.flagTitles,
           );
 
-          const currentInstanceTags = await tx.tag.findMany({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-            },
-          });
-
-          const newInstanceTags = tags.filter((t) => {
-            return !currentInstanceTags.map((e) => e.id).includes(t.id);
-          });
-
-          await tx.tag.createMany({
-            data: newInstanceTags.map((tag) => ({
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              ...tag,
-            })),
-          });
-
           await tx.tagOnProject.createMany({
-            data: tags.map(({ id: tagId }) => ({
+            data: newProject.tags.map(({ id: tagId }) => ({
               tagId,
               projectId: project.id,
             })),
@@ -767,19 +650,31 @@ export const projectRouter = createTRPCRouter({
       },
     ),
 
-  getAllocation: procedure.instance.user
-    .input(z.object({ params: instanceParamsSchema, projectId: z.string() }))
-    .query(async ({ ctx, input: { projectId } }) => {
-      const allocation = await ctx.db.projectAllocation.findFirst({
+  // ok
+  getAllocation: procedure.project.user
+    .input(z.object({ projectId: z.string() }))
+    .output(
+      z.object({ student: studentDtoSchema, rank: z.number() }).optional(),
+    )
+    .query(async ({ ctx: { db }, input: { projectId } }) => {
+      const allocation = await db.studentProjectAllocation.findFirst({
         where: { projectId },
-        select: { student: { select: { user: true } }, studentRanking: true },
+        include: {
+          student: {
+            include: {
+              userInInstance: { include: { user: true } },
+              studentFlags: { include: { flag: true } },
+            },
+          },
+        },
       });
 
-      const student = allocation?.student?.user ?? undefined;
-      const rank = allocation?.studentRanking ?? undefined;
+      if (!allocation) return undefined;
 
-      if (student && rank) return { ...student, rank };
-      return undefined;
+      return {
+        student: studentToDTO(allocation.student),
+        rank: allocation.studentRanking,
+      };
     }),
 
   /**

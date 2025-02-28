@@ -1,11 +1,14 @@
 import { z } from "zod";
 
-import { projectDtoSchema } from "./project";
+import { DEPR_projectDtoSchema } from "./project";
 import { flagDtoSchema, userDtoSchema } from ".";
 
 import { DB_StudentDetails, PreferenceType } from "@/db/types";
 
 //move to db/transformers
+/**
+ * @deprecated BAD
+ */
 export function toStudentDTO(data: DB_StudentDetails): StudentDTO {
   return studentDtoSchema.parse(data);
 }
@@ -15,6 +18,9 @@ export const studentDtoSchema = userDtoSchema.extend({
   latestSubmissionDateTime: z.date().optional(),
 });
 
+/**
+ * @deprecated use StudentDTO from src/dto/student.ts
+ */
 export type StudentDTO = z.infer<typeof studentDtoSchema>;
 
 export const studentDetailsDtoSchema = z.object({
@@ -40,7 +46,7 @@ export type StudentPreferenceRestrictionsDTO = z.infer<
 
 // TODO: review this schema
 export const studentDraftPreferenceDtoSchema = z.object({
-  project: projectDtoSchema,
+  project: DEPR_projectDtoSchema,
   score: z.number(),
   type: z.nativeEnum(PreferenceType),
   supervisor: userDtoSchema,
@@ -52,7 +58,7 @@ export type StudentDraftPreferenceDTO = z.infer<
 
 // TODO: review this schema
 export const studentSubmittedPreferenceDtoSchema = z.object({
-  project: projectDtoSchema,
+  project: DEPR_projectDtoSchema,
   rank: z.number(),
   supervisor: userDtoSchema,
 });

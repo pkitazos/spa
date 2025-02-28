@@ -38,15 +38,13 @@ const baseProjectFormSchema = z.object({
   tags: z.array(z.object({ id: z.string(), title: z.string() })),
   isPreAllocated: z.boolean().optional(),
   capacityUpperBound: z.coerce.number().int().positive().default(1),
-  preAllocatedStudentId: z.string().optional(),
+  preAllocatedStudentId: z.string().min(1).optional(),
   specialTechnicalRequirements: z.string().optional(),
 });
 
 export const updatedProjectSchema = baseProjectFormSchema.refine(
-  ({ isPreAllocated, preAllocatedStudentId }) => {
-    isPreAllocated = Boolean(isPreAllocated);
-    return !(isPreAllocated && preAllocatedStudentId === "");
-  },
+  ({ isPreAllocated, preAllocatedStudentId }) =>
+    !(!!isPreAllocated && preAllocatedStudentId === ""),
   { message: "Please select a student", path: ["preAllocatedStudentId"] },
 );
 
@@ -74,10 +72,7 @@ export function buildUpdatedProjectSchema(
 }
 
 export const currentProjectFormDetailsSchema = baseProjectFormSchema
-  .omit({
-    capacityUpperBound: true,
-    preAllocatedStudentId: true,
-  })
+  .omit({ capacityUpperBound: true, preAllocatedStudentId: true })
   .extend({
     id: z.string(),
     capacityUpperBound: z.number(),

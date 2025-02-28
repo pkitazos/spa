@@ -28,7 +28,7 @@ import {
   UserDTO,
   UserInInstanceDTO,
 } from "@/dto";
-import { ProjectDTO } from "@/dto/project";
+import { DEPR_ProjectDTO } from "@/dto/project";
 import {
   StudentDetailsDTO,
   StudentDraftPreferenceDTO,
@@ -529,7 +529,7 @@ export class DAL {
     getAllocatedProject: async (
       userId: string,
       params: InstanceParams,
-    ): Promise<{ project: ProjectDTO; studentRanking: number }> =>
+    ): Promise<{ project: DEPR_ProjectDTO; studentRanking: number }> =>
       await this.db.studentProjectAllocation
         .findFirstOrThrow({
           where: { userId, ...expand(params) },
@@ -671,7 +671,7 @@ export class DAL {
       preferenceType: PreferenceType,
       updatedRank: number,
       params: InstanceParams,
-    ): Promise<{ project: ProjectDTO; rank: number }> => {
+    ): Promise<{ project: DEPR_ProjectDTO; rank: number }> => {
       return await this.db.studentDraftPreference
         .update({
           where: {

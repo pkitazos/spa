@@ -1,6 +1,6 @@
 import { expand } from "@/lib/utils/general/instance-params";
 
-import { toAlgorithmDTO } from "@/data-objects/algorithm";
+import { toAlgorithmDTO } from "../transformers";
 import { DB } from "@/db/types";
 import { InstanceDTO } from "@/dto";
 
