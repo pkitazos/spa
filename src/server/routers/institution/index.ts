@@ -24,15 +24,13 @@ export const institutionRouter = createTRPCRouter({
 
   groups: procedure.superAdmin
     .output(z.array(groupDtoSchema))
-    .query(
-      async ({ ctx: { institution } }) => await institution.getAllGroups(),
-    ),
+    .query(async ({ ctx: { institution } }) => await institution.getGroups()),
 
   takenGroupNames: procedure.superAdmin
     .output(z.set(z.string()))
     .query(
       async ({ ctx: { institution } }) =>
-        new Set((await institution.getAllGroups()).map((x) => x.displayName)),
+        new Set((await institution.getGroups()).map((x) => x.displayName)),
     ),
 
   createGroup: procedure.superAdmin
