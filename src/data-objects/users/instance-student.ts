@@ -15,13 +15,13 @@ import {
   studentToDTO,
 } from "@/db/transformers";
 import { DB, PreferenceType } from "@/db/types";
-import { ProjectDTO } from "@/dto/project";
+import { DEPR_ProjectDTO } from "@/dto/project";
 import {
   StudentDetailsDTO,
   StudentDraftPreferenceDTO,
-  StudentDTO,
   StudentSubmittedPreferenceDTO,
 } from "@/dto/student";
+import { StudentDTO } from "@/dto/user/student";
 
 export class InstanceStudent extends User {
   instance: AllocationInstance;
@@ -35,7 +35,10 @@ export class InstanceStudent extends User {
     return await this.db.studentDetails
       .findFirstOrThrow({
         where: { userId: this.id, ...expand(this.instance.params) },
-        include: { userInInstance: { include: { user: true } } },
+        include: {
+          studentFlags: { include: { flag: true } },
+          userInInstance: { include: { user: true } },
+        },
       })
       .then(studentToDTO);
   }
@@ -65,7 +68,7 @@ export class InstanceStudent extends User {
   }
 
   public async getAllocation(): Promise<{
-    project: ProjectDTO;
+    project: DEPR_ProjectDTO;
     studentRanking: number;
   }> {
     return await this.db.studentProjectAllocation
@@ -215,7 +218,7 @@ export class InstanceStudent extends User {
     projectId: string,
     updatedRank: number,
     preferenceType: PreferenceType,
-  ): Promise<{ project: ProjectDTO; rank: number }> {
+  ): Promise<{ project: DEPR_ProjectDTO; rank: number }> {
     return await this.db.studentDraftPreference
       .update({
         where: {

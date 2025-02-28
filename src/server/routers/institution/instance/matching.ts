@@ -78,7 +78,7 @@ export const matchingRouter = createTRPCRouter({
     }),
 
   // BREAKING
-  // TODO rename, maybe MOVE
+  // move, maybe rename
   // change output type to something more standard
   rowData: procedure.instance.subGroupAdmin
     .output(

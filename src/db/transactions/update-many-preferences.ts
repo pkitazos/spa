@@ -99,10 +99,7 @@ export async function updateManyPreferenceTransaction(
           score: nextScore,
           ...expand(params),
         },
-        update: {
-          type: preferenceType,
-          score: nextScore,
-        },
+        update: { type: preferenceType, score: nextScore },
       });
       nextScore++;
     }

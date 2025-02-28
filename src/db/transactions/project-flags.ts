@@ -1,6 +1,7 @@
 import { InstanceParams } from "@/lib/validations/params";
 
 import { TX } from "@/db/types";
+import { expand } from "@/lib/utils/general/instance-params";
 
 export async function linkProjectFlags(
   db: TX,
@@ -9,20 +10,12 @@ export async function linkProjectFlags(
   flagTitles: string[],
 ) {
   const existingFlags = await db.flag.findMany({
-    where: {
-      allocationGroupId: params.group,
-      allocationSubGroupId: params.subGroup,
-      allocationInstanceId: params.instance,
-      title: { in: flagTitles },
-    },
+    where: { ...expand(params), title: { in: flagTitles } },
     select: { id: true, title: true },
   });
 
   await db.flagOnProject.createMany({
-    data: existingFlags.map(({ id }) => ({
-      projectId,
-      flagId: id,
-    })),
+    data: existingFlags.map(({ id }) => ({ projectId, flagId: id })),
     skipDuplicates: true,
   });
 }

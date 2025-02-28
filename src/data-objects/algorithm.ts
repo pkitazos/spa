@@ -7,8 +7,8 @@ import { executeMatchingAlgorithm } from "@/server/routers/institution/instance/
 
 import { DataObject } from "./data-object";
 
-import { allocationInstanceToDTO } from "@/db/transformers";
-import { DB, DB_AlgorithmConfig } from "@/db/types";
+import { allocationInstanceToDTO, toAlgorithmDTO } from "@/db/transformers";
+import { DB } from "@/db/types";
 import { InstanceDTO } from "@/dto";
 import { AlgorithmRunResult } from "@/dto/algorithm-run-result";
 
@@ -126,17 +126,3 @@ export class MatchingAlgorithm extends DataObject {
     return this._results!;
   }
 }
-
-// MOVE
-export const toAlgorithmDTO = (a: DB_AlgorithmConfig): AlgorithmDTO => ({
-  id: a.id,
-  displayName: a.displayName,
-  description: a.description ?? undefined,
-  createdAt: a.createdAt,
-  flag1: a.flag1,
-  flag2: a.flag2 ?? undefined,
-  flag3: a.flag3 ?? undefined,
-  maxRank: a.maxRank,
-  targetModifier: a.targetModifier,
-  upperBoundModifier: a.upperBoundModifier,
-});

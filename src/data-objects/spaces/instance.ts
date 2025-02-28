@@ -7,7 +7,8 @@ import { InstanceParams } from "@/lib/validations/params";
 import { SupervisorProjectSubmissionDetails } from "@/lib/validations/supervisor-project-submission-details";
 import { TabType } from "@/lib/validations/tabs";
 
-import { MatchingAlgorithm, toAlgorithmDTO } from "../algorithm";
+import { MatchingAlgorithm } from "../algorithm";
+import { toAlgorithmDTO } from "@/db/transformers";
 import { DataObject } from "../data-object";
 import { StudentProjectAllocationData } from "../student-project-allocation-data";
 import { User } from "../users/user";
@@ -19,7 +20,12 @@ import { PAGES } from "@/config/pages";
 import { ADMIN_TABS_BY_STAGE } from "@/config/side-panel-tabs/admin-tabs-by-stage";
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
 import { collectMatchingData } from "@/db/transactions/collect-matching-data";
-import { allocationInstanceToDTO } from "@/db/transformers";
+import {
+  allocationInstanceToDTO,
+  flagToDTO,
+  projectDataToDTO,
+  supervisorToDTO,
+} from "@/db/transformers";
 import { DB, Stage } from "@/db/types";
 import {
   FlagDTO,
@@ -28,6 +34,7 @@ import {
   TagDTO,
   UserDTO,
 } from "@/dto";
+import { ProjectDTO } from "@/dto/project";
 import { StudentDTO } from "@/dto/student";
 import { SupervisorDTO } from "@/dto/supervisor";
 
@@ -326,18 +333,23 @@ export class AllocationInstance extends DataObject {
     return supervisorPreAllocations;
   }
 
-  public async getStudentDetails() {
+  public async getStudentDetails(): Promise<StudentDTO[]> {
     const students = await this.db.studentDetails.findMany({
       where: expand(this.params),
-      include: { userInInstance: { include: { user: true } } },
+      include: {
+        userInInstance: { include: { user: true } },
+        studentFlags: { include: { flag: true } },
+      },
     });
 
     return students.map((u) => ({
-      institutionId: u.userId,
-      fullName: u.userInInstance.user.name,
+      id: u.userId,
+      name: u.userInInstance.user.name,
       email: u.userInInstance.user.email,
       joined: u.userInInstance.joined,
       level: u.studentLevel,
+      latestSubmission: u.latestSubmissionDateTime ?? undefined,
+      flags: u.studentFlags.map((f) => flagToDTO(f.flag)),
     }));
   }
 
@@ -650,6 +662,53 @@ export class AllocationInstance extends DataObject {
     });
   }
 
+  public async getPreAllocations(): Promise<
+    { project: ProjectDTO; supervisor: SupervisorDTO; student: StudentDTO }[]
+  > {
+    const projectData = await this.db.projectInInstance.findMany({
+      where: {
+        ...expand(this.params),
+        details: { preAllocatedStudentId: { not: null } },
+      },
+      include: {
+        supervisor: {
+          include: { userInInstance: { include: { user: true } } },
+        },
+        details: {
+          include: {
+            flagsOnProject: { include: { flag: true } },
+            tagsOnProject: { include: { tag: true } },
+          },
+        },
+      },
+    });
+
+    const students = await this.getStudentDetails().then((data) =>
+      data.reduce(
+        (acc, val) => ({ ...acc, [val.id]: val }),
+        {} as Record<string, StudentDTO>,
+      ),
+    );
+
+    return projectData.map((p) => {
+      const student = students[p.details.preAllocatedStudentId!];
+      if (!student) {
+        throw new Error(
+          `instance.getPreAllocations: dangling pre-allocated student ID ${p.details.preAllocatedStudentId!}`,
+        );
+      }
+
+      return {
+        project: projectDataToDTO(p),
+        supervisor: supervisorToDTO(p.supervisor),
+        student,
+      };
+    });
+  }
+
+  /**
+   * @deprecated use getPreAllocations instead
+   */
   public async getPreAllocatedStudentIds() {
     const projectData = await this.db.projectInInstance.findMany({
       where: {
@@ -812,12 +871,27 @@ export class AllocationInstance extends DataObject {
   public async deleteStudentAllocation(userId: string): Promise<void> {
     const spaId = { ...expand(this.params), userId };
 
-    this.db.$transaction([
+    await this.db.$transaction([
       this.db.studentProjectAllocation.deleteMany({ where: spaId }),
       this.db.studentSubmittedPreference.deleteMany({ where: spaId }),
     ]);
   }
 
+  public async deleteProjects(projectIds: string[]) {
+    await this.db.$transaction([
+      this.db.projectDetails.deleteMany({
+        where: {
+          OR: projectIds.map((projectId) => ({
+            projectInInstance: { every: { ...expand(this.params), projectId } },
+          })),
+        },
+      }),
+
+      this.db.projectInInstance.deleteMany({
+        where: { ...expand(this.params), projectId: { in: projectIds } },
+      }),
+    ]);
+  }
   public async delete() {
     await this.db.allocationInstance.delete({
       where: { instanceId: toInstanceId(this.params) },

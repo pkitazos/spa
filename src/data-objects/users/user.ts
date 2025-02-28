@@ -353,4 +353,12 @@ export class User extends DataObject {
       })
       .then(userInInstanceToDTO);
   }
+
+  public async isInstanceStaff(params: InstanceParams): Promise<boolean> {
+    return (
+      (await this.isSubGroupAdminOrBetter(params)) ||
+      (await this.isInstanceSupervisor(params)) ||
+      (await this.isInstanceReader(params))
+    );
+  }
 }
