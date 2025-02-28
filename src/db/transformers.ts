@@ -19,9 +19,9 @@ import {
   FlagDTO,
   GroupDTO,
   InstanceDTO,
+  InstanceUserDTO,
   SubGroupDTO,
   TagDTO,
-  UserInInstanceDTO,
 } from "@/dto";
 import { ProjectDTO } from "@/dto/project";
 import {
@@ -159,10 +159,12 @@ export function flagToDTO(data: DB_Flag): FlagDTO {
 }
 
 export function userInInstanceToDTO(
-  data: DB_UserInInstance,
-): UserInInstanceDTO {
+  data: DB_UserInInstance & { user: DB_User },
+): InstanceUserDTO {
   return {
-    userId: data.userId,
+    id: data.userId,
+    name: data.user.name,
+    email: data.user.email,
     joined: data.joined,
     group: data.allocationGroupId,
     subGroup: data.allocationSubGroupId,
