@@ -44,6 +44,7 @@ export class InstanceStudent extends User {
     return await this.db.studentDetails
       .findFirstOrThrow({
         where: { userId: this.id, ...expand(this.instance.params) },
+        include: { studentFlags: { include: { flag: true } } },
       })
       .then(studentDetailsToDto);
   }
@@ -192,6 +193,7 @@ export class InstanceStudent extends User {
           },
         },
         data: { studentLevel: level },
+        include: { studentFlags: { include: { flag: true } } },
       })
       .then(studentDetailsToDto);
   }

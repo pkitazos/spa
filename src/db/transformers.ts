@@ -5,6 +5,7 @@ import {
   DB_AllocationInstance,
   DB_AllocationSubGroup,
   DB_Flag,
+  DB_FlagOnStudent,
   DB_ProjectDetails,
   DB_ProjectInInstance,
   DB_StudentDetails,
@@ -109,12 +110,15 @@ export function studentToDTO(
 }
 
 export function studentDetailsToDto(
-  data: DB_StudentDetails,
+  data: DB_StudentDetails & {
+    studentFlags: (DB_FlagOnStudent & { flag: DB_Flag })[];
+  },
 ): StudentDetailsDTO {
   return {
     studentId: data.userId,
     level: data.studentLevel,
     latestSubmissionDateTime: data.latestSubmissionDateTime ?? undefined,
+    flags: data.studentFlags.map((f) => f.flag),
   };
 }
 
