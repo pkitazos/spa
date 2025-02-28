@@ -21,13 +21,14 @@ import { sortAlgorithms } from "./_utils/get-algorithms-in-order";
 
 import { toAlgorithmDTO } from "@/data-objects/algorithm";
 import { projectDataToDTO, supervisorToDTO } from "@/db/transformers";
-import { UserDTO, userDtoSchema } from "@/dto";
+import { userDtoSchema } from "@/dto";
 import { AlgorithmRunResult } from "@/dto/algorithm-run-result";
 import { projectDetailsDtoSchema } from "@/dto/project";
 import { studentDtoSchema, toStudentDTO } from "@/dto/student";
 
 export const algorithmRouter = createTRPCRouter({
   // BREAKING input/output type changed
+  // pin
   run: procedure.instance.subGroupAdmin
     .input(z.object({ algConfigId: z.string() }))
     .output(z.object({ total: z.number(), matched: z.number() }))
@@ -105,6 +106,7 @@ export const algorithmRouter = createTRPCRouter({
           matchingResults: matchingResult!,
         }))
         .sort((a, b) =>
+          // todo remove this later
           compareAsc(a.algorithm.createdAt, b.algorithm.createdAt),
         );
     }),
@@ -262,7 +264,7 @@ export const algorithmRouter = createTRPCRouter({
               const totalCount = algAllocationCount + preAllocationCount;
 
               return {
-                supervisor: s satisfies UserDTO,
+                supervisor: s,
                 matchingDetails: {
                   // the supervisor's target that was given to the algorithm
                   projectTarget: adjustTarget(s.projectTarget, targetModifier),

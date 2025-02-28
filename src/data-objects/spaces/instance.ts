@@ -7,8 +7,6 @@ import { InstanceParams } from "@/lib/validations/params";
 import { SupervisorProjectSubmissionDetails } from "@/lib/validations/supervisor-project-submission-details";
 import { TabType } from "@/lib/validations/tabs";
 
-import { collectMatchingData } from "@/server/routers/institution/instance/algorithm/_utils/get-matching-data";
-
 import { MatchingAlgorithm, toAlgorithmDTO } from "../algorithm";
 import { DataObject } from "../data-object";
 import { StudentProjectAllocationData } from "../student-project-allocation-data";
@@ -20,6 +18,7 @@ import { AllocationSubGroup } from "./subgroup";
 import { PAGES } from "@/config/pages";
 import { ADMIN_TABS_BY_STAGE } from "@/config/side-panel-tabs/admin-tabs-by-stage";
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
+import { collectMatchingData } from "@/db/transactions/collect-matching-data";
 import { allocationInstanceToDTO } from "@/db/transformers";
 import { DB, Stage } from "@/db/types";
 import {
@@ -117,6 +116,7 @@ export class AllocationInstance extends DataObject {
   }
   // ---------------------------------------------------------------------------
 
+  // should probably create the AlgorithmConfigInInstance too
   public async createAlgorithm(
     data: Omit<AlgorithmDTO, "id">,
   ): Promise<AlgorithmDTO> {

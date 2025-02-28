@@ -1,6 +1,5 @@
-import { PreferenceType, Role } from "@prisma/client";
+import { Role } from "@prisma/client";
 
-import { PrismaTransactionClient } from "@/db";
 import { expand } from "@/lib/utils/general/instance-params";
 import { compareTitle } from "@/lib/utils/sorting/by-title";
 import { InstanceParams } from "@/lib/validations/params";
@@ -13,8 +12,10 @@ import {
 } from "./mark";
 import { updateProjectCapacities, updateSupervisorCapacities } from "./utils";
 
+import { TX } from "@/db/types";
+
 export async function copy(
-  tx: PrismaTransactionClient,
+  tx: TX,
   forkedInstanceId: string,
   params: InstanceParams,
   markedData: ForkMarkedData,
@@ -48,7 +49,7 @@ export async function copy(
 
 // TODO: use difference instead of upper bound to check which supervisors to copy
 async function copySupervisors(
-  tx: PrismaTransactionClient,
+  tx: TX,
   forkedInstanceId: string,
   params: InstanceParams,
   parentInstanceSupervisors: ForkMarkedSupervisorDto[],
@@ -75,7 +76,7 @@ async function copySupervisors(
 }
 
 async function copyStudents(
-  tx: PrismaTransactionClient,
+  tx: TX,
   forkedInstanceId: string,
   params: InstanceParams,
   parentInstanceStudents: ForkMarkedStudentDto[],
@@ -98,7 +99,7 @@ async function copyStudents(
 }
 
 async function copyProjects(
-  tx: PrismaTransactionClient,
+  tx: TX,
   forkedInstanceId: string,
   params: InstanceParams,
   parentInstanceProjects: ForkMarkedProjectDto[],
@@ -136,7 +137,7 @@ async function copyProjects(
 }
 
 export async function copyInstanceFlags(
-  tx: PrismaTransactionClient,
+  tx: TX,
   forkedInstanceId: string,
   params: InstanceParams,
 ) {
@@ -166,7 +167,7 @@ export async function copyInstanceFlags(
 }
 
 export async function copyInstanceTags(
-  tx: PrismaTransactionClient,
+  tx: TX,
   params: InstanceParams,
   forkedInstanceId: string,
 ) {
@@ -182,9 +183,7 @@ export async function copyInstanceTags(
   });
 
   const newTags = await tx.tag
-    .findMany({
-      where: expand(params, forkedInstanceId),
-    })
+    .findMany({ where: expand(params, forkedInstanceId) })
     .then((data) => data.toSorted(compareTitle));
 
   return newTags.reduce(
@@ -195,41 +194,6 @@ export async function copyInstanceTags(
     },
     {} as Record<string, string>,
   );
-}
-
-/**
- *
- * @deprecated
- *
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-async function copyPreferences(
-  tx: PrismaTransactionClient,
-  forkedInstanceId: string,
-  params: InstanceParams,
-  parentInstanceStudents: ForkMarkedStudentDto[],
-  parentInstanceProjects: ForkMarkedProjectDto[],
-) {
-  const projectIds = new Set(parentInstanceProjects.map((p) => p.id));
-
-  const students = parentInstanceStudents.map(({ preferences, userId }) => ({
-    userId,
-    preferences: preferences
-      .filter((p) => projectIds.has(p.project.id))
-      .map((p, i) => ({ title: p.project.title, rank: i + 1 })),
-  }));
-
-  await tx.preference.createMany({
-    data: students.flatMap(({ userId, preferences }) =>
-      preferences.map(({ rank }) => ({
-        ...expand(params, forkedInstanceId),
-        projectId: "TODO",
-        userId,
-        rank,
-        type: PreferenceType.SHORTLIST,
-      })),
-    ),
-  });
 }
 
 export type MappingData = Awaited<ReturnType<typeof copy>>;
