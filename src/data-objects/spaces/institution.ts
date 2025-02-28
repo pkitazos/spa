@@ -7,25 +7,22 @@ import {
   allocationInstanceToDTO,
 } from "@/db/transformers";
 import { DB } from "@/db/types";
-import { InstanceDTO, UserDTO } from "@/dto";
+import { GroupDTO, InstanceDTO, UserDTO } from "@/dto";
+import { SuperAdminDTO } from "@/dto/user/admin";
 
 export class Institution extends DataObject {
   constructor(db: DB) {
     super(db);
   }
 
-  public async userExists(id: string) {
-    return await this.db.user.findFirst({ where: { id } });
-  }
-
   // WARNING bug see group.createSubroup
-  public async createGroup(groupName: string) {
+  public async createGroup(displayName: string): Promise<GroupDTO> {
     return await this.db.allocationGroup
-      .create({ data: { id: slugify(groupName), displayName: groupName } })
+      .create({ data: { id: slugify(displayName), displayName } })
       .then(allocationGroupToDTO);
   }
 
-  public async getAdmins() {
+  public async getAdmins(): Promise<SuperAdminDTO[]> {
     const admins = await this.db.superAdmin.findMany({
       select: { user: true },
     });
@@ -33,23 +30,27 @@ export class Institution extends DataObject {
     return admins.map(({ user }) => user);
   }
 
-  public async getAllGroups() {
+  public async getGroups(): Promise<GroupDTO[]> {
     const groups = await this.db.allocationGroup.findMany();
 
     return groups.map(allocationGroupToDTO);
   }
 
-  public async getAllInstances(): Promise<InstanceDTO[]> {
+  public async getInstances(): Promise<InstanceDTO[]> {
     const instances = await this.db.allocationInstance.findMany();
     return instances.map(allocationInstanceToDTO);
   }
 
-  public async createUser(data: UserDTO) {
+  public async createUser(data: UserDTO): Promise<void> {
     this.db.user.create({ data });
   }
 
-  public async createUsers(users: UserDTO[]) {
+  public async createUsers(users: UserDTO[]): Promise<void> {
     this.db.user.createMany({ data: users, skipDuplicates: true });
+  }
+
+  public async userExists(id: string): Promise<boolean> {
+    return !!(await this.db.user.findFirst({ where: { id } }));
   }
 
   public async getUsers(): Promise<UserDTO[]> {

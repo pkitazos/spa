@@ -23,13 +23,13 @@ export class AllocationGroup extends DataObject {
     this.params = params;
   }
 
-  public async linkAdmin(userId: string) {
+  public async linkAdmin(userId: string): Promise<void> {
     await this.db.groupAdmin.create({
       data: { userId, allocationGroupId: this.params.group },
     });
   }
 
-  public async unlinkAdmin(userId: string) {
+  public async unlinkAdmin(userId: string): Promise<void> {
     await this.db.groupAdmin.delete({
       where: { groupAdminId: { userId, allocationGroupId: this.params.group } },
     });
@@ -93,11 +93,12 @@ export class AllocationGroup extends DataObject {
     return uniqueById([...groupAdmins, ...superAdmins]);
   }
 
-  isGroupAdmin(userId: string) {
-    return new User(this.db, userId).isGroupAdmin(this.params);
+  public async isGroupAdmin(userId: string): Promise<boolean> {
+    const user = new User(this.db, userId);
+    return await user.isGroupAdmin(this.params);
   }
 
-  public async delete() {
+  public async delete(): Promise<GroupDTO> {
     return await this.db.allocationGroup
       .delete({ where: { id: this.params.group } })
       .then(allocationGroupToDTO);
