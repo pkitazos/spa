@@ -9,28 +9,36 @@ import { DB_StudentDetails, PreferenceType } from "@/db/types";
 /**
  * @deprecated BAD
  */
-export function toStudentDTO(data: DB_StudentDetails): StudentDTO {
-  return studentDtoSchema.parse(data);
+export function toStudentDTO(data: DB_StudentDetails): DEPR_StudentDTO {
+  return DEPR_studentDtoSchema.parse(data);
 }
-
-export const studentDtoSchema = userDtoSchema.extend({
+/**
+ * @deprecated
+ */
+export const DEPR_studentDtoSchema = userDtoSchema.extend({
   level: z.number(),
   latestSubmissionDateTime: z.date().optional(),
 });
 
 /**
- * @deprecated use StudentDTO from src/dto/student.ts
+ * @deprecated
  */
-export type StudentDTO = z.infer<typeof studentDtoSchema>;
+export type DEPR_StudentDTO = z.infer<typeof DEPR_studentDtoSchema>;
 
-export const studentDetailsDtoSchema = z.object({
+/**
+ * @deprecated user dto/user/student.ts instead
+ */
+export const studentDtoSchema = z.object({
   studentId: z.string(),
   level: z.number(),
   latestSubmissionDateTime: z.date().optional(),
   flags: z.array(flagDtoSchema),
 });
 
-export type StudentDetailsDTO = z.infer<typeof studentDetailsDtoSchema>;
+/**
+ * @deprecated user dto/user/student.ts instead
+ */
+export type StudentDTO = z.infer<typeof studentDtoSchema>;
 
 //really, a slice of instance - so just use that
 export const studentPreferenceRestrictionsDtoSchema = z.object({

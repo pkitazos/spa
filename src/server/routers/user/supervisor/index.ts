@@ -13,7 +13,7 @@ import { formatSupervisorRowProjects } from "./_utils/supervisor-row-projects";
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
 import { Stage } from "@/db/types";
 import { flagDtoSchema, tagDtoSchema, userDtoSchema } from "@/dto";
-import { studentDtoSchema } from "@/dto/student";
+import { DEPR_studentDtoSchema } from "@/dto/student";
 import {
   baseProjectDtoSchema,
   supervisorDtoSchema,
@@ -194,7 +194,7 @@ export const supervisorRouter = createTRPCRouter({
       z.array(
         z.object({
           project: baseProjectDtoSchema,
-          student: studentDtoSchema,
+          student: DEPR_studentDtoSchema,
           rank: z.number(),
         }),
       ),

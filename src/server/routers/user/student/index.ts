@@ -16,8 +16,8 @@ import { preferenceRouter } from "./preference";
 import { InstanceSupervisor } from "@/data-objects/users/instance-supervisor";
 import { instanceToStudentPreferenceRestrictionsDTO } from "@/db/transformers";
 import {
-  studentDetailsDtoSchema,
   studentDtoSchema,
+  DEPR_studentDtoSchema,
   studentPreferenceRestrictionsDtoSchema,
 } from "@/dto/student";
 
@@ -36,7 +36,7 @@ export const studentRouter = createTRPCRouter({
   getById: procedure.instance.subGroupAdmin
     .input(z.object({ studentId: z.string() }))
     .output(
-      studentDtoSchema.extend({
+      DEPR_studentDtoSchema.extend({
         selfDefinedProjectId: z.string().optional(),
         allocation: studentProjectAllocationDtoSchema.optional(),
       }),
@@ -124,7 +124,7 @@ export const studentRouter = createTRPCRouter({
   // maybe not
   updateLevel: procedure.instance.subGroupAdmin
     .input(z.object({ studentId: z.string(), level: z.number() }))
-    .output(studentDetailsDtoSchema)
+    .output(studentDtoSchema)
     .mutation(async ({ ctx: { instance }, input: { studentId, level } }) => {
       const student = await instance.getStudent(studentId);
       return student.setStudentLevel(level);
@@ -224,6 +224,6 @@ export const studentRouter = createTRPCRouter({
     .query(async ({ ctx: { instance } }) => {
       const { selectedAlgConfigId } = await instance.get();
       if (!selectedAlgConfigId) return;
-      return await instance.getUnallocatedStudents();
+      return await instance.getStudentsForRandomAllocation();
     }),
 });

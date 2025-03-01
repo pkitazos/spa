@@ -30,9 +30,9 @@ import {
 } from "@/dto";
 import { DEPR_ProjectDTO } from "@/dto/project";
 import {
-  StudentDetailsDTO,
-  StudentDraftPreferenceDTO,
   StudentDTO,
+  StudentDraftPreferenceDTO,
+  DEPR_StudentDTO,
   StudentSubmittedPreferenceDTO,
 } from "@/dto/student";
 import {
@@ -494,7 +494,10 @@ export class DAL {
   };
 
   public student = {
-    get: async (userId: string, params: InstanceParams): Promise<StudentDTO> =>
+    get: async (
+      userId: string,
+      params: InstanceParams,
+    ): Promise<DEPR_StudentDTO> =>
       await this.db.studentDetails
         .findFirstOrThrow({
           where: { userId, ...expand(params) },
@@ -505,7 +508,7 @@ export class DAL {
     getDetails: async (
       userId: string,
       params: InstanceParams,
-    ): Promise<StudentDetailsDTO> =>
+    ): Promise<StudentDTO> =>
       await this.db.studentDetails
         .findFirstOrThrow({ where: { userId, ...expand(params) } })
         .then(studentDetailsToDto),
@@ -543,7 +546,7 @@ export class DAL {
     getStudentDetails: async (
       userId: string,
       params: InstanceParams,
-    ): Promise<StudentDetailsDTO> =>
+    ): Promise<StudentDTO> =>
       await this.db.studentDetails
         .findFirstOrThrow({ where: { userId, ...expand(params) } })
         .then(studentDetailsToDto),
@@ -552,7 +555,7 @@ export class DAL {
       userId: string,
       level: number,
       params: InstanceParams,
-    ): Promise<StudentDetailsDTO> =>
+    ): Promise<StudentDTO> =>
       await this.db.studentDetails
         .update({
           where: { studentDetailsId: { userId, ...expand(params) } },
@@ -643,7 +646,7 @@ export class DAL {
       userId: string,
       latestSubmissionDateTime: Date,
       params: InstanceParams,
-    ): Promise<StudentDetailsDTO> =>
+    ): Promise<StudentDTO> =>
       await this.db.studentDetails
         .update({
           where: { studentDetailsId: { userId, ...expand(params) } },

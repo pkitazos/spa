@@ -24,7 +24,7 @@ import { Role, Stage } from "@/db/types";
 import { stageSchema } from "@/db/types";
 import { instanceDtoSchema } from "@/dto";
 import { LinkUserResult, LinkUserResultSchema } from "@/dto/link-user-result";
-import { studentDtoSchema } from "@/dto/student";
+import { DEPR_studentDtoSchema } from "@/dto/student";
 import { supervisorDtoSchema } from "@/dto/supervisor";
 
 const tgc = z.object({
@@ -338,7 +338,7 @@ export const instanceRouter = createTRPCRouter({
 
   // BREAKING input/output types changed
   addStudent: procedure.instance.subGroupAdmin
-    .input(z.object({ newStudent: studentDtoSchema }))
+    .input(z.object({ newStudent: DEPR_studentDtoSchema }))
     .output(LinkUserResultSchema)
     .mutation(
       async ({ ctx: { instance, institution }, input: { newStudent } }) => {
@@ -361,7 +361,7 @@ export const instanceRouter = createTRPCRouter({
 
   // BREAKING input/output types changed
   addStudents: procedure.instance.subGroupAdmin
-    .input(z.object({ newStudents: z.array(studentDtoSchema) }))
+    .input(z.object({ newStudents: z.array(DEPR_studentDtoSchema) }))
     .output(z.array(LinkUserResultSchema))
     .mutation(
       async ({ ctx: { instance, institution }, input: { newStudents } }) => {

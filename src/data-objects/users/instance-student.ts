@@ -17,11 +17,10 @@ import {
 import { DB, PreferenceType } from "@/db/types";
 import { DEPR_ProjectDTO } from "@/dto/project";
 import {
-  StudentDetailsDTO,
+  StudentDTO,
   StudentDraftPreferenceDTO,
   StudentSubmittedPreferenceDTO,
 } from "@/dto/student";
-import { StudentDTO } from "@/dto/user/student";
 
 export class InstanceStudent extends User {
   instance: AllocationInstance;
@@ -43,7 +42,7 @@ export class InstanceStudent extends User {
       .then(studentToDTO);
   }
 
-  public async getDetails(): Promise<StudentDetailsDTO> {
+  public async getDetails(): Promise<StudentDTO> {
     return await this.db.studentDetails
       .findFirstOrThrow({
         where: { userId: this.id, ...expand(this.instance.params) },
@@ -186,7 +185,7 @@ export class InstanceStudent extends User {
     return boardState;
   }
 
-  public async setStudentLevel(level: number): Promise<StudentDetailsDTO> {
+  public async setStudentLevel(level: number): Promise<StudentDTO> {
     return await this.db.studentDetails
       .update({
         where: {
