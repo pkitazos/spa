@@ -29,14 +29,8 @@
       - [ ] updateAllocation <!-- todo -->
       - [ ] getRandomAllocation <!-- pin -->
       - [ ] getRandomAllocationForAll <!-- pin -->
-- [ ] **project** (7 remaining)
+- [ ] **project** (1 remaining)
   - [ ] edit
-  - [ ] getAllForUser
-  - [ ] getAllLateProposals
-  - [ ] getAllStudentPreferences
-  - [ ] details
-  - [ ] getFormDetails
-  - [ ] supervisorSubmissionInfo
 - [x] **user** <!-- ok -->
   - [x] **user.student** <!-- ok -->
   - [x] **user.student.preferences** <!-- ok -->

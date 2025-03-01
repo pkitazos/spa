@@ -236,7 +236,7 @@ export const matchingRouter = createTRPCRouter({
       const { selectedAlgConfigId: selectedAlgName } = await instance.get();
       if (!selectedAlgName) return;
 
-      const data = await instance.getUnallocatedStudents();
+      const data = await instance.getStudentsForRandomAllocation();
 
       // wtf Petro?
       for (const { student } of data) {

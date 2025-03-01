@@ -8,7 +8,7 @@ import { SupervisorProjectSubmissionDetails } from "@/lib/validations/supervisor
 import { TabType } from "@/lib/validations/tabs";
 
 import { MatchingAlgorithm } from "../algorithm";
-import { toAlgorithmDTO } from "@/db/transformers";
+import { studentToDTO, toAlgorithmDTO } from "@/db/transformers";
 import { DataObject } from "../data-object";
 import { StudentProjectAllocationData } from "../student-project-allocation-data";
 import { User } from "../users/user";
@@ -35,7 +35,7 @@ import {
   UserDTO,
 } from "@/dto";
 import { ProjectDTO } from "@/dto/project";
-import { StudentDTO } from "@/dto/student";
+import { StudentDTO } from "@/dto/user/student";
 import { SupervisorDTO } from "@/dto/supervisor";
 
 export class AllocationInstance extends DataObject {
@@ -180,15 +180,36 @@ export class AllocationInstance extends DataObject {
     return await this.db.tag.findMany({ where: expand(this.params) });
   }
 
-  public async getProjectDetails() {
-    return await this.db.projectInInstance.findMany({
+  public async getProjectDetails(): Promise<
+    {
+      project: ProjectDTO;
+      supervisor: SupervisorDTO;
+      flags: FlagDTO[];
+      allocatedTo: string[];
+    }[]
+  > {
+    const projectData = await this.db.projectInInstance.findMany({
       where: expand(this.params),
       include: {
-        details: { include: { flagsOnProject: { include: { flag: true } } } },
-        supervisor: true,
         studentAllocations: true,
+        supervisor: {
+          include: { userInInstance: { include: { user: true } } },
+        },
+        details: {
+          include: {
+            flagsOnProject: { include: { flag: true } },
+            tagsOnProject: { include: { tag: true } },
+          },
+        },
       },
     });
+
+    return projectData.map((p) => ({
+      project: projectDataToDTO(p),
+      supervisor: supervisorToDTO(p.supervisor),
+      flags: p.details.flagsOnProject.map((f) => flagToDTO(f.flag)),
+      allocatedTo: p.studentAllocations.map((a) => a.userId),
+    }));
   }
 
   /**
@@ -449,8 +470,22 @@ export class AllocationInstance extends DataObject {
     }));
   }
 
+  public async getUnallocatedStudents(): Promise<StudentDTO[]> {
+    const studentData = await this.db.studentDetails.findMany({
+      where: { ...expand(this.params), projectAllocation: { is: null } },
+      include: {
+        studentFlags: { include: { flag: true } },
+        userInInstance: { include: { user: true } },
+      },
+    });
+
+    return studentData.map((s) => studentToDTO(s));
+  }
+
   // BREAKING
-  public async getUnallocatedStudents(): Promise<RandomAllocationDto[]> {
+  public async getStudentsForRandomAllocation(): Promise<
+    RandomAllocationDto[]
+  > {
     const { selectedAlgConfigId } = await this.get();
 
     const students = await this.db.studentDetails
@@ -553,14 +588,13 @@ export class AllocationInstance extends DataObject {
   public async getStudents(): Promise<StudentDTO[]> {
     const students = await this.db.studentDetails.findMany({
       where: expand(this.params),
-      include: { userInInstance: { include: { user: true } } },
+      include: {
+        studentFlags: { include: { flag: true } },
+        userInInstance: { include: { user: true } },
+      },
     });
 
-    return students.map((s) => ({
-      ...s.userInInstance.user,
-      latestSubmissionDateTime: s.latestSubmissionDateTime ?? undefined,
-      level: s.studentLevel,
-    }));
+    return students.map((s) => studentToDTO(s));
   }
 
   // --- side panel tab methods
@@ -723,6 +757,64 @@ export class AllocationInstance extends DataObject {
         .map((p) => p.details.preAllocatedStudentId)
         .filter((p) => p !== null),
     );
+  }
+
+  public async getFlagsOnProjects(): Promise<FlagDTO[]> {
+    const flagData = await this.db.flagOnProject.findMany({
+      where: { project: { projectInInstance: { some: expand(this.params) } } },
+      include: { flag: true },
+    });
+
+    return flagData.map(({ flag }) => flagToDTO(flag));
+  }
+
+  public async getTagsOnProjects(): Promise<TagDTO[]> {
+    const tagData = await this.db.tagOnProject.findMany({
+      where: { project: { projectInInstance: { some: expand(this.params) } } },
+      include: { tag: true },
+    });
+
+    return tagData.map(({ tag }) => ({ id: tag.id, title: tag.title }));
+  }
+
+  public async getProject(projectId: string): Promise<ProjectDTO> {
+    return await this.db.projectInInstance
+      .findFirstOrThrow({
+        where: { projectId, ...expand(this.params) },
+        include: {
+          details: {
+            include: {
+              flagsOnProject: { include: { flag: true } },
+              tagsOnProject: { include: { tag: true } },
+            },
+          },
+        },
+      })
+      .then(projectDataToDTO);
+  }
+
+  public async getLateProjects(): Promise<ProjectDTO[]> {
+    const { projectSubmissionDeadline } = await this.get();
+
+    const projectData = await this.db.projectInInstance.findMany({
+      where: {
+        ...expand(this.params),
+        details: { latestEditDateTime: { gt: projectSubmissionDeadline } },
+      },
+      include: {
+        supervisor: {
+          include: { userInInstance: { include: { user: true } } },
+        },
+        details: {
+          include: {
+            flagsOnProject: { include: { flag: true } },
+            tagsOnProject: { include: { tag: true } },
+          },
+        },
+      },
+    });
+
+    return projectData.map(projectDataToDTO);
   }
 
   public async edit({ flags, tags, ...updatedData }: UpdatedInstance) {

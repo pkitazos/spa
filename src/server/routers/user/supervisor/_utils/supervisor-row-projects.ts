@@ -1,6 +1,6 @@
 // MOVE
 // TODO: Refactor this file to use the new DTOs
-import { StudentDTO } from "@/dto/student";
+import { DEPR_StudentDTO } from "@/dto/student";
 import {
   BaseProjectDto,
   Project__AllocatedStudents_Capacities,
@@ -27,7 +27,7 @@ type AllocatedProject = BaseRowProject & {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 type _Row = {
   project: BaseProjectDto;
-  student?: StudentDTO & { rank: number };
+  student?: DEPR_StudentDTO & { rank: number };
 };
 
 export function formatSupervisorRowProjects(

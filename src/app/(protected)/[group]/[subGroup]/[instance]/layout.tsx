@@ -50,6 +50,7 @@ export default async function Layout({
 
   return (
     <InstanceParamsProvider instance={{ params, stage, roles }}>
+      {/* this is really stupid actually, I should just be able to pass tha flags and tags directly to data tables */}
       <DataTableProvider details={{ flags, tags }}>
         {children}
       </DataTableProvider>

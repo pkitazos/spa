@@ -24,7 +24,7 @@ import { projectDataToDTO, supervisorToDTO } from "@/db/transformers";
 import { userDtoSchema } from "@/dto";
 import { AlgorithmRunResult } from "@/dto/algorithm-run-result";
 import { projectDtoSchema } from "@/dto/project";
-import { studentDtoSchema, toStudentDTO } from "@/dto/student";
+import { DEPR_studentDtoSchema, toStudentDTO } from "@/dto/student";
 
 export const algorithmRouter = createTRPCRouter({
   // BREAKING input/output type changed
@@ -133,7 +133,7 @@ export const algorithmRouter = createTRPCRouter({
             algorithm: algorithmDtoSchema,
             matchingPairs: z.array(
               z.object({
-                student: studentDtoSchema,
+                student: DEPR_studentDtoSchema,
                 project: projectDtoSchema,
                 studentRanking: z.number(),
               }),

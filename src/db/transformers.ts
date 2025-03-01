@@ -26,16 +26,12 @@ import {
   SubGroupDTO,
   TagDTO,
 } from "@/dto";
-import {
-  StudentDetailsDTO,
-  StudentPreferenceRestrictionsDTO,
-} from "@/dto/student";
+import { StudentDTO } from "@/dto/user/student";
+import { StudentPreferenceRestrictionsDTO } from "@/dto/student";
 import { SupervisorDetailsDTO } from "@/dto/supervisor";
 import { SupervisorDTO } from "@/dto/supervisor_router";
-import { undefined } from "@/data-objects/algorithm";
 import { AlgorithmDTO } from "@/lib/validations/algorithm";
 import { AlgorithmConfig as DB_AlgorithmConfig } from "@prisma/client";
-import { StudentDTO } from "@/dto/user/student";
 
 export function allocationGroupToDTO(data: DB_AllocationGroup): GroupDTO {
   return { group: data.id, displayName: data.displayName };
@@ -121,7 +117,7 @@ export function studentDetailsToDto(
   data: DB_StudentDetails & {
     studentFlags: (DB_FlagOnStudent & { flag: DB_Flag })[];
   },
-): StudentDetailsDTO {
+): StudentDTO {
   return {
     studentId: data.userId,
     level: data.studentLevel,
