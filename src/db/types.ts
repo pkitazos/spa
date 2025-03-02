@@ -10,8 +10,7 @@ export type DB = PrismaClient;
 export type TX = PrismaTransactionClient;
 
 export type {
-  AlgorithmConfig as DB_AlgorithmConfig,
-  AlgorithmConfigInInstance as DB_AlgorithmConfigInInstance,
+  Algorithm as DB_Algorithm,
   AllocationGroup as DB_AllocationGroup,
   AllocationInstance as DB_AllocationInstance,
   AllocationSubGroup as DB_AllocationSubGroup,
@@ -24,8 +23,7 @@ export type {
   GroupAdmin as DB_GroupAdmin,
   MatchingPair as DB_MatchingPair,
   MatchingResult as DB_MatchingResult,
-  ProjectDetails as DB_ProjectDetails,
-  ProjectInInstance as DB_ProjectInInstance,
+  Project as DB_Project,
   ReaderDetails as DB_ReaderDetails,
   ReaderDraftPreference as DB_ReaderDraftPreference,
   ReaderProjectAllocation as DB_ReaderProjectAllocation,

@@ -1,15 +1,14 @@
 // MOVE these to some other file
 
 import {
-  DB_AlgorithmConfig,
+  DB_Algorithm,
   DB_AllocationGroup,
   DB_AllocationInstance,
   DB_AllocationSubGroup,
   DB_Flag,
   DB_FlagOnProject,
   DB_FlagOnStudent,
-  DB_ProjectDetails,
-  DB_ProjectInInstance,
+  DB_Project,
   DB_StudentDetails,
   DB_SupervisorDetails,
   DB_Tag,
@@ -55,7 +54,7 @@ export class Transformers {
       instance: data.id,
       displayName: data.displayName,
       stage: data.stage,
-      selectedAlgConfigId: data.selectedAlgConfigId ?? undefined,
+      selectedAlgConfigId: data.selectedAlgId ?? undefined,
       parentInstanceId: data.parentInstanceId ?? undefined,
       projectSubmissionDeadline: data.projectSubmissionDeadline,
       supervisorAllocationAccess: data.supervisorAllocationAccess,
@@ -118,26 +117,24 @@ export class Transformers {
   }
 
   public static toProjectDTO(
-    data: DB_ProjectInInstance & {
-      details: DB_ProjectDetails & {
-        flagsOnProject: (DB_FlagOnProject & { flag: DB_Flag })[];
-        tagsOnProject: (DB_TagOnProject & { tag: DB_Tag })[];
-      };
+    data: DB_Project & {
+      flagsOnProject: (DB_FlagOnProject & { flag: DB_Flag })[];
+      tagsOnProject: (DB_TagOnProject & { tag: DB_Tag })[];
     },
   ): ProjectDTO {
     return {
-      id: data.details.id,
-      title: data.details.title,
-      description: data.details.description,
+      id: data.id,
+      title: data.title,
+      description: data.description,
       specialTechnicalRequirements:
-        data.details.specialTechnicalRequirements ?? undefined,
-      preAllocatedStudentId: data.details.preAllocatedStudentId ?? undefined,
-      latestEditDateTime: data.details.latestEditDateTime,
-      capacityLowerBound: data.details.capacityLowerBound,
-      capacityUpperBound: data.details.capacityUpperBound,
+        data.specialTechnicalRequirements ?? undefined,
+      preAllocatedStudentId: data.preAllocatedStudentId ?? undefined,
+      latestEditDateTime: data.latestEditDateTime,
+      capacityLowerBound: data.capacityLowerBound,
+      capacityUpperBound: data.capacityUpperBound,
       supervisorId: data.supervisorId,
-      flags: data.details.flagsOnProject.map((f) => this.toFlagDTO(f.flag)),
-      tags: data.details.tagsOnProject.map((t) => this.toTagDTO(t.tag)),
+      flags: data.flagsOnProject.map((f) => this.toFlagDTO(f.flag)),
+      tags: data.tagsOnProject.map((t) => this.toTagDTO(t.tag)),
     };
   }
 
@@ -149,7 +146,7 @@ export class Transformers {
     return { id: data.id, title: data.title, description: data.description };
   }
 
-  public static toAlgorithmDTO = (a: DB_AlgorithmConfig): AlgorithmDTO => ({
+  public static toAlgorithmDTO = (a: DB_Algorithm): AlgorithmDTO => ({
     id: a.id,
     displayName: a.displayName,
     description: a.description ?? undefined,

@@ -75,12 +75,8 @@ export class AllocationSubGroup extends DataObject {
         })),
       });
 
-      await tx.algorithmConfig.createMany({
-        data: builtInAlgorithms.map((a) => ({
-          ...a,
-          matchingResultData: JSON.stringify({}),
-          ...expand(params),
-        })),
+      await tx.algorithm.createMany({
+        data: builtInAlgorithms.map((a) => ({ ...a, ...expand(params) })),
       });
     });
   }

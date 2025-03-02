@@ -505,7 +505,7 @@ export const projectRouter = createTRPCRouter({
       const takenTitles = new Set(allProjects.map(({ project: p }) => p.title));
 
       if (projectId) {
-        const project = await instance.getProject(projectId);
+        const project = await instance.getProject(projectId).get();
         takenTitles.delete(project.title);
       }
 

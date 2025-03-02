@@ -31,6 +31,9 @@ import { ProjectDTO } from "@/dto/project";
 import { StudentDTO } from "@/dto/user/student";
 import { SupervisorDTO } from "@/dto/user/supervisor";
 import { Transformers as T } from "@/db/transformers";
+import { InstanceSupervisor } from "../users/instance-supervisor";
+import { InstanceStudent } from "../users/instance-student";
+import { Project } from "./project";
 
 export class AllocationInstance extends DataObject {
   public params: InstanceParams;
@@ -43,6 +46,7 @@ export class AllocationInstance extends DataObject {
     this.params = params;
   }
 
+  // TODO this is weird - should it live here?
   static async toQualifiedPaths(
     db: DB,
     instances: InstanceDTO[],
@@ -117,13 +121,13 @@ export class AllocationInstance extends DataObject {
   }
   // ---------------------------------------------------------------------------
 
-  // should probably create the AlgorithmConfigInInstance too
   public async createAlgorithm(
     data: Omit<AlgorithmDTO, "id">,
   ): Promise<AlgorithmDTO> {
-    return await this.db.algorithmConfig
+    return await this.db.algorithm
       .create({
         data: {
+          ...expand(this.params),
           displayName: data.displayName,
           description: data.description ?? null,
           flag1: data.flag1,
@@ -132,7 +136,6 @@ export class AllocationInstance extends DataObject {
           maxRank: data.maxRank,
           targetModifier: data.targetModifier,
           upperBoundModifier: data.upperBoundModifier,
-          algorithmInInstances: { create: expand(this.params) },
         },
       })
       .then(T.toAlgorithmDTO);
@@ -144,13 +147,12 @@ export class AllocationInstance extends DataObject {
   }
 
   public async getAllAlgorithms(): Promise<AlgorithmDTO[]> {
-    const algs = await this.db.algorithmConfigInInstance.findMany({
+    const algs = await this.db.algorithm.findMany({
       where: expand(this.params),
-      include: { algorithmConfig: true },
-      orderBy: { algorithmConfig: { createdAt: "asc" } },
+      orderBy: { createdAt: "asc" },
     });
 
-    return algs.map((a) => T.toAlgorithmDTO(a.algorithmConfig));
+    return algs.map(T.toAlgorithmDTO);
   }
 
   public getAlgorithm(algConfigId: string): MatchingAlgorithm {
@@ -176,42 +178,30 @@ export class AllocationInstance extends DataObject {
   }
 
   public async getProjectDetails(): Promise<
-    {
-      project: ProjectDTO;
-      supervisor: SupervisorDTO;
-      flags: FlagDTO[];
-      allocatedTo: string[];
-    }[]
+    { project: ProjectDTO; supervisor: SupervisorDTO; allocatedTo: string[] }[]
   > {
-    const projectData = await this.db.projectInInstance.findMany({
+    const projectData = await this.db.project.findMany({
       where: expand(this.params),
       include: {
         studentAllocations: true,
         supervisor: {
           include: { userInInstance: { include: { user: true } } },
         },
-        details: {
-          include: {
-            flagsOnProject: { include: { flag: true } },
-            tagsOnProject: { include: { tag: true } },
-          },
-        },
+        flagsOnProject: { include: { flag: true } },
+        tagsOnProject: { include: { tag: true } },
       },
     });
 
     return projectData.map((p) => ({
       project: T.toProjectDTO(p),
       supervisor: T.toSupervisorDTO(p.supervisor),
-      flags: p.details.flagsOnProject.map((f) => T.toFlagDTO(f.flag)),
       allocatedTo: p.studentAllocations.map((a) => a.userId),
     }));
   }
-
   /**
-   * TODO review
-   * idempotent i.e. DOES NOT FAIL ON REPEATED CALLS
-   * should it?
-   * @param user
+   * Creates a userInInstance object linking the specified user to this instance;
+   * Should not be run on its own - follow with appropriate calls to linkSupervisor, linkStudent, or linkReader
+   * @param user userId to link
    */
   public async linkUser(user: UserDTO) {
     await this.db.userInInstance.upsert({
@@ -279,29 +269,12 @@ export class AllocationInstance extends DataObject {
     return supervisorData.map(T.toSupervisorDTO);
   }
 
-  // todo add return type
-  public async getSupervisorDetails() {
-    const supervisors = await this.db.supervisorDetails.findMany({
-      where: expand(this.params),
-      include: { userInInstance: { include: { user: true } } },
-    });
-
-    return supervisors.map(({ userInInstance, ...s }) => ({
-      institutionId: userInInstance.user.id,
-      fullName: userInInstance.user.name,
-      email: userInInstance.user.email,
-      joined: userInInstance.joined,
-      projectTarget: s.projectAllocationTarget,
-      projectUpperQuota: s.projectAllocationUpperBound,
-    }));
-  }
-
   public async getSupervisorProjectDetails() {
     const supervisors = await this.db.supervisorDetails.findMany({
       where: expand(this.params),
       include: {
         userInInstance: { include: { user: true } },
-        projects: { include: { studentAllocations: true, details: true } },
+        projects: { include: { studentAllocations: true } },
       },
     });
 
@@ -313,20 +286,17 @@ export class AllocationInstance extends DataObject {
       projectTarget: s.projectAllocationTarget,
       projectUpperQuota: s.projectAllocationUpperBound,
       projects: s.projects.map((p) => ({
-        id: p.projectId,
-        title: p.details.title,
+        id: p.id,
+        title: p.title,
         allocatedTo: p.studentAllocations.map((a) => a.userId),
       })),
     }));
   }
 
   public async getSupervisorPreAllocations(): Promise<Record<string, number>> {
-    const supervisorPreAllocations = await this.db.projectInInstance
+    const supervisorPreAllocations = await this.db.project
       .findMany({
-        where: {
-          ...expand(this.params),
-          details: { preAllocatedStudentId: { not: null } },
-        },
+        where: { ...expand(this.params), preAllocatedStudentId: { not: null } },
       })
       .then((data) =>
         data.reduce(
@@ -339,26 +309,6 @@ export class AllocationInstance extends DataObject {
       );
 
     return supervisorPreAllocations;
-  }
-
-  public async getStudentDetails(): Promise<StudentDTO[]> {
-    const students = await this.db.studentDetails.findMany({
-      where: expand(this.params),
-      include: {
-        userInInstance: { include: { user: true } },
-        studentFlags: { include: { flag: true } },
-      },
-    });
-
-    return students.map((u) => ({
-      id: u.userId,
-      name: u.userInInstance.user.name,
-      email: u.userInInstance.user.email,
-      joined: u.userInInstance.joined,
-      level: u.studentLevel,
-      latestSubmission: u.latestSubmissionDateTime ?? undefined,
-      flags: u.studentFlags.map((f) => T.toFlagDTO(f.flag)),
-    }));
   }
 
   public async getStudentPreferenceDetails() {
@@ -387,9 +337,7 @@ export class AllocationInstance extends DataObject {
       where: expand(this.params),
       include: {
         userInInstance: { include: { user: true } },
-        projectAllocation: {
-          include: { project: { include: { details: true } } },
-        },
+        projectAllocation: { include: { project: true } },
       },
     });
 
@@ -399,7 +347,7 @@ export class AllocationInstance extends DataObject {
       email: u.userInInstance.user.email,
       joined: u.userInInstance.joined,
       level: u.studentLevel,
-      allocatedProject: u.projectAllocation?.project.details,
+      allocatedProject: u.projectAllocation?.project,
     }));
   }
 
@@ -411,17 +359,15 @@ export class AllocationInstance extends DataObject {
       include: { studentFlags: true },
     });
 
-    const suitableProjects = await this.db.projectInInstance.findMany({
+    const suitableProjects = await this.db.project.findMany({
       where: {
         ...expand(this.params),
-        details: {
-          flagsOnProject: {
-            some: { flagId: { in: studentFlags.map((f) => f.flagId) } },
-          },
+        flagsOnProject: {
+          some: { flagId: { in: studentFlags.map((f) => f.flagId) } },
         },
       },
       include: {
-        details: { include: { flagsOnProject: { select: { flag: true } } } },
+        flagsOnProject: { select: { flag: true } },
         studentAllocations: true,
       },
     });
@@ -429,9 +375,9 @@ export class AllocationInstance extends DataObject {
     return suitableProjects
       .filter((p) => p.studentAllocations.length === 0)
       .map((p) => ({
-        id: p.projectId,
-        title: p.details.title,
-        flag: p.details.flagsOnProject.map((f) => f.flag),
+        id: p.id,
+        title: p.title,
+        flag: p.flagsOnProject.map((f) => T.toFlagDTO(f.flag)),
       }));
   }
 
@@ -439,11 +385,7 @@ export class AllocationInstance extends DataObject {
     const data = await this.db.studentSubmittedPreference.findMany({
       where: expand(this.params),
       include: {
-        project: {
-          include: {
-            details: { include: { tagsOnProject: { include: { tag: true } } } },
-          },
-        },
+        project: { include: { tagsOnProject: { include: { tag: true } } } },
       },
       orderBy: [{ projectId: "asc" }, { rank: "asc" }, { userId: "asc" }],
     });
@@ -451,9 +393,9 @@ export class AllocationInstance extends DataObject {
     return data.map((p) => ({
       studentId: p.userId,
       rank: p.rank,
-      project: { id: p.projectId, title: p.project.details.title },
+      project: { id: p.projectId, title: p.project.title },
       supervisorId: p.project.supervisorId,
-      tags: p.project.details.tagsOnProject.map((t) => t.tag),
+      tags: p.project.tagsOnProject.map((t) => t.tag),
     }));
   }
 
@@ -480,9 +422,7 @@ export class AllocationInstance extends DataObject {
         where: expand(this.params),
         include: {
           userInInstance: { select: { user: true } },
-          projectAllocation: {
-            select: { project: { include: { details: true } } },
-          },
+          projectAllocation: { select: { project: true } },
         },
       })
       .then((d) =>
@@ -490,8 +430,8 @@ export class AllocationInstance extends DataObject {
           student: { ...s.userInInstance.user, level: s.studentLevel },
           project: s.projectAllocation?.project
             ? {
-                id: s.projectAllocation?.project.details.id,
-                title: s.projectAllocation?.project.details.title,
+                id: s.projectAllocation?.project.id,
+                title: s.projectAllocation?.project.title,
               }
             : undefined,
         })),
@@ -499,7 +439,7 @@ export class AllocationInstance extends DataObject {
 
     const matchedStudentIds = await this.db.matchingResult
       .findFirstOrThrow({
-        where: { ...expand(this.params), algConfigId: selectedAlgConfigId },
+        where: { ...expand(this.params), algorithmId: selectedAlgConfigId },
         include: { matching: true },
       })
       .then((x) => new Set(x.matching.map((m) => m.userId)));
@@ -556,19 +496,19 @@ export class AllocationInstance extends DataObject {
     return access;
   }
 
-  public isSupervisor(userId: string) {
+  public isSupervisor(userId: string): Promise<boolean> {
     return new User(this.db, userId).isInstanceSupervisor(this.params);
   }
 
-  public getSupervisor(userId: string) {
+  public getSupervisor(userId: string): InstanceSupervisor {
     return new User(this.db, userId).toInstanceSupervisor(this.params);
   }
 
-  public isStudent(userId: string) {
+  public isStudent(userId: string): Promise<boolean> {
     return new User(this.db, userId).isInstanceStudent(this.params);
   }
 
-  public getStudent(userId: string) {
+  public getStudent(userId: string): Promise<InstanceStudent> {
     return new User(this.db, userId).toInstanceStudent(this.params);
   }
 
@@ -686,25 +626,18 @@ export class AllocationInstance extends DataObject {
   public async getPreAllocations(): Promise<
     { project: ProjectDTO; supervisor: SupervisorDTO; student: StudentDTO }[]
   > {
-    const projectData = await this.db.projectInInstance.findMany({
-      where: {
-        ...expand(this.params),
-        details: { preAllocatedStudentId: { not: null } },
-      },
+    const projectData = await this.db.project.findMany({
+      where: { ...expand(this.params), preAllocatedStudentId: { not: null } },
       include: {
         supervisor: {
           include: { userInInstance: { include: { user: true } } },
         },
-        details: {
-          include: {
-            flagsOnProject: { include: { flag: true } },
-            tagsOnProject: { include: { tag: true } },
-          },
-        },
+        flagsOnProject: { include: { flag: true } },
+        tagsOnProject: { include: { tag: true } },
       },
     });
 
-    const students = await this.getStudentDetails().then((data) =>
+    const students = await this.getStudents().then((data) =>
       data.reduce(
         (acc, val) => ({ ...acc, [val.id]: val }),
         {} as Record<string, StudentDTO>,
@@ -712,10 +645,10 @@ export class AllocationInstance extends DataObject {
     );
 
     return projectData.map((p) => {
-      const student = students[p.details.preAllocatedStudentId!];
+      const student = students[p.preAllocatedStudentId!];
       if (!student) {
         throw new Error(
-          `instance.getPreAllocations: dangling pre-allocated student ID ${p.details.preAllocatedStudentId!}`,
+          `instance.getPreAllocations: dangling pre-allocated student ID ${p.preAllocatedStudentId!}`,
         );
       }
 
@@ -731,73 +664,51 @@ export class AllocationInstance extends DataObject {
    * @deprecated use getPreAllocations instead
    */
   public async getPreAllocatedStudentIds() {
-    const projectData = await this.db.projectInInstance.findMany({
-      where: {
-        ...expand(this.params),
-        details: { preAllocatedStudentId: { not: null } },
-      },
-      select: { details: { select: { preAllocatedStudentId: true } } },
+    const projectData = await this.db.project.findMany({
+      where: { ...expand(this.params), preAllocatedStudentId: { not: null } },
     });
 
     return new Set(
-      projectData
-        .map((p) => p.details.preAllocatedStudentId)
-        .filter((p) => p !== null),
+      projectData.map((p) => p.preAllocatedStudentId).filter((p) => p !== null),
     );
   }
 
   public async getFlagsOnProjects(): Promise<FlagDTO[]> {
     const flagData = await this.db.flagOnProject.findMany({
-      where: { project: { projectInInstance: { some: expand(this.params) } } },
+      where: { project: expand(this.params) },
       include: { flag: true },
     });
 
-    return flagData.map(({ flag }) => T.toFlagDTO(flag));
+    return flagData.map((f) => T.toFlagDTO(f.flag));
   }
 
   public async getTagsOnProjects(): Promise<TagDTO[]> {
     const tagData = await this.db.tagOnProject.findMany({
-      where: { project: { projectInInstance: { some: expand(this.params) } } },
+      where: { project: expand(this.params) },
       include: { tag: true },
     });
 
-    return tagData.map(({ tag }) => ({ id: tag.id, title: tag.title }));
+    return tagData.map(({ tag }) => T.toTagDTO(tag));
   }
 
-  public async getProject(projectId: string): Promise<ProjectDTO> {
-    return await this.db.projectInInstance
-      .findFirstOrThrow({
-        where: { projectId, ...expand(this.params) },
-        include: {
-          details: {
-            include: {
-              flagsOnProject: { include: { flag: true } },
-              tagsOnProject: { include: { tag: true } },
-            },
-          },
-        },
-      })
-      .then(T.toProjectDTO);
+  public getProject(projectId: string): Project {
+    return new Project(this.db, { projectId, ...this.params });
   }
 
   public async getLateProjects(): Promise<ProjectDTO[]> {
     const { projectSubmissionDeadline } = await this.get();
 
-    const projectData = await this.db.projectInInstance.findMany({
+    const projectData = await this.db.project.findMany({
       where: {
         ...expand(this.params),
-        details: { latestEditDateTime: { gt: projectSubmissionDeadline } },
+        latestEditDateTime: { gt: projectSubmissionDeadline },
       },
       include: {
         supervisor: {
           include: { userInInstance: { include: { user: true } } },
         },
-        details: {
-          include: {
-            flagsOnProject: { include: { flag: true } },
-            tagsOnProject: { include: { tag: true } },
-          },
-        },
+        flagsOnProject: { include: { flag: true } },
+        tagsOnProject: { include: { tag: true } },
       },
     });
 
@@ -865,12 +776,12 @@ export class AllocationInstance extends DataObject {
   }
 
   public async selectAlg(algId: string): Promise<void> {
-    const preAllocatedStudentIds = await this.getPreAllocatedStudentIds().then(
-      (data) => Array.from(data),
+    const preAllocatedStudentIds = await this.getPreAllocations().then((data) =>
+      data.map(({ student: { id } }) => id),
     );
 
     const matchingData = await this.db.matchingResult.findFirst({
-      where: { ...expand(this.params), algConfigId: algId },
+      where: { ...expand(this.params), algorithmId: algId },
       include: { matching: true },
     });
 
@@ -888,7 +799,7 @@ export class AllocationInstance extends DataObject {
 
       this.db.allocationInstance.update({
         where: { instanceId: toInstanceId(this.params) },
-        data: { selectedAlgConfigId: algId },
+        data: { selectedAlgId: algId },
       }),
     ]);
   }
@@ -905,13 +816,11 @@ export class AllocationInstance extends DataObject {
     });
   }
 
+  // TODO split into 2 methods
   public async unlinkStudent(userId: string) {
     await this.db.$transaction([
-      this.db.projectDetails.updateMany({
-        where: {
-          preAllocatedStudentId: userId,
-          projectInInstance: { every: expand(this.params) },
-        },
+      this.db.project.updateMany({
+        where: { preAllocatedStudentId: userId, ...expand(this.params) },
         data: { preAllocatedStudentId: null },
       }),
       this.db.userInInstance.delete({
@@ -922,10 +831,10 @@ export class AllocationInstance extends DataObject {
 
   public async unlinkStudents(studentIds: string[]) {
     await this.db.$transaction([
-      this.db.projectDetails.updateMany({
+      this.db.project.updateMany({
         where: {
           preAllocatedStudentId: { in: studentIds },
-          projectInInstance: { every: expand(this.params) },
+          ...expand(this.params),
         },
         data: { preAllocatedStudentId: null },
       }),
@@ -957,20 +866,11 @@ export class AllocationInstance extends DataObject {
   }
 
   public async deleteProjects(projectIds: string[]) {
-    await this.db.$transaction([
-      this.db.projectDetails.deleteMany({
-        where: {
-          OR: projectIds.map((projectId) => ({
-            projectInInstance: { every: { ...expand(this.params), projectId } },
-          })),
-        },
-      }),
-
-      this.db.projectInInstance.deleteMany({
-        where: { ...expand(this.params), projectId: { in: projectIds } },
-      }),
-    ]);
+    await this.db.project.deleteMany({
+      where: { ...expand(this.params), id: { in: projectIds } },
+    });
   }
+
   public async delete() {
     await this.db.allocationInstance.delete({
       where: { instanceId: toInstanceId(this.params) },
