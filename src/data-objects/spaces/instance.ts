@@ -1,6 +1,6 @@
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { setDiff } from "@/lib/utils/general/set-difference";
-import { AlgorithmDTO } from "@/lib/validations/algorithm";
+import { AlgorithmDTO } from "@/dto/algorithm";
 import { RandomAllocationDto } from "@/lib/validations/allocation/data-table-dto";
 import { UpdatedInstance } from "@/lib/validations/instance-form";
 import { InstanceParams } from "@/lib/validations/params";
@@ -8,7 +8,6 @@ import { SupervisorProjectSubmissionDetails } from "@/lib/validations/supervisor
 import { TabType } from "@/lib/validations/tabs";
 
 import { MatchingAlgorithm } from "../algorithm";
-import { studentToDTO, toAlgorithmDTO } from "@/db/transformers";
 import { DataObject } from "../data-object";
 import { StudentProjectAllocationData } from "../student-project-allocation-data";
 import { User } from "../users/user";
@@ -20,12 +19,6 @@ import { PAGES } from "@/config/pages";
 import { ADMIN_TABS_BY_STAGE } from "@/config/side-panel-tabs/admin-tabs-by-stage";
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
 import { collectMatchingData } from "@/db/transactions/collect-matching-data";
-import {
-  allocationInstanceToDTO,
-  flagToDTO,
-  projectDataToDTO,
-  supervisorToDTO,
-} from "@/db/transformers";
 import { DB, Stage } from "@/db/types";
 import {
   FlagDTO,
@@ -36,7 +29,8 @@ import {
 } from "@/dto";
 import { ProjectDTO } from "@/dto/project";
 import { StudentDTO } from "@/dto/user/student";
-import { SupervisorDTO } from "@/dto/supervisor";
+import { SupervisorDTO } from "@/dto/user/supervisor";
+import { Transformers as T } from "@/db/transformers";
 
 export class AllocationInstance extends DataObject {
   public params: InstanceParams;
@@ -80,7 +74,7 @@ export class AllocationInstance extends DataObject {
     if (refetch || !this._data) {
       this._data = await this.db.allocationInstance
         .findFirstOrThrow({ where: expand(this.params) })
-        .then(allocationInstanceToDTO);
+        .then(T.toAllocationInstanceDTO);
     }
 
     return this._data!;
@@ -117,7 +111,7 @@ export class AllocationInstance extends DataObject {
       instance: childData.id,
     });
 
-    childInstance._data = allocationInstanceToDTO(childData);
+    childInstance._data = T.toAllocationInstanceDTO(childData);
 
     return childInstance;
   }
@@ -141,7 +135,7 @@ export class AllocationInstance extends DataObject {
           algorithmInInstances: { create: expand(this.params) },
         },
       })
-      .then(toAlgorithmDTO);
+      .then(T.toAlgorithmDTO);
   }
 
   public async getMatchingData() {
@@ -153,9 +147,10 @@ export class AllocationInstance extends DataObject {
     const algs = await this.db.algorithmConfigInInstance.findMany({
       where: expand(this.params),
       include: { algorithmConfig: true },
+      orderBy: { algorithmConfig: { createdAt: "asc" } },
     });
 
-    return algs.map((a) => toAlgorithmDTO(a.algorithmConfig));
+    return algs.map((a) => T.toAlgorithmDTO(a.algorithmConfig));
   }
 
   public getAlgorithm(algConfigId: string): MatchingAlgorithm {
@@ -205,9 +200,9 @@ export class AllocationInstance extends DataObject {
     });
 
     return projectData.map((p) => ({
-      project: projectDataToDTO(p),
-      supervisor: supervisorToDTO(p.supervisor),
-      flags: p.details.flagsOnProject.map((f) => flagToDTO(f.flag)),
+      project: T.toProjectDTO(p),
+      supervisor: T.toSupervisorDTO(p.supervisor),
+      flags: p.details.flagsOnProject.map((f) => T.toFlagDTO(f.flag)),
       allocatedTo: p.studentAllocations.map((a) => a.userId),
     }));
   }
@@ -243,8 +238,8 @@ export class AllocationInstance extends DataObject {
       data: {
         ...expand(this.params),
         projectAllocationLowerBound: 0,
-        projectAllocationTarget: user.projectTarget,
-        projectAllocationUpperBound: user.projectUpperQuota,
+        projectAllocationTarget: user.allocationTarget,
+        projectAllocationUpperBound: user.allocationUpperBound,
         userId: user.id,
       },
     });
@@ -256,8 +251,8 @@ export class AllocationInstance extends DataObject {
         ...expand(this.params),
 
         projectAllocationLowerBound: 0,
-        projectAllocationTarget: user.projectTarget,
-        projectAllocationUpperBound: user.projectUpperQuota,
+        projectAllocationTarget: user.allocationTarget,
+        projectAllocationUpperBound: user.allocationUpperBound,
         userId: user.id,
       })),
       skipDuplicates: true,
@@ -276,20 +271,12 @@ export class AllocationInstance extends DataObject {
   }
 
   public async getSupervisors(): Promise<SupervisorDTO[]> {
-    return await this.db.supervisorDetails
-      .findMany({
-        where: expand(this.params),
-        include: { userInInstance: { include: { user: true } } },
-      })
-      .then((supervisors) =>
-        supervisors.map(({ userInInstance, ...s }) => ({
-          id: userInInstance.user.id,
-          name: userInInstance.user.name,
-          email: userInInstance.user.email,
-          projectTarget: s.projectAllocationTarget,
-          projectUpperQuota: s.projectAllocationUpperBound,
-        })),
-      );
+    const supervisorData = await this.db.supervisorDetails.findMany({
+      where: expand(this.params),
+      include: { userInInstance: { include: { user: true } } },
+    });
+
+    return supervisorData.map(T.toSupervisorDTO);
   }
 
   // todo add return type
@@ -370,7 +357,7 @@ export class AllocationInstance extends DataObject {
       joined: u.userInInstance.joined,
       level: u.studentLevel,
       latestSubmission: u.latestSubmissionDateTime ?? undefined,
-      flags: u.studentFlags.map((f) => flagToDTO(f.flag)),
+      flags: u.studentFlags.map((f) => T.toFlagDTO(f.flag)),
     }));
   }
 
@@ -479,7 +466,7 @@ export class AllocationInstance extends DataObject {
       },
     });
 
-    return studentData.map((s) => studentToDTO(s));
+    return studentData.map((s) => T.toStudentDTO(s));
   }
 
   // BREAKING
@@ -594,7 +581,7 @@ export class AllocationInstance extends DataObject {
       },
     });
 
-    return students.map((s) => studentToDTO(s));
+    return students.map((s) => T.toStudentDTO(s));
   }
 
   // --- side panel tab methods
@@ -733,8 +720,8 @@ export class AllocationInstance extends DataObject {
       }
 
       return {
-        project: projectDataToDTO(p),
-        supervisor: supervisorToDTO(p.supervisor),
+        project: T.toProjectDTO(p),
+        supervisor: T.toSupervisorDTO(p.supervisor),
         student,
       };
     });
@@ -765,7 +752,7 @@ export class AllocationInstance extends DataObject {
       include: { flag: true },
     });
 
-    return flagData.map(({ flag }) => flagToDTO(flag));
+    return flagData.map(({ flag }) => T.toFlagDTO(flag));
   }
 
   public async getTagsOnProjects(): Promise<TagDTO[]> {
@@ -790,7 +777,7 @@ export class AllocationInstance extends DataObject {
           },
         },
       })
-      .then(projectDataToDTO);
+      .then(T.toProjectDTO);
   }
 
   public async getLateProjects(): Promise<ProjectDTO[]> {
@@ -814,7 +801,7 @@ export class AllocationInstance extends DataObject {
       },
     });
 
-    return projectData.map(projectDataToDTO);
+    return projectData.map(T.toProjectDTO);
   }
 
   public async edit({ flags, tags, ...updatedData }: UpdatedInstance) {

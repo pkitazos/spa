@@ -9,18 +9,11 @@ import { User } from "./user";
 
 import { updateManyPreferenceTransaction } from "@/db/transactions/update-many-preferences";
 import { updatePreferenceTransaction } from "@/db/transactions/update-preference";
-import {
-  projectDataToDTO,
-  studentDetailsToDto,
-  studentToDTO,
-} from "@/db/transformers";
+import { Transformers as T } from "@/db/transformers";
 import { DB, PreferenceType } from "@/db/types";
-import { DEPR_ProjectDTO } from "@/dto/project";
-import {
-  StudentDTO,
-  StudentDraftPreferenceDTO,
-  StudentSubmittedPreferenceDTO,
-} from "@/dto/student";
+import { StudentDTO } from "@/dto/user/student";
+import { ProjectDTO } from "@/dto/project";
+import { SupervisorDTO } from "@/dto/user/supervisor";
 
 export class InstanceStudent extends User {
   instance: AllocationInstance;
@@ -39,16 +32,7 @@ export class InstanceStudent extends User {
           userInInstance: { include: { user: true } },
         },
       })
-      .then(studentToDTO);
-  }
-
-  public async getDetails(): Promise<StudentDTO> {
-    return await this.db.studentDetails
-      .findFirstOrThrow({
-        where: { userId: this.id, ...expand(this.instance.params) },
-        include: { studentFlags: { include: { flag: true } } },
-      })
-      .then(studentDetailsToDto);
+      .then(T.toStudentDTO);
   }
 
   public async hasSelfDefinedProject(): Promise<boolean> {
@@ -67,24 +51,38 @@ export class InstanceStudent extends User {
   }
 
   public async getAllocation(): Promise<{
-    project: DEPR_ProjectDTO;
+    project: ProjectDTO;
     studentRanking: number;
   }> {
     return await this.db.studentProjectAllocation
       .findFirstOrThrow({
         where: { userId: this.id, ...expand(this.instance.params) },
-        include: { project: { include: { details: true } } },
+        include: {
+          project: {
+            include: {
+              supervisor: {
+                include: { userInInstance: { include: { user: true } } },
+              },
+              details: {
+                include: {
+                  flagsOnProject: { include: { flag: true } },
+                  tagsOnProject: { include: { tag: true } },
+                },
+              },
+            },
+          },
+        },
       })
       .then((x) => ({
-        project: projectDataToDTO(x.project),
+        project: T.toProjectDTO(x.project),
         studentRanking: x.studentRanking,
       }));
   }
 
   public async getLatestSubmissionDateTime(): Promise<Date | undefined> {
-    const { latestSubmissionDateTime } = await this.getDetails();
+    const { latestSubmission } = await this.get();
 
-    return latestSubmissionDateTime;
+    return latestSubmission;
   }
 
   public async getDraftPreference(
@@ -98,38 +96,48 @@ export class InstanceStudent extends User {
       .then((x) => x?.type);
   }
 
-  public async getAllDraftPreferences(): Promise<StudentDraftPreferenceDTO[]> {
-    return await this.db.studentDraftPreference
-      .findMany({
-        where: { userId: this.id, ...expand(this.instance.params) },
-        select: {
-          type: true,
-          score: true,
-          project: {
-            include: {
-              details: true,
-              supervisor: {
-                select: { userInInstance: { select: { user: true } } },
+  public async getAllDraftPreferences(): Promise<
+    {
+      project: ProjectDTO;
+      score: number;
+      type: PreferenceType;
+      supervisor: SupervisorDTO;
+    }[]
+  > {
+    const preferenceData = await this.db.studentDraftPreference.findMany({
+      where: { userId: this.id, ...expand(this.instance.params) },
+      select: {
+        type: true,
+        score: true,
+        project: {
+          include: {
+            supervisor: {
+              include: { userInInstance: { include: { user: true } } },
+            },
+            details: {
+              include: {
+                flagsOnProject: { include: { flag: true } },
+                tagsOnProject: { include: { tag: true } },
               },
             },
           },
         },
-        orderBy: { score: "asc" },
-      })
-      .then((data) =>
-        data
-          .sort(sortPreferenceType)
-          .map((x) => ({
-            project: projectDataToDTO(x.project),
-            supervisor: x.project.supervisor.userInInstance.user,
-            score: x.score,
-            type: x.type,
-          })),
-      );
+      },
+      orderBy: { score: "asc" },
+    });
+
+    return preferenceData
+      .sort(sortPreferenceType)
+      .map((x) => ({
+        project: T.toProjectDTO(x.project),
+        supervisor: T.toSupervisorDTO(x.project.supervisor),
+        score: x.score,
+        type: x.type,
+      }));
   }
 
   public async getSubmittedPreferences(): Promise<
-    StudentSubmittedPreferenceDTO[]
+    { project: ProjectDTO; supervisor: SupervisorDTO; rank: number }[]
   > {
     return await this.db.studentDetails
       .findFirstOrThrow({
@@ -139,7 +147,12 @@ export class InstanceStudent extends User {
             include: {
               project: {
                 include: {
-                  details: true,
+                  details: {
+                    include: {
+                      flagsOnProject: { include: { flag: true } },
+                      tagsOnProject: { include: { tag: true } },
+                    },
+                  },
                   supervisor: {
                     include: { userInInstance: { include: { user: true } } },
                   },
@@ -152,9 +165,9 @@ export class InstanceStudent extends User {
       })
       .then((data) =>
         data.studentSubmittedPreferences.map((x) => ({
-          project: projectDataToDTO(x.project),
+          project: T.toProjectDTO(x.project),
+          supervisor: T.toSupervisorDTO(x.project.supervisor),
           rank: x.rank,
-          supervisor: x.project.supervisor.userInInstance.user,
         })),
       );
   }
@@ -195,9 +208,12 @@ export class InstanceStudent extends User {
           },
         },
         data: { studentLevel: level },
-        include: { studentFlags: { include: { flag: true } } },
+        include: {
+          studentFlags: { include: { flag: true } },
+          userInInstance: { include: { user: true } },
+        },
       })
-      .then(studentDetailsToDto);
+      .then(T.toStudentDTO);
   }
 
   public async updateDraftPreferenceType(
@@ -217,7 +233,7 @@ export class InstanceStudent extends User {
     projectId: string,
     updatedRank: number,
     preferenceType: PreferenceType,
-  ): Promise<{ project: DEPR_ProjectDTO; rank: number }> {
+  ): Promise<{ project: ProjectDTO; rank: number }> {
     return await this.db.studentDraftPreference
       .update({
         where: {
@@ -228,10 +244,24 @@ export class InstanceStudent extends User {
           },
         },
         data: { type: preferenceType, score: updatedRank },
-        include: { project: { include: { details: true } } },
+        include: {
+          project: {
+            include: {
+              details: {
+                include: {
+                  flagsOnProject: { include: { flag: true } },
+                  tagsOnProject: { include: { tag: true } },
+                },
+              },
+              supervisor: {
+                include: { userInInstance: { include: { user: true } } },
+              },
+            },
+          },
+        },
       })
       .then((data) => ({
-        project: projectDataToDTO(data.project),
+        project: T.toProjectDTO(data.project),
         rank: updatedRank,
       }));
   }

@@ -1,17 +1,14 @@
 // MOVE
 // TODO: Refactor this file to use the new DTOs
-import { DEPR_StudentDTO } from "@/dto/student";
-import {
-  BaseProjectDto,
-  Project__AllocatedStudents_Capacities,
-} from "@/dto/supervisor_router";
+import { ProjectDTO, projectDtoSchema, userDtoSchema } from "@/dto";
+import { z } from "zod";
 
 type ProjectCapacities = {
   capacityLowerBound: number;
   capacityUpperBound: number;
 };
 
-type BaseRowProject = BaseProjectDto & ProjectCapacities;
+type BaseRowProject = ProjectDTO & ProjectCapacities;
 
 type UnallocatedProject = BaseRowProject & {
   allocatedStudentId: undefined;
@@ -23,12 +20,16 @@ type AllocatedProject = BaseRowProject & {
   allocatedStudentName: string;
 };
 
-// ? Maybe something like this would be better
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-type _Row = {
-  project: BaseProjectDto;
-  student?: DEPR_StudentDTO & { rank: number };
-};
+export const project__AllocatedStudents_Capacities_Schema =
+  projectDtoSchema.extend({
+    capacityLowerBound: z.number(),
+    capacityUpperBound: z.number(),
+    allocatedStudents: z.array(userDtoSchema),
+  });
+
+export type Project__AllocatedStudents_Capacities = z.infer<
+  typeof project__AllocatedStudents_Capacities_Schema
+>;
 
 export function formatSupervisorRowProjects(
   supervisorProjects: Project__AllocatedStudents_Capacities[],

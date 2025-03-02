@@ -18,7 +18,10 @@ export {
   type UserDTO,
   userDtoSchema,
 } from "./user";
-export { type SupervisorDTO } from "./user/supervisor";
+export { type SupervisorDTO, supervisorDtoSchema } from "./user/supervisor";
+export { type StudentDTO, studentDtoSchema } from "./user/student";
+export { type AlgorithmDTO, algorithmDtoSchema } from "./algorithm";
+export { type ProjectDTO, projectDtoSchema } from "./project";
 
 export const flagDtoSchema = z.object({
   id: z.string(),
@@ -33,6 +36,7 @@ export const tagDtoSchema = z.object({ id: z.string(), title: z.string() });
 export type TagDTO = z.infer<typeof tagDtoSchema>;
 
 // TODO is this really a DTO?
+// no? but it's a response type that's kinda large and annoying to have to write out every time we need it
 export const instanceDisplayDataSchema = z.object({
   group: z.object({ id: z.string(), displayName: z.string() }),
   subGroup: z.object({ id: z.string(), displayName: z.string() }),

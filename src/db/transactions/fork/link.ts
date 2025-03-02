@@ -1,10 +1,10 @@
-import { PrismaTransactionClient } from "@/db";
+import { TX } from "@/db/types";
 
 import { MappingData } from "./copy";
 import { ForkMarkedProjectDto } from "./mark";
 
 export async function link(
-  tx: PrismaTransactionClient,
+  tx: TX,
   parentInstanceProjects: ForkMarkedProjectDto[],
   mappings: MappingData,
 ) {
@@ -13,7 +13,7 @@ export async function link(
 }
 
 export async function linkTags(
-  tx: PrismaTransactionClient,
+  tx: TX,
   parentInstanceProjects: ForkMarkedProjectDto[],
   { tag, project }: MappingData,
 ) {
@@ -30,7 +30,7 @@ export async function linkTags(
 }
 
 export async function linkFlags(
-  tx: PrismaTransactionClient,
+  tx: TX,
   parentInstanceProjects: ForkMarkedProjectDto[],
   { flag, project }: MappingData,
 ) {

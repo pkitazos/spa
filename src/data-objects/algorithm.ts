@@ -1,15 +1,12 @@
 import { expand, toAlgID } from "@/lib/utils/general/instance-params";
-import { AlgorithmDTO } from "@/lib/validations/algorithm";
+import { AlgorithmDTO } from "@/dto/algorithm";
 import { MatchingDataDTO, MatchingResultDTO } from "@/lib/validations/matching";
 import { AlgorithmInstanceParams } from "@/lib/validations/params";
-
 import { executeMatchingAlgorithm } from "@/server/routers/institution/instance/algorithm/_utils/execute-matching-algorithm";
-
 import { DataObject } from "./data-object";
-
-import { allocationInstanceToDTO, toAlgorithmDTO } from "@/db/transformers";
 import { DB } from "@/db/types";
 import { InstanceDTO } from "@/dto";
+import { Transformers } from "@/db/transformers";
 import { AlgorithmRunResult } from "@/dto/algorithm-run-result";
 
 export class MatchingAlgorithm extends DataObject {
@@ -28,7 +25,7 @@ export class MatchingAlgorithm extends DataObject {
     if (!this._config) {
       this._config = await this.db.algorithmConfig
         .findFirstOrThrow({ where: { id: this.params.algConfigId } })
-        .then(toAlgorithmDTO);
+        .then(Transformers.toAlgorithmDTO);
     }
     return this._config!;
   }
@@ -37,7 +34,7 @@ export class MatchingAlgorithm extends DataObject {
     if (!this._instance) {
       this._instance = await this.db.allocationInstance
         .findFirstOrThrow({ where: expand(this.params) })
-        .then(allocationInstanceToDTO);
+        .then(Transformers.toAllocationInstanceDTO);
     }
     return this._instance!;
   }

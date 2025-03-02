@@ -14,12 +14,7 @@ import { createTRPCRouter } from "@/server/trpc";
 import { preferenceRouter } from "./preference";
 
 import { InstanceSupervisor } from "@/data-objects/users/instance-supervisor";
-import { instanceToStudentPreferenceRestrictionsDTO } from "@/db/transformers";
-import {
-  studentDtoSchema,
-  DEPR_studentDtoSchema,
-  studentPreferenceRestrictionsDtoSchema,
-} from "@/dto/student";
+import { studentDtoSchema } from "@/dto/user/student";
 
 export const studentRouter = createTRPCRouter({
   preference: preferenceRouter,
@@ -36,7 +31,8 @@ export const studentRouter = createTRPCRouter({
   getById: procedure.instance.subGroupAdmin
     .input(z.object({ studentId: z.string() }))
     .output(
-      DEPR_studentDtoSchema.extend({
+      z.object({
+        student: studentDtoSchema,
         selfDefinedProjectId: z.string().optional(),
         allocation: studentProjectAllocationDtoSchema.optional(),
       }),
@@ -50,7 +46,7 @@ export const studentRouter = createTRPCRouter({
         return {
           allocation: undefined,
           selfDefinedProjectId: undefined,
-          ...studentData,
+          student: studentData,
         };
       }
 
@@ -63,29 +59,17 @@ export const studentRouter = createTRPCRouter({
       if (!(await student.hasSelfDefinedProject())) {
         // no self defined project
         return {
-          allocation: {
-            project: { id: project.id, title: project.title, supervisor },
-            rank: studentRanking,
-          },
+          allocation: { project, rank: studentRanking },
           selfDefinedProjectId: undefined,
-          ...studentData,
+          student: studentData,
         };
       }
 
       // definitely has self defined project
-
       return {
-        id: studentData.id,
-        name: studentData.name,
-        email: studentData.email,
-        level: studentData.level,
-        latestSubmissionDateTime: studentData.latestSubmissionDateTime,
-
+        allocation: { project, rank: studentRanking },
         selfDefinedProjectId: project.id,
-        allocation: {
-          project: { id: project.id, title: project.title, supervisor },
-          rank: studentRanking,
-        },
+        student: studentData,
       };
     }),
 
@@ -147,12 +131,25 @@ export const studentRouter = createTRPCRouter({
   // MOVE to instance router
   // this sucks actually
   preferenceRestrictions: procedure.instance.user
-    .output(studentPreferenceRestrictionsDtoSchema)
-    .query(
-      async ({ ctx: { instance } }) =>
-        // ? should this be a method on the instance object
-        await instance.get().then(instanceToStudentPreferenceRestrictionsDTO),
-    ),
+    .output(
+      z.object({
+        minPreferences: z.number(),
+        maxPreferences: z.number(),
+        maxPreferencesPerSupervisor: z.number(),
+        preferenceSubmissionDeadline: z.date(),
+      }),
+    )
+    .query(async ({ ctx: { instance } }) => {
+      // ? should this be a method on the instance object
+      const data = await instance.get();
+
+      return {
+        minPreferences: data.minStudentPreferences,
+        maxPreferences: data.maxStudentPreferences,
+        maxPreferencesPerSupervisor: data.maxStudentPreferencesPerSupervisor,
+        preferenceSubmissionDeadline: data.studentPreferenceSubmissionDeadline,
+      };
+    }),
 
   // TODO: change output type
   // TODO: split into two procedures

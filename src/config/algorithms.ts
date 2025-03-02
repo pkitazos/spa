@@ -1,4 +1,4 @@
-import { AlgorithmDTO } from "@/lib/validations/algorithm";
+import { AlgorithmDTO } from "@/dto/algorithm";
 
 import { AlgorithmFlag } from "@/db/types";
 

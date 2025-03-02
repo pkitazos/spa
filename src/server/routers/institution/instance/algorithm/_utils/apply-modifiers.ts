@@ -1,4 +1,4 @@
-import { AlgorithmDTO } from "@/lib/validations/algorithm";
+import { AlgorithmDTO } from "@/dto/algorithm";
 import { MatchingDataDTO } from "@/lib/validations/matching";
 
 // TODO: add docs + figure out where this was used

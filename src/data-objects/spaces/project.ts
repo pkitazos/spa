@@ -9,7 +9,7 @@ import { AllocationSubGroup } from "./subgroup";
 
 import { DB } from "@/db/types";
 import { FlagDTO } from "@/dto";
-import { flagToDTO } from "@/db/transformers";
+import { Transformers as T } from "@/db/transformers";
 
 export class Project extends DataObject {
   public params: ProjectParams;
@@ -53,7 +53,7 @@ export class Project extends DataObject {
       },
     });
 
-    return data.details.flagsOnProject.map((f) => flagToDTO(f.flag));
+    return data.details.flagsOnProject.map((f) => T.toFlagDTO(f.flag));
   }
 
   public async delete(): Promise<void> {

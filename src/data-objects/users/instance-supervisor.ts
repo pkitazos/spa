@@ -5,20 +5,9 @@ import { AllocationInstance } from "../spaces/instance";
 
 import { User } from "./user";
 
-import {
-  flagToDTO,
-  projectDataToDTO,
-  supervisorToDTO,
-  tagToDTO,
-} from "@/db/transformers";
+import { Transformers as T } from "@/db/transformers";
 import { DB } from "@/db/types";
-import { UserDTO } from "@/dto";
-import {
-  Project__AllocatedStudents_Capacities,
-  SupervisionAllocationDto,
-  SupervisorCapacityDetails,
-  SupervisorDTO,
-} from "@/dto/supervisor_router";
+import { UserDTO, ProjectDTO, StudentDTO, SupervisorDTO } from "@/dto";
 
 export class InstanceSupervisor extends User {
   instance: AllocationInstance;
@@ -33,7 +22,7 @@ export class InstanceSupervisor extends User {
         where: { userId: this.id, ...expand(this.instance.params) },
         include: { userInInstance: { include: { user: true } } },
       })
-      .then(supervisorToDTO);
+      .then(T.toSupervisorDTO);
   }
 
   public async get(): Promise<UserDTO> {
@@ -46,7 +35,7 @@ export class InstanceSupervisor extends User {
   }
 
   public async getSupervisionAllocations(): Promise<
-    SupervisionAllocationDto[]
+    { project: ProjectDTO; student: StudentDTO; rank: number }[]
   > {
     return await this.db.studentProjectAllocation
       .findMany({
@@ -54,30 +43,38 @@ export class InstanceSupervisor extends User {
           project: { supervisorId: this.id },
           ...expand(this.instance.params),
         },
-        select: {
-          studentRanking: true,
-          project: { include: { details: true } },
-          student: { include: { userInInstance: { select: { user: true } } } },
+        include: {
+          project: {
+            include: {
+              details: {
+                include: {
+                  tagsOnProject: { include: { tag: true } },
+                  flagsOnProject: { include: { flag: true } },
+                },
+              },
+            },
+          },
+          student: {
+            include: {
+              studentFlags: { include: { flag: true } },
+              userInInstance: { include: { user: true } },
+            },
+          },
         },
       })
       .then((data) =>
-        data.map(({ project, student, studentRanking: rank }) => ({
-          project: {
-            ...project,
-            ...project.details,
-            preAllocatedStudentId:
-              project.details.preAllocatedStudentId ?? undefined,
-          },
-          student: {
-            ...student.userInInstance.user,
-            level: student.studentLevel,
-          },
-          rank,
+        data.map(({ project, student, studentRanking }) => ({
+          project: T.toProjectDTO(project),
+          student: T.toStudentDTO(student),
+          rank: studentRanking,
         })),
       );
   }
 
-  public async getCapacityDetails(): Promise<SupervisorCapacityDetails> {
+  public async getCapacityDetails(): Promise<{
+    projectTarget: number;
+    projectUpperQuota: number;
+  }> {
     return await this.db.supervisorDetails
       .findFirstOrThrow({
         where: { userId: this.id, ...expand(this.instance.params) },
@@ -88,37 +85,37 @@ export class InstanceSupervisor extends User {
       }));
   }
 
-  // TODO rename this return type
-  public async getProjects(): Promise<Project__AllocatedStudents_Capacities[]> {
-    return await this.db.projectInInstance
-      .findMany({
-        where: { supervisorId: this.id, ...expand(this.instance.params) },
-        select: {
-          projectId: true,
-          supervisorId: true,
-          details: true,
-          studentAllocations: {
-            select: {
-              student: {
-                select: { userInInstance: { select: { user: true } } },
+  public async getProjects(): Promise<
+    { project: ProjectDTO; allocatedStudents: StudentDTO[] }[]
+  > {
+    const projectData = await this.db.projectInInstance.findMany({
+      where: { supervisorId: this.id, ...expand(this.instance.params) },
+      include: {
+        details: {
+          include: {
+            tagsOnProject: { include: { tag: true } },
+            flagsOnProject: { include: { flag: true } },
+          },
+        },
+        studentAllocations: {
+          include: {
+            student: {
+              include: {
+                studentFlags: { include: { flag: true } },
+                userInInstance: { include: { user: true } },
               },
             },
           },
         },
-      })
-      .then((data) =>
-        data.map((x) => ({
-          id: x.projectId,
-          title: x.details.title,
-          supervisorId: x.supervisorId,
-          capacityLowerBound: x.details.capacityLowerBound,
-          capacityUpperBound: x.details.capacityUpperBound,
-          preAllocatedStudentId: x.details.preAllocatedStudentId ?? undefined,
-          allocatedStudents: x.studentAllocations.map(
-            (y) => y.student.userInInstance.user,
-          ),
-        })),
-      );
+      },
+    });
+
+    return projectData.map((x) => ({
+      project: T.toProjectDTO(x),
+      allocatedStudents: x.studentAllocations.map((s) =>
+        T.toStudentDTO(s.student),
+      ),
+    }));
   }
 
   public async getProjectsWithDetails() {
@@ -147,15 +144,15 @@ export class InstanceSupervisor extends User {
       });
 
     return projectData.map((data) => ({
-      project: projectDataToDTO(data),
+      project: T.toProjectDTO(data),
       // TODO remove below
-      ...projectDataToDTO(data),
+      ...T.toProjectDTO(data),
       allocatedStudents: data.studentAllocations.map((u) => ({
         level: u.student.studentLevel,
         ...u.student.userInInstance.user,
       })),
-      flags: data.details.flagsOnProject.map((f) => flagToDTO(f.flag)),
-      tags: data.details.tagsOnProject.map((t) => tagToDTO(t.tag)),
+      flags: data.details.flagsOnProject.map((f) => T.toFlagDTO(f.flag)),
+      tags: data.details.tagsOnProject.map((t) => T.toTagDTO(t.tag)),
     }));
   }
 
@@ -180,7 +177,10 @@ export class InstanceSupervisor extends User {
   public async setCapacityDetails({
     projectTarget,
     projectUpperQuota,
-  }: SupervisorCapacityDetails): Promise<SupervisorCapacityDetails> {
+  }: {
+    projectTarget: number;
+    projectUpperQuota: number;
+  }): Promise<{ projectTarget: number; projectUpperQuota: number }> {
     await this.db.supervisorDetails.update({
       where: {
         supervisorDetailsId: {

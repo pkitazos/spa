@@ -3,7 +3,7 @@ import { expand } from "@/lib/utils/general/instance-params";
 import { relativeComplement } from "@/lib/utils/general/set-difference";
 import { InstanceParams } from "@/lib/validations/params";
 
-import { flagToDTO } from "@/db/transformers";
+import { Transformers as T } from "@/db/transformers";
 import { DB, PreferenceType } from "@/db/types";
 
 export async function updateManyPreferenceTransaction(
@@ -26,7 +26,7 @@ export async function updateManyPreferenceTransaction(
         where: { id: { in: projectIds } },
         select: { flagsOnProject: { select: { flag: true } } },
       })
-      .then((data) => data.flagsOnProject.map((f) => flagToDTO(f.flag)))
+      .then((data) => data.flagsOnProject.map((f) => T.toFlagDTO(f.flag)))
       .then((x) => new Set(x));
 
     const studentFlags = await tx.studentDetails
@@ -34,7 +34,7 @@ export async function updateManyPreferenceTransaction(
         where: { userId, ...expand(params) },
         select: { studentFlags: { select: { flag: true } } },
       })
-      .then((data) => data.studentFlags.map((f) => flagToDTO(f.flag)))
+      .then((data) => data.studentFlags.map((f) => T.toFlagDTO(f.flag)))
       .then((x) => new Set(x));
 
     if (projectFlags.intersection(studentFlags).size <= 0) {

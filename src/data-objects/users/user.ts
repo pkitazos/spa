@@ -22,9 +22,9 @@ import { SubGroupAdmin } from "./subgroup-admin";
 import { SuperAdmin } from "./super-admin";
 
 import { DAL } from "@/data-access";
-import { userInInstanceToDTO } from "@/db/transformers";
+import { Transformers as T } from "@/db/transformers";
 import { DB, Role } from "@/db/types";
-import { UserDTO } from "@/dto";
+import { InstanceUserDTO, UserDTO } from "@/dto";
 
 export class User extends DataObject {
   id: string;
@@ -344,14 +344,14 @@ export class User extends DataObject {
     return this._data;
   }
 
-  public async joinInstance(params: InstanceParams) {
-    await this.db.userInInstance
+  public async joinInstance(params: InstanceParams): Promise<InstanceUserDTO> {
+    return await this.db.userInInstance
       .update({
         where: { instanceMembership: { ...expand(params), userId: this.id } },
         data: { joined: true },
         include: { user: true },
       })
-      .then(userInInstanceToDTO);
+      .then(T.toInstanceUserDTO);
   }
 
   public async isInstanceStaff(params: InstanceParams): Promise<boolean> {

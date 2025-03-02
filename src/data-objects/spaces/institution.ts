@@ -2,10 +2,7 @@ import { slugify } from "@/lib/utils/general/slugify";
 
 import { DataObject } from "../data-object";
 
-import {
-  allocationGroupToDTO,
-  allocationInstanceToDTO,
-} from "@/db/transformers";
+import { Transformers as T } from "@/db/transformers";
 import { DB } from "@/db/types";
 import { GroupDTO, InstanceDTO, UserDTO } from "@/dto";
 import { SuperAdminDTO } from "@/dto/user/admin";
@@ -19,7 +16,7 @@ export class Institution extends DataObject {
   public async createGroup(displayName: string): Promise<GroupDTO> {
     return await this.db.allocationGroup
       .create({ data: { id: slugify(displayName), displayName } })
-      .then(allocationGroupToDTO);
+      .then(T.toAllocationGroupDTO);
   }
 
   public async getAdmins(): Promise<SuperAdminDTO[]> {
@@ -33,12 +30,12 @@ export class Institution extends DataObject {
   public async getGroups(): Promise<GroupDTO[]> {
     const groups = await this.db.allocationGroup.findMany();
 
-    return groups.map(allocationGroupToDTO);
+    return groups.map(T.toAllocationGroupDTO);
   }
 
   public async getInstances(): Promise<InstanceDTO[]> {
     const instances = await this.db.allocationInstance.findMany();
-    return instances.map(allocationInstanceToDTO);
+    return instances.map(T.toAllocationInstanceDTO);
   }
 
   public async createUser(data: UserDTO): Promise<void> {

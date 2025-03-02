@@ -8,16 +8,14 @@ import { supervisorCapacitiesSchema } from "@/lib/validations/supervisor-project
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
-import { formatSupervisorRowProjects } from "./_utils/supervisor-row-projects";
-
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
 import { Stage } from "@/db/types";
-import { flagDtoSchema, tagDtoSchema, userDtoSchema } from "@/dto";
-import { DEPR_studentDtoSchema } from "@/dto/student";
 import {
-  baseProjectDtoSchema,
+  projectDtoSchema,
+  studentDtoSchema,
   supervisorDtoSchema,
-} from "@/dto/supervisor_router";
+  userDtoSchema,
+} from "@/dto";
 
 export const supervisorRouter = createTRPCRouter({
   exists: procedure.instance.user
@@ -77,9 +75,7 @@ export const supervisorRouter = createTRPCRouter({
       z.object({
         supervisor: supervisorDtoSchema,
         projects: z.array(
-          baseProjectDtoSchema.extend({
-            tags: z.array(tagDtoSchema),
-            flags: z.array(flagDtoSchema),
+          projectDtoSchema.extend({
             allocatedStudents: z.array(userDtoSchema),
           }),
         ),
@@ -114,7 +110,7 @@ export const supervisorRouter = createTRPCRouter({
       let totalCount: number;
       if (parentInstanceId) {
         const forkedPreAllocatedCount = allProjects.reduce(
-          (acc, val) => (val.preAllocatedStudentId ? acc + 1 : acc),
+          (acc, val) => (val.project.preAllocatedStudentId ? acc + 1 : acc),
           0,
         );
 
@@ -134,25 +130,30 @@ export const supervisorRouter = createTRPCRouter({
       };
     }),
 
-  // TODO kill this?
-  // use supervisor.getProjects on the client
-  // run it through format rows on that side?
+  // BREAKING output type
   rowProjects: procedure.instance.supervisor
     .output(
       z.array(
-        // TODO Refactor this?
-        baseProjectDtoSchema.extend({
-          capacityLowerBound: z.number(),
-          capacityUpperBound: z.number(),
-          allocatedStudentId: z.string().optional(),
-          allocatedStudentName: z.string().optional(),
+        z.object({
+          project: projectDtoSchema,
+          student: studentDtoSchema.or(z.undefined()),
         }),
       ),
     )
-    .query(
-      async ({ ctx: { user } }) =>
-        await user.getProjects().then(formatSupervisorRowProjects),
-    ),
+    .query(async ({ ctx: { user } }) => {
+      const supervisorProjects = await user.getProjects();
+
+      return supervisorProjects.flatMap((p) => {
+        if (p.allocatedStudents.length === 0) {
+          return [{ project: p.project, student: undefined }];
+        }
+
+        return p.allocatedStudents.map((s) => ({
+          project: p.project,
+          student: s,
+        }));
+      });
+    }),
 
   updateInstanceCapacities: procedure.instance.subGroupAdmin
     .input(
@@ -187,14 +188,13 @@ export const supervisorRouter = createTRPCRouter({
         await instance.deleteSupervisors(supervisorIds),
     ),
 
-  // TODO: fix on client
+  // BREAKING output type
   allocations: procedure.instance.supervisor
-    .input(z.object({ params: instanceParamsSchema }))
     .output(
       z.array(
         z.object({
-          project: baseProjectDtoSchema,
-          student: DEPR_studentDtoSchema,
+          project: projectDtoSchema,
+          student: studentDtoSchema,
           rank: z.number(),
         }),
       ),

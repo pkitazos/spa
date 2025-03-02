@@ -9,6 +9,7 @@ import {
   MinCostAlgorithm,
 } from "@/config/algorithms";
 import { AlgorithmFlag } from "@/db/types";
+import { algorithmDtoSchema, AlgorithmDTO } from "../../dto/algorithm";
 
 // TODO: centralise built-in algorithm names
 
@@ -46,21 +47,6 @@ export function buildNewAlgorithmSchema(takenNames: string[]) {
     maxRank: z.coerce.number().int().positive().or(z.literal(-1)),
   });
 }
-
-export const algorithmDtoSchema = z.object({
-  id: z.string(),
-  displayName: z.string(),
-  createdAt: z.date(),
-  description: z.string().optional(),
-  flag1: algorithmFlagSchema,
-  flag2: algorithmFlagSchema.optional(),
-  flag3: algorithmFlagSchema.optional(),
-  targetModifier: z.number(),
-  upperBoundModifier: z.number(),
-  maxRank: z.number(),
-});
-
-export type AlgorithmDTO = z.infer<typeof algorithmDtoSchema>;
 
 // BREAKING
 export const algorithmResultDtoSchema = z.object({

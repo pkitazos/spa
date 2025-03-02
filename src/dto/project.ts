@@ -10,6 +10,7 @@ export const projectDtoSchema = z.object({
   latestEditDateTime: z.date(),
   capacityLowerBound: z.number(),
   capacityUpperBound: z.number(),
+  supervisorId: z.string(),
   flags: z.array(flagDtoSchema),
   tags: z.array(tagDtoSchema),
 });

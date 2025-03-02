@@ -27,7 +27,9 @@ export function MyProjectsDataTable({
 
   async function handleDelete(projectId: string) {
     void toast.promise(
-      deleteAsync({ params, projectId }).then(() => router.refresh()),
+      deleteAsync({ params: { ...params, projectId } }).then(() =>
+        router.refresh(),
+      ),
       {
         loading: "Deleting Project...",
         error: "Something went wrong",

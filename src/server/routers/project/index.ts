@@ -18,8 +18,8 @@ import { linkProjectFlags } from "@/db/transactions/project-flags";
 import { flagDtoSchema, tagDtoSchema } from "@/dto";
 import { projectDtoSchema } from "@/dto/project";
 import { studentDtoSchema } from "@/dto/user/student";
-import { supervisorDtoSchema } from "@/dto/supervisor";
-import { projectDataToDTO, studentToDTO } from "@/db/transformers";
+import { supervisorDtoSchema } from "@/dto/user/supervisor";
+import { Transformers as T } from "@/db/transformers";
 
 export const projectRouter = createTRPCRouter({
   // ok
@@ -158,7 +158,7 @@ export const projectRouter = createTRPCRouter({
       const projectData = await instance.getProjectDetails();
 
       const student = await instance.getStudent(studentId);
-      const studentData = await student.getDetails();
+      const studentData = await student.get();
       const preferences = await student.getAllDraftPreferences();
 
       const preferenceIds = new Set(preferences.map(({ project: p }) => p.id));
@@ -195,7 +195,7 @@ export const projectRouter = createTRPCRouter({
 
       if (await user.isInstanceStudent(instance.params)) {
         const student = await user.toInstanceStudent(instance.params);
-        const studentData = await student.getDetails();
+        const studentData = await student.get();
 
         return projectData
           .filter((p) => {
@@ -255,7 +255,7 @@ export const projectRouter = createTRPCRouter({
         },
       });
 
-      return projectDataToDTO(data);
+      return T.toProjectDTO(data);
     }),
 
   // ok
@@ -374,13 +374,13 @@ export const projectRouter = createTRPCRouter({
 
       const submittedPreferences = hello.inStudentSubmittedPreferences.map(
         (x) => ({
-          student: studentToDTO(x.student),
+          student: T.toStudentDTO(x.student),
           preference: { type: "SUBMITTED" as const, rank: x.rank },
         }),
       );
 
       const draftPreferences = hello.inStudentDraftPreferences.map((x) => {
-        const student = studentToDTO(x.student);
+        const student = T.toStudentDTO(x.student);
         return {
           student,
           preference: {
@@ -539,7 +539,7 @@ export const projectRouter = createTRPCRouter({
       if (!allocation) return undefined;
 
       return {
-        student: studentToDTO(allocation.student),
+        student: T.toStudentDTO(allocation.student),
         rank: allocation.studentRanking,
       };
     }),
