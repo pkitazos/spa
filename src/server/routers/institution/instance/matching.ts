@@ -7,9 +7,12 @@ import {
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { getRandomInt } from "@/lib/utils/general/random";
 import {
+  ProjectDetails,
   projectDetailsSchema,
   projectInfoSchema,
+  StudentRow,
   studentRowSchema,
+  SupervisorDetails,
   supervisorDetailsSchema,
 } from "@/lib/validations/allocation-adjustment";
 import { allocationCsvDataSchema } from "@/lib/validations/allocation-csv-data";
@@ -89,30 +92,51 @@ export const matchingRouter = createTRPCRouter({
     )
     .query(async ({ ctx: { instance } }) => {
       const studentData = await instance.getStudentPreferenceDetails();
-      const projects = await instance.getProjectDetails();
+      const projectData = await instance.getProjectDetails();
       const supervisorData = await instance.getSupervisorProjectDetails();
 
       const allocationRecord = await instance
         .getAllocationData()
         .then((data) => data.toRecord());
 
-      const supervisors = supervisorData.map((s) => ({
-        supervisorId: s.institutionId,
-        lowerBound: 0,
-        target: s.projectTarget,
-        upperBound: s.projectUpperQuota,
-        projects: s.projects.map((e) => e.id),
-      }));
+      const supervisors = supervisorData.map(
+        (s) =>
+          ({
+            supervisorId: s.institutionId,
+            lowerBound: 0,
+            target: s.projectTarget,
+            upperBound: s.projectUpperQuota,
+            projects: s.projects.map((e) => e.id),
+          }) satisfies SupervisorDetails,
+      );
 
       const students = studentData
-        .map((s) => ({
-          student: { id: s.institutionId, name: s.fullName },
-          projects: s.submittedPreferences.map(({ projectId: id }) => ({
-            id,
-            selected: allocationRecord[id]?.includes(s.institutionId) ?? false,
-          })),
-        }))
+        .map(
+          (s) =>
+            ({
+              student: { id: s.institutionId, name: s.fullName },
+              projects: s.submittedPreferences.map(({ projectId: id }) => ({
+                id,
+                selected:
+                  allocationRecord[id]?.includes(s.institutionId) ?? false,
+              })),
+            }) satisfies StudentRow,
+        )
         .filter((e) => e.projects.length > 0);
+
+      const projects = projectData.map(
+        (p) =>
+          ({
+            capacityLowerBound: p.project.capacityLowerBound,
+            capacityUpperBound: p.project.capacityUpperBound,
+            allocatedTo: p.allocatedTo,
+            supervisor: {
+              projectAllocationLowerBound: p.supervisor.allocationLowerBound,
+              projectAllocationTarget: p.supervisor.allocationTarget,
+              projectAllocationUpperBound: p.supervisor.allocationUpperBound,
+            },
+          }) satisfies ProjectDetails,
+      );
 
       return { supervisors, students, projects };
     }),
