@@ -114,33 +114,33 @@ model AllocationSubGroup {
 
 model AllocationInstance {
     id                                  String
-    displayName                         String                      @map("display_name")
-    stage                               Stage                       @default(SETUP)
+    displayName                         String                @map("display_name")
+    stage                               Stage                 @default(SETUP)
     // ---
-    selectedAlgConfigId                 String?                     @map("selected_alg_config_id") // BREAKING fixup
-    parentInstanceId                    String?                     @map("parent_instance_id")
+    selectedAlgId                       String?               @map("selected_alg_id") // BREAKING fixup
+    parentInstanceId                    String?               @map("parent_instance_id")
     // supervisor details
-    projectSubmissionDeadline           DateTime                    @map("project_submission_deadline")
-    supervisorAllocationAccess          Boolean                     @default(false) @map("supervisor_allocation_access")
+    projectSubmissionDeadline           DateTime              @map("project_submission_deadline")
+    supervisorAllocationAccess          Boolean               @default(false) @map("supervisor_allocation_access")
     // student details
-    minStudentPreferences               Int                         @map("min_student_preferences")
-    maxStudentPreferences               Int                         @map("max_student_preferences")
-    maxStudentPreferencesPerSupervisor  Int                         @map("max_student_preferences_per_supervisor")
-    studentPreferenceSubmissionDeadline DateTime                    @map("student_preference_submission_deadline")
-    studentAllocationAccess             Boolean                     @default(false) @map("student_allocation_access")
+    minStudentPreferences               Int                   @map("min_student_preferences")
+    maxStudentPreferences               Int                   @map("max_student_preferences")
+    maxStudentPreferencesPerSupervisor  Int                   @map("max_student_preferences_per_supervisor")
+    studentPreferenceSubmissionDeadline DateTime              @map("student_preference_submission_deadline")
+    studentAllocationAccess             Boolean               @default(false) @map("student_allocation_access")
     // reader details
-    minReaderPreferences                Int                         @map("min_reader_preferences")
-    maxReaderPreferences                Int                         @map("max_reader_preferences")
-    readerPreferenceSubmissionDeadline  DateTime                    @map("reader_preference_submission_deadline")
+    minReaderPreferences                Int                   @map("min_reader_preferences")
+    maxReaderPreferences                Int                   @map("max_reader_preferences")
+    readerPreferenceSubmissionDeadline  DateTime              @map("reader_preference_submission_deadline")
     // ---
-    allocationGroupId                   String                      @map("allocation_group_id")
-    allocationSubGroupId                String                      @map("allocation_sub_group_id")
-    allocationSubGroup                  AllocationSubGroup          @relation(fields: [allocationGroupId, allocationSubGroupId], references: [allocationGroupId, id], onDelete: Cascade)
+    allocationGroupId                   String                @map("allocation_group_id")
+    allocationSubGroupId                String                @map("allocation_sub_group_id")
+    allocationSubGroup                  AllocationSubGroup    @relation(fields: [allocationGroupId, allocationSubGroupId], references: [allocationGroupId, id], onDelete: Cascade)
     // ---
     users                               UserInInstance[]
-    projects                            ProjectInInstance[]
+    projects                            Project[]
     studentFlags                        FlagOnStudent[]
-    algorithmConfigurations             AlgorithmConfigInInstance[]
+    algorithms                          Algorithm[]
     flags                               Flag[]
     tags                                Tag[]
     matchingResults                     MatchingResult[]
@@ -168,23 +168,24 @@ model StudentDetails {
     studentDraftPreferences     StudentDraftPreference[]
     studentSubmittedPreferences StudentSubmittedPreference[]
     matchingPairs               MatchingPair[]
+    preAllocatedProjects        Project[]
 
     @@id(name: "studentDetailsId", map: "student_details_id", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@map("student_details")
 }
 
 model SupervisorDetails {
-    projectAllocationLowerBound Int                 @map("project_allocation_lower_bound")
-    projectAllocationTarget     Int                 @map("project_allocation_target")
-    projectAllocationUpperBound Int                 @map("project_allocation_upper_bound")
+    projectAllocationLowerBound Int            @map("project_allocation_lower_bound")
+    projectAllocationTarget     Int            @map("project_allocation_target")
+    projectAllocationUpperBound Int            @map("project_allocation_upper_bound")
     // ---
-    userId                      String              @map("user_id")
-    allocationGroupId           String              @map("allocation_group_id")
-    allocationSubGroupId        String              @map("allocation_sub_group_id")
-    allocationInstanceId        String              @map("allocation_instance_id")
+    userId                      String         @map("user_id")
+    allocationGroupId           String         @map("allocation_group_id")
+    allocationSubGroupId        String         @map("allocation_sub_group_id")
+    allocationInstanceId        String         @map("allocation_instance_id")
     // ---
-    userInInstance              UserInInstance      @relation(name: "supervisor_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, onUpdate: Cascade)
-    projects                    ProjectInInstance[]
+    userInInstance              UserInInstance @relation(name: "supervisor_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, onUpdate: Cascade)
+    projects                    Project[]
 
     @@id(name: "supervisorDetailsId", map: "supervisor_details_id", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@map("supervisor_details")
@@ -206,9 +207,16 @@ model ReaderDetails {
     @@map("reader_details")
 }
 
-model ProjectInInstance {
-    projectId                     String                       @map("project_id")
-    details                       ProjectDetails               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+model Project {
+    id                            String                       @id @default(uuid())
+    title                         String
+    description                   String
+    specialTechnicalRequirements  String?                      @map("special_technical_requirements")
+    latestEditDateTime            DateTime                     @default(now()) @map("latest_edit_date_time")
+    capacityLowerBound            Int                          @map("capacity_lower_bound")
+    capacityUpperBound            Int                          @map("capacity_upper_bound")
+    preAllocatedStudentId         String?                      @map("pre_allocated_student_id")
+    preAllocatedStudent           StudentDetails?              @relation(fields: [preAllocatedStudentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     // ---
     allocationGroupId             String                       @map("allocation_group_id")
     allocationSubGroupId          String                       @map("allocation_sub_group_id")
@@ -223,57 +231,42 @@ model ProjectInInstance {
     inReaderDraftPreferences      ReaderDraftPreference[]
     inReaderSubmittedPreferences  ReaderSubmittedPreference[]
     studentAllocations            StudentProjectAllocation[]
-    MatchingPair                  MatchingPair[]
-
-    @@id(name: "projectInInstanceId", map: "project_in_instance_id", [projectId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
-    @@map("project_in_instance")
-}
-
-// TODO: keep version history somehow?
-model ProjectDetails {
-    id                           String              @id @default(uuid())
-    title                        String
-    description                  String
-    specialTechnicalRequirements String?             @map("special_technical_requirements")
-    latestEditDateTime           DateTime            @default(now()) @map("latest_edit_date_time")
-    capacityLowerBound           Int                 @map("capacity_lower_bound")
-    capacityUpperBound           Int                 @map("capacity_upper_bound")
-    preAllocatedStudentId        String?             @map("pre_allocated_student_id")
+    readerAllocations             ReaderProjectAllocation[]
+    matchingPairs                 MatchingPair[]
     // ---
-    flagsOnProject               FlagOnProject[]
-    tagsOnProject                TagOnProject[]
-    projectInInstance            ProjectInInstance[]
+    flagsOnProject                FlagOnProject[]
+    tagsOnProject                 TagOnProject[]
 
-    @@map("project_details")
+    @@map("project")
 }
 
 model StudentDraftPreference {
-    projectId            String            @map("project_id")
-    userId               String            @map("user_id")
+    projectId            String         @map("project_id")
+    userId               String         @map("user_id")
     score                Float
     type                 PreferenceType
     // ---
-    allocationGroupId    String            @map("allocation_group_id")
-    allocationSubGroupId String            @map("allocation_sub_group_id")
-    allocationInstanceId String            @map("allocation_instance_id")
+    allocationGroupId    String         @map("allocation_group_id")
+    allocationSubGroupId String         @map("allocation_sub_group_id")
+    allocationInstanceId String         @map("allocation_instance_id")
     // ---
-    project              ProjectInInstance @relation(fields: [projectId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [projectId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
-    student              StudentDetails    @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+    project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    student              StudentDetails @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
 
     @@id(name: "draftPreferenceId", [projectId, userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
 }
 
 model StudentSubmittedPreference {
-    projectId            String            @map("project_id")
-    userId               String            @map("user_id")
+    projectId            String         @map("project_id")
+    userId               String         @map("user_id")
     rank                 Int
     // ---
-    allocationGroupId    String            @map("allocation_group_id")
-    allocationSubGroupId String            @map("allocation_sub_group_id")
-    allocationInstanceId String            @map("allocation_instance_id")
+    allocationGroupId    String         @map("allocation_group_id")
+    allocationSubGroupId String         @map("allocation_sub_group_id")
+    allocationInstanceId String         @map("allocation_instance_id")
     // ---
-    project              ProjectInInstance @relation(fields: [projectId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [projectId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
-    student              StudentDetails    @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+    project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    student              StudentDetails @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
 
     @@id(name: "studentSubmittedPreferenceId", map: "student_submitted_preference_id", [projectId, userId])
     @@unique([projectId, userId, rank])
@@ -281,16 +274,16 @@ model StudentSubmittedPreference {
 }
 
 model StudentProjectAllocation {
-    projectId            String            @map("project_id")
-    userId               String            @map("user_id")
-    studentRanking       Int               @map("student_ranking")
+    projectId            String         @map("project_id")
+    userId               String         @map("user_id")
+    studentRanking       Int            @map("student_ranking")
     // ---
-    allocationGroupId    String            @map("allocation_group_id")
-    allocationSubGroupId String            @map("allocation_sub_group_id")
-    allocationInstanceId String            @map("allocation_instance_id")
+    allocationGroupId    String         @map("allocation_group_id")
+    allocationSubGroupId String         @map("allocation_sub_group_id")
+    allocationInstanceId String         @map("allocation_instance_id")
     // ---
-    project              ProjectInInstance @relation(fields: [projectId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [projectId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
-    student              StudentDetails    @relation(name: "project_allocation", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+    project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    student              StudentDetails @relation(name: "project_allocation", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
 
     @@id(name: "studentProjectAllocationId", map: "student_project_allocation_id", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@unique([userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
@@ -298,30 +291,30 @@ model StudentProjectAllocation {
 }
 
 model ReaderDraftPreference {
-    projectId            String            @map("project_id")
-    userId               String            @map("user_id")
+    projectId            String         @map("project_id")
+    userId               String         @map("user_id")
     score                Float
     type                 PreferenceType
     // ---
-    allocationGroupId    String            @map("allocation_group_id")
-    allocationSubGroupId String            @map("allocation_sub_group_id")
-    allocationInstanceId String            @map("allocation_instance_id")
+    allocationGroupId    String         @map("allocation_group_id")
+    allocationSubGroupId String         @map("allocation_sub_group_id")
+    allocationInstanceId String         @map("allocation_instance_id")
     // ---
-    project              ProjectInInstance @relation(fields: [projectId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [projectId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+    project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
     @@id(name: "readerDraftPreferenceId", [projectId, userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
 }
 
 model ReaderSubmittedPreference {
-    projectId            String            @map("project_id")
-    userId               String            @map("user_id")
+    projectId            String  @map("project_id")
+    userId               String  @map("user_id")
     rank                 Int
     // ---
-    allocationGroupId    String            @map("allocation_group_id")
-    allocationSubGroupId String            @map("allocation_sub_group_id")
-    allocationInstanceId String            @map("allocation_instance_id")
+    allocationGroupId    String  @map("allocation_group_id")
+    allocationSubGroupId String  @map("allocation_sub_group_id")
+    allocationInstanceId String  @map("allocation_instance_id")
     // ---
-    project              ProjectInInstance @relation(fields: [projectId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [projectId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+    project              Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
     @@id(name: "readerSubmittedPreferenceId", map: "reader_submitted_preference_id", [projectId, userId])
     @@unique([projectId, userId, rank])
@@ -329,12 +322,14 @@ model ReaderSubmittedPreference {
 }
 
 model ReaderProjectAllocation {
-    projectId            String @map("project_id")
-    userId               String @map("user_id")
+    projectId            String  @map("project_id")
+    userId               String  @map("user_id")
     // ---
-    allocationGroupId    String @map("allocation_group_id")
-    allocationSubGroupId String @map("allocation_sub_group_id")
-    allocationInstanceId String @map("allocation_instance_id")
+    allocationGroupId    String  @map("allocation_group_id")
+    allocationSubGroupId String  @map("allocation_sub_group_id")
+    allocationInstanceId String  @map("allocation_instance_id")
+    // ---
+    project              Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
     @@id(name: "readerProjectAllocationId", map: "reader_project_allocation_id", [projectId, userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@unique([userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
@@ -379,6 +374,22 @@ model ComponentScore {
     @@map("component_score")
 }
 
+model MarkerSubmissionComments {
+    id                   String  @id @default(uuid())
+    summary              String
+    recommendedForPrize  Boolean @default(false) @map("recommended_for_prize")
+    // ---
+    markerId             String  @map("marker_id")
+    studentId            String  @map("student_id")
+    flagId               String  @map("flag_id")
+    submissionId         String  @map("submission_id")
+    allocationGroupId    String  @map("allocation_group_id")
+    allocationSubGroupId String  @map("allocation_sub_group_id")
+    allocationInstanceId String  @map("allocation_instance_id")
+
+    @@map("marker_submission_comments")
+}
+
 model FinalGrade {
     id                   String             @id @default(uuid())
     studentId            String             @map("student_id")
@@ -414,10 +425,10 @@ model Flag {
 }
 
 model FlagOnProject {
-    flag      Flag           @relation(fields: [flagId], references: [id], onDelete: Cascade)
-    flagId    String         @map("flag_id")
-    project   ProjectDetails @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    projectId String         @map("project_id")
+    flag      Flag    @relation(fields: [flagId], references: [id], onDelete: Cascade)
+    flagId    String  @map("flag_id")
+    project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    projectId String  @map("project_id")
 
     @@id(name: "flagOnProjectId", map: "flag_on_project_id", [flagId, projectId])
     @@map("flag_on_project")
@@ -455,71 +466,61 @@ model Tag {
 }
 
 model TagOnProject {
-    tag       Tag            @relation(fields: [tagId], references: [id], onDelete: Cascade)
-    tagId     String         @map("tag_id")
-    project   ProjectDetails @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    projectId String         @map("project_id")
+    tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+    tagId     String  @map("tag_id")
+    project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    projectId String  @map("project_id")
 
     @@id(name: "tagOnProjectId", map: "tag_on_project_id", [tagId, projectId])
     @@map("tag_on_project")
 }
 
-model AlgorithmConfig {
-    id                 String         @id @default(uuid())
-    displayName        String         @map("display_name")
-    createdAt          DateTime       @default(now()) @map("created_at")
-    description        String?
-    targetModifier     Int            @default(0) @map("target_modifier")
-    upperBoundModifier Int            @default(0) @map("upper_bound_modifier")
-    maxRank            Int            @default(-1) @map("max_rank")
-    flag1              AlgorithmFlag  @map("flag_1")
-    flag2              AlgorithmFlag? @map("flag_2")
-    flag3              AlgorithmFlag? @map("flag_3")
-
-    algorithmInInstances AlgorithmConfigInInstance[]
-
-    @@map("algorithm_config")
-}
-
-model AlgorithmConfigInInstance {
-    algConfigId          String             @map("alg_config_id")
+model Algorithm {
+    id                   String             @id @default(uuid())
+    displayName          String             @map("display_name")
+    createdAt            DateTime           @default(now()) @map("created_at")
+    description          String?
+    targetModifier       Int                @default(0) @map("target_modifier")
+    upperBoundModifier   Int                @default(0) @map("upper_bound_modifier")
+    maxRank              Int                @default(-1) @map("max_rank")
+    flag1                AlgorithmFlag      @map("flag_1")
+    flag2                AlgorithmFlag?     @map("flag_2")
+    flag3                AlgorithmFlag?     @map("flag_3")
+    // ---
+    matchingResult       MatchingResult?    @relation(map: "alg_config_in_instance")
     // ---
     allocationGroupId    String             @map("allocation_group_id")
     allocationSubGroupId String             @map("allocation_sub_group_id")
     allocationInstanceId String             @map("allocation_instance_id")
-    // ---
-    allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
-    algorithmConfig      AlgorithmConfig    @relation(fields: [algConfigId], references: [id], onDelete: Cascade)
-    matchingResult       MatchingResult?    @relation(map: "alg_config_in_instance")
+    AllocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id])
 
-    @@id(name: "algConfigInInstanceId", map: "alg_config_in_instance_id", [algConfigId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
-    @@map("algorithm_config_in_instance")
+    @@map("algorithm")
 }
 
 model MatchingResult {
-    id                        String                    @id @default(uuid())
-    modifiedAt                DateTime                  @updatedAt @map("modified_at")
+    id                   String             @id @default(uuid())
+    modifiedAt           DateTime           @updatedAt @map("modified_at")
     // details 
-    profile                   Int[]
-    degree                    Int
-    size                      Int
-    weight                    Int
-    cost                      Int
-    costSq                    Int                       @map("cost_sq")
-    maxLecAbsDiff             Int                       @map("max_lec_abs_diff")
-    sumLecAbsDiff             Int                       @map("sum_lec_abs_diff")
-    matching                  MatchingPair[]
-    ranks                     Int[]
+    profile              Int[]
+    degree               Int
+    size                 Int
+    weight               Int
+    cost                 Int
+    costSq               Int                @map("cost_sq")
+    maxLecAbsDiff        Int                @map("max_lec_abs_diff")
+    sumLecAbsDiff        Int                @map("sum_lec_abs_diff")
+    matching             MatchingPair[]
+    ranks                Int[]
     // ---
-    allocationGroupId         String                    @map("allocation_group_id")
-    allocationSubGroupId      String                    @map("allocation_sub_group_id")
-    allocationInstanceId      String                    @map("allocation_instance_id")
-    algConfigId               String                    @map("algorithm_config_id")
+    allocationGroupId    String             @map("allocation_group_id")
+    allocationSubGroupId String             @map("allocation_sub_group_id")
+    allocationInstanceId String             @map("allocation_instance_id")
+    algorithmId          String             @map("algorithm_config_id")
     // ---
-    allocationInstance        AllocationInstance        @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
-    algorithmConfigInInstance AlgorithmConfigInInstance @relation(map: "alg_config_in_instance", fields: [algConfigId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [algConfigId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+    algorithm            Algorithm          @relation(map: "algorithm", fields: [algorithmId], references: [id])
 
-    @@unique(name: "algConfigInInstanceId", [algConfigId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@unique(name: "algConfigInInstanceId", [algorithmId])
     @@map("matching_result")
 }
 
@@ -529,7 +530,7 @@ model MatchingPair {
     studentRanking       Int                @map("student_ranking")
     // ---
     student              StudentDetails     @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
-    project              ProjectInInstance  @relation(fields: [projectId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [projectId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+    project              Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
     // ---
     matchingResultId     String             @map("matching_result_id")
     allocationGroupId    String             @map("allocation_group_id")
