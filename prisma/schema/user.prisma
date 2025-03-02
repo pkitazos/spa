@@ -43,6 +43,7 @@ model StudentDetails {
     studentSubmittedPreferences StudentSubmittedPreference[]
     matchingPairs               MatchingPair[]
     preAllocatedProjects        Project[]
+    readers                     ReaderProjectAllocation[]
 
     @@id(name: "studentDetailsId", map: "student_details_id", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@map("student_details")
@@ -66,16 +67,17 @@ model SupervisorDetails {
 }
 
 model ReaderDetails {
-    projectAllocationLowerBound Int            @map("project_allocation_lower_bound")
-    projectAllocationTarget     Int            @map("project_allocation_target")
-    projectAllocationUpperBound Int            @map("project_allocation_upper_bound")
+    projectAllocationLowerBound Int                       @map("project_allocation_lower_bound")
+    projectAllocationTarget     Int                       @map("project_allocation_target")
+    projectAllocationUpperBound Int                       @map("project_allocation_upper_bound")
     // ---
-    userId                      String         @map("user_id")
-    allocationGroupId           String         @map("allocation_group_id")
-    allocationSubGroupId        String         @map("allocation_sub_group_id")
-    allocationInstanceId        String         @map("allocation_instance_id")
+    userId                      String                    @map("user_id")
+    allocationGroupId           String                    @map("allocation_group_id")
+    allocationSubGroupId        String                    @map("allocation_sub_group_id")
+    allocationInstanceId        String                    @map("allocation_instance_id")
     // ---
-    userInInstance              UserInInstance @relation(name: "reader_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, onUpdate: Cascade)
+    userInInstance              UserInInstance            @relation(name: "reader_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, onUpdate: Cascade)
+    projectAllocations          ReaderProjectAllocation[]
 
     @@id(name: "readerDetailsId", map: "reader_details_id", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@map("reader_details")

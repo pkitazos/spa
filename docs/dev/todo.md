@@ -49,8 +49,11 @@
 
 - [ ] standardise references to space params;
       -> i.e. an instanceId should always be referred to as `allocationInstanceId`
+  - happy to do that now (and break a whole bunch of shit)
 - [ ] same for userId (should always be userId)
+  - well sometimes there's multiple different users in the same model (see RPA)
 - [ ] add separate slug field to spaces (or we are doomed)
+  - yep agreed
 - [x] use the new multi-file schema's to make it a bit more tractable?
   - open to feedback on how to organise these
 
