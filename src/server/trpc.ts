@@ -15,7 +15,6 @@ import { auth } from "@/lib/auth";
 import { now } from "@/lib/utils/date/now";
 import { Session } from "@/lib/validations/auth";
 
-import { DAL } from "@/data-access";
 import { db } from "@/db";
 
 /**
@@ -41,7 +40,7 @@ export const createTRPCContext = async (opts: {
 
   console.log(`>>> tRPC Request from ${source} by`, session.user, `at ${time}`);
 
-  return { session, db, dal: new DAL(db) };
+  return { session, db };
 };
 
 /**
