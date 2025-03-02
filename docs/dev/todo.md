@@ -51,7 +51,8 @@
       -> i.e. an instanceId should always be referred to as `allocationInstanceId`
 - [ ] same for userId (should always be userId)
 - [ ] add separate slug field to spaces (or we are doomed)
-- [ ] use the new multi-file schema's to make it a bit more tractable?
+- [x] use the new multi-file schema's to make it a bit more tractable?
+  - open to feedback on how to organise these
 
 ## From scratch
 
