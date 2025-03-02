@@ -24,7 +24,7 @@ export function toInstanceId(params: InstanceParams, instanceId?: string) {
 }
 
 export function toAlgID(params: AlgorithmInstanceParams) {
-  return { algConfigId: params.algConfigId, ...expand(params) };
+  return { algorithmId: params.algConfigId, ...expand(params) };
 }
 
 // TODO figure this out later
@@ -42,5 +42,5 @@ export function toPP(params: PageParams) {
 }
 
 export function toPP2(params: ProjectParams) {
-  return { ...expand(params), projectId: params.projectId };
+  return { ...expand(params), id: params.projectId };
 }

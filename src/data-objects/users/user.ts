@@ -1,5 +1,4 @@
 import { expand } from "@/lib/utils/general/instance-params";
-import { relativeComplement } from "@/lib/utils/general/set-difference";
 import { ValidatedSegments } from "@/lib/validations/breadcrumbs";
 import {
   GroupParams,
@@ -9,7 +8,6 @@ import {
 } from "@/lib/validations/params";
 
 import { DataObject } from "../data-object";
-import { AllocationInstance } from "../spaces/instance";
 import { Institution } from "../spaces/institution";
 
 import { GroupAdmin } from "./group-admin";
@@ -25,7 +23,7 @@ import { DAL } from "@/data-access";
 import { Transformers as T } from "@/db/transformers";
 import { DB, Role } from "@/db/types";
 import { InstanceUserDTO, UserDTO } from "@/dto";
-
+import { InstanceDTO, InstanceUserDTO, UserDTO } from "@/dto";
 export class User extends DataObject {
   id: string;
   private _data: UserDTO | undefined;
@@ -154,8 +152,8 @@ export class User extends DataObject {
   }
 
   public async isProjectSupervisor({ projectId, ...params }: ProjectParams) {
-    return !!(await this.db.projectInInstance.findFirst({
-      where: { projectId, ...expand(params), supervisorId: this.id },
+    return !!(await this.db.project.findFirst({
+      where: { id: projectId, ...expand(params), supervisorId: this.id },
     }));
   }
 
@@ -168,7 +166,7 @@ export class User extends DataObject {
 
   public async isProjectReader({ projectId, ...params }: ProjectParams) {
     return !!(await this.db.readerProjectAllocation.findFirst({
-      where: { projectId, ...expand(params), userId: this.id },
+      where: { projectId, ...expand(params), readerId: this.id },
     }));
   }
 
@@ -178,11 +176,6 @@ export class User extends DataObject {
     }
 
     return new ProjectReader(this.db, this.id, projectParams);
-  }
-
-  public async canAccessProject(_projectParams: ProjectParams) {
-    // TODO @pkitazos spec for when you can access a project would be great
-    return true;
   }
 
   public async getRolesInInstance(instanceParams: InstanceParams) {

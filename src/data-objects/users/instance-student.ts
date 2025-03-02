@@ -36,9 +36,9 @@ export class InstanceStudent extends User {
   }
 
   public async hasSelfDefinedProject(): Promise<boolean> {
-    return !!(await this.db.projectInInstance.findFirst({
+    return !!(await this.db.project.findFirst({
       where: {
-        details: { preAllocatedStudentId: this.id },
+        preAllocatedStudentId: this.id,
         ...expand(this.instance.params),
       },
     }));
@@ -63,12 +63,8 @@ export class InstanceStudent extends User {
               supervisor: {
                 include: { userInInstance: { include: { user: true } } },
               },
-              details: {
-                include: {
-                  flagsOnProject: { include: { flag: true } },
-                  tagsOnProject: { include: { tag: true } },
-                },
-              },
+              flagsOnProject: { include: { flag: true } },
+              tagsOnProject: { include: { tag: true } },
             },
           },
         },
@@ -114,12 +110,8 @@ export class InstanceStudent extends User {
             supervisor: {
               include: { userInInstance: { include: { user: true } } },
             },
-            details: {
-              include: {
-                flagsOnProject: { include: { flag: true } },
-                tagsOnProject: { include: { tag: true } },
-              },
-            },
+            flagsOnProject: { include: { flag: true } },
+            tagsOnProject: { include: { tag: true } },
           },
         },
       },
@@ -147,12 +139,8 @@ export class InstanceStudent extends User {
             include: {
               project: {
                 include: {
-                  details: {
-                    include: {
-                      flagsOnProject: { include: { flag: true } },
-                      tagsOnProject: { include: { tag: true } },
-                    },
-                  },
+                  flagsOnProject: { include: { flag: true } },
+                  tagsOnProject: { include: { tag: true } },
                   supervisor: {
                     include: { userInInstance: { include: { user: true } } },
                   },
@@ -247,12 +235,8 @@ export class InstanceStudent extends User {
         include: {
           project: {
             include: {
-              details: {
-                include: {
-                  flagsOnProject: { include: { flag: true } },
-                  tagsOnProject: { include: { tag: true } },
-                },
-              },
+              flagsOnProject: { include: { flag: true } },
+              tagsOnProject: { include: { tag: true } },
               supervisor: {
                 include: { userInInstance: { include: { user: true } } },
               },
