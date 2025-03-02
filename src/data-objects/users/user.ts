@@ -19,11 +19,10 @@ import { ProjectSupervisor } from "./project-supervisor";
 import { SubGroupAdmin } from "./subgroup-admin";
 import { SuperAdmin } from "./super-admin";
 
-import { DAL } from "@/data-access";
 import { Transformers as T } from "@/db/transformers";
 import { DB, Role } from "@/db/types";
-import { InstanceUserDTO, UserDTO } from "@/dto";
 import { InstanceDTO, InstanceUserDTO, UserDTO } from "@/dto";
+
 export class User extends DataObject {
   id: string;
   private _data: UserDTO | undefined;
@@ -228,45 +227,30 @@ export class User extends DataObject {
     }));
   }
 
-  public async getInstances() {
+  public async getInstances(): Promise<InstanceDTO[]> {
     if (await this.isSuperAdmin()) {
-      const instances = await new Institution(this.db).getInstances();
-      return AllocationInstance.toQualifiedPaths(this.db, instances);
+      return await new Institution(this.db).getInstances();
     }
 
-    const dal = new DAL(this.db);
+    const instanceData = await this.db.allocationInstance.findMany({
+      where: {
+        OR: [
+          { users: { some: { userId: this.id } } },
+          {
+            allocationSubGroup: {
+              subGroupAdmins: { some: { userId: this.id } },
+            },
+          },
+          {
+            allocationSubGroup: {
+              allocationGroup: { groupAdmins: { some: { userId: this.id } } },
+            },
+          },
+        ],
+      },
+    });
 
-    this.getManagedGroups();
-
-    const groups = await dal.groupAdmin.getAllGroups(this.id);
-    const groupAdminInstances = await dal.instance.getForGroups(groups);
-
-    const subGroups = await dal.subGroupAdmin.getAllSubgroups(this.id);
-
-    const uniqueSubGroups = relativeComplement(
-      subGroups,
-      groups,
-      (a, b) => a.group == b.group,
-    );
-
-    const subGroupAdminInstances =
-      await dal.instance.getForGroups(uniqueSubGroups);
-
-    const privilegedInstances = [
-      ...groupAdminInstances,
-      ...subGroupAdminInstances,
-    ];
-
-    const unprivilegedInstances = await dal.user.getAllInstances(this.id);
-
-    const uniqueUnprivileged = relativeComplement(
-      unprivilegedInstances,
-      privilegedInstances,
-      AllocationInstance.eq,
-    );
-
-    const allInstances = [...privilegedInstances, ...uniqueUnprivileged];
-    return await AllocationInstance.toQualifiedPaths(this.db, allInstances);
+    return instanceData.map(T.toAllocationInstanceDTO);
   }
 
   public async authoriseBreadcrumbs(segments: string[]) {
