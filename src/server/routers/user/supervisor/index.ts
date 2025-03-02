@@ -11,7 +11,9 @@ import { createTRPCRouter } from "@/server/trpc";
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
 import { Stage } from "@/db/types";
 import {
+  ProjectDTO,
   projectDtoSchema,
+  StudentDTO,
   studentDtoSchema,
   supervisorDtoSchema,
   userDtoSchema,
@@ -141,17 +143,18 @@ export const supervisorRouter = createTRPCRouter({
       ),
     )
     .query(async ({ ctx: { user } }) => {
+      type Ret = { project: ProjectDTO; student: StudentDTO | undefined }[];
       const supervisorProjects = await user.getProjects();
 
       return supervisorProjects.flatMap((p) => {
         if (p.allocatedStudents.length === 0) {
-          return [{ project: p.project, student: undefined }];
+          return [{ project: p.project, student: undefined }] as Ret;
         }
 
         return p.allocatedStudents.map((s) => ({
           project: p.project,
           student: s,
-        }));
+        })) as Ret;
       });
     }),
 
