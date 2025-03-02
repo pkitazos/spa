@@ -23,7 +23,7 @@ export class MatchingAlgorithm extends DataObject {
 
   public async get(): Promise<AlgorithmDTO> {
     if (!this._config) {
-      this._config = await this.db.algorithmConfig
+      this._config = await this.db.algorithm
         .findFirstOrThrow({ where: { id: this.params.algConfigId } })
         .then(Transformers.toAlgorithmDTO);
     }
@@ -70,13 +70,11 @@ export class MatchingAlgorithm extends DataObject {
 
     await this.db.$transaction([
       this.db.matchingPair.deleteMany({
-        where: {
-          matchingResult: { algorithmConfigInInstance: toAlgID(this.params) },
-        },
+        where: { matchingResult: { algorithm: toAlgID(this.params) } },
       }),
 
       this.db.matchingResult.upsert({
-        where: { algConfigInInstanceId: toAlgID(this.params) },
+        where: { algorithm: toAlgID(this.params) },
         update: matchingResult,
         create: {
           ...toAlgID(this.params),
@@ -102,7 +100,7 @@ export class MatchingAlgorithm extends DataObject {
       this._results = await this.db.matchingResult
         .findFirstOrThrow({
           where: {
-            algConfigId: this.params.algConfigId,
+            algorithmId: this.params.algConfigId,
             ...expand(this.params),
           },
           include: { matching: true },

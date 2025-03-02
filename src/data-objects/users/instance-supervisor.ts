@@ -46,12 +46,8 @@ export class InstanceSupervisor extends User {
         include: {
           project: {
             include: {
-              details: {
-                include: {
-                  tagsOnProject: { include: { tag: true } },
-                  flagsOnProject: { include: { flag: true } },
-                },
-              },
+              tagsOnProject: { include: { tag: true } },
+              flagsOnProject: { include: { flag: true } },
             },
           },
           student: {
@@ -88,15 +84,11 @@ export class InstanceSupervisor extends User {
   public async getProjects(): Promise<
     { project: ProjectDTO; allocatedStudents: StudentDTO[] }[]
   > {
-    const projectData = await this.db.projectInInstance.findMany({
+    const projectData = await this.db.project.findMany({
       where: { supervisorId: this.id, ...expand(this.instance.params) },
       include: {
-        details: {
-          include: {
-            tagsOnProject: { include: { tag: true } },
-            flagsOnProject: { include: { flag: true } },
-          },
-        },
+        tagsOnProject: { include: { tag: true } },
+        flagsOnProject: { include: { flag: true } },
         studentAllocations: {
           include: {
             student: {
@@ -132,12 +124,8 @@ export class InstanceSupervisor extends User {
                   },
                 },
               },
-              details: {
-                include: {
-                  tagsOnProject: { include: { tag: true } },
-                  flagsOnProject: { include: { flag: true } },
-                },
-              },
+              tagsOnProject: { include: { tag: true } },
+              flagsOnProject: { include: { flag: true } },
             },
           },
         },
@@ -151,8 +139,8 @@ export class InstanceSupervisor extends User {
         level: u.student.studentLevel,
         ...u.student.userInInstance.user,
       })),
-      flags: data.details.flagsOnProject.map((f) => T.toFlagDTO(f.flag)),
-      tags: data.details.tagsOnProject.map((t) => T.toTagDTO(t.tag)),
+      flags: data.flagsOnProject.map((f) => T.toFlagDTO(f.flag)),
+      tags: data.tagsOnProject.map((t) => T.toTagDTO(t.tag)),
     }));
   }
 

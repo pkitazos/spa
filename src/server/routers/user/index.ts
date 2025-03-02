@@ -11,6 +11,7 @@ import { supervisorRouter } from "./supervisor";
 import { User } from "@/data-objects/users/user";
 import { Role } from "@/db/types";
 import { instanceDisplayDataSchema, userDtoSchema } from "@/dto";
+import { AllocationInstance } from "@/data-objects/spaces/instance";
 
 export const userRouter = createTRPCRouter({
   student: studentRouter,
@@ -60,7 +61,13 @@ export const userRouter = createTRPCRouter({
 
   instances: procedure.user
     .output(z.array(instanceDisplayDataSchema))
-    .query(async ({ ctx: { user } }) => await user.getInstances()),
+    .query(
+      async ({ ctx: { db, user } }) =>
+        await AllocationInstance.toQualifiedPaths(
+          db,
+          await user.getInstances(),
+        ),
+    ),
 
   // TODO: rename
   breadcrumbs: procedure.user

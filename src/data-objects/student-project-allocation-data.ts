@@ -4,21 +4,21 @@ import { InstanceParams } from "@/lib/validations/params";
 import { DataObject } from "./data-object";
 
 import { guidToMatric } from "@/config/guid-to-matric";
-import {
-  DB,
-  DB_ProjectDetails,
-  DB_ProjectInInstance,
-  DB_StudentDetails,
-  DB_StudentProjectAllocation,
-  DB_SupervisorDetails,
-  DB_User,
-  DB_UserInInstance,
-} from "@/db/types";
+import { DB } from "@/db/types";
+import { ProjectDTO, StudentDTO, SupervisorDTO } from "@/dto";
+import { Transformers as T } from "@/db/transformers";
+
+type allocationDataDTO = {
+  student: StudentDTO;
+  supervisor: SupervisorDTO;
+  project: ProjectDTO;
+  ranking: number;
+};
 
 export class StudentProjectAllocationData extends DataObject {
-  private allocationData: DB_Data[];
+  private allocationData: allocationDataDTO[];
 
-  constructor(db: DB, data: DB_Data[]) {
+  constructor(db: DB, data: allocationDataDTO[]) {
     super(db);
     this.db = db;
     this.allocationData = data;
@@ -28,26 +28,39 @@ export class StudentProjectAllocationData extends DataObject {
     const data = await db.studentProjectAllocation.findMany({
       where: expand(params),
       include: {
-        student: { include: { userInInstance: { include: { user: true } } } },
+        student: {
+          include: {
+            userInInstance: { include: { user: true } },
+            studentFlags: { include: { flag: true } },
+          },
+        },
         project: {
           include: {
-            details: true,
             supervisor: {
               include: { userInInstance: { include: { user: true } } },
             },
+            flagsOnProject: { include: { flag: true } },
+            tagsOnProject: { include: { tag: true } },
           },
         },
       },
     });
 
-    return new StudentProjectAllocationData(db, data);
+    const formatData = data.map((x) => ({
+      student: T.toStudentDTO(x.student),
+      supervisor: T.toSupervisorDTO(x.project.supervisor),
+      project: T.toProjectDTO(x.project),
+      ranking: x.studentRanking,
+    }));
+
+    return new StudentProjectAllocationData(db, formatData);
   }
 
   public toRecord() {
     return this.allocationData.reduce(
-      (acc, { projectId, userId }) => ({
+      (acc, { project, student }) => ({
         ...acc,
-        [projectId]: [...(acc[projectId] ?? []), userId],
+        [project.id]: [...(acc[project.id] ?? []), student.id],
       }),
       {} as Record<string, string[]>,
     );
@@ -55,21 +68,15 @@ export class StudentProjectAllocationData extends DataObject {
 
   public toStudentView() {
     return this.allocationData
-      .map((allocation) => ({
+      .map(({ ranking, student, project, supervisor }) => ({
         student: {
-          id: allocation.student.userInInstance.user.id,
-          name: allocation.student.userInInstance.user.name,
-          email: allocation.student.userInInstance.user.email,
-          ranking: allocation.studentRanking,
+          id: student.id,
+          name: student.name,
+          email: student.email,
+          ranking,
         },
-        project: {
-          id: allocation.project.details.id,
-          title: allocation.project.details.title,
-        },
-        supervisor: {
-          id: allocation.project.supervisor.userInInstance.user.id,
-          name: allocation.project.supervisor.userInInstance.user.name,
-        },
+        project: { id: project.id, title: project.title },
+        supervisor: { id: supervisor.id, name: supervisor.name },
       }))
       .sort((a, b) => a.student.id.localeCompare(b.student.id));
   }
@@ -78,19 +85,19 @@ export class StudentProjectAllocationData extends DataObject {
     return this.allocationData
       .map((allocation) => ({
         project: {
-          id: allocation.project.details.id,
-          title: allocation.project.details.title,
-          capacityLowerBound: allocation.project.details.capacityLowerBound,
-          capacityUpperBound: allocation.project.details.capacityUpperBound,
+          id: allocation.project.id,
+          title: allocation.project.title,
+          capacityLowerBound: allocation.project.capacityLowerBound,
+          capacityUpperBound: allocation.project.capacityUpperBound,
         },
         supervisor: {
-          id: allocation.project.supervisor.userInInstance.user.id,
-          name: allocation.project.supervisor.userInInstance.user.name,
+          id: allocation.supervisor.id,
+          name: allocation.supervisor.name,
         },
         student: {
-          id: allocation.student.userInInstance.user.id,
-          name: allocation.student.userInInstance.user.name,
-          ranking: allocation.studentRanking,
+          id: allocation.student.id,
+          name: allocation.student.name,
+          ranking: allocation.ranking,
         },
       }))
       .sort((a, b) => a.project.id.localeCompare(b.project.id));
@@ -99,25 +106,19 @@ export class StudentProjectAllocationData extends DataObject {
   public toSupervisorView() {
     return this.allocationData
       .map((allocation) => ({
-        project: {
-          id: allocation.project.details.id,
-          title: allocation.project.details.title,
-        },
+        project: { id: allocation.project.id, title: allocation.project.title },
         supervisor: {
-          id: allocation.project.supervisor.userInInstance.user.id,
-          name: allocation.project.supervisor.userInInstance.user.name!,
-          email: allocation.project.supervisor.userInInstance.user.email!,
-          allocationLowerBound:
-            allocation.project.supervisor.projectAllocationLowerBound,
-          allocationTarget:
-            allocation.project.supervisor.projectAllocationTarget,
-          allocationUpperBound:
-            allocation.project.supervisor.projectAllocationUpperBound,
+          id: allocation.supervisor.id,
+          name: allocation.supervisor.name!,
+          email: allocation.supervisor.email!,
+          allocationLowerBound: allocation.supervisor.allocationLowerBound,
+          allocationTarget: allocation.supervisor.allocationTarget,
+          allocationUpperBound: allocation.supervisor.allocationUpperBound,
         },
         student: {
-          id: allocation.student.userInInstance.user.id,
-          name: allocation.student.userInInstance.user.name,
-          ranking: allocation.studentRanking,
+          id: allocation.student.id,
+          name: allocation.student.name,
+          ranking: allocation.ranking,
         },
       }))
       .sort((a, b) => a.supervisor.id.localeCompare(b.supervisor.id));
@@ -133,38 +134,24 @@ export class StudentProjectAllocationData extends DataObject {
 
   public toExportData() {
     return this.allocationData
-      .map(({ project: p, student, ...e }) => ({
+      .map(({ project: p, student, supervisor, ...e }) => ({
         project: {
-          id: p.projectId,
-          title: p.details.title,
-          description: p.details.description,
-          supervisor: p.supervisor.userInInstance.user,
-          specialTechnicalRequirements:
-            p.details.specialTechnicalRequirements ?? "",
+          id: p.id,
+          title: p.title,
+          description: p.description,
+          supervisor: supervisor,
+          specialTechnicalRequirements: p.specialTechnicalRequirements ?? "",
         },
         student: {
-          id: student.userInInstance.user.id,
-          name: student.userInInstance.user.name,
-          matric: guidToMatric(student.userInInstance.user.id),
-          level: student.studentLevel,
-          email: student.userInInstance.user.email,
-          ranking: e.studentRanking,
+          id: student.id,
+          name: student.name,
+          matric: guidToMatric(student.id),
+          level: student.level,
+          email: student.email,
+          ranking: e.ranking,
         },
-        supervisor: p.supervisor.userInInstance.user,
+        supervisor: supervisor,
       }))
       .sort((a, b) => a.student.id.localeCompare(b.student.id));
   }
 }
-
-// pin
-type DB_Data = DB_StudentProjectAllocation & {
-  student: {
-    userInInstance: { user: DB_User } & DB_UserInInstance;
-  } & DB_StudentDetails;
-  project: {
-    details: DB_ProjectDetails;
-    supervisor: {
-      userInInstance: { user: DB_User } & DB_UserInInstance;
-    } & DB_SupervisorDetails;
-  } & DB_ProjectInInstance;
-};
