@@ -1,0 +1,96 @@
+enum MarkerType {
+    SUPERVISOR
+    READER
+}
+
+model FlagSubmission {
+    flagId               String                @map("flag_id")
+    title                String
+    deadline             DateTime
+    weight               Int
+    // ---
+    allocationGroupId    String                @map("allocation_group_id")
+    allocationSubGroupId String                @map("allocation_sub_group_id")
+    allocationInstanceId String                @map("allocation_instance_id")
+    // ---
+    allocationInstance   AllocationInstance    @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+    AssessmentComponent  AssessmentComponent[]
+
+    @@unique(name: "flagSubmissionId", [flagId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("flag_submission")
+}
+
+model AssessmentComponent {
+    flagId               String             @map("flag_id")
+    submissionId         String             @map("submission_id")
+    title                String
+    description          String
+    weight               Int
+    layoutIndex          Int                @map("layout_index")
+    markerType           MarkerType         @map("marker_type")
+    // ---
+    allocationGroupId    String             @map("allocation_group_id")
+    allocationSubGroupId String             @map("allocation_sub_group_id")
+    allocationInstanceId String             @map("allocation_instance_id")
+    // ---
+    allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+    flagSubmission       FlagSubmission     @relation(fields: [flagId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [flagId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+    scores               ComponentScore[]
+    flag                 Flag               @relation(fields: [flagId], references: [id])
+
+    @@id(name: "assessmentComponentId", [flagId, submissionId, markerType, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("assessment_component")
+}
+
+model ComponentScore {
+    id                   String              @id @default(uuid())
+    markerId             String              @map("marker_id")
+    studentId            String              @map("student_id")
+    flagId               String              @map("flag_id")
+    submissionId         String              @map("submission_id")
+    grade                Int
+    justification        String
+    draft                Boolean
+    markerType           MarkerType          @map("marker_type")
+    // ---
+    allocationGroupId    String              @map("allocation_group_id")
+    allocationSubGroupId String              @map("allocation_sub_group_id")
+    allocationInstanceId String              @map("allocation_instance_id")
+    // ---
+    allocationInstance   AllocationInstance  @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+    component            AssessmentComponent @relation(fields: [flagId, submissionId, markerType, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [flagId, submissionId, markerType, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+
+    @@unique([markerId, studentId, flagId, submissionId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("component_score")
+}
+
+model MarkerSubmissionComments {
+    id                   String  @id @default(uuid())
+    summary              String
+    recommendedForPrize  Boolean @default(false) @map("recommended_for_prize")
+    // ---
+    markerId             String  @map("marker_id")
+    studentId            String  @map("student_id")
+    flagId               String  @map("flag_id")
+    submissionId         String  @map("submission_id")
+    allocationGroupId    String  @map("allocation_group_id")
+    allocationSubGroupId String  @map("allocation_sub_group_id")
+    allocationInstanceId String  @map("allocation_instance_id")
+
+    @@map("marker_submission_comments")
+}
+
+model FinalGrade {
+    id                   String             @id @default(uuid())
+    studentId            String             @map("student_id")
+    grade                Int
+    // ---
+    allocationGroupId    String             @map("allocation_group_id")
+    allocationSubGroupId String             @map("allocation_sub_group_id")
+    allocationInstanceId String             @map("allocation_instance_id")
+    // ---
+    allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+
+    @@unique([studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("final_grade")
+}
