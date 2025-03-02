@@ -4,7 +4,7 @@ import {
   getAllocPairs,
   getStudentRank,
 } from "@/lib/utils/allocation-adjustment/rank";
-import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
+import { expand } from "@/lib/utils/general/instance-params";
 import { getRandomInt } from "@/lib/utils/general/random";
 import {
   ProjectDetails,
@@ -35,49 +35,16 @@ export const matchingRouter = createTRPCRouter({
   clearSelection: procedure.instance.subGroupAdmin
     .input(z.object({ params: instanceParamsSchema }))
     .output(z.void())
-    .mutation(async ({ ctx: { instance, db }, input: { params } }) => {
-      const preAllocatedStudentIds = await instance
-        .getPreAllocatedStudentIds()
-        .then((d) => Array.from(d));
-
-      await db.$transaction([
-        db.studentProjectAllocation.deleteMany({
-          where: {
-            ...expand(params),
-            userId: { notIn: preAllocatedStudentIds },
-          },
-        }),
-
-        db.allocationInstance.update({
-          where: { instanceId: toInstanceId(instance.params) },
-          data: { selectedAlgConfigId: null },
-        }),
-      ]);
-    }),
+    .mutation(
+      async ({ ctx: { instance } }) => await instance.clearAlgSelection(),
+    ),
 
   // ok
   clearAll: procedure.instance.subGroupAdmin
     .output(z.void())
-    .mutation(async ({ ctx: { instance, db } }) => {
-      const preAllocations = await instance.getPreAllocations();
-      const preAllocatedStudentIds = preAllocations.map((e) => e.student.id);
-
-      await db.$transaction([
-        db.matchingResult.deleteMany({ where: expand(instance.params) }),
-
-        db.allocationInstance.update({
-          where: { instanceId: toInstanceId(instance.params) },
-          data: { selectedAlgConfigId: null },
-        }),
-
-        db.studentProjectAllocation.deleteMany({
-          where: {
-            ...expand(instance.params),
-            userId: { notIn: preAllocatedStudentIds },
-          },
-        }),
-      ]);
-    }),
+    .mutation(
+      async ({ ctx: { instance } }) => await instance.clearAllAlgResults(),
+    ),
 
   // BREAKING
   // move, maybe rename
@@ -141,6 +108,7 @@ export const matchingRouter = createTRPCRouter({
       return { supervisors, students, projects };
     }),
 
+  // TODO
   updateAllocation: procedure.instance.subGroupAdmin
     .input(
       z.object({

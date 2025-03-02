@@ -25,6 +25,7 @@
     "MINCOST",
     "MINSQCOST",
     "nocompatible",
+    "Normalised",
     "papaparse",
     "pkitazos",
     "prjkt",

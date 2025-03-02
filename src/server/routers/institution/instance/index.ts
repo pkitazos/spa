@@ -331,7 +331,6 @@ export const instanceRouter = createTRPCRouter({
         if (!userExists) institution.createUser(newStudent);
 
         await instance.linkUser(newStudent);
-        // TODO @pkitazos am I allowed to do this?
         await instance.linkStudents([newStudent]);
 
         if (!userExists) return LinkUserResult.CREATED_NEW;

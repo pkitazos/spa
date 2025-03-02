@@ -50,12 +50,7 @@ export const preferenceRouter = createTRPCRouter({
     }),
 
   statsByProject: procedure.instance.subGroupAdmin
-    .output(
-      z.object({
-        aggregated: csvDataSchema,
-        normalised: csvDataSchema,
-      }),
-    )
+    .output(z.object({ aggregated: csvDataSchema, normalised: csvDataSchema }))
     .query(async ({ ctx: { instance } }) => {
       const preferences = await instance
         .getSubmittedPreferences()
@@ -74,12 +69,7 @@ export const preferenceRouter = createTRPCRouter({
     }),
 
   statsBySupervisor: procedure.instance.subGroupAdmin
-    .output(
-      z.object({
-        aggregated: csvDataSchema,
-        normalised: csvDataSchema,
-      }),
-    )
+    .output(z.object({ aggregated: csvDataSchema, normalised: csvDataSchema }))
     .query(async ({ ctx: { instance } }) => {
       const preferences = await instance
         .getSubmittedPreferences()

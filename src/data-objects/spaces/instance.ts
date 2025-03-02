@@ -775,6 +775,47 @@ export class AllocationInstance extends DataObject {
     ]);
   }
 
+  public async clearAllAlgResults(): Promise<void> {
+    const preAllocations = await this.getPreAllocations();
+    const preAllocatedStudentIds = preAllocations.map((e) => e.student.id);
+
+    await this.db.$transaction([
+      this.db.matchingResult.deleteMany({ where: expand(this.params) }),
+
+      this.db.allocationInstance.update({
+        where: { instanceId: toInstanceId(this.params) },
+        data: { selectedAlgId: null },
+      }),
+
+      this.db.studentProjectAllocation.deleteMany({
+        where: {
+          ...expand(this.params),
+          userId: { notIn: preAllocatedStudentIds },
+        },
+      }),
+    ]);
+  }
+
+  public async clearAlgSelection(): Promise<void> {
+    const preAllocatedStudentIds = await this.getPreAllocations().then((d) =>
+      d.map((d) => d.student.id),
+    );
+
+    await this.db.$transaction([
+      this.db.studentProjectAllocation.deleteMany({
+        where: {
+          ...expand(this.params),
+          userId: { notIn: preAllocatedStudentIds },
+        },
+      }),
+
+      this.db.allocationInstance.update({
+        where: { instanceId: toInstanceId(this.params) },
+        data: { selectedAlgId: null },
+      }),
+    ]);
+  }
+
   public async selectAlg(algId: string): Promise<void> {
     const preAllocatedStudentIds = await this.getPreAllocations().then((data) =>
       data.map(({ student: { id } }) => id),
