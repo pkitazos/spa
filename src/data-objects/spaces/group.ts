@@ -7,12 +7,9 @@ import { User } from "../users/user";
 
 import { Institution } from "./institution";
 
-import {
-  allocationGroupToDTO,
-  allocationSubGroupToDTO,
-} from "@/db/transformers";
 import { DB } from "@/db/types";
 import { GroupDTO, SubGroupDTO, UserDTO } from "@/dto";
+import { Transformers } from "@/db/transformers";
 
 export class AllocationGroup extends DataObject {
   public params: GroupParams;
@@ -49,12 +46,12 @@ export class AllocationGroup extends DataObject {
     return await this.db.allocationSubGroup
       .create({
         data: {
-          displayName,
           id: slugify(displayName),
+          displayName,
           allocationGroupId: this.params.group,
         },
       })
-      .then(allocationSubGroupToDTO);
+      .then(Transformers.toAllocationSubGroupDTO);
   }
 
   public async exists(): Promise<boolean> {
@@ -66,7 +63,7 @@ export class AllocationGroup extends DataObject {
   public async get(): Promise<GroupDTO> {
     return await this.db.allocationGroup
       .findFirstOrThrow({ where: { id: this.params.group } })
-      .then(allocationGroupToDTO);
+      .then(Transformers.toAllocationGroupDTO);
   }
 
   public async getSubGroups(): Promise<SubGroupDTO[]> {
@@ -74,7 +71,7 @@ export class AllocationGroup extends DataObject {
       where: { allocationGroupId: this.params.group },
     });
 
-    return subgroups.map(allocationSubGroupToDTO);
+    return subgroups.map(Transformers.toAllocationSubGroupDTO);
   }
 
   public async getAdmins(): Promise<UserDTO[]> {
@@ -101,7 +98,7 @@ export class AllocationGroup extends DataObject {
   public async delete(): Promise<GroupDTO> {
     return await this.db.allocationGroup
       .delete({ where: { id: this.params.group } })
-      .then(allocationGroupToDTO);
+      .then(Transformers.toAllocationGroupDTO);
   }
 
   get institution() {

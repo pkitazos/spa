@@ -2,10 +2,7 @@ import { compareAsc } from "date-fns";
 import { z } from "zod";
 
 import { expand } from "@/lib/utils/general/instance-params";
-import {
-  algorithmDtoSchema,
-  algorithmResultDtoSchema,
-} from "@/lib/validations/algorithm";
+import { algorithmResultDtoSchema } from "@/lib/validations/algorithm";
 import {
   blankResult,
   matchingResultDtoSchema,
@@ -17,14 +14,14 @@ import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
 import { adjustTarget, adjustUpperBound } from "./_utils/apply-modifiers";
-import { sortAlgorithms } from "./_utils/get-algorithms-in-order";
-
-import { toAlgorithmDTO } from "@/db/transformers";
-import { projectDataToDTO, supervisorToDTO } from "@/db/transformers";
-import { userDtoSchema } from "@/dto";
+import { Transformers as T } from "@/db/transformers";
+import {
+  algorithmDtoSchema,
+  projectDtoSchema,
+  studentDtoSchema,
+  userDtoSchema,
+} from "@/dto";
 import { AlgorithmRunResult } from "@/dto/algorithm-run-result";
-import { projectDtoSchema } from "@/dto/project";
-import { DEPR_studentDtoSchema, toStudentDTO } from "@/dto/student";
 
 export const algorithmRouter = createTRPCRouter({
   // BREAKING input/output type changed
@@ -79,10 +76,7 @@ export const algorithmRouter = createTRPCRouter({
   getAll: procedure.instance.subGroupAdmin
     .input(z.object({ params: instanceParamsSchema }))
     .output(z.array(algorithmDtoSchema))
-    .query(
-      async ({ ctx: { instance } }) =>
-        await instance.getAllAlgorithms().then(sortAlgorithms),
-    ),
+    .query(async ({ ctx: { instance } }) => await instance.getAllAlgorithms()),
 
   // BREAKING output type changed
   // TODO: review how this is used on the client
@@ -102,7 +96,7 @@ export const algorithmRouter = createTRPCRouter({
       return algorithmData
         .filter((x) => x.matchingResult !== null)
         .map(({ algorithmConfig, matchingResult }) => ({
-          algorithm: toAlgorithmDTO(algorithmConfig),
+          algorithm: T.toAlgorithmDTO(algorithmConfig),
           matchingResults: matchingResult!,
         }))
         .sort((a, b) =>
@@ -133,7 +127,7 @@ export const algorithmRouter = createTRPCRouter({
             algorithm: algorithmDtoSchema,
             matchingPairs: z.array(
               z.object({
-                student: DEPR_studentDtoSchema,
+                student: studentDtoSchema,
                 project: projectDtoSchema,
                 studentRanking: z.number(),
               }),
@@ -152,7 +146,12 @@ export const algorithmRouter = createTRPCRouter({
             include: {
               matching: {
                 include: {
-                  student: true,
+                  student: {
+                    include: {
+                      studentFlags: { include: { flag: true } },
+                      userInInstance: { include: { user: true } },
+                    },
+                  },
                   project: {
                     include: {
                       details: {
@@ -173,11 +172,11 @@ export const algorithmRouter = createTRPCRouter({
 
       const results = algorithmData
         .map((a) => ({
-          algorithm: toAlgorithmDTO(a.algorithmConfig),
+          algorithm: T.toAlgorithmDTO(a.algorithmConfig),
           matchingPairs:
             a.matchingResult?.matching.map((m) => ({
-              project: projectDataToDTO(m.project),
-              student: toStudentDTO(m.student),
+              project: T.toProjectDTO(m.project),
+              student: T.toStudentDTO(m.student),
               studentRanking: m.studentRanking,
             })) ?? [],
         }))
@@ -249,7 +248,7 @@ export const algorithmRouter = createTRPCRouter({
           compareAsc(a.algorithmConfig.createdAt, b.algorithmConfig.createdAt),
         )
         .map((x) => {
-          const algorithm = toAlgorithmDTO(x.algorithmConfig);
+          const algorithm = T.toAlgorithmDTO(x.algorithmConfig);
           const matchingData = x.matchingResult?.matching ?? [];
 
           const algAllocationsMap = matchingData.reduce(
@@ -266,7 +265,7 @@ export const algorithmRouter = createTRPCRouter({
           return {
             algorithm,
             data: matchingData.map(({ project }) => {
-              const s = supervisorToDTO(project.supervisor);
+              const s = T.toSupervisorDTO(project.supervisor);
 
               const preAllocationCount = preAllocationsMap[s.id] ?? 0;
               const algAllocationCount = algAllocationsMap[s.id] ?? 0;
@@ -276,19 +275,22 @@ export const algorithmRouter = createTRPCRouter({
                 supervisor: s,
                 matchingDetails: {
                   // the supervisor's target that was given to the algorithm
-                  projectTarget: adjustTarget(s.projectTarget, targetModifier),
+                  projectTarget: adjustTarget(
+                    s.allocationTarget,
+                    targetModifier,
+                  ),
 
                   // the supervisor's target that setup in the allocation instance
-                  actualTarget: s.projectTarget,
+                  actualTarget: s.allocationTarget,
 
                   // the supervisor's upper quota that was given to the algorithm
                   projectUpperQuota: adjustUpperBound(
-                    s.projectUpperQuota,
+                    s.allocationUpperBound,
                     upperBoundModifier,
                   ),
 
                   // the supervisor's upper quota that setup in the allocation instance
-                  actualUpperQuota: s.projectUpperQuota,
+                  actualUpperQuota: s.allocationUpperBound,
 
                   // the number of students that were allocated to the supervisor by the algorithm
                   allocationCount: algAllocationCount,
@@ -298,10 +300,10 @@ export const algorithmRouter = createTRPCRouter({
 
                   // the difference between the number of students that were allocated to the supervisor by the algorithm and the supervisor's target in the allocation instance
                   algorithmTargetDifference:
-                    algAllocationCount - s.projectTarget,
+                    algAllocationCount - s.allocationTarget,
 
                   // the difference between the number of students that were allocated to the supervisor in total and the supervisor's target in the allocation instance
-                  actualTargetDifference: totalCount - s.projectTarget,
+                  actualTargetDifference: totalCount - s.allocationTarget,
                 },
               };
             }),

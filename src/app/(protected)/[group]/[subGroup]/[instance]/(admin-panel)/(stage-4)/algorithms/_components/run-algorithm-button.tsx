@@ -4,7 +4,7 @@ import { useInstanceParams } from "@/components/params-context";
 import { Button } from "@/components/ui/button";
 
 import { api } from "@/lib/trpc/client";
-import { AlgorithmDTO } from "@/lib/validations/algorithm";
+import { AlgorithmDTO } from "@/dto/algorithm";
 
 import { useAlgorithmUtils } from "./algorithm-context";
 

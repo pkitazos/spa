@@ -1,9 +1,9 @@
-import { PrismaTransactionClient } from "@/db";
+import { TX } from "@/db/types";
 import { expand } from "@/lib/utils/general/instance-params";
 import { InstanceParams } from "@/lib/validations/params";
 
 export async function mark(
-  tx: PrismaTransactionClient,
+  tx: TX,
   params: InstanceParams,
   supervisorCounts: Record<string, number>,
   projectCounts: Record<string, number>,
@@ -34,7 +34,7 @@ export type ForkMarkedProjectDto = ForkMarkedData["projects"][number];
  * @returns
  */
 async function getSupervisorsWithSlack(
-  tx: PrismaTransactionClient,
+  tx: TX,
   params: InstanceParams,
   supervisorCounts: Record<string, number>,
   projectCounts: Record<string, number>,
@@ -77,10 +77,7 @@ async function getSupervisorsWithSlack(
  * @returns
  */
 
-async function getAvailableStudents(
-  tx: PrismaTransactionClient,
-  params: InstanceParams,
-) {
+async function getAvailableStudents(tx: TX, params: InstanceParams) {
   return await tx.studentDetails.findMany({
     where: {
       ...expand(params),

@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import {
-  createdInstanceSchema,
   forkedInstanceSchema,
   updatedInstanceSchema,
 } from "@/lib/validations/instance-form";
@@ -22,10 +21,15 @@ import { forkInstanceTransaction } from "@/db/transactions/fork/transaction";
 import { mergeInstanceTrx } from "@/db/transactions/merge/transaction";
 import { Role, Stage } from "@/db/types";
 import { stageSchema } from "@/db/types";
-import { instanceDtoSchema } from "@/dto";
+
+import {
+  flagDtoSchema,
+  instanceDtoSchema,
+  studentDtoSchema,
+  supervisorDtoSchema,
+  tagDtoSchema,
+} from "@/dto";
 import { LinkUserResult, LinkUserResultSchema } from "@/dto/link-user-result";
-import { DEPR_studentDtoSchema } from "@/dto/student";
-import { supervisorDtoSchema } from "@/dto/supervisor";
 
 const tgc = z.object({
   id: z.string(),
@@ -159,45 +163,29 @@ export const instanceRouter = createTRPCRouter({
   // TODO review usage of this
   // DEFINITELY it should use std. names
   // MAYBE kill it and use other gets?
+  // BREAKING
   getEditFormDetails: procedure.instance.subGroupAdmin
     .output(
-      createdInstanceSchema.extend({ parentInstanceId: z.string().optional() }),
+      z.object({
+        instanceData: instanceDtoSchema,
+        flags: z.array(flagDtoSchema),
+        tags: z.array(tagDtoSchema),
+      }),
     )
-    .query(async ({ ctx: { instance } }) => {
-      const data = await instance.get();
-      const flags = await instance.getFlags();
-      const tags = await instance.getTags();
-      return {
-        ...data,
-        flags,
-        tags,
-        instanceName: data.displayName,
-        minPreferences: data.minStudentPreferences,
-        maxPreferences: data.maxStudentPreferences,
-        maxPreferencesPerSupervisor: data.maxStudentPreferencesPerSupervisor,
-        preferenceSubmissionDeadline: data.studentPreferenceSubmissionDeadline,
-      };
-    }),
+    .query(async ({ ctx: { instance } }) => ({
+      instanceData: await instance.get(),
+      flags: await instance.getFlags(),
+      tags: await instance.getTags(),
+    })),
 
   supervisors: procedure.instance.user
     .output(z.array(supervisorDtoSchema))
     .query(async ({ ctx: { instance } }) => await instance.getSupervisors()),
 
+  // BREAKING output type changed
   getSupervisors: procedure.instance.subGroupAdmin
-    .output(
-      z.array(
-        z.object({
-          institutionId: z.string(),
-          fullName: z.string(),
-          email: z.string(),
-          projectTarget: z.number(),
-          projectUpperQuota: z.number(),
-        }),
-      ),
-    )
-    .query(
-      async ({ ctx: { instance } }) => await instance.getSupervisorDetails(),
-    ),
+    .output(z.array(supervisorDtoSchema))
+    .query(async ({ ctx: { instance } }) => await instance.getSupervisors()),
 
   // BREAKING input/output type changed
   addSupervisor: procedure.instance.subGroupAdmin
@@ -323,22 +311,14 @@ export const instanceRouter = createTRPCRouter({
       }));
     }),
 
+  // BREAKING output type changed
   getStudents: procedure.instance.subGroupAdmin
-    .output(
-      z.array(
-        z.object({
-          institutionId: z.string(),
-          fullName: z.string(),
-          email: z.string(),
-          level: z.number(),
-        }),
-      ),
-    )
+    .output(z.array(studentDtoSchema))
     .query(async ({ ctx: { instance } }) => await instance.getStudentDetails()),
 
   // BREAKING input/output types changed
   addStudent: procedure.instance.subGroupAdmin
-    .input(z.object({ newStudent: DEPR_studentDtoSchema }))
+    .input(z.object({ newStudent: studentDtoSchema }))
     .output(LinkUserResultSchema)
     .mutation(
       async ({ ctx: { instance, institution }, input: { newStudent } }) => {
@@ -361,7 +341,7 @@ export const instanceRouter = createTRPCRouter({
 
   // BREAKING input/output types changed
   addStudents: procedure.instance.subGroupAdmin
-    .input(z.object({ newStudents: z.array(DEPR_studentDtoSchema) }))
+    .input(z.object({ newStudents: z.array(studentDtoSchema) }))
     .output(z.array(LinkUserResultSchema))
     .mutation(
       async ({ ctx: { instance, institution }, input: { newStudents } }) => {
@@ -406,7 +386,6 @@ export const instanceRouter = createTRPCRouter({
     }),
 
   invitedStudents: procedure.instance.subGroupAdmin
-    .input(z.object({ params: instanceParamsSchema }))
     .output(
       z.object({
         all: z.array(tgc),
@@ -417,15 +396,18 @@ export const instanceRouter = createTRPCRouter({
     .query(async ({ ctx: { instance } }) => {
       const invitedStudents = await instance.getStudentDetails();
 
-      const preAllocatedStudents = await instance.getPreAllocatedStudentIds();
+      const preAllocations = await instance.getPreAllocations();
+      const preAllocatedStudents = new Set(
+        preAllocations.map((p) => p.project.id),
+      );
 
       const all = invitedStudents.map((u) => ({
-        id: u.institutionId,
-        name: u.fullName,
+        id: u.id,
+        name: u.name,
         email: u.email,
         joined: u.joined,
         level: u.level,
-        preAllocated: preAllocatedStudents.has(u.institutionId),
+        preAllocated: preAllocatedStudents.has(u.id),
       }));
 
       return {

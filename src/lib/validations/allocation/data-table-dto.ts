@@ -1,3 +1,4 @@
+import { projectDtoSchema } from "@/dto/project";
 import { z } from "zod";
 
 export const allocationByStudentDtoSchema = z.object({
@@ -48,11 +49,7 @@ export type AllocationBySupervisorDto = z.infer<
 >;
 
 export const studentProjectAllocationDtoSchema = z.object({
-  project: z.object({
-    id: z.string(),
-    title: z.string(),
-    supervisor: z.object({ id: z.string(), name: z.string() }),
-  }),
+  project: projectDtoSchema,
   rank: z.number(),
 });
 

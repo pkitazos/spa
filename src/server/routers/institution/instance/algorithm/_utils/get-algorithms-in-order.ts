@@ -1,8 +1,8 @@
 import {
-  AlgorithmDTO,
   builtInAlgorithms,
   builtInAlgSchema,
 } from "@/lib/validations/algorithm";
+import { AlgorithmDTO } from "@/dto/algorithm";
 
 // should be displayed in the order they were created, except the built-in ones which should be displayed first
 /**

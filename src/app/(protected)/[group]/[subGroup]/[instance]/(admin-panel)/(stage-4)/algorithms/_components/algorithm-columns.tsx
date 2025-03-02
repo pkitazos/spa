@@ -22,7 +22,7 @@ import {
 } from "@/components/yes-no-action";
 
 import { api } from "@/lib/trpc/client";
-import { AlgorithmDTO } from "@/lib/validations/algorithm";
+import { AlgorithmDTO } from "@/dto/algorithm";
 
 import { useAlgorithmUtils } from "./algorithm-context";
 import { RunAlgorithmButton } from "./run-algorithm-button";

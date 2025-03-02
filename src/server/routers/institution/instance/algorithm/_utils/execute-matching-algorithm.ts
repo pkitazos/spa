@@ -1,6 +1,7 @@
 import axios from "axios";
 
-import { AlgorithmDTO, builtInAlgSchema } from "@/lib/validations/algorithm";
+import { builtInAlgSchema } from "@/lib/validations/algorithm";
+import { AlgorithmDTO } from "@/dto/algorithm";
 import {
   MatchingDataDTO,
   MatchingDataWithArgs,

@@ -56,9 +56,8 @@ export const matchingRouter = createTRPCRouter({
   clearAll: procedure.instance.subGroupAdmin
     .output(z.void())
     .mutation(async ({ ctx: { instance, db } }) => {
-      const preAllocatedStudentIds = await instance
-        .getPreAllocatedStudentIds()
-        .then((d) => Array.from(d));
+      const preAllocations = await instance.getPreAllocations();
+      const preAllocatedStudentIds = preAllocations.map((e) => e.student.id);
 
       await db.$transaction([
         db.matchingResult.deleteMany({ where: expand(instance.params) }),
@@ -90,7 +89,7 @@ export const matchingRouter = createTRPCRouter({
     )
     .query(async ({ ctx: { instance } }) => {
       const studentData = await instance.getStudentPreferenceDetails();
-      const projectData = await instance.getProjectDetails();
+      const projects = await instance.getProjectDetails();
       const supervisorData = await instance.getSupervisorProjectDetails();
 
       const allocationRecord = await instance
@@ -114,13 +113,6 @@ export const matchingRouter = createTRPCRouter({
           })),
         }))
         .filter((e) => e.projects.length > 0);
-
-      const projects = projectData.map((p) => ({
-        capacityLowerBound: p.details.capacityLowerBound,
-        capacityUpperBound: p.details.capacityUpperBound,
-        allocatedTo: p.studentAllocations.map((e) => e.userId),
-        supervisor: p.supervisor,
-      }));
 
       return { supervisors, students, projects };
     }),

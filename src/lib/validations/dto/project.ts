@@ -2,7 +2,10 @@ import { z } from "zod";
 
 import { TagType, tagTypeSchema } from "@/components/tag/tag-input";
 
-export const projectDtoSchema = z.object({
+/**
+ * @deprecated
+ */
+export const DEPR_projectDtoSchema = z.object({
   title: z.string(),
   description: z.string(),
   supervisor: z.object({ id: z.string(), name: z.string() }),
@@ -13,30 +16,16 @@ export const projectDtoSchema = z.object({
   tags: z.array(tagTypeSchema),
 });
 
-export type ProjectDto = z.infer<typeof projectDtoSchema>;
+export type ProjectDto = z.infer<typeof DEPR_projectDtoSchema>;
 
 export const projectTableDataDtoSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string(),
   specialTechnicalRequirements: z.string(),
-  supervisor: z.object({
-    id: z.string(),
-    name: z.string(),
-    email: z.string(),
-  }),
-  flags: z.array(
-    z.object({
-      id: z.string(),
-      title: z.string(),
-    }),
-  ),
-  tags: z.array(
-    z.object({
-      id: z.string(),
-      title: z.string(),
-    }),
-  ),
+  supervisor: z.object({ id: z.string(), name: z.string(), email: z.string() }),
+  flags: z.array(z.object({ id: z.string(), title: z.string() })),
+  tags: z.array(z.object({ id: z.string(), title: z.string() })),
 });
 
 export type ProjectTableDataDto = z.infer<typeof projectTableDataDtoSchema>;

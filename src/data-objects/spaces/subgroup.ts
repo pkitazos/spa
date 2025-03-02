@@ -11,10 +11,7 @@ import { User } from "../users/user";
 import { AllocationGroup } from "./group";
 import { Institution } from "./institution";
 
-import {
-  allocationInstanceToDTO,
-  allocationSubGroupToDTO,
-} from "@/db/transformers";
+import { Transformers as T } from "@/db/transformers";
 import { DB } from "@/db/types";
 import { InstanceDTO, SubGroupDTO, UserDTO } from "@/dto";
 
@@ -97,13 +94,13 @@ export class AllocationSubGroup extends DataObject {
   public async get(): Promise<SubGroupDTO> {
     return await this.db.allocationSubGroup
       .findFirstOrThrow({ where: toSubgroupId(this.params) })
-      .then(allocationSubGroupToDTO);
+      .then(T.toAllocationSubGroupDTO);
   }
 
   public async getInstances(): Promise<InstanceDTO[]> {
     return await this.db.allocationInstance
       .findMany({ where: subgroupExpand(this.params) })
-      .then((data) => data.map(allocationInstanceToDTO));
+      .then((data) => data.map(T.toAllocationInstanceDTO));
   }
 
   public async isSubGroupAdmin(userId: string): Promise<boolean> {
@@ -142,7 +139,7 @@ export class AllocationSubGroup extends DataObject {
   public async delete(): Promise<SubGroupDTO> {
     return await this.db.allocationSubGroup
       .delete({ where: { subGroupId: toSubgroupId(this.params) } })
-      .then(allocationSubGroupToDTO);
+      .then(T.toAllocationSubGroupDTO);
   }
 
   get institution() {

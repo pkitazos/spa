@@ -1,5 +1,3 @@
-import { Role } from "@prisma/client";
-
 import { expand } from "@/lib/utils/general/instance-params";
 import { compareTitle } from "@/lib/utils/sorting/by-title";
 import { InstanceParams } from "@/lib/validations/params";
@@ -12,7 +10,7 @@ import {
 } from "./mark";
 import { updateProjectCapacities, updateSupervisorCapacities } from "./utils";
 
-import { TX } from "@/db/types";
+import { Role, TX } from "@/db/types";
 
 export async function copy(
   tx: TX,
