@@ -1,4 +1,4 @@
-import { expand, toPP2 } from "@/lib/utils/general/instance-params";
+import { toPP2 } from "@/lib/utils/general/instance-params";
 import { ProjectParams } from "@/lib/validations/params";
 
 import { DataObject } from "../data-object";
@@ -8,7 +8,7 @@ import { AllocationInstance } from "./instance";
 import { AllocationSubGroup } from "./subgroup";
 
 import { DB } from "@/db/types";
-import { FlagDTO } from "@/dto";
+import { FlagDTO, ProjectDTO } from "@/dto";
 import { Transformers as T } from "@/db/transformers";
 
 export class Project extends DataObject {
@@ -23,9 +23,19 @@ export class Project extends DataObject {
   }
 
   public async exists() {
-    return !!(await this.db.projectInInstance.findFirst({
-      where: { projectId: this.params.projectId, ...expand(this.params) },
-    }));
+    return !!(await this.db.project.findFirst({ where: toPP2(this.params) }));
+  }
+
+  public async get(): Promise<ProjectDTO> {
+    return await this.db.project
+      .findFirstOrThrow({
+        where: toPP2(this.params),
+        include: {
+          flagsOnProject: { include: { flag: true } },
+          tagsOnProject: { include: { tag: true } },
+        },
+      })
+      .then(T.toProjectDTO);
   }
 
   get group() {
@@ -46,24 +56,15 @@ export class Project extends DataObject {
   }
 
   public async getFlags(): Promise<FlagDTO[]> {
-    const data = await this.db.projectInInstance.findFirstOrThrow({
+    const data = await this.db.project.findFirstOrThrow({
       where: toPP2(this.params),
-      include: {
-        details: { include: { flagsOnProject: { include: { flag: true } } } },
-      },
+      include: { flagsOnProject: { include: { flag: true } } },
     });
 
-    return data.details.flagsOnProject.map((f) => T.toFlagDTO(f.flag));
+    return data.flagsOnProject.map((f) => T.toFlagDTO(f.flag));
   }
 
   public async delete(): Promise<void> {
-    await this.db.$transaction([
-      this.db.projectDetails.deleteMany({
-        where: { projectInInstance: { every: toPP2(this.params) } },
-      }),
-      this.db.projectInInstance.delete({
-        where: { projectInInstanceId: toPP2(this.params) },
-      }),
-    ]);
+    await this.db.project.delete({ where: toPP2(this.params) });
   }
 }

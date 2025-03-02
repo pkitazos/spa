@@ -271,12 +271,12 @@ export const instanceRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx: { instance } }) => {
-      const invitedUsers = await instance.getSupervisorDetails();
+      const invitedUsers = await instance.getSupervisors();
 
       return {
         supervisors: invitedUsers.map((u) => ({
-          id: u.institutionId,
-          name: u.fullName,
+          id: u.id,
+          name: u.name,
           email: u.email,
           joined: u.joined,
         })),
@@ -314,7 +314,7 @@ export const instanceRouter = createTRPCRouter({
   // BREAKING output type changed
   getStudents: procedure.instance.subGroupAdmin
     .output(z.array(studentDtoSchema))
-    .query(async ({ ctx: { instance } }) => await instance.getStudentDetails()),
+    .query(async ({ ctx: { instance } }) => await instance.getStudents()),
 
   // BREAKING input/output types changed
   addStudent: procedure.instance.subGroupAdmin
@@ -394,7 +394,7 @@ export const instanceRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx: { instance } }) => {
-      const invitedStudents = await instance.getStudentDetails();
+      const invitedStudents = await instance.getStudents();
 
       const preAllocations = await instance.getPreAllocations();
       const preAllocatedStudents = new Set(
