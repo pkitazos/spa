@@ -47,12 +47,11 @@ export const projectRouter = createTRPCRouter({
           },
         },
       }) => {
-        project.update(updatedProject);
         const newPreAllocatedStudentId = preAllocatedStudentId || undefined;
 
         await db.$transaction(async (tx) => {
-          const oldProjectData = await tx.projectDetails.findFirstOrThrow({
-            where: { id: project.params.projectId },
+          const oldProjectData = await tx.project.findFirstOrThrow({
+            where: toPP2(project.params),
             select: { preAllocatedStudentId: true },
           });
 
@@ -87,8 +86,8 @@ export const projectRouter = createTRPCRouter({
             });
           }
 
-          await tx.projectDetails.update({
-            where: { id: project.params.projectId },
+          await tx.project.update({
+            where: toPP2(project.params),
             data: {
               title: title,
               description: description,
@@ -166,14 +165,14 @@ export const projectRouter = createTRPCRouter({
       return projectData
         .filter((p) => {
           if (preferenceIds.has(p.project.id)) return false;
-          const projectFlags = new Set(p.flags.map((f) => f.title));
+          const projectFlags = new Set(p.project.flags.map((f) => f.title));
           const studentFlags = new Set(studentData.flags.map((f) => f.title));
           return studentFlags.intersection(projectFlags).size !== 0;
         })
         .map((p) => ({
           id: p.project.id,
           title: p.project.title,
-          flags: p.flags,
+          flags: p.project.flags,
         }));
     }),
 
@@ -199,7 +198,7 @@ export const projectRouter = createTRPCRouter({
 
         return projectData
           .filter((p) => {
-            const projectFlags = new Set(p.flags.map((f) => f.title));
+            const projectFlags = new Set(p.project.flags.map((f) => f.title));
             const studentFlags = new Set(studentData.flags.map((f) => f.title));
             return studentFlags.intersection(projectFlags).size !== 0;
           })
@@ -239,19 +238,16 @@ export const projectRouter = createTRPCRouter({
   // ok
   getById: procedure.project.user
     .output(projectDtoSchema)
-    .query(async ({ ctx: { db }, input: { params } }) => {
-      const data = await db.projectInInstance.findFirstOrThrow({
-        where: params,
+    .query(async ({ ctx: { db, project } }) => {
+      // project.get
+      const data = await db.project.findFirstOrThrow({
+        where: toPP2(project.params),
         include: {
           supervisor: {
             include: { userInInstance: { include: { user: true } } },
           },
-          details: {
-            include: {
-              flagsOnProject: { include: { flag: true } },
-              tagsOnProject: { include: { tag: true } },
-            },
-          },
+          flagsOnProject: { include: { flag: true } },
+          tagsOnProject: { include: { tag: true } },
         },
       });
 
@@ -268,9 +264,9 @@ export const projectRouter = createTRPCRouter({
     }) => {
       const { parentInstanceId } = await instance.get();
 
-      const projects = await db.projectInInstance.findMany({
+      const projects = await db.project.findMany({
         where: {
-          projectId,
+          id: projectId,
           OR: [
             expand(instance.params),
             expand(instance.params, parentInstanceId),
@@ -346,7 +342,7 @@ export const projectRouter = createTRPCRouter({
         {} as Record<string, string[]>,
       );
 
-      const hello = await db.projectInInstance.findFirstOrThrow({
+      const hello = await db.project.findFirstOrThrow({
         where: toPP2(project.params),
         include: {
           inStudentDraftPreferences: {
@@ -438,8 +434,9 @@ export const projectRouter = createTRPCRouter({
         input: { supervisorId, newProject },
       }) => {
         await db.$transaction(async (tx) => {
-          const project = await tx.projectDetails.create({
+          const project = await tx.project.create({
             data: {
+              ...expand(instance.params),
               title: newProject.title,
               description: newProject.description,
               capacityLowerBound: 0,
@@ -448,9 +445,7 @@ export const projectRouter = createTRPCRouter({
               specialTechnicalRequirements:
                 newProject.specialTechnicalRequirements ?? null,
               latestEditDateTime: new Date(),
-              projectInInstance: {
-                create: { ...expand(instance.params), supervisorId },
-              },
+              supervisorId,
             },
           });
 
