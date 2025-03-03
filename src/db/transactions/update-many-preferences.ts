@@ -3,7 +3,6 @@ import { expand } from "@/lib/utils/general/instance-params";
 import { relativeComplement } from "@/lib/utils/general/set-difference";
 import { InstanceParams } from "@/lib/validations/params";
 
-import { Transformers as T } from "@/db/transformers";
 import { DB, PreferenceType } from "@/db/types";
 
 export async function updateManyPreferenceTransaction(
@@ -21,12 +20,12 @@ export async function updateManyPreferenceTransaction(
   },
 ) {
   await db.$transaction(async (tx) => {
-    const projectFlags = await tx.projectDetails
+    const projectFlags = await tx.project
       .findFirstOrThrow({
         where: { id: { in: projectIds } },
         select: { flagsOnProject: { select: { flag: true } } },
       })
-      .then((data) => data.flagsOnProject.map((f) => T.toFlagDTO(f.flag)))
+      .then((data) => data.flagsOnProject.map((f) => f.flag.title))
       .then((x) => new Set(x));
 
     const studentFlags = await tx.studentDetails
@@ -34,7 +33,7 @@ export async function updateManyPreferenceTransaction(
         where: { userId, ...expand(params) },
         select: { studentFlags: { select: { flag: true } } },
       })
-      .then((data) => data.studentFlags.map((f) => T.toFlagDTO(f.flag)))
+      .then((data) => data.studentFlags.map((f) => f.flag.title))
       .then((x) => new Set(x));
 
     if (projectFlags.intersection(studentFlags).size <= 0) {

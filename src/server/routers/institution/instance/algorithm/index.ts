@@ -12,7 +12,6 @@ import { instanceParamsSchema } from "@/lib/validations/params";
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
-import { adjustTarget, adjustUpperBound } from "./_utils/apply-modifiers";
 import { Transformers as T } from "@/db/transformers";
 import {
   algorithmDtoSchema,
@@ -21,6 +20,10 @@ import {
   userDtoSchema,
 } from "@/dto";
 import { AlgorithmRunResult } from "@/dto/algorithm-run-result";
+import {
+  adjustTarget,
+  adjustUpperBound,
+} from "@/lib/utils/algorithm/modifiers";
 
 export const algorithmRouter = createTRPCRouter({
   // BREAKING input/output type changed

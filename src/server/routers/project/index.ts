@@ -13,7 +13,6 @@ import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
-import { updateProjectAllocation } from "@/db/transactions/project-allocation";
 import { linkProjectFlags } from "@/db/transactions/project-flags";
 import { flagDtoSchema, tagDtoSchema } from "@/dto";
 import { projectDtoSchema } from "@/dto/project";
@@ -59,11 +58,11 @@ export const projectRouter = createTRPCRouter({
             oldProjectData.preAllocatedStudentId;
 
           const requiresDelete =
-            prevPreAllocatedStudentId && // if there is an old version
+            !!prevPreAllocatedStudentId && // if there is an old version
             prevPreAllocatedStudentId !== newPreAllocatedStudentId; // and it doesn't match
 
           const requiresCreate =
-            newPreAllocatedStudentId && // if there is a new student
+            !!newPreAllocatedStudentId && // if there is a new student
             prevPreAllocatedStudentId !== newPreAllocatedStudentId; // and it doesn't match
 
           if (requiresDelete) {
@@ -80,9 +79,23 @@ export const projectRouter = createTRPCRouter({
           }
 
           if (requiresCreate) {
-            await updateProjectAllocation(tx, {
-              ...project.params,
-              preAllocatedStudentId: newPreAllocatedStudentId,
+            await db.studentProjectAllocation.upsert({
+              where: {
+                studentProjectAllocationId: {
+                  ...expand(project.params),
+                  userId: newPreAllocatedStudentId,
+                },
+              },
+              create: {
+                ...expand(project.params),
+                userId: newPreAllocatedStudentId,
+                projectId: project.params.projectId,
+                studentRanking: 1,
+              },
+              update: {
+                projectId: project.params.projectId,
+                studentRanking: 1,
+              },
             });
           }
 

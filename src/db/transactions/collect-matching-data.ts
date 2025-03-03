@@ -3,23 +3,23 @@ import { expand } from "@/lib/utils/general/instance-params";
 import { Transformers as T } from "../transformers";
 import { DB } from "@/db/types";
 import { InstanceDTO } from "@/dto";
+import {
+  adjustTarget,
+  adjustUpperBound,
+} from "@/lib/utils/algorithm/modifiers";
 
 export async function collectMatchingData(db: DB, instanceData: InstanceDTO) {
   if (!instanceData.selectedAlgConfigId) {
     throw new Error("No algorithm selected");
   }
 
-  const { maxRank, targetModifier, upperBoundModifier } =
-    await db.algorithmConfig
-      .findFirstOrThrow({ where: { id: instanceData.selectedAlgConfigId } })
-      .then(T.toAlgorithmDTO);
+  const { maxRank, targetModifier, upperBoundModifier } = await db.algorithm
+    .findFirstOrThrow({ where: { id: instanceData.selectedAlgConfigId } })
+    .then(T.toAlgorithmDTO);
 
-  const preAllocations = await db.projectInInstance
+  const preAllocations = await db.project
     .findMany({
-      where: {
-        ...expand(instanceData),
-        details: { preAllocatedStudentId: { not: null } },
-      },
+      where: { ...expand(instanceData), preAllocatedStudentId: { not: null } },
     })
     .then((data) =>
       data.reduce(
@@ -58,7 +58,7 @@ export async function collectMatchingData(db: DB, instanceData: InstanceDTO) {
         .map((s) => ({
           id: s.userId,
           preferences: s.studentSubmittedPreferences.map(
-            ({ project }) => project.projectId,
+            ({ project }) => project.id,
           ),
         })),
     );
@@ -83,13 +83,13 @@ export async function collectMatchingData(db: DB, instanceData: InstanceDTO) {
       })),
     );
 
-  const projects = await db.projectInInstance
-    .findMany({ where: expand(instanceData), include: { details: true } })
+  const projects = await db.project
+    .findMany({ where: expand(instanceData) })
     .then((data) =>
       data.map((p) => ({
-        id: p.projectId,
-        lowerBound: p.details.capacityLowerBound,
-        upperBound: p.details.capacityUpperBound,
+        id: p.id,
+        lowerBound: p.capacityLowerBound,
+        upperBound: p.capacityUpperBound,
         supervisorId: p.supervisorId,
       })),
     );
@@ -114,15 +114,4 @@ export async function collectMatchingData(db: DB, instanceData: InstanceDTO) {
       };
     }),
   };
-}
-
-function adjustTarget(unstableTarget: number, targetModifier: number) {
-  return Math.max(unstableTarget + targetModifier, 0);
-}
-
-function adjustUpperBound(
-  unstableUpperBound: number,
-  upperBoundModifier: number,
-) {
-  return Math.max(unstableUpperBound + upperBoundModifier, 0);
 }

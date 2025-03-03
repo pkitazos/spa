@@ -22,7 +22,7 @@ import {
   formatProfile,
   formatSize,
   formatWeight,
-} from "@/lib/utils/algorithm-results/format";
+} from "@/lib/utils/algorithm/format";
 import { AlgorithmResultDTO } from "@/lib/validations/algorithm";
 
 import { useAlgorithmUtils } from "./algorithm-context";
