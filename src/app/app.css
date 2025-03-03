@@ -36,10 +36,13 @@
     --ring: 215 20.2% 65.1%;
 
     --radius: 0.5rem; /* might be useless */
-  }
 
-  .dark {
-    --background: 229 84% 5%;
+    --sidebar-background: var(--accent);
+    --sidebar-foreground: var(--accent-foreground);
+
+    --sidebar-accent: var(--secondary);
+    --sidebar-accent-foreground: var(--secondary-foreground);
+    --sidebar-border: var(--border);
   }
 
   ::-webkit-scrollbar {
@@ -57,5 +60,14 @@
 
   ::-webkit-scrollbar-thumb {
     @apply rounded-xl bg-slate-600;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 }

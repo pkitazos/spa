@@ -2,6 +2,7 @@ import { PreferenceType, Stage } from "@prisma/client";
 import { z } from "zod";
 
 import { expand, toPP2 } from "@/lib/utils/general/instance-params";
+
 import {
   previousStages,
   subsequentStages,
@@ -188,6 +189,129 @@ export const projectRouter = createTRPCRouter({
           flags: p.project.flags,
         }));
     }),
+  // pin
+  editSpecialCircumstances: instanceProcedure
+    .input(
+      z.object({
+        params: instanceParamsSchema,
+        studentId: z.string(),
+        projectId: z.string(),
+        specialCircumstances: z.string().optional(),
+      }),
+    )
+    .mutation(
+      async ({
+        ctx,
+        input: { params, studentId, projectId, specialCircumstances },
+      }) => {
+        await ctx.db.projectAllocation.update({
+          where: {
+            allocationId: { projectId, userId: studentId, ...expand(params) },
+          },
+          data: { specialCircumstances },
+        });
+      },
+    ),
+
+  editMarks: instanceProcedure
+    .input(
+      z.object({
+        params: instanceParamsSchema,
+        projectId: z.string(),
+        marks: z.array(z.tuple([z.string(), z.number(), z.string()])), // (flagId, mark, justification)
+        finalComment: z.string(),
+        prize: z.boolean(),
+        markerId: z.string(),
+        studentId: z.string(),
+        draft: z.boolean(),
+        flagId: z.string(),
+      }),
+    )
+    .mutation(
+      async ({
+        ctx,
+        input: {
+          params: { group, subGroup, instance },
+          marks,
+          finalComment,
+          prize,
+          markerId,
+          studentId,
+          draft,
+          flagId,
+        },
+      }) => {
+        for (const mark of marks) {
+          await ctx.db.componentScore.update({
+            where: {
+              markerId_studentId_flagId_submissionId_allocationGroupId_allocationSubGroupId_allocationInstanceId:
+                {
+                  markerId: markerId,
+                  studentId: studentId,
+                  flagId: mark[0],
+                  submissionId: "", // TODO: understand submissionId
+                  allocationGroupId: group,
+                  allocationSubGroupId: subGroup,
+                  allocationInstanceId: instance,
+                },
+            },
+            data: { grade: mark[1], justification: mark[2], draft: draft },
+          });
+        }
+
+        await ctx.db.markerSubmissionComments.create({
+          data: {
+            summary: finalComment,
+            recommendedForPrize: prize,
+            markerId: markerId,
+            studentId,
+            flagId: flagId,
+            submissionId: "",
+            allocationGroupId: group,
+            allocationSubGroupId: subGroup,
+            allocationInstanceId: instance,
+          },
+        });
+      },
+    ),
+
+  getSpecialCircumstances: instanceProcedure
+    .input(z.object({ params: instanceParamsSchema, projectId: z.string() }))
+    .query(async ({ ctx, input: { projectId } }) => {
+      const project = await ctx.db.project.findFirst({
+        where: { id: projectId },
+        select: { specialCircumstances: true },
+      });
+
+      return project?.specialCircumstances ?? "";
+    }),
+
+  getAllForStudentPreferences: instanceProcedure
+    .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
+    .query(
+      async ({
+        ctx,
+        input: {
+          params: { group, subGroup, instance },
+          studentId,
+        },
+      }) => {
+        const projectData = await ctx.db.project.findMany({
+          where: {
+            allocationGroupId: group,
+            allocationSubGroupId: subGroup,
+            allocationInstanceId: instance,
+            preAllocatedStudentId: null,
+          },
+          select: {
+            id: true,
+            title: true,
+            preAllocatedStudentId: true,
+            flagOnProjects: { select: { flag: true } },
+          },
+        });
+      },
+    ),
 
   // BREAKING input/output type
   getAllForUser: procedure.instance.user
@@ -553,7 +677,6 @@ export const projectRouter = createTRPCRouter({
     }),
 
   // ok
-  // @JakeTrevor this seems to have already been done, looks good for a merge
   // TODO: change output type
   supervisorSubmissionInfo: procedure.instance.subGroupAdmin
     .output(

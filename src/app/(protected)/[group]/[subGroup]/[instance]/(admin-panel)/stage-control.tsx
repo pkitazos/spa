@@ -12,6 +12,7 @@ import { api } from "@/lib/trpc/client";
 import { StageButton } from "./_components/stage-button";
 
 import { stageSchema } from "@/db/types";
+import { CHAPTER } from "@/config/config/stage";
 
 export function StageControl({ stage }: { stage: Stage }) {
   const params = useInstanceParams();
@@ -28,10 +29,7 @@ export function StageControl({ stage }: { stage: Stage }) {
 
   const handleConfirmation = (idx: number) => {
     toast.promise(
-      mutateAsync({
-        params,
-        stage: stages[idx - 1],
-      }).then(() => {
+      mutateAsync({ params, stage: stages[idx - 1]! }).then(() => {
         setSelectedIdx(-1);
         setConfirmedIdx(idx);
         router.refresh();
@@ -47,56 +45,38 @@ export function StageControl({ stage }: { stage: Stage }) {
 
   return (
     <div className="mx-16 mt-12 flex justify-between px-6">
-      <ol className="flex flex-col gap-7">
-        <StageButton
-          title="Setup"
-          num={1}
-          selectedIdx={selectedIdx}
-          confirmedIdx={confirmedIdx}
-          setSelectedIdx={setSelectedIdx}
-        />
-        <StageButton
-          title="Project Submission"
-          num={2}
-          selectedIdx={selectedIdx}
-          confirmedIdx={confirmedIdx}
-          setSelectedIdx={setSelectedIdx}
-        />
-        <StageButton
-          title="Project Selection"
-          num={3}
-          selectedIdx={selectedIdx}
-          confirmedIdx={confirmedIdx}
-          setSelectedIdx={setSelectedIdx}
-        />
-        <StageButton
-          title="Project Allocation"
-          num={4}
-          selectedIdx={selectedIdx}
-          confirmedIdx={confirmedIdx}
-          setSelectedIdx={setSelectedIdx}
-        />
-        <StageButton
-          title="Adjusting Project Allocation"
-          num={5}
-          selectedIdx={selectedIdx}
-          confirmedIdx={confirmedIdx}
-          setSelectedIdx={setSelectedIdx}
-        />
-        <StageButton
-          title="Publishing Project Allocation"
-          num={6}
-          selectedIdx={selectedIdx}
-          confirmedIdx={confirmedIdx}
-          setSelectedIdx={setSelectedIdx}
-        />
+      <ol className="grid w-full grid-cols-2">
+        <div className="col-span-1 flex flex-col gap-7">
+          {Object.values(CHAPTER.ALLOCATION).map((stage, i) => (
+            <StageButton
+              key={stage.id}
+              title={stage.displayName}
+              num={i + 1}
+              selectedIdx={selectedIdx}
+              confirmedIdx={confirmedIdx}
+              setSelectedIdx={setSelectedIdx}
+            />
+          ))}
+        </div>
+        <div className="col-span-1 flex flex-col gap-7">
+          {Object.values(CHAPTER.MARKING).map((stage, i) => (
+            <StageButton
+              key={stage.id}
+              title={stage.displayName}
+              num={i + Object.values(CHAPTER.ALLOCATION).length + 1}
+              selectedIdx={selectedIdx}
+              confirmedIdx={confirmedIdx}
+              setSelectedIdx={setSelectedIdx}
+            />
+          ))}
+        </div>
       </ol>
       <Button
-        className="self-end"
+        className="w-40 self-end"
         disabled={selectedIdx === -1}
         onClick={() => handleConfirmation(selectedIdx)}
       >
-        confirm
+        Change Stage
       </Button>
     </div>
   );

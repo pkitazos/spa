@@ -8,3 +8,5 @@ export const projectFlags = {
 } as const;
 
 export const requiredFlags = [projectFlags.level4, projectFlags.level5];
+
+export const FLAG = "Flag";

@@ -39,6 +39,7 @@ export const ADMIN_TABS_BY_STAGE: Record<Stage, TabType[]> = {
   [Stage.ALLOCATION_PUBLICATION]: [
     PAGES.manageUserAccess,
     PAGES.allocationOverview,
+    PAGES.uploadReadings,
     PAGES.exportToCSV,
     // ! Note: branch tab injected in side-panel/admin-only tabs
     PAGES.preferenceStatistics,

@@ -125,8 +125,9 @@ export const preferenceRouter = createTRPCRouter({
       },
     ),
 
-  update: procedure.instance.student
-    .input(
+  update: procedure.instance
+    .inStage([Stage.STUDENT_BIDDING])
+    .student.input(
       z.object({
         projectId: z.string(),
         preferenceType: studentPreferenceSchema,
@@ -134,13 +135,7 @@ export const preferenceRouter = createTRPCRouter({
     )
     .output(z.void())
     .mutation(
-      async ({
-        ctx: { instance, user },
-        input: { projectId, preferenceType },
-      }) => {
-        const { stage } = await instance.get();
-        if (stage !== Stage.STUDENT_BIDDING) return;
-
+      async ({ ctx: { user }, input: { projectId, preferenceType } }) => {
         if (await user.hasSelfDefinedProject()) return;
 
         const newPreferenceType = convertPreferenceType(preferenceType);
@@ -150,8 +145,9 @@ export const preferenceRouter = createTRPCRouter({
 
   // ? Yet a third name for an update method; this one is updateMany i think
   // Imagine seeing these three in an autocomplete list and being asked what the difference is
-  updateSelected: procedure.instance.student
-    .input(
+  updateSelected: procedure.instance
+    .inStage([Stage.STUDENT_BIDDING])
+    .student.input(
       z.object({
         projectIds: z.array(z.string()),
         preferenceType: studentPreferenceSchema,
@@ -159,13 +155,7 @@ export const preferenceRouter = createTRPCRouter({
     )
     .output(z.void())
     .mutation(
-      async ({
-        ctx: { instance, user },
-        input: { projectIds, preferenceType },
-      }) => {
-        const { stage } = await instance.get();
-        if (stage !== Stage.STUDENT_BIDDING) return;
-
+      async ({ ctx: { user }, input: { projectIds, preferenceType } }) => {
         if (await user.hasSelfDefinedProject()) return;
 
         const newPreferenceType = convertPreferenceType(preferenceType);
@@ -252,6 +242,7 @@ export const preferenceRouter = createTRPCRouter({
       const { ok, message } = await accessControl({
         instance,
         user,
+        // pin: @JakeTrevor multi-role procedures
         allowedRoles: [Role.ADMIN, Role.STUDENT],
         stageCheck: (s) => s === Stage.STUDENT_BIDDING,
       });

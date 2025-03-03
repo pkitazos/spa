@@ -177,5 +177,21 @@ export const PAGES = {
     title: "My Allocation",
     href: "my-allocation",
     icon: "file-check-2",
+  },  
+  
+  myReadings: {
+    title: "My Readings",
+    href: "my-readings",
+    icon: "folder",
+  },
+  uploadReadings: {
+    title: "Upload Readings",
+    href: "upload-readings",
+    icon: "file-plus-2",
+  },
+  myMarking: {
+    title: "My Marking",
+    href: "my-marking",
+    icon: "file-check-2",
   },
 };

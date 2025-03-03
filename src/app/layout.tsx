@@ -32,11 +32,11 @@ export default async function RootLayout({
         >
           <TRPCReactProvider>
             <Header />
-            <main className="flex h-[92dvh] flex-col justify-start gap-4 bg-background">
+            <main className="flex h-[92dvh] w-full flex-col justify-start gap-4 bg-background">
               <div className="ml-20 mt-7 flex items-center">
                 <Breadcrumbs />
               </div>
-              <section className="mx-auto flex h-full w-full max-w-7xl justify-center pb-32 pt-6 3xl:max-w-9xl">
+              <section className="mx-auto mt-1.5 flex h-full w-full justify-center 3xl:max-w-9xl">
                 {children}
               </section>
             </main>

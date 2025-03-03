@@ -18,7 +18,8 @@ export async function getShibUserFromHeaders() {
     // shib_groups = headers().get("DH75HDYT78");
   } else {
     // TODO: create a proper dev vs prod env distinction
-    // shib_guid = "000-123460d"; // supervisor
+    // shib_guid = "sf190s"; // supervisor
+    // shib_guid = "ajg18k"; // supervisor
     // shib_guid = "000-234581p"; // student
     shib_guid = env.DEV_ID;
     shib_displayName = env.DEV_NAME;

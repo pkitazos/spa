@@ -7,7 +7,15 @@
     "config": "tailwind.config.ts",
     "css": "app/app.css",
     "baseColor": "slate",
-    "cssVariables": true
+    "cssVariables": true,
+    "prefix": ""
   },
-  "aliases": { "components": "@/components", "utils": "@/lib/utils" }
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/lib/hooks"
+  },
+  "iconLibrary": "lucide"
 }

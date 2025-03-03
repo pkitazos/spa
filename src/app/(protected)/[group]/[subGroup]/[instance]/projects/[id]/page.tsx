@@ -3,12 +3,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AccessControl } from "@/components/access-control";
-import { Heading, SubHeading } from "@/components/heading";
+import { Heading, SectionHeading, SubHeading } from "@/components/heading";
 import { MarkdownRenderer } from "@/components/markdown-editor";
 import { PageWrapper } from "@/components/page-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
@@ -20,6 +21,7 @@ import { ProjectDto } from "@/lib/validations/dto/project";
 import { InstanceParams } from "@/lib/validations/params";
 import { StudentPreferenceType } from "@/lib/validations/student-preference";
 
+import { SpecialCircumstancesPage } from "./_components/special-circumstances";
 import { StudentPreferenceButton } from "./_components/student-preference-button";
 import { StudentPreferenceDataTable } from "./_components/student-preference-data-table";
 
@@ -148,17 +150,37 @@ export default async function Project({ params }: { params: PageParams }) {
 
       <AccessControl
         allowedRoles={[Role.ADMIN]}
-        extraConditions={{ RBAC: { AND: !!allocatedStudent } }}
+        extraConditions={{
+          RBAC: {
+            OR: project.supervisor.id === user.id,
+            AND: !!allocatedStudent,
+          },
+        }}
       >
-        <section className={cn("my-16 flex flex-col gap-8")}>
+        <section className={cn("mt-16 flex flex-col gap-8")}>
           <SubHeading>Allocation</SubHeading>
           <AllocatedStudentCard
             student={allocatedStudent!}
             preAllocated={!!project.preAllocatedStudentId}
           />
         </section>
+        <section className="mb-16 flex flex-col">
+          <SectionHeading>Special Circumstances</SectionHeading>
+          <SpecialCircumstancesPage
+            formInternalData={{
+              specialCircumstances:
+                allocatedStudent?.specialCircumstances ?? "",
+            }}
+            studentId={allocatedStudent!.id}
+            project={{
+              id: projectId,
+              specialCircumstances:
+                allocatedStudent?.specialCircumstances ?? "",
+            }}
+          />
+        </section>
+        <Separator />
       </AccessControl>
-
       <AccessControl
         allowedRoles={[Role.ADMIN]}
         extraConditions={{ RBAC: { AND: !project.preAllocatedStudentId } }}

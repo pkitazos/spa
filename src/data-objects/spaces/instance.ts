@@ -593,11 +593,36 @@ export class AllocationInstance extends DataObject {
       [Stage.STUDENT_BIDDING]: [PAGES.myProjects, PAGES.newProject],
       [Stage.PROJECT_ALLOCATION]: [PAGES.myProjects],
       [Stage.ALLOCATION_ADJUSTMENT]: [PAGES.myProjects],
-      [Stage.ALLOCATION_PUBLICATION]: [PAGES.myProjects, ...allocationsTab],
-      [Stage.READER_BIDDING]: [PAGES.myProjects, ...allocationsTab],
-      [Stage.READER_ALLOCATION]: [PAGES.myProjects, ...allocationsTab],
-      [Stage.MARK_SUBMISSION]: [PAGES.myProjects, ...allocationsTab],
-      [Stage.GRADE_PUBLICATION]: [PAGES.myProjects, ...allocationsTab],
+      [Stage.ALLOCATION_PUBLICATION]: [
+        PAGES.myProjects,
+        PAGES.myReadings,
+        PAGES.myMarking,
+        ...allocationsTab,
+      ],
+      [Stage.READER_BIDDING]: [
+        PAGES.myProjects,
+        PAGES.myReadings,
+        PAGES.myMarking,
+        ...allocationsTab,
+      ],
+      [Stage.READER_ALLOCATION]: [
+        PAGES.myProjects,
+        PAGES.myReadings,
+        PAGES.myMarking,
+        ...allocationsTab,
+      ],
+      [Stage.MARK_SUBMISSION]: [
+        PAGES.myProjects,
+        PAGES.myReadings,
+        PAGES.myMarking,
+        ...allocationsTab,
+      ],
+      [Stage.GRADE_PUBLICATION]: [
+        PAGES.myProjects,
+        PAGES.myReadings,
+        PAGES.myMarking,
+        ...allocationsTab,
+      ],
     };
 
     return tabs[stage];

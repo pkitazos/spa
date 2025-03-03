@@ -12,6 +12,14 @@ async function main() {
 
   await db.$transaction(async (tx) => {
     // code goes here
+        
+    // find reader ids using their name
+
+    // find project id using student id in project allocations table
+
+    // create list of objects
+
+
   });
   console.log("PATCH COMPLETE");
 }

@@ -30,6 +30,8 @@ import {
   tagDtoSchema,
 } from "@/dto";
 import { LinkUserResult, LinkUserResultSchema } from "@/dto/link-user-result";
+import { newReaderAllocationSchema } from "@/lib/validations/allocate-readers/new-reader-allocation";
+import { assignReadersTx } from "@/db/transactions/assign-readers";
 
 const tgc = z.object({
   id: z.string(),
@@ -529,5 +531,68 @@ export const instanceRouter = createTRPCRouter({
     .query(async ({ ctx: { instance } }) => {
       const flags = await instance.getFlags();
       return flags.map((f) => f.title);
+    }),
+
+  // pin
+  assignReader: instanceAdminProcedure
+    .input(
+      z.object({
+        params: instanceParamsSchema,
+        newReaderAllocation: newReaderAllocationSchema,
+      }),
+    )
+    .mutation(
+      async ({
+        ctx,
+        input: {
+          params: { group, subGroup, instance },
+          newReaderAllocation: { project_title, student_guid, reader_name },
+        },
+      }) => {
+        await ctx.db.$transaction(async (tx) => {
+          const reader = await tx.user.findFirst({
+            where: { name: reader_name },
+          });
+          if (!reader) {
+            const reader_id = "";
+            return null;
+          }
+          const reader_id = reader.id;
+
+          const project = await tx.project.findFirst({
+            where: { title: project_title },
+          });
+          if (!project) {
+            const project_id = "";
+            return null;
+          }
+          const project_id = project.id;
+
+          await tx.projectAllocationReader.create({
+            data: {
+              readerId: reader_id,
+              projectId: project_id,
+              studentId: student_guid,
+              allocationGroupId: group,
+              allocationSubGroupId: subGroup,
+              allocationInstanceId: instance,
+            },
+          });
+        });
+
+        return { student_guid };
+      },
+    ),
+
+  // pin
+  assignReaders: instanceAdminProcedure
+    .input(
+      z.object({
+        params: instanceParamsSchema,
+        newReaderAllocations: z.array(newReaderAllocationSchema),
+      }),
+    )
+    .mutation(async ({ ctx, input: { params, newReaderAllocations } }) => {
+      return await assignReadersTx(ctx.db, newReaderAllocations, params);
     }),
 });
