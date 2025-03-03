@@ -1,3 +1,4 @@
+// @JakeTrevor do these changes look right?
 export function computeUpdatedRank<T extends { rank: number }>(
   arr: T[],
   targetIdx: number,
@@ -14,7 +15,7 @@ export function computeUpdatedRank<T extends { rank: number }>(
    */
   if (targetIdx === 0) {
     const after = arr[0];
-    return after.rank / 2;
+    return after ? after.rank / 2 : 1;
   }
 
   /**
@@ -25,7 +26,7 @@ export function computeUpdatedRank<T extends { rank: number }>(
    */
   if (targetIdx >= arr.length) {
     const before = arr[arr.length - 1];
-    return before.rank + 1;
+    return before ? before.rank + 1 : 1;
   }
 
   /**
@@ -35,5 +36,5 @@ export function computeUpdatedRank<T extends { rank: number }>(
    */
   const before = arr[targetIdx - 1];
   const after = arr[targetIdx];
-  return (before.rank + after.rank) / 2;
+  return before && after ? (before.rank + after.rank) / 2 : 1;
 }
