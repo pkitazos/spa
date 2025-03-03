@@ -1,6 +1,10 @@
 import { expand, toAlgID } from "@/lib/utils/general/instance-params";
 import { AlgorithmDTO } from "@/dto/algorithm";
-import { MatchingDataDTO, MatchingResultDTO } from "@/lib/validations/matching";
+import {
+  blankResult,
+  MatchingDataDTO,
+  MatchingResultDTO,
+} from "@/lib/validations/matching";
 import { AlgorithmInstanceParams } from "@/lib/validations/params";
 import { executeMatchingAlgorithm } from "@/server/routers/institution/instance/algorithm/_utils/execute-matching-algorithm";
 import { DataObject } from "./data-object";
@@ -119,5 +123,18 @@ export class MatchingAlgorithm extends DataObject {
         }));
     }
     return this._results!;
+  }
+
+  public async getMatching(): Promise<MatchingResultDTO> {
+    const res = await this.db.matchingResult.findFirst({
+      where: { algorithmId: this.params.algConfigId, ...expand(this.params) },
+      include: { matching: true },
+    });
+
+    return !res ? blankResult : res;
+  }
+
+  public async delete(): Promise<void> {
+    await this.db.algorithm.delete({ where: { id: this.params.algConfigId } });
   }
 }
