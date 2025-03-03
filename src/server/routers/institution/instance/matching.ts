@@ -140,14 +140,15 @@ export const matchingRouter = createTRPCRouter({
           studentRanking: getStudentRank(allStudents, userId, projectId),
         }));
 
-        const preAllocatedStudentIds =
-          await instance.getPreAllocatedStudentIds();
+        const preAllocatedStudentIds = await instance
+          .getPreAllocations()
+          .then((d) => d.map((d) => d.student.id));
 
         await db.$transaction([
           db.studentProjectAllocation.deleteMany({
             where: {
               ...expand(instance.params),
-              userId: { notIn: Array.from(preAllocatedStudentIds) },
+              userId: { notIn: preAllocatedStudentIds },
             },
           }),
 

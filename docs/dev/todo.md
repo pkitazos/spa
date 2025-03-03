@@ -11,20 +11,12 @@
   - [x] **institution.instance** (2 remaining)
     - [ ] fork <!-- pin -->
     - [ ] merge <!-- pin -->
-    - [ ] **institution.instance.algorithm** (9 remaining)
-      - [ ] run
-      - [ ] takenNames
-      - [ ] create
-      - [ ] delete
-      - [ ] getAll
-      - [ ] getAllSummaryResults
-      - [ ] singleResult
+    - [ ] **institution.instance.algorithm** (2 remaining)
       - [ ] allStudentResults
       - [ ] allSupervisorResults
     - [x] **institution.instance.preference** <!-- ok -->
-    - [ ] **institution.instance.matching** (4 remaining)
-      - [x] rowData <!-- move -->
-      - [ ] updateAllocation <!-- todo -->
+    - [ ] **institution.instance.matching** (3 remaining)
+      - [ ] updateAllocation
       - [ ] getRandomAllocation <!-- pin -->
       - [ ] getRandomAllocationForAll <!-- pin -->
 - [ ] **project** (1 remaining)
