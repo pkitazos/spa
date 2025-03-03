@@ -17,6 +17,7 @@ import { Project } from "@/data-objects/spaces/project";
 import { AllocationSubGroup } from "@/data-objects/spaces/subgroup";
 import { User } from "@/data-objects/users/user";
 import { Stage } from "@/db/types";
+import { MatchingAlgorithm } from "@/data-objects/algorithm";
 
 // We should re-imagine how our middleware works
 
@@ -90,6 +91,16 @@ const projectMiddleware = t.middleware(async ({ ctx: { db }, input, next }) => {
   const project = new Project(db, params);
   return next({ ctx: { project } });
 });
+
+const algorithmMiddleware = t.middleware(
+  async ({ ctx: { db }, input, next }) => {
+    const { params, algId } = z
+      .object({ params: instanceParamsSchema, algId: z.string() })
+      .parse(input);
+    const alg = new MatchingAlgorithm(db, { algConfigId: algId, ...params });
+    return next({ ctx: { alg } });
+  },
+);
 
 // Next, Lets consider the authenticated (permission protected) middlewares:
 // DTOs should be created for different kinds of users. These are in:
@@ -263,6 +274,13 @@ const projectProcedure = institutionProcedure
   .use(instanceMiddleware)
   .use(projectMiddleware);
 
+const algorithmProcedure = institutionProcedure
+  .input(z.object({ params: instanceParamsSchema, algId: z.string() }))
+  .use(groupMiddleware)
+  .use(subGroupMiddleware)
+  .use(instanceMiddleware)
+  .use(algorithmMiddleware);
+
 export const procedure = {
   // site wide procedures (i.e. not tied to a space)
   user: institutionProcedure.use(authedMiddleware),
@@ -330,6 +348,29 @@ export const procedure = {
         subGroupAdmin: proc.use(SubGroupAdminMiddleware),
         supervisor: proc.use(projectSupervisorMiddleware),
         reader: proc.use(projectReaderMiddleware),
+      };
+    },
+  },
+
+  algorithm: {
+    user: algorithmProcedure.use(authedMiddleware),
+    superAdmin: algorithmProcedure.use(SuperAdminMiddleware),
+    groupAdmin: algorithmProcedure.use(GroupAdminMiddleware),
+    subGroupAdmin: algorithmProcedure.use(SubGroupAdminMiddleware),
+
+    inStage: (allowedStages: Stage[]) => {
+      const proc = institutionProcedure
+        .input(z.object({ params: instanceParamsSchema, algId: z.string() }))
+        .use(groupMiddleware)
+        .use(subGroupMiddleware)
+        .use(stageMiddleware(allowedStages))
+        .use(algorithmMiddleware);
+
+      return {
+        user: proc.use(authedMiddleware),
+        superAdmin: proc.use(SuperAdminMiddleware),
+        groupAdmin: proc.use(GroupAdminMiddleware),
+        subGroupAdmin: proc.use(SubGroupAdminMiddleware),
       };
     },
   },

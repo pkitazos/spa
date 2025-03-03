@@ -36,6 +36,20 @@ import { InstanceStudent } from "../users/instance-student";
 import { Project } from "./project";
 
 export class AllocationInstance extends DataObject {
+  public async getSummaryResults() {
+    const algorithmData = await this.db.algorithm.findMany({
+      where: expand(this.params),
+      include: { matchingResult: { include: { matching: true } } },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return algorithmData
+      .filter((x) => x.matchingResult !== null)
+      .map(({ matchingResult, ...algorithm }) => ({
+        algorithm: T.toAlgorithmDTO(algorithm),
+        matchingResults: matchingResult!,
+      }));
+  }
   public params: InstanceParams;
   private _group: AllocationGroup | undefined;
   private _subgroup: AllocationSubGroup | undefined;

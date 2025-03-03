@@ -4,7 +4,6 @@ import { z } from "zod";
 import { expand } from "@/lib/utils/general/instance-params";
 import { algorithmResultDtoSchema } from "@/lib/validations/algorithm";
 import {
-  blankResult,
   matchingResultDtoSchema,
   supervisorMatchingDetailsDtoSchema2,
 } from "@/lib/validations/matching";
@@ -26,12 +25,10 @@ import { AlgorithmRunResult } from "@/dto/algorithm-run-result";
 export const algorithmRouter = createTRPCRouter({
   // BREAKING input/output type changed
   // pin
-  run: procedure.instance.subGroupAdmin
+  run: procedure.algorithm.subGroupAdmin
     .input(z.object({ algConfigId: z.string() }))
     .output(z.object({ total: z.number(), matched: z.number() }))
-    .mutation(async ({ ctx: { instance }, input: { algConfigId } }) => {
-      const alg = instance.getAlgorithm(algConfigId); // ? this feels weird
-
+    .mutation(async ({ ctx: { alg, instance } }) => {
       const matchingData = await instance.getMatchingData();
       const res = await alg.run(matchingData);
 
@@ -65,12 +62,9 @@ export const algorithmRouter = createTRPCRouter({
         await instance.createAlgorithm(data),
     ),
 
-  delete: procedure.instance.subGroupAdmin
-    .input(z.object({ algId: z.string() }))
-    .mutation(async ({ ctx, input: { algId: id } }) => {
-      // instance.deleteAlgorithm
-      await ctx.db.algorithmConfig.delete({ where: { id } });
-    }),
+  delete: procedure.algorithm.subGroupAdmin
+    .output(z.void())
+    .mutation(async ({ ctx: { alg } }) => await alg.delete()),
 
   // BREAKING output type changed
   getAll: procedure.instance.subGroupAdmin
@@ -82,41 +76,12 @@ export const algorithmRouter = createTRPCRouter({
   // TODO: review how this is used on the client
   getAllSummaryResults: procedure.instance.subGroupAdmin
     .output(z.array(algorithmResultDtoSchema))
-    .query(async ({ ctx: { db }, input: { params } }) => {
-      // instance.getSummaryResults
-      const algorithmData = await db.algorithmConfigInInstance.findMany({
-        where: expand(params),
-        include: {
-          matchingResult: { include: { matching: true } },
-          algorithmConfig: true,
-        },
-        orderBy: { algorithmConfig: { createdAt: "asc" } },
-      });
-
-      return algorithmData
-        .filter((x) => x.matchingResult !== null)
-        .map(({ algorithmConfig, matchingResult }) => ({
-          algorithm: T.toAlgorithmDTO(algorithmConfig),
-          matchingResults: matchingResult!,
-        }))
-        .sort((a, b) =>
-          // todo remove this later
-          compareAsc(a.algorithm.createdAt, b.algorithm.createdAt),
-        );
-    }),
+    .query(async ({ ctx: { instance } }) => await instance.getSummaryResults()),
 
   // BREAKING input/output type changed
-  singleResult: procedure.instance.subGroupAdmin
-    .input(z.object({ algConfigId: z.string() }))
+  singleResult: procedure.algorithm.subGroupAdmin
     .output(matchingResultDtoSchema)
-    .query(async ({ ctx: { instance, db }, input: { algConfigId } }) => {
-      const res = await db.matchingResult.findFirst({
-        where: { algConfigId, ...expand(instance.params) },
-        include: { matching: true },
-      });
-
-      return !res ? blankResult : res;
-    }),
+    .query(async ({ ctx: { alg } }) => await alg.getMatching()),
 
   allStudentResults: procedure.instance.subGroupAdmin
     .output(
@@ -138,10 +103,9 @@ export const algorithmRouter = createTRPCRouter({
     )
     .query(async ({ ctx: { instance, db } }) => {
       // instance.getStudentResults
-      const algorithmData = await db.algorithmConfigInInstance.findMany({
+      const algorithmData = await db.algorithm.findMany({
         where: expand(instance.params),
         include: {
-          algorithmConfig: true,
           matchingResult: {
             include: {
               matching: {
@@ -154,12 +118,8 @@ export const algorithmRouter = createTRPCRouter({
                   },
                   project: {
                     include: {
-                      details: {
-                        include: {
-                          flagsOnProject: { include: { flag: true } },
-                          tagsOnProject: { include: { tag: true } },
-                        },
-                      },
+                      flagsOnProject: { include: { flag: true } },
+                      tagsOnProject: { include: { tag: true } },
                     },
                   },
                 },
@@ -167,12 +127,12 @@ export const algorithmRouter = createTRPCRouter({
             },
           },
         },
-        orderBy: { algorithmConfig: { createdAt: "asc" } },
+        orderBy: { createdAt: "asc" },
       });
 
       const results = algorithmData
         .map((a) => ({
-          algorithm: T.toAlgorithmDTO(a.algorithmConfig),
+          algorithm: T.toAlgorithmDTO(a),
           matchingPairs:
             a.matchingResult?.matching.map((m) => ({
               project: T.toProjectDTO(m.project),
@@ -214,10 +174,9 @@ export const algorithmRouter = createTRPCRouter({
     )
     .query(async ({ ctx: { instance, db } }) => {
       // instance.getSupervisorResults
-      const algorithmData = await db.algorithmConfigInInstance.findMany({
+      const algorithmData = await db.algorithm.findMany({
         where: expand(instance.params),
         include: {
-          algorithmConfig: true,
           matchingResult: {
             include: {
               matching: {
@@ -225,7 +184,6 @@ export const algorithmRouter = createTRPCRouter({
                   student: true,
                   project: {
                     include: {
-                      details: true,
                       supervisor: {
                         include: {
                           userInInstance: { include: { user: true } },
@@ -238,17 +196,15 @@ export const algorithmRouter = createTRPCRouter({
             },
           },
         },
-        orderBy: { algorithmConfig: { createdAt: "asc" } },
+        orderBy: { createdAt: "asc" },
       });
 
       const preAllocationsMap = await instance.getSupervisorPreAllocations();
 
       const results = algorithmData
-        .sort((a, b) =>
-          compareAsc(a.algorithmConfig.createdAt, b.algorithmConfig.createdAt),
-        )
+        .sort((a, b) => compareAsc(a.createdAt, b.createdAt))
         .map((x) => {
-          const algorithm = T.toAlgorithmDTO(x.algorithmConfig);
+          const algorithm = T.toAlgorithmDTO(x);
           const matchingData = x.matchingResult?.matching ?? [];
 
           const algAllocationsMap = matchingData.reduce(
@@ -259,8 +215,8 @@ export const algorithmRouter = createTRPCRouter({
             {} as Record<string, number>,
           );
 
-          const targetModifier = x.algorithmConfig.targetModifier;
-          const upperBoundModifier = x.algorithmConfig.upperBoundModifier;
+          const targetModifier = x.targetModifier;
+          const upperBoundModifier = x.upperBoundModifier;
 
           return {
             algorithm,
