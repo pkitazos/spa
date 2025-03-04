@@ -20,6 +20,8 @@ import { projectDtoSchema } from "@/dto/project";
 import { studentDtoSchema } from "@/dto/user/student";
 import { supervisorDtoSchema } from "@/dto/user/supervisor";
 import { Transformers as T } from "@/db/transformers";
+import { Role } from "@/db/types";
+import { TRPCError } from "@trpc/server";
 
 export const projectRouter = createTRPCRouter({
   // ok
@@ -441,18 +443,32 @@ export const projectRouter = createTRPCRouter({
     }),
 
   // ok
-  // TODO: @JakeTrevor admins should also be able to delete projects
   delete: procedure.project
     .inStage(previousStages(Stage.PROJECT_ALLOCATION))
-    .supervisor.output(z.void())
-    .mutation(async ({ ctx: { project } }) => await project.delete()),
+    .withRoles([Role.ADMIN, Role.SUPERVISOR])
+    .output(z.void())
+    .mutation(async ({ ctx: { project, user } }) => {
+      // ? @pkitazos please review control flow
+      if (await user.isSubGroupAdminOrBetter(project.params)) {
+        return await project.delete();
+      }
+
+      if ((await project.get()).supervisorId === user.id) {
+        return await project.delete();
+      }
+
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }),
 
   // ok
   // supervisor or admin
   deleteSelected: procedure.instance
     .inStage(previousStages(Stage.PROJECT_ALLOCATION))
-    .user.input(z.object({ projectIds: z.array(z.string()) }))
+    .withRoles([Role.ADMIN, Role.SUPERVISOR])
+    .input(z.object({ projectIds: z.array(z.string()) }))
     .mutation(
+      // ? @pkitazos Here, I have not checked if
+      // ? the supervisor had permission. Should I?
       async ({ ctx: { instance }, input: { projectIds } }) =>
         await instance.deleteProjects(projectIds),
     ),

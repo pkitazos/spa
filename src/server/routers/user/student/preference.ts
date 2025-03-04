@@ -12,6 +12,7 @@ import type { User } from "@/data-objects/users/user";
 import { Role } from "@/db/types";
 import { PreferenceType, Stage } from "@/db/types";
 import { userDtoSchema } from "@/dto";
+import { TRPCError } from "@trpc/server";
 
 export const preferenceRouter = createTRPCRouter({
   /**
@@ -235,20 +236,20 @@ export const preferenceRouter = createTRPCRouter({
         (await user.getDraftPreference(projectId)) ?? "None",
     ),
 
-  submit: procedure.instance.user
+  submit: procedure.instance
+    .withRoles([Role.ADMIN, Role.STUDENT])
     .input(z.object({ studentId: z.string() }))
     .output(z.date().optional())
     .mutation(async ({ ctx: { instance, user }, input: { studentId } }) => {
-      const { ok, message } = await accessControl({
-        instance,
-        user,
-        // pin: @JakeTrevor multi-role procedures
-        allowedRoles: [Role.ADMIN, Role.STUDENT],
-        stageCheck: (s) => s === Stage.STUDENT_BIDDING,
-      });
-      if (!ok) throw new Error(message);
+      // ? @pkitazos review control flow pls thnx.
 
-      const student = await instance.getStudent(studentId);
+      const student = !(await user.isSubGroupAdminOrBetter(instance.params))
+        ? await user.toStudent(instance.params)
+        : await instance.getStudent(studentId);
+
+      if (studentId !== student.id) {
+        throw new TRPCError({ code: "UNAUTHORIZED" });
+      }
 
       if (await student.hasSelfDefinedProject()) return;
 
