@@ -2,7 +2,6 @@ import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { slugify } from "@/lib/utils/general/slugify";
 import { uniqueById } from "@/lib/utils/list-unique";
 import { builtInAlgorithms } from "@/lib/validations/algorithm";
-import { ValidatedInstanceDetails } from "@/lib/validations/instance-form";
 import { SubGroupParams } from "@/lib/validations/params";
 
 import { DataObject } from "../data-object";
@@ -12,8 +11,8 @@ import { AllocationGroup } from "./group";
 import { Institution } from "./institution";
 
 import { Transformers as T } from "@/db/transformers";
-import { DB } from "@/db/types";
-import { InstanceDTO, SubGroupDTO, UserDTO } from "@/dto";
+import { DB, New } from "@/db/types";
+import { FlagDTO, InstanceDTO, SubGroupDTO, TagDTO, UserDTO } from "@/dto";
 
 function toSubgroupId(params: SubGroupParams) {
   return { allocationGroupId: params.group, id: params.subGroup };
@@ -36,47 +35,38 @@ export class AllocationSubGroup extends DataObject {
     this.params = params;
   }
 
-  // TODO input type (should be InstanceDTO?)
-  public async createInstance(newInstance: ValidatedInstanceDetails) {
-    const instanceSlug = slugify(newInstance.instanceName);
+  public async createInstance({
+    newInstance,
+    flags,
+    tags,
+  }: {
+    newInstance: Omit<InstanceDTO, "instance">;
+    flags: New<FlagDTO>[];
+    tags: New<TagDTO>[];
+  }) {
+    const instanceSlug = slugify(newInstance.displayName);
 
     const params = { ...this.params, instance: instanceSlug };
 
     await this.db.$transaction(async (tx) => {
       await tx.allocationInstance.create({
-        data: {
-          ...toInstanceId(params),
-          displayName: newInstance.instanceName,
-          minStudentPreferences: newInstance.minPreferences,
-          maxStudentPreferences: newInstance.maxPreferences,
-          maxStudentPreferencesPerSupervisor:
-            newInstance.maxPreferencesPerSupervisor,
-          studentPreferenceSubmissionDeadline:
-            newInstance.preferenceSubmissionDeadline,
-          projectSubmissionDeadline: newInstance.projectSubmissionDeadline,
-          minReaderPreferences: 0, //todo
-          maxReaderPreferences: 10, //todo
-          readerPreferenceSubmissionDeadline: new Date(), //todo
-        },
+        data: { ...toInstanceId(params), ...newInstance },
       });
 
       await tx.flag.createMany({
-        data: newInstance.flags.map(({ title }) => ({
+        data: flags.map((f) => ({
           ...expand(params),
-          title,
-          description: "", // TODO
+          title: f.title,
+          description: f.description,
         })),
       });
 
       await tx.tag.createMany({
-        data: newInstance.tags.map(({ title }) => ({
-          title,
-          ...expand(params),
-        })),
+        data: tags.map((t) => ({ ...expand(params), title: t.title })),
       });
 
       await tx.algorithm.createMany({
-        data: builtInAlgorithms.map((a) => ({ ...a, ...expand(params) })),
+        data: builtInAlgorithms.map((alg) => ({ ...expand(params), ...alg })),
       });
     });
   }

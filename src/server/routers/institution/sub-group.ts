@@ -1,11 +1,15 @@
 import { z } from "zod";
 
-import { createdInstanceSchema } from "@/lib/validations/instance-form";
-
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
-import { subGroupDtoSchema, userDtoSchema } from "@/dto";
+import {
+  flagDtoSchema,
+  instanceDtoSchema,
+  subGroupDtoSchema,
+  tagDtoSchema,
+  userDtoSchema,
+} from "@/dto";
 import { LinkUserResult, LinkUserResultSchema } from "@/dto/link-user-result";
 
 export const subGroupRouter = createTRPCRouter({
@@ -48,11 +52,17 @@ export const subGroupRouter = createTRPCRouter({
     ),
 
   createInstance: procedure.subgroup.subgroupAdmin
-    .input(z.object({ newInstance: createdInstanceSchema }))
+    .input(
+      z.object({
+        newInstance: instanceDtoSchema.omit({ instance: true }),
+        flags: z.array(flagDtoSchema.omit({ id: true })),
+        tags: z.array(tagDtoSchema.omit({ id: true })),
+      }),
+    )
     .output(z.void())
     .mutation(
-      async ({ ctx: { subGroup }, input: { newInstance } }) =>
-        await subGroup.createInstance(newInstance),
+      async ({ ctx: { subGroup }, input: { newInstance, flags, tags } }) =>
+        await subGroup.createInstance({ newInstance, flags, tags }),
     ),
 
   deleteInstance: procedure.instance.subGroupAdmin

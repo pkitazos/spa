@@ -47,10 +47,7 @@ export function SidePanel() {
   const { flags, createFlag, setTabPosition } = useMarkingSchemeStore((s) => s);
 
   function handleNewFlag() {
-    const newFlag = {
-      title: `New Flag ${flags.length + 1}`,
-      submissions: [],
-    };
+    const newFlag = { title: `New Flag ${flags.length + 1}`, submissions: [] };
 
     createFlag(newFlag);
     setTabPosition(flags.length, undefined);

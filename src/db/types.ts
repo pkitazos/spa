@@ -109,3 +109,5 @@ export {
   Stage,
   MarkerType,
 } from "@prisma/client";
+
+export type New<T> = Omit<T, "id">;

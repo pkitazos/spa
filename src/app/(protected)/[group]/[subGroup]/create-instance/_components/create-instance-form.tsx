@@ -12,6 +12,7 @@ import { ValidatedInstanceDetails } from "@/lib/validations/instance-form";
 import { SubGroupParams } from "@/lib/validations/params";
 
 import { spacesLabels } from "@/config/spaces";
+import { Stage } from "@/db/types";
 
 export function CreateInstanceForm({
   params,
@@ -31,15 +32,27 @@ export function CreateInstanceForm({
       createInstanceAsync({
         params,
         newInstance: {
-          instanceName: data.instanceName,
-          flags: data.flags,
-          tags: data.tags,
+          group,
+          subGroup,
+          displayName: data.instanceName,
           projectSubmissionDeadline: data.projectSubmissionDeadline,
-          minPreferences: data.minPreferences,
-          maxPreferences: data.maxPreferences,
-          maxPreferencesPerSupervisor: data.maxPreferencesPerSupervisor,
-          preferenceSubmissionDeadline: data.preferenceSubmissionDeadline,
+          minStudentPreferences: data.minPreferences,
+          maxStudentPreferences: data.maxPreferences,
+          maxStudentPreferencesPerSupervisor: data.maxPreferencesPerSupervisor,
+          studentPreferenceSubmissionDeadline:
+            data.preferenceSubmissionDeadline,
+          // TODO: add fields to form
+          minReaderPreferences: 0,
+          maxReaderPreferences: 0,
+          readerPreferenceSubmissionDeadline: new Date(),
+          stage: Stage.SETUP,
+          studentAllocationAccess: false,
+          supervisorAllocationAccess: false,
+          parentInstanceId: undefined,
+          selectedAlgConfigId: undefined,
         },
+        flags: data.flags,
+        tags: data.tags,
       }).then(() => {
         router.push(`/${group}/${subGroup}/${slugify(data.instanceName)}`);
         router.refresh();

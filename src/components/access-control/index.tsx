@@ -1,11 +1,10 @@
 "use client";
 import { ReactNode } from "react";
-import { Role, Stage } from "@prisma/client";
 
 import { RBAC } from "./rbac";
 import { SBAC } from "./sbac";
 
-import { stageSchema } from "@/db/types";
+import { Role, Stage, stageSchema } from "@/db/types";
 
 export function AccessControl({
   children,

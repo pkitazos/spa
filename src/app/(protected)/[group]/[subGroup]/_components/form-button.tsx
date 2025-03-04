@@ -45,7 +45,13 @@ export function FormButton({ params }: { params: SubGroupParams }) {
 
   const { mutateAsync } = api.institution.subGroup.addAdmin.useMutation();
 
-  const onSubmit = async (newAdmin: NewAdmin) => {
+  const onSubmit = async (data: NewAdmin) => {
+    const newAdmin = {
+      id: data.institutionId,
+      name: data.name,
+      email: data.email,
+    };
+
     void toast.promise(
       mutateAsync({ params, newAdmin }).then(() => {
         form.reset();
