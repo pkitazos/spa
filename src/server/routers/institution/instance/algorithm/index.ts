@@ -19,7 +19,7 @@ import {
   studentDtoSchema,
   userDtoSchema,
 } from "@/dto";
-import { AlgorithmRunResult } from "@/dto/algorithm-run-result";
+import { AlgorithmRunResult } from "@/dto/result/algorithm-run-result";
 import {
   adjustTarget,
   adjustUpperBound,

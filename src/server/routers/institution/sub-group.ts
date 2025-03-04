@@ -10,7 +10,10 @@ import {
   tagDtoSchema,
   userDtoSchema,
 } from "@/dto";
-import { LinkUserResult, LinkUserResultSchema } from "@/dto/link-user-result";
+import {
+  LinkUserResult,
+  LinkUserResultSchema,
+} from "@/dto/result/link-user-result";
 
 export const subGroupRouter = createTRPCRouter({
   exists: procedure.subgroup.user

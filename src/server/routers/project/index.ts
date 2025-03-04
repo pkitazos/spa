@@ -21,7 +21,10 @@ import { studentDtoSchema } from "@/dto/user/student";
 import { supervisorDtoSchema } from "@/dto/user/supervisor";
 import { Transformers as T } from "@/db/transformers";
 import { Role } from "@/db/types";
-import { TRPCError } from "@trpc/server";
+import {
+  PermissionResult,
+  permissionResultSchema,
+} from "@/dto/result/permission-result";
 
 export const projectRouter = createTRPCRouter({
   // ok
@@ -443,35 +446,52 @@ export const projectRouter = createTRPCRouter({
     }),
 
   // ok
+  // BREAKING output type changed
   delete: procedure.project
     .inStage(previousStages(Stage.PROJECT_ALLOCATION))
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
-    .output(z.void())
+    .output(permissionResultSchema)
     .mutation(async ({ ctx: { project, user } }) => {
-      // ? @pkitazos please review control flow
       if (await user.isSubGroupAdminOrBetter(project.params)) {
-        return await project.delete();
+        await project.delete();
+        return PermissionResult.OK;
       }
 
       if ((await project.get()).supervisorId === user.id) {
-        return await project.delete();
+        await project.delete();
+        return PermissionResult.OK;
       }
 
-      throw new TRPCError({ code: "UNAUTHORIZED" });
+      return PermissionResult.UNAUTHORISED;
     }),
 
   // ok
-  // supervisor or admin
+  // BREAKING output type changed
   deleteSelected: procedure.instance
     .inStage(previousStages(Stage.PROJECT_ALLOCATION))
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
     .input(z.object({ projectIds: z.array(z.string()) }))
-    .mutation(
-      // ? @pkitazos Here, I have not checked if
-      // ? the supervisor had permission. Should I?
-      async ({ ctx: { instance }, input: { projectIds } }) =>
-        await instance.deleteProjects(projectIds),
-    ),
+    .output(z.array(permissionResultSchema))
+    .mutation(async ({ ctx: { instance, user }, input: { projectIds } }) => {
+      const isAdmin = await user.isSubGroupAdminOrBetter(instance.params);
+
+      const checkedProjects = isAdmin
+        ? projectIds.map((e) => ({ pid: e, res: true }))
+        : await Promise.all(
+            projectIds.map(async (e) => ({
+              pid: e,
+              res: await user.isProjectSupervisor(e),
+            })),
+          );
+
+      await instance.deleteProjects(
+        checkedProjects.filter(({ res }) => res).map(({ pid }) => pid),
+      );
+
+      return checkedProjects.map(({ res }) =>
+        res ? PermissionResult.OK : PermissionResult.UNAUTHORISED,
+      );
+    }),
 
   // ok
   // MOVE to instance

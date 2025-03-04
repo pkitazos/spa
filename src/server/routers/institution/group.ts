@@ -4,7 +4,10 @@ import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
 import { groupDtoSchema, subGroupDtoSchema, userDtoSchema } from "@/dto";
-import { LinkUserResult, LinkUserResultSchema } from "@/dto/link-user-result";
+import {
+  LinkUserResult,
+  LinkUserResultSchema,
+} from "@/dto/result/link-user-result";
 
 export const groupRouter = createTRPCRouter({
   exists: procedure.group.user

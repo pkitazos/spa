@@ -16,7 +16,7 @@ export const DEPR_projectDtoSchema = z.object({
   tags: z.array(tagTypeSchema),
 });
 
-export type ProjectDto = z.infer<typeof DEPR_projectDtoSchema>;
+export type DEPR_ProjectDto = z.infer<typeof DEPR_projectDtoSchema>;
 
 export const projectTableDataDtoSchema = z.object({
   id: z.string(),

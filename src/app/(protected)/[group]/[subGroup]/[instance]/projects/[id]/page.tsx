@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import { toPositional } from "@/lib/utils/general/to-positional";
 import { previousStages } from "@/lib/utils/permissions/stage-check";
-import { ProjectDto } from "@/lib/validations/dto/project";
+import { DEPR_ProjectDto } from "@/lib/validations/dto/project";
 import { InstanceParams } from "@/lib/validations/params";
 import { StudentPreferenceType } from "@/lib/validations/student-preference";
 
@@ -199,7 +199,7 @@ function ProjectDetailsCard({
   project,
 }: {
   roles: Set<Role>;
-  project: ProjectDto;
+  project: DEPR_ProjectDto;
 }) {
   return (
     <Card className="w-full max-w-sm border-none bg-accent">
