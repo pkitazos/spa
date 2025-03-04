@@ -1,5 +1,4 @@
 "use client";
-import { Role } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -7,25 +6,26 @@ import { useInstanceParams } from "@/components/params-context";
 import DataTable from "@/components/ui/data-table/data-table";
 
 import { api } from "@/lib/trpc/client";
-import { SupervisorDto } from "@/lib/validations/dto/supervisor";
 
 import { useAllSupervisorsColumns } from "./all-supervisors-columns";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
+import { Role } from "@/db/types";
+import { SupervisorDTO } from "@/dto/user/supervisor";
 
 export function SupervisorsDataTable({
-  role,
+  roles,
   data,
 }: {
-  role: Role;
-  data: SupervisorDto[];
+  roles: Set<Role>;
+  data: SupervisorDTO[];
 }) {
   const params = useInstanceParams();
   const router = useRouter();
 
   const { mutateAsync: deleteAsync } = api.user.supervisor.delete.useMutation();
   const { mutateAsync: deleteSelectedAsync } =
-    api.user.supervisor.deleteSelected.useMutation();
+    api.user.supervisor.deleteMany.useMutation();
 
   async function handleDelete(supervisorId: string) {
     void toast.promise(
@@ -52,7 +52,7 @@ export function SupervisorsDataTable({
   }
 
   const columns = useAllSupervisorsColumns({
-    role: role,
+    roles,
     deleteSupervisor: handleDelete,
     deleteSelectedSupervisors: handleDeleteSelected,
   });

@@ -1,5 +1,5 @@
 "use client";
-import { Stage } from "@prisma/client";
+
 import { useParams } from "next/navigation";
 
 import { AccessControl } from "@/components/access-control";
@@ -12,6 +12,8 @@ import { PageParams } from "@/lib/validations/params";
 
 import { KanbanBoardSection } from "./kanban-board-section";
 import { NewPreferenceButton } from "./new-preference-button";
+
+import { Stage } from "@/db/types";
 
 export function CurrentBoardState({
   availableProjects,

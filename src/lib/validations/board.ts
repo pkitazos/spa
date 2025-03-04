@@ -1,6 +1,15 @@
 import { PreferenceType } from "@prisma/client";
+import { z } from "zod";
 
 export type Id = string;
+
+export const projectPreferenceCardDtoSchema = z.object({
+  id: z.string(),
+  columnId: z.nativeEnum(PreferenceType),
+  title: z.string(),
+  rank: z.number(),
+  supervisor: z.object({ id: z.string(), name: z.string() }),
+});
 
 export type ProjectPreferenceCardDto = {
   id: Id;

@@ -11,7 +11,10 @@ const baseSchema = z.object({
   interimMarkingDeadline: z.date(),
   markingSubmissionDeadline: z.date(),
   flags: z.array(
-    z.object({ title: z.string().min(3, "Please enter a valid title") }),
+    z.object({
+      title: z.string().min(3, "Please enter a valid title"),
+      description: z.string().min(3, "Please enter a valid description"),
+    }),
   ),
   tags: z.array(
     z.object({ title: z.string().min(2, "Please enter a valid title") }),
@@ -20,13 +23,13 @@ const baseSchema = z.object({
 
 export const createdInstanceSchema = baseSchema;
 
-export const updatedInstanceSchema = baseSchema.omit({
-  instanceName: true,
-});
+export const updatedInstanceSchema = baseSchema.omit({ instanceName: true });
+
+export type UpdatedInstance = z.infer<typeof updatedInstanceSchema>;
 
 export type ValidatedInstanceDetails = z.infer<typeof baseSchema>;
 
-export function buildInstanceFormSchema(takenNames: string[]) {
+export function buildInstanceFormSchema(takenNames: Set<string>) {
   return baseSchema
     .omit({
       minPreferences: true,
@@ -60,7 +63,7 @@ export function buildInstanceFormSchema(takenNames: string[]) {
       message: "Please add at least one flag",
       path: ["flags.0.title"],
     })
-    .refine(({ instanceName }) => !takenNames.includes(instanceName), {
+    .refine(({ instanceName }) => !takenNames.has(instanceName), {
       message: "This name is already taken",
       path: ["instanceName"],
     })
@@ -113,10 +116,7 @@ export function buildInstanceFormSchema(takenNames: string[]) {
         const flagSet = new Set(flags.map(({ title }) => title));
         return flags.length === flagSet.size;
       },
-      {
-        message: "Flags must have distinct values",
-        path: ["flags.0.title"],
-      },
+      { message: "Flags must have distinct values", path: ["flags.0.title"] },
     );
 }
 
@@ -132,9 +132,9 @@ export const forkedInstanceSchema = baseForkedSchema;
 
 export type ForkedInstanceDetails = z.infer<typeof baseForkedSchema>;
 
-export function buildForkedInstanceSchema(takenNames: string[]) {
+export function buildForkedInstanceSchema(takenNames: Set<string>) {
   return baseForkedSchema
-    .refine(({ instanceName }) => !takenNames.includes(instanceName), {
+    .refine(({ instanceName }) => !takenNames.has(instanceName), {
       message: "This name is already taken",
       path: ["instanceName"],
     })

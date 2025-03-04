@@ -1,4 +1,3 @@
-import { Role, Stage } from "@prisma/client";
 import { FlagIcon, TagIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -18,26 +17,30 @@ import { cn } from "@/lib/utils";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import { toPositional } from "@/lib/utils/general/to-positional";
 import { previousStages } from "@/lib/utils/permissions/stage-check";
-import { ProjectDto } from "@/lib/validations/dto/project";
+import { DEPR_ProjectDto } from "@/lib/validations/dto/project";
 import { InstanceParams } from "@/lib/validations/params";
+import { StudentPreferenceType } from "@/lib/validations/student-preference";
 
 import { SpecialCircumstancesPage } from "./_components/special-circumstances";
 import { StudentPreferenceButton } from "./_components/student-preference-button";
 import { StudentPreferenceDataTable } from "./_components/student-preference-data-table";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+import { Role, Stage } from "@/db/types";
 
 type PageParams = InstanceParams & { id: string };
 
 export async function generateMetadata({ params }: { params: PageParams }) {
   const { displayName } = await api.institution.instance.get({ params });
-  const { title } = await api.project.getById({ projectId: params.id });
+  const { title } = await api.project.getById({
+    params: { ...params, projectId: params.id },
+  });
 
   return {
     title: metadataTitle([
       title,
-      pages.allProjects.title,
+      PAGES.allProjects.title,
       displayName,
       app.name,
     ]),
@@ -46,10 +49,7 @@ export async function generateMetadata({ params }: { params: PageParams }) {
 
 export default async function Project({ params }: { params: PageParams }) {
   const projectId = params.id;
-  const exists = await api.project.exists({
-    params,
-    projectId: params.id,
-  });
+  const exists = await api.project.exists({ params, projectId: params.id });
   if (!exists) notFound();
 
   const instancePath = formatParamsAsPath(params);
@@ -69,17 +69,18 @@ export default async function Project({ params }: { params: PageParams }) {
 
   const project = await api.project.getById({ projectId });
   const user = await api.user.get();
-  const role = await api.user.role({ params });
+  const roles = await api.user.roles({ params });
 
   let preAllocated = false;
-  if (role === Role.STUDENT) {
-    preAllocated = !!(await api.user.student.isPreAllocated({ params }));
-  }
+  let preferenceStatus: StudentPreferenceType = "None";
 
-  const preferenceStatus = await api.user.student.preference.getForProject({
-    params,
-    projectId,
-  });
+  if (roles.has(Role.STUDENT)) {
+    preAllocated = !!(await api.user.student.isPreAllocated({ params }));
+    preferenceStatus = await api.user.student.preference.getForProject({
+      params,
+      projectId,
+    });
+  }
 
   const studentPreferences = await api.project.getAllStudentPreferences({
     params,
@@ -143,7 +144,7 @@ export default async function Project({ params }: { params: PageParams }) {
           </section>
         </div>
         <div className="w-1/4">
-          <ProjectDetailsCard project={project} role={role} />
+          <ProjectDetailsCard project={project} roles={roles} />
         </div>
       </div>
 
@@ -194,36 +195,43 @@ export default async function Project({ params }: { params: PageParams }) {
 }
 
 function ProjectDetailsCard({
-  role,
+  roles,
   project,
 }: {
-  role: Role;
-  project: ProjectDto;
+  roles: Set<Role>;
+  project: DEPR_ProjectDto;
 }) {
   return (
     <Card className="w-full max-w-sm border-none bg-accent">
       <CardContent className="flex flex-col gap-10 pt-5">
-        <div className="flex items-center space-x-4">
-          <UserIcon className="h-6 w-6 text-blue-500" />
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">
-              Supervisor
-            </h3>
-            {role === Role.ADMIN ? (
-              <Link
-                className={cn(
-                  buttonVariants({ variant: "link" }),
-                  "p-0 text-lg",
-                )}
-                href={`../supervisors/${project.supervisor.id}`}
-              >
-                {project.supervisor.name}
-              </Link>
-            ) : (
-              <p className="text-lg font-semibold">{project.supervisor.name}</p>
-            )}
+        <AccessControl
+          allowedRoles={[Role.ADMIN, Role.STUDENT]}
+          // extraConditions={{ RBAC: { OR: project.supervisor.id === user.id } }}
+        >
+          <div className="flex items-center space-x-4">
+            <UserIcon className="h-6 w-6 text-blue-500" />
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">
+                Supervisor
+              </h3>
+              {roles.has(Role.ADMIN) ? (
+                <Link
+                  className={cn(
+                    buttonVariants({ variant: "link" }),
+                    "p-0 text-lg",
+                  )}
+                  href={`../supervisors/${project.supervisor.id}`}
+                >
+                  {project.supervisor.name}
+                </Link>
+              ) : (
+                <p className="text-lg font-semibold">
+                  {project.supervisor.name}
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        </AccessControl>
         <div className={cn(project.flags.length === 0 && "hidden")}>
           <div className="mb-2 flex items-center space-x-4">
             <FlagIcon className="h-6 w-6 text-fuchsia-500" />

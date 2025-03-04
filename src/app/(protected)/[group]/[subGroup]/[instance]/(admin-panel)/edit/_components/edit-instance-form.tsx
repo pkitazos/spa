@@ -11,7 +11,7 @@ import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import { ValidatedInstanceDetails } from "@/lib/validations/instance-form";
 import { InstanceParams } from "@/lib/validations/params";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function EditInstanceForm({
   params,

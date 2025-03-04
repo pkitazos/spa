@@ -6,15 +6,15 @@ import { GroupParams } from "@/lib/validations/params";
 
 import { FormSection } from "./_components/form-section";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
-import { spacesLabels } from "@/content/spaces";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+import { spacesLabels } from "@/config/spaces";
 
 export async function generateMetadata({ params }: { params: GroupParams }) {
   const { displayName } = await api.institution.group.get({ params });
 
   return {
-    title: metadataTitle([pages.newSubGroup.title, displayName, app.name]),
+    title: metadataTitle([PAGES.newSubGroup.title, displayName, app.name]),
   };
 }
 

@@ -1,5 +1,3 @@
-import { Stage } from "@prisma/client";
-
 import { Heading } from "@/components/heading";
 import { PageWrapper } from "@/components/page-wrapper";
 import { CreateProjectForm } from "@/components/pages/create-project-form";
@@ -10,8 +8,9 @@ import { makeRequiredFlags } from "@/lib/utils/general/make-required-flags";
 import { stageGt } from "@/lib/utils/permissions/stage-check";
 import { InstanceParams } from "@/lib/validations/params";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+import { Stage } from "@/db/types";
 
 type PageParams = InstanceParams & { id: string };
 
@@ -21,9 +20,9 @@ export async function generateMetadata({ params }: { params: PageParams }) {
 
   return {
     title: metadataTitle([
-      pages.newProject.title,
+      PAGES.newProject.title,
       name,
-      pages.allSupervisors.title,
+      PAGES.allSupervisors.title,
       displayName,
       app.name,
     ]),
@@ -46,7 +45,7 @@ export default async function Page({ params }: { params: PageParams }) {
   return (
     <PageWrapper>
       <Heading className="flex items-baseline gap-6">
-        <p>{pages.newProject.title}</p>
+        <p>{PAGES.newProject.title}</p>
         <p className="text-3xl text-muted-foreground">for {supervisor.name}</p>
       </Heading>
       <CreateProjectForm

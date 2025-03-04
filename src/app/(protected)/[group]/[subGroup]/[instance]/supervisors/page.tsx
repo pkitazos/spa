@@ -6,25 +6,25 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { SupervisorsDataTable } from "./_components/all-supervisors-data-table";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([pages.allSupervisors.title, displayName, app.name]),
+    title: metadataTitle([PAGES.allSupervisors.title, displayName, app.name]),
   };
 }
 
 export default async function Page({ params }: { params: InstanceParams }) {
-  const role = await api.user.role({ params });
+  const roles = await api.user.roles({ params });
   const data = await api.institution.instance.supervisors({ params });
 
   return (
     <PageWrapper>
       <Heading>All Supervisors</Heading>
-      <SupervisorsDataTable role={role} data={data} />
+      <SupervisorsDataTable roles={roles} data={data} />
     </PageWrapper>
   );
 }

@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+/**
+ * @deprecated
+ */
 export const supervisorDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -8,8 +11,14 @@ export const supervisorDtoSchema = z.object({
   projectUpperQuota: z.number(),
 });
 
+/**
+ * @deprecated
+ */
 export type SupervisorDto = z.infer<typeof supervisorDtoSchema>;
 
+/**
+ * @deprecated
+ */
 export const supervisorInviteDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -17,4 +26,7 @@ export const supervisorInviteDtoSchema = z.object({
   joined: z.boolean(),
 });
 
+/**
+ * @deprecated
+ */
 export type SupervisorInviteDto = z.infer<typeof supervisorInviteDtoSchema>;

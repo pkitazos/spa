@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { api } from "@/lib/trpc/client";
-import { blankEmail } from "@/lib/utils/general/blank-email";
 
 export function UserButton() {
   const { data: user } = api.user.get.useQuery();
@@ -30,7 +29,7 @@ export function UserButton() {
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium leading-none">{user.name}</p>
               <p className="text-xs leading-none text-muted-foreground">
-                {user.email !== blankEmail(user.id) && user.email}
+                {user.email}
               </p>
             </div>
           </DropdownMenuLabel>

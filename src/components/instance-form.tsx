@@ -32,18 +32,18 @@ import { Separator } from "./ui/separator";
 import { TimePicker } from "./ui/time-picker";
 import { SubHeading } from "./heading";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function InstanceForm({
   submissionButtonLabel,
-  takenNames = [],
+  takenNames = new Set(),
   currentInstanceDetails,
   isForked = false,
   onSubmit,
   children: dismissalButton,
 }: {
   submissionButtonLabel: string;
-  takenNames?: string[];
+  takenNames?: Set<string>;
   currentInstanceDetails?: ValidatedInstanceDetails;
   isForked?: boolean;
   onSubmit: (data: ValidatedInstanceDetails) => Promise<void>;

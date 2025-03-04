@@ -1,26 +1,18 @@
 import {
-  GenerousAlgorithm,
-  GreedyAlgorithm,
-  GreedyGenAlgorithm,
-  MinCostAlgorithm,
-} from "@/lib/algorithms";
-import { relativeComplement } from "@/lib/utils/general/set-difference";
+  builtInAlgorithms,
+  builtInAlgSchema,
+} from "@/lib/validations/algorithm";
+import { AlgorithmDTO } from "@/dto/algorithm";
 
-export function getAlgorithmsInOrder<T extends { algName: string }>(
-  algorithmData: T[],
-) {
-  const builtInAlgs = [
-    GenerousAlgorithm,
-    GreedyAlgorithm,
-    GreedyGenAlgorithm,
-    MinCostAlgorithm,
-  ];
+// should be displayed in the order they were created, except the built-in ones which should be displayed first
+/**
+ *
+ * @deprecated us db level sorting on createdAt
+ */
+export function sortAlgorithms(algorithms: AlgorithmDTO[]) {
+  const customAlgs = algorithms
+    .filter((a) => !builtInAlgSchema.options.includes(a.id))
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
 
-  const customAlgs = relativeComplement(
-    algorithmData,
-    builtInAlgs,
-    (a, b) => a.algName === b.algName,
-  ).sort((a, b) => a.algName.localeCompare(b.algName));
-
-  return [...builtInAlgs, ...customAlgs];
+  return [...builtInAlgorithms, ...customAlgs];
 }

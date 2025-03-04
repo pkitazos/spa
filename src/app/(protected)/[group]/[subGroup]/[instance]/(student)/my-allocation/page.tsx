@@ -13,14 +13,14 @@ import { api } from "@/lib/trpc/server";
 import { toPositional } from "@/lib/utils/general/to-positional";
 import { InstanceParams } from "@/lib/validations/params";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([pages.myAllocation.title, displayName, app.name]),
+    title: metadataTitle([PAGES.myAllocation.title, displayName, app.name]),
   };
 }
 
@@ -44,7 +44,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
 
   return (
     <>
-      <Heading>{pages.myAllocation.title}</Heading>
+      <Heading>{PAGES.myAllocation.title}</Heading>
       <PanelWrapper className="px-16">
         {!allocatedProject ? (
           <div className="mt-9 flex flex-col gap-4">

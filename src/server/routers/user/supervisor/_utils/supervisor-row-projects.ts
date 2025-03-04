@@ -1,23 +1,46 @@
-type SupervisorProject = {
-  description: string;
-  id: string;
-  allocations: { student: { user: { id: string; name: string | null } } }[];
-  title: string;
+// MOVE
+// TODO: Refactor this file to use the new DTOs
+import { ProjectDTO, projectDtoSchema, userDtoSchema } from "@/dto";
+import { z } from "zod";
+
+type ProjectCapacities = {
   capacityLowerBound: number;
   capacityUpperBound: number;
-  preAllocatedStudentId: string | null;
 };
 
+type BaseRowProject = ProjectDTO & ProjectCapacities;
+
+type UnallocatedProject = BaseRowProject & {
+  allocatedStudentId: undefined;
+  allocatedStudentName: undefined;
+};
+
+type AllocatedProject = BaseRowProject & {
+  allocatedStudentId: string;
+  allocatedStudentName: string;
+};
+
+export const project__AllocatedStudents_Capacities_Schema =
+  projectDtoSchema.extend({
+    capacityLowerBound: z.number(),
+    capacityUpperBound: z.number(),
+    allocatedStudents: z.array(userDtoSchema),
+  });
+
+export type Project__AllocatedStudents_Capacities = z.infer<
+  typeof project__AllocatedStudents_Capacities_Schema
+>;
+
 export function formatSupervisorRowProjects(
-  supervisorProjects: SupervisorProject[],
-) {
+  supervisorProjects: Project__AllocatedStudents_Capacities[],
+): (AllocatedProject | UnallocatedProject)[] {
   return supervisorProjects.flatMap((project) => {
-    const { allocations, preAllocatedStudentId, ...rest } = project;
+    const { allocatedStudents, preAllocatedStudentId, ...rest } = project;
 
     // ! breaks if pre-allocated student is removed
     if (preAllocatedStudentId) {
-      const idx = allocations.findIndex(
-        (a) => a.student.user.id === preAllocatedStudentId,
+      const idx = allocatedStudents.findIndex(
+        (a) => a.id === preAllocatedStudentId,
       );
 
       if (idx === -1) {
@@ -31,11 +54,11 @@ export function formatSupervisorRowProjects(
       return {
         ...rest,
         allocatedStudentId: preAllocatedStudentId,
-        allocatedStudentName: allocations[idx].student.user.name!,
+        allocatedStudentName: allocatedStudents[idx]!.name,
       };
     }
 
-    if (allocations.length === 0) {
+    if (allocatedStudents.length === 0) {
       return {
         ...rest,
         allocatedStudentId: undefined,
@@ -43,10 +66,10 @@ export function formatSupervisorRowProjects(
       };
     }
 
-    return allocations.map((allocation) => ({
+    return allocatedStudents.map((allocation) => ({
       ...rest,
-      allocatedStudentId: allocation.student.user.id,
-      allocatedStudentName: allocation.student.user.name!,
+      allocatedStudentId: allocation.id,
+      allocatedStudentName: allocation.name,
     }));
   });
 }

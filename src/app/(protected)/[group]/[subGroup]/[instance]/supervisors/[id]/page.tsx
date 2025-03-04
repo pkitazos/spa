@@ -14,8 +14,8 @@ import { PageParams } from "@/lib/validations/params";
 import { InstanceDetailsCard } from "./_components/instance-details-card";
 import { SupervisorProjectsDataTable } from "./_components/supervisor-projects-data-table";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: PageParams }) {
   const { displayName } = await api.institution.instance.get({ params });
@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: { params: PageParams }) {
   return {
     title: metadataTitle([
       name,
-      pages.allSupervisors.title,
+      PAGES.allSupervisors.title,
       displayName,
       app.name,
     ]),

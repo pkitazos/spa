@@ -16,14 +16,14 @@ import { InstanceParams } from "@/lib/validations/params";
 import { StudentResultsSection } from "./_components/student-results-section";
 import { SupervisorResultsSection } from "./_components/supervisor-results-section";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([pages.results.title, displayName, app.name]),
+    title: metadataTitle([PAGES.results.title, displayName, app.name]),
   };
 }
 
@@ -31,7 +31,7 @@ export default function Page() {
   return (
     <PanelWrapper className="mt-10 flex flex-col items-start gap-16 px-12">
       <div className="flex w-full flex-col gap-3">
-        <SubHeading className="mb-6">{pages.results.title}</SubHeading>
+        <SubHeading className="mb-6">{PAGES.results.title}</SubHeading>
         <Accordion type="multiple">
           <AccordionItem className="border-b-0" value="by-supervisors">
             <AccordionTrigger className="mb-4 rounded-md px-5 py-4 hover:bg-accent hover:no-underline">

@@ -18,7 +18,7 @@ import { CSVUploadButton } from "./csv-upload-button";
 import { FormSection } from "./form-section";
 import { useNewStudentColumns } from "./new-student-columns";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function AddStudentsSection() {
   const router = useRouter();

@@ -5,14 +5,14 @@ import { PanelWrapper } from "@/components/panel-wrapper";
 import { api } from "@/lib/trpc/server";
 import { InstanceParams } from "@/lib/validations/params";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([pages.supervisorTasks.title, displayName, app.name]),
+    title: metadataTitle([PAGES.supervisorTasks.title, displayName, app.name]),
   };
 }
 

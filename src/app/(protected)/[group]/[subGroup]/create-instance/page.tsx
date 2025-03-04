@@ -6,15 +6,15 @@ import { SubGroupParams } from "@/lib/validations/params";
 
 import { CreateInstanceForm } from "./_components/create-instance-form";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
-import { spacesLabels } from "@/content/spaces";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+import { spacesLabels } from "@/config/spaces";
 
 export async function generateMetadata({ params }: { params: SubGroupParams }) {
   const { displayName } = await api.institution.subGroup.get({ params });
 
   return {
-    title: metadataTitle([pages.newInstance.title, displayName, app.name]),
+    title: metadataTitle([PAGES.newInstance.title, displayName, app.name]),
   };
 }
 

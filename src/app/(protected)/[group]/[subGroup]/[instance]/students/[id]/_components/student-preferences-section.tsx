@@ -1,4 +1,3 @@
-import { Stage } from "@prisma/client";
 import { PenIcon } from "lucide-react";
 import Link from "next/link";
 
@@ -14,6 +13,8 @@ import { cn } from "@/lib/utils";
 import { PageParams } from "@/lib/validations/params";
 
 import { StudentPreferenceDataTable } from "./student-preference-data-table";
+
+import { Stage } from "@/db/types";
 
 export async function StudentPreferencesSection({
   params,

@@ -1,15 +1,13 @@
-import AdmZip from "adm-zip";
-import { unparse } from "papaparse";
 import { z } from "zod";
 
-import { expand } from "@/lib/utils/general/instance-params";
+import { studentPreferenceSubmissionDto } from "@/lib/validations/dto/preference";
 import { instanceParamsSchema } from "@/lib/validations/params";
 
-import { createTRPCRouter, instanceAdminProcedure } from "@/server/trpc";
-
-import { getPreAllocatedStudents } from "../_utils/pre-allocated-students";
+import { procedure } from "@/server/middleware";
+import { createTRPCRouter } from "@/server/trpc";
 
 import {
+  csvDataSchema,
   generateProjectAggregated,
   generateProjectNormalised,
   generateSupervisorAggregated,
@@ -19,65 +17,50 @@ import {
 } from "./_utils/generate-csv-data";
 
 export const preferenceRouter = createTRPCRouter({
-  studentSubmissions: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const preAllocatedStudents = await getPreAllocatedStudents(ctx.db, {
-          group,
-          subGroup,
-          instance,
-        });
+  studentSubmissions: procedure.instance.subGroupAdmin
+    .output(
+      z.object({
+        all: z.array(studentPreferenceSubmissionDto),
+        incomplete: z.array(studentPreferenceSubmissionDto),
+        preAllocated: z.array(studentPreferenceSubmissionDto),
+      }),
+    )
+    .query(async ({ ctx: { instance } }) => {
+      const preAllocatedStudentIds = await instance.getPreAllocatedStudentIds();
 
-        const students = await ctx.db.studentDetails
-          .findMany({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-            },
-            select: {
-              submittedPreferences: true,
-              preferences: true,
-              studentLevel: true,
-              userInInstance: {
-                select: {
-                  user: { select: { id: true, name: true, email: true } },
-                },
-              },
-            },
-          })
-          .then((data) =>
-            data.map(({ userInInstance, ...s }) => ({
-              ...userInInstance.user,
-              level: s.studentLevel,
-              submissionCount: s.preferences.length,
-              submitted: s.submittedPreferences,
-              preAllocated: preAllocatedStudents.has(userInInstance.user.id),
-            })),
-          );
+      const students = await instance
+        .getStudentPreferenceDetails()
+        .then((students) =>
+          students.map((s) => ({
+            id: s.institutionId,
+            name: s.fullName,
+            email: s.email,
+            level: s.level,
+            submissionCount: s.submittedPreferences.length,
+            submitted: s.submittedPreferences.length !== 0,
+            preAllocated: preAllocatedStudentIds.has(s.institutionId),
+          })),
+        );
 
-        return {
-          all: students,
-          incomplete: students.filter((s) => !s.submitted && !s.preAllocated),
-          preAllocated: students.filter((s) => s.preAllocated),
-        };
-      },
-    ),
+      return {
+        all: students,
+        incomplete: students.filter((s) => !s.submitted && !s.preAllocated),
+        preAllocated: students.filter((s) => s.preAllocated),
+      };
+    }),
 
-  statsByProject: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ ctx, input: { params } }) => {
-      const preferences = await ctx.db.savedPreference.findMany({
-        where: { ...expand(params) },
-        select: { projectId: true, userId: true, rank: true },
-        orderBy: [{ projectId: "asc" }, { rank: "asc" }, { userId: "asc" }],
-      });
+  statsByProject: procedure.instance.subGroupAdmin
+    .output(z.object({ aggregated: csvDataSchema, normalised: csvDataSchema }))
+    .query(async ({ ctx: { instance } }) => {
+      const preferences = await instance
+        .getSubmittedPreferences()
+        .then((data) =>
+          data.map((p) => ({
+            userId: p.studentId,
+            projectId: p.project.id,
+            rank: p.rank,
+          })),
+        );
 
       return {
         aggregated: generateProjectAggregated(preferences),
@@ -85,28 +68,21 @@ export const preferenceRouter = createTRPCRouter({
       };
     }),
 
-  statsBySupervisor: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ ctx, input: { params } }) => {
-      const preferenceData = await ctx.db.savedPreference.findMany({
-        where: { ...expand(params) },
-        select: {
-          projectId: true,
-          userId: true,
-          rank: true,
-          project: { select: { supervisorId: true } },
-        },
-        orderBy: [
-          { project: { supervisorId: "asc" } },
-          { projectId: "asc" },
-          { rank: "asc" },
-          { userId: "asc" },
-        ],
-      });
-
-      const preferences = preferenceData.map(
-        ({ project: { supervisorId }, ...p }) => ({ ...p, supervisorId }),
-      );
+  statsBySupervisor: procedure.instance.subGroupAdmin
+    .output(z.object({ aggregated: csvDataSchema, normalised: csvDataSchema }))
+    .query(async ({ ctx: { instance } }) => {
+      const preferences = await instance
+        .getSubmittedPreferences()
+        .then((data) =>
+          data
+            .toSorted((a, b) => a.supervisorId.localeCompare(b.supervisorId))
+            .map((p) => ({
+              supervisorId: p.supervisorId,
+              userId: p.studentId,
+              projectId: p.project.id,
+              rank: p.rank,
+            })),
+        );
 
       return {
         aggregated: generateSupervisorAggregated(preferences),
@@ -114,92 +90,25 @@ export const preferenceRouter = createTRPCRouter({
       };
     }),
 
-  statsByTag: instanceAdminProcedure
+  statsByTag: procedure.instance.subGroupAdmin
     .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ ctx, input: { params } }) => {
-      const preferenceData = await ctx.db.savedPreference.findMany({
-        where: { ...expand(params) },
-        select: {
-          projectId: true,
-          userId: true,
-          rank: true,
-          project: { select: { tagOnProject: { select: { tag: true } } } },
-        },
-        orderBy: [{ projectId: "asc" }, { rank: "asc" }, { userId: "asc" }],
-      });
-
-      const preferences = preferenceData.flatMap((p) =>
-        p.project.tagOnProject.map((t) => ({
-          tag: t.tag.title,
-          projectId: p.projectId,
-          userId: p.userId,
-          rank: p.rank,
-        })),
-      );
+    .query(async ({ ctx: { instance } }) => {
+      const preferences = await instance
+        .getSubmittedPreferences()
+        .then((data) =>
+          data.flatMap((p) =>
+            p.tags.map((t) => ({
+              tag: t.title,
+              userId: p.studentId,
+              projectId: p.project.id,
+              rank: p.rank,
+            })),
+          ),
+        );
 
       return {
         aggregated: generateTagAggregated(preferences),
         normalised: generateTagNormalised(preferences),
-      };
-    }),
-
-  allStats: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ ctx, input: { params } }) => {
-      const preferenceData = await ctx.db.savedPreference.findMany({
-        where: { ...expand(params) },
-        select: {
-          projectId: true,
-          userId: true,
-          rank: true,
-          project: {
-            select: {
-              supervisorId: true,
-              tagOnProject: { select: { tag: true } },
-            },
-          },
-        },
-        orderBy: [
-          { project: { supervisorId: "asc" } },
-          { projectId: "asc" },
-          { rank: "asc" },
-          { userId: "asc" },
-        ],
-      });
-
-      const preferences = preferenceData.flatMap((p) =>
-        p.project.tagOnProject.map((t) => ({
-          tag: t.tag.title,
-          supervisorId: p.project.supervisorId,
-          projectId: p.projectId,
-          userId: p.userId,
-          rank: p.rank,
-        })),
-      );
-
-      const zip = new AdmZip();
-
-      const handlers = [
-        { name: "project-aggregated", fn: generateProjectAggregated },
-        { name: "project-normalised", fn: generateProjectNormalised },
-        { name: "supervisor-aggregated", fn: generateSupervisorAggregated },
-        { name: "supervisor-normalised", fn: generateSupervisorNormalised },
-        { name: "tag-aggregated", fn: generateTagAggregated },
-        { name: "tag-normalised", fn: generateTagNormalised },
-      ];
-
-      handlers.forEach(({ name, fn }) => {
-        const { header, rows } = fn(preferences);
-        const csvContent = unparse({ fields: header, data: rows });
-        zip.addFile(`by-${name}.csv`, Buffer.from(csvContent, "utf-8")); // change depending on the zip thing
-      });
-
-      const zipBuffer = zip.toBuffer();
-
-      return {
-        zipData: zipBuffer,
-        filename: "all-preference-statistics.zip",
-        contentType: "application/zip",
       };
     }),
 });

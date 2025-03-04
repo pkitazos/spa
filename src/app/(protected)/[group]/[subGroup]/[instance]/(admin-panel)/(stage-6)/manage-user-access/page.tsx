@@ -10,14 +10,14 @@ import { InstanceParams } from "@/lib/validations/params";
 import { StudentAccessToggle } from "./_components/student-access-toggle";
 import { SupervisorAccessToggle } from "./_components/supervisor-access-toggle";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([pages.manageUserAccess.title, displayName, app.name]),
+    title: metadataTitle([PAGES.manageUserAccess.title, displayName, app.name]),
   };
 }
 
@@ -27,7 +27,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
 
   return (
     <PanelWrapper className="mt-10 flex flex-col items-start gap-10 px-12">
-      <SubHeading className="mb-4">{pages.manageUserAccess.title}</SubHeading>
+      <SubHeading className="mb-4">{PAGES.manageUserAccess.title}</SubHeading>
       <section className="flex w-full flex-col gap-6">
         <SectionHeading className="mb-2 flex items-center">
           <Users2Icon className="mr-2 h-6 w-6 text-indigo-500" />

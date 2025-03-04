@@ -1,10 +1,20 @@
+import { z } from "zod";
+
 import {
   StudentPreferenceDto,
   SupervisorCentricPreferenceDto,
   TagCentricPreferenceDto,
 } from "@/lib/validations/dto/preference";
 
-export function generateProjectAggregated(data: StudentPreferenceDto[]) {
+export const csvDataSchema = z.object({
+  header: z.array(z.string()),
+  rows: z.array(z.array(z.union([z.string(), z.number()]))),
+});
+
+export function generateProjectAggregated(data: StudentPreferenceDto[]): {
+  header: string[];
+  rows: (string | number)[][];
+} {
   // Aggregate student preferences by project ID, collecting student-rank pairs
   const rowData = data.reduce(
     (acc, p) => {
@@ -48,7 +58,7 @@ export function generateProjectNormalised(data: StudentPreferenceDto[]) {
 
 export function generateSupervisorAggregated(
   data: SupervisorCentricPreferenceDto[],
-) {
+): { header: string[]; rows: (string | number)[][] } {
   // Aggregate student preferences by project ID, collecting student-rank pairs
   const rowData = data.reduce(
     (acc, p) => {
@@ -86,7 +96,7 @@ export function generateSupervisorAggregated(
 
 export function generateSupervisorNormalised(
   data: SupervisorCentricPreferenceDto[],
-) {
+): { header: string[]; rows: (string | number)[][] } {
   const rows = data.map((p) => [p.supervisorId, p.projectId, p.userId, p.rank]);
 
   const header = ["Supervisor ID", "Project ID", "Student ID", "Rank"];

@@ -18,14 +18,10 @@ export async function SupervisorInstanceHome({
   const {
     projectSubmissionDeadline: deadline,
     deadlineTimeZoneOffset: timeZoneOffset,
-  } = await api.user.supervisor.instancePage({
-    params,
-  });
+  } = await api.user.supervisor.instancePage({ params });
 
   const { currentSubmissionCount, submissionTarget } =
-    await api.user.supervisor.projects({
-      params,
-    });
+    await api.user.supervisor.projectStats({ params });
 
   if (stage === Stage.PROJECT_SUBMISSION) {
     return (

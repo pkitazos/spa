@@ -18,15 +18,15 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { DownloadPreferenceDataSection } from "./_components/download-preference-section";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
     title: metadataTitle([
-      pages.preferenceStatistics.title,
+      PAGES.preferenceStatistics.title,
       displayName,
       app.name,
     ]),
@@ -37,7 +37,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
   return (
     <PanelWrapper className="mt-10 flex flex-col items-start gap-16 px-12">
       <SubHeading className="mb-4">
-        {pages.preferenceStatistics.title}
+        {PAGES.preferenceStatistics.title}
       </SubHeading>
       <section className="flex w-full flex-col gap-5">
         <SectionHeading className="flex items-center">

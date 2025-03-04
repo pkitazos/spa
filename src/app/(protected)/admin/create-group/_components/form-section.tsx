@@ -24,7 +24,7 @@ import {
   NewAllocationGroupForm,
 } from "@/lib/validations/spaces/allocation-group";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function FormSection({
   takenGroupNames,

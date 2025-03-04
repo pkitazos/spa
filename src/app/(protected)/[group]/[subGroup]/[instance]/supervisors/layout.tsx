@@ -1,10 +1,11 @@
 import { ReactNode } from "react";
-import { Role } from "@prisma/client";
 
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
 import { InstanceParams } from "@/lib/validations/params";
+
+import { Role } from "@/db/types";
 
 export default async function Layout({
   params,

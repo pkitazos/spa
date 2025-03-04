@@ -5,15 +5,14 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { EditInstanceForm } from "./_components/edit-instance-form";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
-import { spacesLabels } from "@/content/spaces";
+import { app, metadataTitle } from "@/config/meta";
+import { spacesLabels } from "@/config/spaces";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([pages.instanceEdit.title, displayName, app.name]),
+    title: metadataTitle([PAGES.instanceEdit.title, displayName, app.name]),
   };
 }
 

@@ -1,4 +1,3 @@
-import { Stage } from "@prisma/client";
 import { notFound } from "next/navigation";
 
 import { AccessControl } from "@/components/access-control";
@@ -15,12 +14,11 @@ import { PageParams } from "@/lib/validations/params";
 
 import { CurrentBoardState } from "./_components/current-board-state";
 
+import { Stage } from "@/db/types";
+
 export default async function Page({ params }: { params: PageParams }) {
   const studentId = params.id;
-  const exists = await api.user.student.exists({
-    params,
-    studentId,
-  });
+  const exists = await api.user.student.exists({ params, studentId });
   if (!exists) notFound();
 
   const stage = await api.institution.instance.currentStage({ params });

@@ -12,12 +12,25 @@ module.exports = {
     // increase the severity of rules so they are auto-fixable
     "simple-import-sort/imports": "error",
     "simple-import-sort/exports": "error",
+    "@typescript-eslint/no-floating-promises": "error",
   },
   overrides: [
     // override "simple-import-sort" config
     {
       files: ["*.js", "*.jsx", "*.ts", "*.tsx"],
       rules: {
+        "@typescript-eslint/no-unused-vars": [
+          "error",
+          {
+            args: "all",
+            argsIgnorePattern: "^_",
+            caughtErrors: "all",
+            caughtErrorsIgnorePattern: "^_",
+            destructuredArrayIgnorePattern: "^_",
+            varsIgnorePattern: "^_",
+            ignoreRestSiblings: true,
+          },
+        ],
         "simple-import-sort/imports": [
           "error",
           {

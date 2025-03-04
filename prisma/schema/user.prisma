@@ -1,0 +1,133 @@
+model User {
+    id              String           @id
+    name            String
+    email           String           @unique
+    // ---
+    userInInstances UserInInstance[]
+    superAdmin      SuperAdmin?
+    groupAdmin      GroupAdmin[]
+    subGroupAdmin   SubGroupAdmin[]
+
+    @@map("user")
+}
+
+model FlagOnStudent {
+    flag                 Flag               @relation(fields: [flagId], references: [id], onDelete: Cascade)
+    flagId               String             @map("flag_id")
+    student              StudentDetails     @relation(fields: [studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+    studentId            String             @map("student_id")
+    // ---
+    allocationGroupId    String             @map("allocation_group_id")
+    allocationSubGroupId String             @map("allocation_sub_group_id")
+    allocationInstanceId String             @map("allocation_instance_id")
+    // ---
+    allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+
+    @@id(name: "flagOnStudentId", map: "flag_on_student_id", [flagId, studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("flag_on_student")
+}
+
+model StudentDetails {
+    studentLevel                Int                          @map("student_level")
+    latestSubmissionDateTime    DateTime?                    @map("latest_submission_date_time")
+    projectAllocation           StudentProjectAllocation?    @relation(name: "project_allocation")
+    // ---
+    userId                      String                       @map("user_id")
+    allocationGroupId           String                       @map("allocation_group_id")
+    allocationSubGroupId        String                       @map("allocation_sub_group_id")
+    allocationInstanceId        String                       @map("allocation_instance_id")
+    // ---
+    userInInstance              UserInInstance               @relation(name: "student_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, onUpdate: Cascade)
+    studentFlags                FlagOnStudent[]
+    studentDraftPreferences     StudentDraftPreference[]
+    studentSubmittedPreferences StudentSubmittedPreference[]
+    matchingPairs               MatchingPair[]
+    preAllocatedProjects        Project[]
+    readers                     ReaderProjectAllocation[]
+
+    @@id(name: "studentDetailsId", map: "student_details_id", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("student_details")
+}
+
+model SupervisorDetails {
+    projectAllocationLowerBound Int            @map("project_allocation_lower_bound")
+    projectAllocationTarget     Int            @map("project_allocation_target")
+    projectAllocationUpperBound Int            @map("project_allocation_upper_bound")
+    // ---
+    userId                      String         @map("user_id")
+    allocationGroupId           String         @map("allocation_group_id")
+    allocationSubGroupId        String         @map("allocation_sub_group_id")
+    allocationInstanceId        String         @map("allocation_instance_id")
+    // ---
+    userInInstance              UserInInstance @relation(name: "supervisor_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, onUpdate: Cascade)
+    projects                    Project[]
+
+    @@id(name: "supervisorDetailsId", map: "supervisor_details_id", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("supervisor_details")
+}
+
+model ReaderDetails {
+    projectAllocationLowerBound Int                       @map("project_allocation_lower_bound")
+    projectAllocationTarget     Int                       @map("project_allocation_target")
+    projectAllocationUpperBound Int                       @map("project_allocation_upper_bound")
+    // ---
+    userId                      String                    @map("user_id")
+    allocationGroupId           String                    @map("allocation_group_id")
+    allocationSubGroupId        String                    @map("allocation_sub_group_id")
+    allocationInstanceId        String                    @map("allocation_instance_id")
+    // ---
+    userInInstance              UserInInstance            @relation(name: "reader_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, onUpdate: Cascade)
+    projectAllocations          ReaderProjectAllocation[]
+
+    @@id(name: "readerDetailsId", map: "reader_details_id", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("reader_details")
+}
+
+model UserInInstance {
+    user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId               String             @map("user_id")
+    joined               Boolean            @default(false)
+    // ---
+    allocationGroupId    String             @map("allocation_group_id")
+    allocationSubGroupId String             @map("allocation_sub_group_id")
+    allocationInstanceId String             @map("allocation_instance_id")
+    allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+    // ---
+    studentDetails       StudentDetails?    @relation(name: "student_details")
+    supervisorDetails    SupervisorDetails? @relation(name: "supervisor_details")
+    readerDetails        ReaderDetails?     @relation(name: "reader_details")
+
+    @@id(name: "instanceMembership", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("user_in_instance")
+}
+
+model SuperAdmin {
+    userId String @id @map("user_id")
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("super_admin")
+}
+
+model GroupAdmin {
+    userId            String          @map("user_id")
+    user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    // ---
+    allocationGroupId String          @map("allocation_group_id")
+    allocationGroup   AllocationGroup @relation(fields: [allocationGroupId], references: [id], onDelete: Cascade)
+
+    @@id(name: "groupAdminId", map: "group_admin_id", [userId, allocationGroupId])
+    @@map("group_admin")
+}
+
+model SubGroupAdmin {
+    userId               String             @map("user_id")
+    user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+    // ---
+    allocationGroupId    String             @map("allocation_group_id")
+    allocationGroup      AllocationGroup    @relation(fields: [allocationGroupId], references: [id], onDelete: Cascade)
+    allocationSubGroupId String             @map("allocation_sub_group_id")
+    allocationSubGroup   AllocationSubGroup @relation(fields: [allocationGroupId, allocationSubGroupId], references: [allocationGroupId, id], onDelete: Cascade)
+
+    @@id(name: "subGroupAdminId", map: "sub_group_admin_id", [userId, allocationGroupId, allocationSubGroupId])
+    @@map("sub_group_admin")
+}

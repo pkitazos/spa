@@ -20,7 +20,7 @@ import {
 
 import { api } from "@/lib/trpc/client";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function MergeButton({
   forkedInstance,

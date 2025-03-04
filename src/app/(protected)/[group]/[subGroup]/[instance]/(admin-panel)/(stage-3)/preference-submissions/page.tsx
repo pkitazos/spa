@@ -25,15 +25,15 @@ import { InstanceParams } from "@/lib/validations/params";
 import { PreferenceSubmissionsDataTable } from "./_components/preference-submissions-data-table";
 import { SummarySection } from "./_components/summary-section";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
     title: metadataTitle([
-      pages.preferenceSubmissions.title,
+      PAGES.preferenceSubmissions.title,
       displayName,
       app.name,
     ]),
@@ -48,7 +48,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
   return (
     <PanelWrapper className="mt-10 flex flex-col items-start gap-16 px-12">
       <SubHeading className="mb-4">
-        {pages.preferenceSubmissions.title}
+        {PAGES.preferenceSubmissions.title}
       </SubHeading>
       <section className="flex flex-col gap-5">
         <SectionHeading className="flex items-center">

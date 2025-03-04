@@ -22,8 +22,8 @@ import {
   formatProfile,
   formatSize,
   formatWeight,
-} from "@/lib/utils/algorithm-results/format";
-import { AlgorithmResultDto } from "@/lib/validations/algorithm";
+} from "@/lib/utils/algorithm/format";
+import { AlgorithmResultDTO } from "@/lib/validations/algorithm";
 
 import { useAlgorithmUtils } from "./algorithm-context";
 
@@ -33,7 +33,7 @@ export function useAlgorithmResultColumns({
 }: {
   selectedAlgName: string | undefined;
   setSelectedAlgName: Dispatch<SetStateAction<string | undefined>>;
-}): ColumnDef<AlgorithmResultDto>[] {
+}): ColumnDef<AlgorithmResultDTO>[] {
   const params = useInstanceParams();
   const router = useRouter();
 
@@ -49,13 +49,10 @@ export function useAlgorithmResultColumns({
   const { mutateAsync: selectMatchingAsync } =
     api.institution.instance.matching.select.useMutation();
 
-  function handleSelection(algName: string) {
+  function handleSelection(algId: string) {
     void toast.promise(
-      selectMatchingAsync({
-        algName,
-        params,
-      }).then(() => {
-        setSelectedAlgName(algName);
+      selectMatchingAsync({ algId, params }).then(() => {
+        setSelectedAlgName(algId);
         refetchResults();
         router.refresh();
       }),
@@ -67,12 +64,8 @@ export function useAlgorithmResultColumns({
     );
   }
 
-  const columns: ColumnDef<AlgorithmResultDto>[] = [
-    {
-      id: "Name",
-      accessorFn: (a) => a.displayName,
-      header: "Name",
-    },
+  const columns: ColumnDef<AlgorithmResultDTO>[] = [
+    { id: "Name", accessorFn: (a) => a.displayName, header: "Name" },
     {
       id: "Weight",
       accessorFn: (a) => a.weight,
