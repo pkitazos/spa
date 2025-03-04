@@ -15,7 +15,7 @@ export default async function Layout({
   const stage = await api.institution.instance.currentStage({ params });
   const instancePath = formatParamsAsPath(params);
 
-  if (stage !== Stage.MARKING) redirect(`${instancePath}/`);
+  if (stage !== Stage.MARK_SUBMISSION) redirect(`${instancePath}/`);
 
   return <>{children}</>;
 }

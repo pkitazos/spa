@@ -1,23 +1,17 @@
 "use client";
 
-import { TRPCClientError } from "@trpc/client";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 import { useInstanceParams } from "@/components/params-context";
-import { LabelledSeparator } from "@/components/ui/labelled-separator";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
 
 import { api } from "@/lib/trpc/client";
 import { allocateReadersCsvHeaders } from "@/lib/validations/allocate-readers/csv";
 import { NewReaderAllocation } from "@/lib/validations/allocate-readers/new-reader-allocation";
 
 import { CSVUploadButton } from "./csv-upload-button";
+import { ReaderAssignmentResult } from "@/dto/result/reader-allocation-result";
 //import { FormSection } from "./form-section";
 //import { useNewSupervisorColumns } from "./new-supervisor-columns";
-
-import { spacesLabels } from "@/content/spaces";
 
 export function AddReadersSection() {
   const router = useRouter();
@@ -29,9 +23,6 @@ export function AddReadersSection() {
   });
 
   const refetchData = () => utils.institution.instance.getSupervisors.refetch();
-
-  const { mutateAsync: assignReaderAsync } =
-    api.institution.instance.assignReader.useMutation();
 
   /*async function handleAssignReader(newReaderAllocation: NewReaderAllocation) {
     void toast.promise(
@@ -60,17 +51,23 @@ export function AddReadersSection() {
       (data) => {
         router.refresh();
         refetchData();
-        return data;
+
+        return data.reduce(
+          (acc, val) => ({ ...acc, [val]: (acc[val] ?? 0) + 1 }),
+          {} as Record<ReaderAssignmentResult, number>,
+        );
       },
     );
 
-    if (res.successFullyAdded === 0) {
-      toast.error(`No readers were assigned in ${spacesLabels.instance.short}`);
-    } else {
-      toast.success(
-        `Successfully assigned ${res.successFullyAdded} readers to projects in ${spacesLabels.instance.short}`,
-      );
-    }
+    // TODO: report status of csv upload
+
+    // if (res.successFullyAdded === 0) {
+    //   toast.error(`No readers were assigned in ${spacesLabels.instance.short}`);
+    // } else {
+    //   toast.success(
+    //     `Successfully assigned ${res.successFullyAdded} readers to projects in ${spacesLabels.instance.short}`,
+    //   );
+    // }
   }
 
   return (

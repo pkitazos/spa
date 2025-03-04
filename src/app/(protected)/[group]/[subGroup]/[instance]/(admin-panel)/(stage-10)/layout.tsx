@@ -15,7 +15,7 @@ export default async function Layout({
   const stage = await api.institution.instance.currentStage({ params });
   const instancePath = formatParamsAsPath(params);
 
-  if (stage !== Stage.FINAL_GRADES_RELEASED) redirect(`${instancePath}/`);
+  if (stage !== Stage.GRADE_PUBLICATION) redirect(`${instancePath}/`);
 
   return <>{children}</>;
 }

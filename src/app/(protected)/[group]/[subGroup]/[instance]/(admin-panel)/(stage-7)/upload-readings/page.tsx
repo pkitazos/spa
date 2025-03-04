@@ -1,28 +1,26 @@
-import { Stage } from "@prisma/client";
 import { AddReadersSection } from "./_components/add-readers-section";
 
-import { AccessControl } from "@/components/access-control";
-import { Heading, SubHeading } from "@/components/heading";
+import { SubHeading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
 import { InstanceParams } from "@/lib/validations/params";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { PAGES } from "@/config/pages";
+import { app, metadataTitle } from "@/config/meta";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([pages.uploadReadings.title, displayName, app.name]),
+    title: metadataTitle([PAGES.uploadReadings.title, displayName, app.name]),
   };
 }
 
 export default async function Page({ params }: { params: InstanceParams }) {
   return (
     <PanelWrapper className="mt-10">
-      <SubHeading className="mb-4">{pages.uploadReadings.title}</SubHeading>
+      <SubHeading className="mb-4">{PAGES.uploadReadings.title}</SubHeading>
       <AddReadersSection />
     </PanelWrapper>
   );

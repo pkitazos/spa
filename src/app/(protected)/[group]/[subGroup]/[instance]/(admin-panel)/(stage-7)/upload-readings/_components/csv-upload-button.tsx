@@ -66,10 +66,12 @@ export function CSVUploadButton({
 
           handleUpload(
             uniqueRows.map((e) => ({
-              project_title: e.project_title,
-              student_guid: e.student_guid,
-              supervisor_guid: e.supervisor_guid,
-              reader_name: e.reader_name,
+              reader: {
+                id: e.reader_guid,
+                name: e.reader_name,
+                email: e.reader_email,
+              },
+              studentId: e.student_guid,
             })),
           );
         },
