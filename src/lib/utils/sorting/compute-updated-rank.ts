@@ -1,4 +1,3 @@
-// @JakeTrevor do these changes look right?
 export function computeUpdatedRank<T extends { rank: number }>(
   arr: T[],
   targetIdx: number,

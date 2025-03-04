@@ -241,8 +241,6 @@ export const preferenceRouter = createTRPCRouter({
     .input(z.object({ studentId: z.string() }))
     .output(z.date().optional())
     .mutation(async ({ ctx: { instance, user }, input: { studentId } }) => {
-      // ? @pkitazos review control flow pls thnx.
-
       const student = !(await user.isSubGroupAdminOrBetter(instance.params))
         ? await user.toStudent(instance.params)
         : await instance.getStudent(studentId);
@@ -301,7 +299,6 @@ export const preferenceRouter = createTRPCRouter({
       },
     ),
 
-  //  ? change rather than update? change what
   changeSelected: procedure.instance.subGroupAdmin
     .input(
       z.object({
