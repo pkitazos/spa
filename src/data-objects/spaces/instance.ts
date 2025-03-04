@@ -521,6 +521,9 @@ export class AllocationInstance extends DataObject {
     });
     return access;
   }
+  public async isReader(id: string): Promise<boolean> {
+    return await new User(this.db, id).isReader(this.params);
+  }
 
   public async isSupervisor(userId: string): Promise<boolean> {
     return new User(this.db, userId).isSupervisor(this.params);

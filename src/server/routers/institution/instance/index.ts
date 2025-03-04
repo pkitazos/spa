@@ -41,6 +41,10 @@ import { newReaderAllocationSchema } from "@/lib/validations/allocate-readers/ne
 import { expand } from "@/lib/utils/general/instance-params";
 import { Transformers as T } from "@/db/transformers";
 import { computeGrade } from "@/config/grades";
+import {
+  ReaderAssignmentResult,
+  readerAssignmentResultSchema,
+} from "@/dto/result/reader-allocation-result";
 
 const tgc = z.object({
   id: z.string(),
@@ -660,68 +664,56 @@ export const instanceRouter = createTRPCRouter({
       });
     }),
 
-  // pin @JakeTrevor
   assignReaders: procedure.instance
     .inStage([Stage.READER_BIDDING, Stage.READER_ALLOCATION])
     .subGroupAdmin.input(
       z.object({ newReaderAllocations: z.array(newReaderAllocationSchema) }),
     )
+    .output(z.array(readerAssignmentResultSchema))
     .mutation(
       async ({ ctx: { db, instance }, input: { newReaderAllocations } }) => {
-        enum readerAssignmentResult {
-          OK,
-          MISSING_STUDENT,
-          MISSING_READER,
-        }
+        const projectAllocationData =
+          await instance.getStudentAllocationDetails();
+        const studentIds = projectAllocationData.map(
+          (student) => student.institutionId,
+        );
 
-        db.$transaction([
-          db.user.createMany({
-            data: newReaderAllocations.map(({ reader }) => reader),
-            skipDuplicates: true,
+        const readers = await instance.getReaders();
+        const readerIds = readers.map(({ id }) => id);
+
+        const allocationData = newReaderAllocations.map((data) => {
+          let status: ReaderAssignmentResult = ReaderAssignmentResult.OK;
+
+          if (!studentIds.includes(data.studentId))
+            status = ReaderAssignmentResult.MISSING_STUDENT;
+
+          if (!readerIds.includes(data.reader.id))
+            status = ReaderAssignmentResult.MISSING_READER;
+
+          return { data, status };
+        });
+
+        const studentProjectMap = projectAllocationData.reduce(
+          (acc, val) => ({
+            ...acc,
+            [val.institutionId]: val.allocatedProject?.id!,
           }),
+          {} as Record<string, string>,
+        );
 
-          db.userInInstance.createMany({
-            data: newReaderAllocations.map(({ reader }) => ({
-              ...expand(instance.params),
-              userId: reader.id,
-            })),
-            skipDuplicates: true,
-          }),
-
-          db.readerDetails.createMany({
-            data: newReaderAllocations.map(({ reader }) => ({
-              ...expand(instance.params),
-              userId: reader.id,
-              projectAllocationLowerBound: 0, // TODO
-              projectAllocationTarget: 10,
-              projectAllocationUpperBound: 100,
-            })),
-            skipDuplicates: true,
-          }),
-
-          db.readerProjectAllocation.createMany({
-            data: newReaderAllocations.map(({ reader, studentId }) => ({
+        await db.readerProjectAllocation.createMany({
+          data: allocationData
+            .filter((e) => e.status === ReaderAssignmentResult.OK)
+            .map(({ data: { reader, studentId } }) => ({
               ...expand(instance.params),
               readerId: reader.id,
               studentId,
-              projectId: "  ", // TODO
-              thirdMarker: false,
+              projectId: studentProjectMap[studentId]!,
+              thirdMarker: false, // TODO needs to come from somewhere
             })),
-          }),
-        ]);
-        /**
-         * we are given pairs of (studentId, reader (userDTO))
-         *
-         * we need to check that the student provided is actually a student in the instance
-         * if not, we should flag that in our error response
-         *
-         * for the provided readerIds we need to check:
-         * - if they are already a reader in this instance then you can go ahead and create the ReaderProjectAllocation
-         * - if they are not a reader in the instance but they are a UserInInstance, first create their ReaderDetails and then create the ReaderProjectAllocation
-         * - if they are not a UserInInstance, but they are a User, create the UserInInstance, then the ReaderDetails and then the ReaderProjectAllocation
-         * - if they are not a User, create the User, then the UserInInstance, then the ReaderDetails and then the ReaderProjectAllocation
-         *
-         */
+        });
+
+        return allocationData.map((e) => e.status);
       },
     ),
 });
