@@ -16,7 +16,7 @@ import { Institution } from "@/data-objects/spaces/institution";
 import { Project } from "@/data-objects/spaces/project";
 import { AllocationSubGroup } from "@/data-objects/spaces/subgroup";
 import { User } from "@/data-objects/users/user";
-import { Stage } from "@/db/types";
+import { Role, Stage } from "@/db/types";
 import { MatchingAlgorithm } from "@/data-objects/algorithm";
 
 // We should re-imagine how our middleware works
@@ -177,72 +177,99 @@ const SubGroupAdminMiddleware = authedMiddleware.unstable_pipe(
 /**
  * @requires a preceding `.input(z.object({ params: instanceParamsSchema }))` or better
  */
-const instanceStudentMiddleware = authedMiddleware.unstable_pipe(
+const studentMiddleware = authedMiddleware.unstable_pipe(
   async ({ ctx: { user }, next, input }) => {
     const { params } = z.object({ params: instanceParamsSchema }).parse(input);
 
-    if (!user.isInstanceStudent(params)) {
+    if (!user.isStudent(params)) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
         message: "User is not a group admin of group XXX",
       });
     }
 
-    return next({ ctx: { user: await user.toInstanceStudent(params) } });
+    return next({ ctx: { user: await user.toStudent(params) } });
   },
 );
 
 /**
  * @requires a preceding `.input(z.object({ params: instanceParamsSchema }))` or better
  */
-const instanceSupervisorMiddleware = authedMiddleware.unstable_pipe(
+const supervisorMiddleware = authedMiddleware.unstable_pipe(
   async ({ ctx: { user }, next, input }) => {
     const { params } = z.object({ params: instanceParamsSchema }).parse(input);
 
-    if (!user.isInstanceSupervisor(params)) {
+    if (!user.isSupervisor(params)) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
         message: "User is not a group admin of group XXX",
       });
     }
 
-    return next({ ctx: { user: await user.toInstanceSupervisor(params) } });
+    return next({ ctx: { user: await user.toSupervisor(params) } });
   },
 );
 
 /**
- * @requires a preceding `.input(z.object({ params: projectParamsSchema }))`
+ * @requires a preceding `.input(z.object({ params: instanceParamsSchema }))` or better
  */
-const projectSupervisorMiddleware = authedMiddleware.unstable_pipe(
+const markerMiddleware = authedMiddleware.unstable_pipe(
   async ({ ctx: { user }, next, input }) => {
-    const { params } = z.object({ params: projectParamsSchema }).parse(input);
+    const { params } = z.object({ params: instanceParamsSchema }).parse(input);
 
-    if (!user.isProjectSupervisor(params)) {
+    if (!user.isMarker(params)) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
-        message: "User does not supervise this project",
+        message: "User is not a marker of group XXX",
       });
     }
-    return next({ ctx: { user: await user.toProjectSupervisor(params) } });
+
+    return next({ ctx: { user: await user.toMarker(params) } });
   },
 );
 
 /**
- * @requires a preceding `.input(z.object({ params: projectParamsSchema }))`
+ * @requires a preceding `.input(z.object({ params: instanceParamsSchema }))` or better
  */
-const projectReaderMiddleware = authedMiddleware.unstable_pipe(
-  async ({ ctx: { user }, next, input }) => {
-    const { params } = z.object({ params: projectParamsSchema }).parse(input);
+function mkRoleMiddleware(allowedRoles: Role[]) {
+  return authedMiddleware.unstable_pipe(
+    async ({ ctx: { user }, next, input }) => {
+      const { params } = z
+        .object({ params: instanceParamsSchema })
+        .parse(input);
 
-    if (!user.isProjectReader(params)) {
+      if (
+        allowedRoles.includes(Role.ADMIN) &&
+        (await user.isSubGroupAdminOrBetter(params))
+      ) {
+        return next();
+      }
+
+      if (allowedRoles.includes(Role.READER) && (await user.isReader(params))) {
+        return next();
+      }
+
+      if (
+        allowedRoles.includes(Role.STUDENT) &&
+        (await user.isStudent(params))
+      ) {
+        return next();
+      }
+
+      if (
+        allowedRoles.includes(Role.SUPERVISOR) &&
+        (await user.isSupervisor(params))
+      ) {
+        return next();
+      }
+
       throw new TRPCError({
         code: "UNAUTHORIZED",
-        message: "User does not supervise this project",
+        message: "User does not have one of the allowed roles",
       });
-    }
-    return next({ ctx: { user: await user.toProjectReader(params) } });
-  },
-);
+    },
+  );
+}
 
 // Note that the logic of determining weather a user is a group admin is isolated to the data object
 // the business logic is not tied up with our tRPC - uncle bob would be proud.
@@ -304,8 +331,11 @@ export const procedure = {
     superAdmin: instanceProcedure.use(SuperAdminMiddleware),
     groupAdmin: instanceProcedure.use(GroupAdminMiddleware),
     subGroupAdmin: instanceProcedure.use(SubGroupAdminMiddleware),
-    student: instanceProcedure.use(instanceStudentMiddleware),
-    supervisor: instanceProcedure.use(instanceSupervisorMiddleware),
+    student: instanceProcedure.use(studentMiddleware),
+    supervisor: instanceProcedure.use(supervisorMiddleware),
+    marker: instanceProcedure.use(markerMiddleware),
+    withRoles: (allowedRoles: Role[]) =>
+      instanceProcedure.use(mkRoleMiddleware(allowedRoles)),
 
     inStage: (allowedStages: Stage[]) => {
       const proc = institutionProcedure
@@ -319,8 +349,11 @@ export const procedure = {
         superAdmin: proc.use(SuperAdminMiddleware),
         groupAdmin: proc.use(GroupAdminMiddleware),
         subGroupAdmin: proc.use(SubGroupAdminMiddleware),
-        student: proc.use(instanceStudentMiddleware),
-        supervisor: proc.use(instanceSupervisorMiddleware),
+        student: proc.use(studentMiddleware),
+        supervisor: proc.use(supervisorMiddleware),
+        marker: proc.use(markerMiddleware),
+        withRoles: (allowedRoles: Role[]) =>
+          proc.use(mkRoleMiddleware(allowedRoles)),
       };
     },
   },
@@ -330,8 +363,10 @@ export const procedure = {
     superAdmin: projectProcedure.use(SuperAdminMiddleware),
     groupAdmin: projectProcedure.use(GroupAdminMiddleware),
     subGroupAdmin: projectProcedure.use(SubGroupAdminMiddleware),
-    supervisor: projectProcedure.use(projectSupervisorMiddleware),
-    reader: projectProcedure.use(projectReaderMiddleware),
+    supervisor: projectProcedure.use(supervisorMiddleware),
+    marker: projectProcedure.use(markerMiddleware),
+    withRoles: (allowedRoles: Role[]) =>
+      projectProcedure.use(mkRoleMiddleware(allowedRoles)),
 
     inStage: (allowedStages: Stage[]) => {
       const proc = institutionProcedure
@@ -346,8 +381,10 @@ export const procedure = {
         superAdmin: proc.use(SuperAdminMiddleware),
         groupAdmin: proc.use(GroupAdminMiddleware),
         subGroupAdmin: proc.use(SubGroupAdminMiddleware),
-        supervisor: proc.use(projectSupervisorMiddleware),
-        reader: proc.use(projectReaderMiddleware),
+        supervisor: proc.use(supervisorMiddleware),
+        marker: proc.use(markerMiddleware),
+        withRoles: (allowedRoles: Role[]) =>
+          proc.use(mkRoleMiddleware(allowedRoles)),
       };
     },
   },

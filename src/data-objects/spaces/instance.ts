@@ -24,6 +24,7 @@ import {
   FlagDTO,
   InstanceDisplayData,
   InstanceDTO,
+  ReaderDTO,
   TagDTO,
   UserDTO,
 } from "@/dto";
@@ -31,8 +32,8 @@ import { ProjectDTO } from "@/dto/project";
 import { StudentDTO } from "@/dto/user/student";
 import { SupervisorDTO } from "@/dto/user/supervisor";
 import { Transformers as T } from "@/db/transformers";
-import { InstanceSupervisor } from "../users/instance-supervisor";
-import { InstanceStudent } from "../users/instance-student";
+import { Supervisor } from "../users/supervisor";
+import { Student } from "../users/student";
 import { Project } from "./project";
 
 export class AllocationInstance extends DataObject {
@@ -325,6 +326,15 @@ export class AllocationInstance extends DataObject {
     return supervisorPreAllocations;
   }
 
+  public async getReaders(): Promise<ReaderDTO[]> {
+    const readers = await this.db.readerDetails.findMany({
+      where: expand(this.params),
+      include: { userInInstance: { include: { user: true } } },
+    });
+
+    return readers.map(T.toReaderDTO);
+  }
+
   public async getStudentPreferenceDetails() {
     const students = await this.db.studentDetails.findMany({
       where: expand(this.params),
@@ -489,7 +499,7 @@ export class AllocationInstance extends DataObject {
    * @param access
    * @returns the new access state
    */
-  async setStudentPublicationAccess(access: boolean): Promise<boolean> {
+  public async setStudentPublicationAccess(access: boolean): Promise<boolean> {
     await this.db.allocationInstance.update({
       where: { instanceId: toInstanceId(this.params) },
       data: { studentAllocationAccess: access },
@@ -502,7 +512,9 @@ export class AllocationInstance extends DataObject {
    * @param access
    * @returns the new access state
    */
-  async setSupervisorPublicationAccess(access: boolean): Promise<boolean> {
+  public async setSupervisorPublicationAccess(
+    access: boolean,
+  ): Promise<boolean> {
     await this.db.allocationInstance.update({
       where: { instanceId: toInstanceId(this.params) },
       data: { supervisorAllocationAccess: access },
@@ -510,20 +522,20 @@ export class AllocationInstance extends DataObject {
     return access;
   }
 
-  public isSupervisor(userId: string): Promise<boolean> {
-    return new User(this.db, userId).isInstanceSupervisor(this.params);
+  public async isSupervisor(userId: string): Promise<boolean> {
+    return new User(this.db, userId).isSupervisor(this.params);
   }
 
-  public getSupervisor(userId: string): InstanceSupervisor {
-    return new User(this.db, userId).toInstanceSupervisor(this.params);
+  public async getSupervisor(userId: string): Promise<Supervisor> {
+    return new User(this.db, userId).toSupervisor(this.params);
   }
 
-  public isStudent(userId: string): Promise<boolean> {
-    return new User(this.db, userId).isInstanceStudent(this.params);
+  public async isStudent(userId: string): Promise<boolean> {
+    return new User(this.db, userId).isStudent(this.params);
   }
 
-  public getStudent(userId: string): Promise<InstanceStudent> {
-    return new User(this.db, userId).toInstanceStudent(this.params);
+  public async getStudent(userId: string): Promise<Student> {
+    return new User(this.db, userId).toStudent(this.params);
   }
 
   public async getStudents(): Promise<StudentDTO[]> {

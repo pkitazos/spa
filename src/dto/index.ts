@@ -19,6 +19,7 @@ export {
   userDtoSchema,
 } from "./user";
 export { type SupervisorDTO, supervisorDtoSchema } from "./user/supervisor";
+export { type ReaderDTO, readerDtoSchema } from "./user/reader";
 export { type StudentDTO, studentDtoSchema } from "./user/student";
 export { type AlgorithmDTO, algorithmDtoSchema } from "./algorithm";
 export { type ProjectDTO, projectDtoSchema } from "./project";

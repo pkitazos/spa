@@ -71,7 +71,7 @@ export const accessControlRouter = createTRPCRouter({
     .output(z.boolean())
     .query(
       async ({ ctx: { instance, user } }) =>
-        await user.isInstanceMember(instance.params),
+        await user.isMember(instance.params),
     ),
 
   stageAccess: procedure.instance.user
@@ -80,15 +80,15 @@ export const accessControlRouter = createTRPCRouter({
       if (await user.isSubGroupAdminOrBetter(instance.params)) return true;
 
       const { stage } = await instance.get();
-      if (await user.isInstanceSupervisor(instance.params)) {
+      if (await user.isSupervisor(instance.params)) {
         return !supervisorStages.includes(stage);
       }
 
-      if (await user.isInstanceReader(instance.params)) {
+      if (await user.isReader(instance.params)) {
         return !readerStages.includes(stage);
       }
 
-      if (await user.isInstanceStudent(instance.params)) {
+      if (await user.isStudent(instance.params)) {
         return !studentStages.includes(stage);
       }
 

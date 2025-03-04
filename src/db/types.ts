@@ -20,7 +20,9 @@ export type {
   Flag as DB_Flag,
   FlagOnProject as DB_FlagOnProject,
   FlagOnStudent as DB_FlagOnStudent,
+  GradedSubmission as DB_GradedSubmission,
   GroupAdmin as DB_GroupAdmin,
+  MarkerSubmissionComments as DB_MarkerSubmissionComments,
   MatchingPair as DB_MatchingPair,
   MatchingResult as DB_MatchingResult,
   Project as DB_Project,
@@ -99,4 +101,11 @@ export const adminLevelSchema = z.enum([
 
 export type AdminLevel = z.infer<typeof adminLevelSchema>;
 
-export { AlgorithmFlag, PreferenceType, Stage } from "@prisma/client";
+export const markerTypeSchema = z.enum([Role.SUPERVISOR, Role.READER]);
+
+export {
+  AlgorithmFlag,
+  PreferenceType,
+  Stage,
+  MarkerType,
+} from "@prisma/client";

@@ -15,7 +15,7 @@ import { StudentDTO } from "@/dto/user/student";
 import { ProjectDTO } from "@/dto/project";
 import { SupervisorDTO } from "@/dto/user/supervisor";
 
-export class InstanceStudent extends User {
+export class Student extends User {
   instance: AllocationInstance;
 
   constructor(db: DB, id: string, params: InstanceParams) {

@@ -1,5 +1,6 @@
 // MOVE these to some other file
 
+import { GradedSubmissionDTO } from "@/dto/marking";
 import {
   DB_Algorithm,
   DB_AllocationGroup,
@@ -8,7 +9,9 @@ import {
   DB_Flag,
   DB_FlagOnProject,
   DB_FlagOnStudent,
+  DB_GradedSubmission,
   DB_Project,
+  DB_ReaderDetails,
   DB_StudentDetails,
   DB_SupervisorDetails,
   DB_Tag,
@@ -24,6 +27,7 @@ import {
   InstanceDTO,
   InstanceUserDTO,
   ProjectDTO,
+  ReaderDTO,
   StudentDTO,
   SubGroupDTO,
   SupervisorDTO,
@@ -100,6 +104,22 @@ export class Transformers {
     };
   }
 
+  public static toReaderDTO(
+    data: DB_ReaderDetails & {
+      userInInstance: DB_UserInInstance & { user: DB_User };
+    },
+  ): ReaderDTO {
+    return {
+      id: data.userId,
+      name: data.userInInstance.user.name,
+      email: data.userInInstance.user.email,
+      joined: data.userInInstance.joined,
+      allocationLowerBound: data.projectAllocationLowerBound,
+      allocationTarget: data.projectAllocationTarget,
+      allocationUpperBound: data.projectAllocationUpperBound,
+    };
+  }
+
   public static toSupervisorDTO(
     data: DB_SupervisorDetails & {
       userInInstance: DB_UserInInstance & { user: DB_User };
@@ -146,16 +166,30 @@ export class Transformers {
     return { id: data.id, title: data.title, description: data.description };
   }
 
-  public static toAlgorithmDTO = (a: DB_Algorithm): AlgorithmDTO => ({
-    id: a.id,
-    displayName: a.displayName,
-    description: a.description ?? undefined,
-    createdAt: a.createdAt,
-    flag1: a.flag1,
-    flag2: a.flag2 ?? undefined,
-    flag3: a.flag3 ?? undefined,
-    maxRank: a.maxRank,
-    targetModifier: a.targetModifier,
-    upperBoundModifier: a.upperBoundModifier,
-  });
+  public static toAlgorithmDTO(a: DB_Algorithm): AlgorithmDTO {
+    return {
+      id: a.id,
+      displayName: a.displayName,
+      description: a.description ?? undefined,
+      createdAt: a.createdAt,
+      flag1: a.flag1,
+      flag2: a.flag2 ?? undefined,
+      flag3: a.flag3 ?? undefined,
+      maxRank: a.maxRank,
+      targetModifier: a.targetModifier,
+      upperBoundModifier: a.upperBoundModifier,
+    };
+  }
+
+  public static toGradedSubmissionDTO(
+    data: DB_GradedSubmission,
+  ): GradedSubmissionDTO {
+    return {
+      id: data.id,
+      title: data.title,
+      flagId: data.flagId,
+      weight: data.weight,
+      deadline: data.deadline,
+    };
+  }
 }

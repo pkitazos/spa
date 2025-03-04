@@ -1,19 +1,14 @@
 import { expand } from "@/lib/utils/general/instance-params";
 import { InstanceParams } from "@/lib/validations/params";
 
-import { AllocationInstance } from "../spaces/instance";
-
-import { User } from "./user";
-
 import { Transformers as T } from "@/db/transformers";
 import { DB } from "@/db/types";
 import { UserDTO, ProjectDTO, StudentDTO, SupervisorDTO } from "@/dto";
+import { Marker } from "./marker";
 
-export class InstanceSupervisor extends User {
-  instance: AllocationInstance;
+export class Supervisor extends Marker {
   constructor(db: DB, id: string, params: InstanceParams) {
-    super(db, id);
-    this.instance = new AllocationInstance(db, params);
+    super(db, id, params);
   }
 
   public async toDTO(): Promise<SupervisorDTO> {
@@ -151,7 +146,7 @@ export class InstanceSupervisor extends User {
       instance: parentInstanceId,
     };
 
-    return await new InstanceSupervisor(this.db, this.id, parentInstanceParams)
+    return await new Supervisor(this.db, this.id, parentInstanceParams)
       .getSupervisionAllocations()
       .then((allocations) => allocations.length);
   }

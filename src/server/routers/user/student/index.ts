@@ -13,7 +13,7 @@ import { createTRPCRouter } from "@/server/trpc";
 
 import { preferenceRouter } from "./preference";
 
-import { InstanceSupervisor } from "@/data-objects/users/instance-supervisor";
+import { Supervisor } from "@/data-objects/users/supervisor";
 import { studentDtoSchema } from "@/dto/user/student";
 
 export const studentRouter = createTRPCRouter({
@@ -52,9 +52,6 @@ export const studentRouter = createTRPCRouter({
 
       // definitely has allocation
       const { project, studentRanking } = await student.getAllocation();
-      const supervisor = await instance
-        .getSupervisor(project.supervisorId)
-        .get();
 
       if (!(await student.hasSelfDefinedProject())) {
         // no self defined project
@@ -177,7 +174,7 @@ export const studentRouter = createTRPCRouter({
 
       const { project, studentRanking } = await student.getAllocation();
 
-      const supervisor = new InstanceSupervisor(
+      const supervisor = new Supervisor(
         db,
         project.supervisorId,
         instance.params,

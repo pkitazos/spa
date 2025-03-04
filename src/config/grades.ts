@@ -23,3 +23,9 @@ export const GRADES = [
   { label: "G2", value: 1 },
   { label: "H", value: 0 },
 ];
+
+export function computeGrade(mark: number): string {
+  const grade = GRADES.find((g) => g.value === Math.ceil(mark));
+  if (!grade) throw new Error(`Computed mark not valid: ${mark}`);
+  return grade.label;
+}

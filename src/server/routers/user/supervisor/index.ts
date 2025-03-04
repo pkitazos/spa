@@ -84,7 +84,7 @@ export const supervisorRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx: { instance }, input: { supervisorId } }) => {
-      const supervisor = instance.getSupervisor(supervisorId);
+      const supervisor = await instance.getSupervisor(supervisorId);
       return {
         supervisor: await supervisor.toDTO(),
         projects: await supervisor.getProjectsWithDetails(),
@@ -167,124 +167,9 @@ export const supervisorRouter = createTRPCRouter({
     )
     .output(supervisorCapacitiesSchema)
     .mutation(
-      async ({ ctx: { instance }, input: { supervisorId, capacities } }) =>
-        await instance
-          .getSupervisor(supervisorId)
-          .setCapacityDetails(capacities),
-    ),
-
-  // pin
-  readings: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const userId = ctx.session.user.id;
-
-        const allReadings = await ctx.db.projectAllocationReader.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            readerId: userId,
-          },
-        });
-
-        const projectIds = [];
-
-        for (const read of allReadings) {
-          projectIds.push(read.projectId);
-        }
-
-        const projects = await ctx.db.project.findMany({
-          where: { id: { in: projectIds } },
-        });
-
-        const projectsAndStudents = [];
-
-        for (let i = 0; i < projects.length; i++) {
-          if (projects[i].description.length >= 200) {
-            projects[i].description =
-              projects[i].description.slice(0, 100) + "...";
-          }
-          const student = await ctx.db.projectAllocation.findFirst({
-            where: { projectId: projects[i].id },
-          });
-          let studentId;
-          if (!student) {
-            studentId = "N/A";
-          } else {
-            studentId = student.userId;
-          }
-
-          projectsAndStudents.push({
-            id: projects[i].id,
-            title: projects[i].title,
-            description: projects[i].description,
-            studentId: studentId,
-          });
-        }
-
-        return { projectsAndStudents };
-      },
-    ),
-
-  marking: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const userId = ctx.session.user.id;
-
-        const allReadings = await ctx.db.projectAllocationReader.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            readerId: userId,
-          },
-        });
-
-        const projectIds = [];
-
-        for (const read of allReadings) {
-          projectIds.push(read.projectId);
-        }
-
-        const projects = await ctx.db.project.findMany({
-          where: { id: { in: projectIds } },
-        });
-
-        const projectsAndStudents = [];
-
-        for (let i = 0; i < projects.length; i++) {
-          const student = await ctx.db.projectAllocation.findFirst({
-            where: { projectId: projects[i].id },
-          });
-          let studentId;
-          if (!student) {
-            studentId = "N/A";
-          } else {
-            studentId = student.userId;
-          }
-
-          projectsAndStudents.push({
-            id: projects[i].id,
-            title: projects[i].title,
-            studentId: studentId,
-            isMarked: projects[i].interimMarked,
-          });
-        }
-
-        return { projectsAndStudents };
+      async ({ ctx: { instance }, input: { supervisorId, capacities } }) => {
+        const supervisor = await instance.getSupervisor(supervisorId);
+        return supervisor.setCapacityDetails(capacities);
       },
     ),
 

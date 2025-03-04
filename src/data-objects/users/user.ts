@@ -3,7 +3,6 @@ import { ValidatedSegments } from "@/lib/validations/breadcrumbs";
 import {
   GroupParams,
   InstanceParams,
-  ProjectParams,
   SubGroupParams,
 } from "@/lib/validations/params";
 
@@ -11,17 +10,16 @@ import { DataObject } from "../data-object";
 import { Institution } from "../spaces/institution";
 
 import { GroupAdmin } from "./group-admin";
-import { InstanceReader } from "./instance-reader";
-import { InstanceStudent } from "./instance-student";
-import { InstanceSupervisor } from "./instance-supervisor";
-import { ProjectReader } from "./project-reader";
-import { ProjectSupervisor } from "./project-supervisor";
+import { Reader } from "./reader";
+import { Student } from "./student";
+import { Supervisor } from "./supervisor";
 import { SubGroupAdmin } from "./subgroup-admin";
 import { SuperAdmin } from "./super-admin";
 
 import { Transformers as T } from "@/db/transformers";
 import { DB, Role } from "@/db/types";
 import { InstanceDTO, InstanceUserDTO, UserDTO } from "@/dto";
+import { Marker } from "./marker";
 
 export class User extends DataObject {
   id: string;
@@ -32,14 +30,21 @@ export class User extends DataObject {
     this.id = id;
   }
 
+  public async toDTO(): Promise<UserDTO> {
+    if (!this._data) {
+      this._data = await this.db.user.findFirstOrThrow({
+        where: { id: this.id },
+      });
+    }
+    return this._data;
+  }
+
   static fromDTO(db: DB, data: UserDTO) {
     const user = new User(db, data.id);
     user._data = data;
   }
 
-  public toUser() {
-    return new User(this.db, this.id);
-  }
+  // --- kind checks:
 
   public async isSuperAdmin(): Promise<boolean> {
     return !!(await this.db.superAdmin.findFirst({
@@ -47,25 +52,10 @@ export class User extends DataObject {
     }));
   }
 
-  public async toSuperAdmin() {
-    if (!(await this.isSuperAdmin())) throw new Error("unauthorised");
-    return new SuperAdmin(this.db, this.id);
-  }
-
   public async isGroupAdmin(groupParams: GroupParams): Promise<boolean> {
     return !!(await this.db.groupAdmin.findFirst({
       where: { userId: this.id, allocationGroupId: groupParams.group },
     }));
-  }
-
-  public async isGroupAdminOrBetter(params: GroupParams): Promise<boolean> {
-    return (await this.isSuperAdmin()) || (await this.isGroupAdmin(params));
-  }
-
-  public async toGroupAdmin(groupParams: GroupParams) {
-    if (!(await this.isGroupAdmin(groupParams)))
-      throw new Error("unauthorised");
-    return new GroupAdmin(this.db, this.id, groupParams);
   }
 
   public async isSubGroupAdmin(
@@ -80,6 +70,10 @@ export class User extends DataObject {
     }));
   }
 
+  public async isGroupAdminOrBetter(params: GroupParams): Promise<boolean> {
+    return (await this.isSuperAdmin()) || (await this.isGroupAdmin(params));
+  }
+
   public async isSubGroupAdminOrBetter(
     params: SubGroupParams,
   ): Promise<boolean> {
@@ -89,111 +83,120 @@ export class User extends DataObject {
     );
   }
 
-  public async toSubGroupAdmin(subGroupParams: SubGroupParams) {
-    if (!(await this.isSubGroupAdmin(subGroupParams)))
-      throw new Error("unauthorised");
-    return new SubGroupAdmin(this.db, this.id, subGroupParams);
-  }
-
-  public async isInstanceStudent(params: InstanceParams): Promise<boolean> {
+  public async isStudent(params: InstanceParams): Promise<boolean> {
     return !!(await this.db.studentDetails.findFirst({
       where: { ...expand(params), userId: this.id },
     }));
   }
 
-  public async toInstanceStudent(instanceParams: InstanceParams) {
-    if (!(await this.isInstanceStudent(instanceParams)))
-      throw new Error("unauthorised");
-
-    return new InstanceStudent(this.db, this.id, instanceParams);
-  }
-
-  public async hasSelfDefinedProject(instanceParams: InstanceParams) {
-    if (!(await this.isInstanceStudent(instanceParams))) return false;
-
-    return await this.toInstanceStudent(instanceParams).then((s) =>
-      s.hasSelfDefinedProject(),
-    );
-  }
-
-  public async isInstanceSupervisor(params: InstanceParams) {
+  public async isSupervisor(params: InstanceParams): Promise<boolean> {
     return !!(await this.db.supervisorDetails.findFirst({
       where: { ...expand(params), userId: this.id },
     }));
   }
 
-  public toInstanceSupervisor(instanceParams: InstanceParams) {
-    if (!this.isInstanceSupervisor(instanceParams))
-      throw new Error("User is not a supervisor in this instance");
-
-    return new InstanceSupervisor(this.db, this.id, instanceParams);
-  }
-
-  public async isInstanceReader(params: InstanceParams) {
+  public async isReader(params: InstanceParams): Promise<boolean> {
     return !!(await this.db.readerDetails.findFirst({
       where: { ...expand(params), userId: this.id },
     }));
   }
 
-  public toInstanceReader(instanceParams: InstanceParams) {
-    if (!this.isInstanceReader(instanceParams)) throw new Error("unauthorised");
-
-    return new InstanceReader(this.db, this.id, instanceParams);
+  public async isMarker(params: InstanceParams): Promise<boolean> {
+    return (await this.isSupervisor(params)) || (await this.isReader(params));
   }
 
-  public async isInstanceMember(params: InstanceParams) {
+  public async isStaff(params: InstanceParams): Promise<boolean> {
     return (
       (await this.isSubGroupAdminOrBetter(params)) ||
-      (await this.isInstanceSupervisor(params)) ||
-      (await this.isInstanceStudent(params)) ||
-      (await this.isInstanceReader(params))
+      (await this.isMarker(params))
     );
   }
 
-  public async isProjectSupervisor({ projectId, ...params }: ProjectParams) {
-    return !!(await this.db.project.findFirst({
-      where: { id: projectId, ...expand(params), supervisorId: this.id },
-    }));
+  public async isMember(params: InstanceParams): Promise<boolean> {
+    return (await this.isStaff(params)) || (await this.isStudent(params));
   }
 
-  public toProjectSupervisor(projectParams: ProjectParams) {
-    if (!this.isProjectSupervisor(projectParams))
-      throw new Error("unauthorised");
-
-    return new ProjectSupervisor(this.db, this.id, projectParams);
-  }
-
-  public async isProjectReader({ projectId, ...params }: ProjectParams) {
-    return !!(await this.db.readerProjectAllocation.findFirst({
-      where: { projectId, ...expand(params), readerId: this.id },
-    }));
-  }
-
-  public async toProjectReader(projectParams: ProjectParams) {
-    if (!(await this.isProjectReader(projectParams))) {
-      throw new Error("unauthorised");
-    }
-
-    return new ProjectReader(this.db, this.id, projectParams);
-  }
-
-  public async getRolesInInstance(instanceParams: InstanceParams) {
+  public async getRolesInInstance(
+    instanceParams: InstanceParams,
+  ): Promise<Set<Role>> {
     const roles = new Set<Role>();
 
     if (await this.isSubGroupAdminOrBetter(instanceParams)) {
       roles.add(Role.ADMIN);
     }
-    if (await this.isInstanceStudent(instanceParams)) {
+    if (await this.isStudent(instanceParams)) {
       roles.add(Role.STUDENT);
     }
-    if (await this.isInstanceReader(instanceParams)) {
+    if (await this.isReader(instanceParams)) {
       roles.add(Role.READER);
     }
-    if (await this.isInstanceSupervisor(instanceParams)) {
+    if (await this.isSupervisor(instanceParams)) {
       roles.add(Role.SUPERVISOR);
     }
 
     return roles;
+  }
+
+  // --- conversions
+
+  public toUser(): User {
+    return new User(this.db, this.id);
+  }
+
+  public async toSuperAdmin(): Promise<SuperAdmin> {
+    if (!(await this.isSuperAdmin())) throw new Error("unauthorised");
+    return new SuperAdmin(this.db, this.id);
+  }
+
+  public async toGroupAdmin(groupParams: GroupParams): Promise<GroupAdmin> {
+    if (!(await this.isGroupAdmin(groupParams)))
+      throw new Error("unauthorised");
+    return new GroupAdmin(this.db, this.id, groupParams);
+  }
+
+  public async toSubGroupAdmin(
+    subGroupParams: SubGroupParams,
+  ): Promise<SubGroupAdmin> {
+    if (!(await this.isSubGroupAdmin(subGroupParams)))
+      throw new Error("unauthorised");
+    return new SubGroupAdmin(this.db, this.id, subGroupParams);
+  }
+
+  public async toStudent(instanceParams: InstanceParams): Promise<Student> {
+    if (!(await this.isStudent(instanceParams)))
+      throw new Error("unauthorised");
+
+    return new Student(this.db, this.id, instanceParams);
+  }
+
+  public async toSupervisor(
+    instanceParams: InstanceParams,
+  ): Promise<Supervisor> {
+    if (!(await this.isSupervisor(instanceParams)))
+      throw new Error("User is not a supervisor in this instance");
+
+    return new Supervisor(this.db, this.id, instanceParams);
+  }
+
+  public async toReader(instanceParams: InstanceParams): Promise<Reader> {
+    if (!(await this.isReader(instanceParams))) throw new Error("unauthorised");
+
+    return new Reader(this.db, this.id, instanceParams);
+  }
+
+  public async toMarker(instanceParams: InstanceParams): Promise<Marker> {
+    if (!(await this.isMarker(instanceParams))) throw new Error("unauthorised");
+
+    return new Marker(this.db, this.id, instanceParams);
+  }
+
+  // --- Other methods
+  public async hasSelfDefinedProject(instanceParams: InstanceParams) {
+    if (!(await this.isStudent(instanceParams))) return false;
+
+    return await this.toStudent(instanceParams).then((s) =>
+      s.hasSelfDefinedProject(),
+    );
   }
 
   // TODO return type
@@ -272,7 +275,7 @@ export class User extends DataObject {
     if (group && subGroup && instance) {
       res.push({
         segment: instance,
-        access: await this.isInstanceMember({ group, subGroup, instance }),
+        access: await this.isMember({ group, subGroup, instance }),
       });
     }
 
@@ -312,15 +315,6 @@ export class User extends DataObject {
     return res;
   }
 
-  public async toDTO(): Promise<UserDTO> {
-    if (!this._data) {
-      this._data = await this.db.user.findFirstOrThrow({
-        where: { id: this.id },
-      });
-    }
-    return this._data;
-  }
-
   public async joinInstance(params: InstanceParams): Promise<InstanceUserDTO> {
     return await this.db.userInInstance
       .update({
@@ -329,13 +323,5 @@ export class User extends DataObject {
         include: { user: true },
       })
       .then(T.toInstanceUserDTO);
-  }
-
-  public async isInstanceStaff(params: InstanceParams): Promise<boolean> {
-    return (
-      (await this.isSubGroupAdminOrBetter(params)) ||
-      (await this.isInstanceSupervisor(params)) ||
-      (await this.isInstanceReader(params))
-    );
   }
 }

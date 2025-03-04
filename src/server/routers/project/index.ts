@@ -189,8 +189,9 @@ export const projectRouter = createTRPCRouter({
           flags: p.project.flags,
         }));
     }),
-  // pin
-  editSpecialCircumstances: instanceProcedure
+
+  // TODO: @JakeTrevor this should just be an update + allow supervisor of the project to edit it also
+  editSpecialCircumstances: procedure.project.subGroupAdmin
     .input(
       z.object({
         params: instanceParamsSchema,
@@ -199,82 +200,19 @@ export const projectRouter = createTRPCRouter({
         specialCircumstances: z.string().optional(),
       }),
     )
-    .mutation(
-      async ({
-        ctx,
-        input: { params, studentId, projectId, specialCircumstances },
-      }) => {
-        await ctx.db.projectAllocation.update({
-          where: {
-            allocationId: { projectId, userId: studentId, ...expand(params) },
-          },
-          data: { specialCircumstances },
-        });
-      },
-    ),
+    .mutation(async ({ ctx, input: { projectId, specialCircumstances } }) => {
+      // TODO: make project method
+      // TODO: add to data model
+      await ctx.db.project.update({
+        where: { id: projectId },
+        data: { specialCircumstances },
+      });
+    }),
 
-  editMarks: instanceProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        projectId: z.string(),
-        marks: z.array(z.tuple([z.string(), z.number(), z.string()])), // (flagId, mark, justification)
-        finalComment: z.string(),
-        prize: z.boolean(),
-        markerId: z.string(),
-        studentId: z.string(),
-        draft: z.boolean(),
-        flagId: z.string(),
-      }),
-    )
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          marks,
-          finalComment,
-          prize,
-          markerId,
-          studentId,
-          draft,
-          flagId,
-        },
-      }) => {
-        for (const mark of marks) {
-          await ctx.db.componentScore.update({
-            where: {
-              markerId_studentId_flagId_submissionId_allocationGroupId_allocationSubGroupId_allocationInstanceId:
-                {
-                  markerId: markerId,
-                  studentId: studentId,
-                  flagId: mark[0],
-                  submissionId: "", // TODO: understand submissionId
-                  allocationGroupId: group,
-                  allocationSubGroupId: subGroup,
-                  allocationInstanceId: instance,
-                },
-            },
-            data: { grade: mark[1], justification: mark[2], draft: draft },
-          });
-        }
-
-        await ctx.db.markerSubmissionComments.create({
-          data: {
-            summary: finalComment,
-            recommendedForPrize: prize,
-            markerId: markerId,
-            studentId,
-            flagId: flagId,
-            submissionId: "",
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          },
-        });
-      },
-    ),
-
+  /**
+   * @deprecated use project.get
+   */
+  // TODO: @JakeTrevor
   getSpecialCircumstances: instanceProcedure
     .input(z.object({ params: instanceParamsSchema, projectId: z.string() }))
     .query(async ({ ctx, input: { projectId } }) => {
@@ -285,33 +223,6 @@ export const projectRouter = createTRPCRouter({
 
       return project?.specialCircumstances ?? "";
     }),
-
-  getAllForStudentPreferences: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          studentId,
-        },
-      }) => {
-        const projectData = await ctx.db.project.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            preAllocatedStudentId: null,
-          },
-          select: {
-            id: true,
-            title: true,
-            preAllocatedStudentId: true,
-            flagOnProjects: { select: { flag: true } },
-          },
-        });
-      },
-    ),
 
   // BREAKING input/output type
   getAllForUser: procedure.instance.user
@@ -329,8 +240,8 @@ export const projectRouter = createTRPCRouter({
       // if you are a student, you should only be able to see projects that you are eligible for
       const projectData = await instance.getProjectDetails();
 
-      if (await user.isInstanceStudent(instance.params)) {
-        const student = await user.toInstanceStudent(instance.params);
+      if (await user.isStudent(instance.params)) {
+        const student = await user.toStudent(instance.params);
         const studentData = await student.get();
 
         return projectData
@@ -426,10 +337,10 @@ export const projectRouter = createTRPCRouter({
       ]),
     )
     .query(async ({ ctx: { user, instance, project } }) => {
-      if (await user.isInstanceStaff(instance.params)) {
+      if (await user.isStaff(instance.params)) {
         return { access: true };
-      } else if (await user.isInstanceStudent(instance.params)) {
-        const student = await user.toInstanceStudent(instance.params);
+      } else if (await user.isStudent(instance.params)) {
+        const student = await user.toStudent(instance.params);
 
         const { flags: studentFlags } = await student.get();
         const studentFlagSet = new Set(studentFlags);

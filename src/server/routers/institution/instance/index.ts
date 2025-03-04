@@ -25,13 +25,19 @@ import { stageSchema } from "@/db/types";
 import {
   flagDtoSchema,
   instanceDtoSchema,
+  projectDtoSchema,
+  ReaderDTO,
+  readerDtoSchema,
   studentDtoSchema,
+  SupervisorDTO,
   supervisorDtoSchema,
   tagDtoSchema,
 } from "@/dto";
 import { LinkUserResult, LinkUserResultSchema } from "@/dto/link-user-result";
 import { newReaderAllocationSchema } from "@/lib/validations/allocate-readers/new-reader-allocation";
-import { assignReadersTx } from "@/db/transactions/assign-readers";
+import { expand } from "@/lib/utils/general/instance-params";
+import { Transformers as T } from "@/db/transformers";
+import { computeGrade } from "@/config/grades";
 
 const tgc = z.object({
   id: z.string(),
@@ -533,66 +539,143 @@ export const instanceRouter = createTRPCRouter({
       return flags.map((f) => f.title);
     }),
 
-  // pin
-  assignReader: instanceAdminProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        newReaderAllocation: newReaderAllocationSchema,
-      }),
+  getMarkerSubmissions: procedure.instance.subGroupAdmin
+    .input(z.object({ gradedSubmissionId: z.string() }))
+    .output(
+      z.array(
+        z.object({
+          project: projectDtoSchema,
+          student: studentDtoSchema,
+          supervisor: supervisorDtoSchema,
+          supervisorGrade: z.string().optional(),
+          reader: readerDtoSchema,
+          readerGrade: z.string().optional(),
+        }),
+      ),
     )
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          newReaderAllocation: { project_title, student_guid, reader_name },
-        },
-      }) => {
-        await ctx.db.$transaction(async (tx) => {
-          const reader = await tx.user.findFirst({
-            where: { name: reader_name },
-          });
-          if (!reader) {
-            const reader_id = "";
-            return null;
-          }
-          const reader_id = reader.id;
+    .query(async ({ ctx: { instance, db }, input: { gradedSubmissionId } }) => {
+      const supervisors = await instance.getSupervisors();
 
-          const project = await tx.project.findFirst({
-            where: { title: project_title },
-          });
-          if (!project) {
-            const project_id = "";
-            return null;
-          }
-          const project_id = project.id;
+      const supervisorMap = supervisors.reduce(
+        (acc, supervisor) => ({ ...acc, [supervisor.id]: supervisor }),
+        {} as Record<string, SupervisorDTO>,
+      );
 
-          await tx.projectAllocationReader.create({
-            data: {
-              readerId: reader_id,
-              projectId: project_id,
-              studentId: student_guid,
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
+      const readers = await instance.getReaders();
+
+      const readerMap = readers.reduce(
+        (acc, reader) => ({ ...acc, [reader.id]: reader }),
+        {} as Record<string, ReaderDTO>,
+      );
+
+      const submission = await db.gradedSubmission.findFirstOrThrow({
+        where: { id: gradedSubmissionId },
+        include: { assessmentComponents: { include: { scores: true } } },
+      });
+
+      const studentAllocations = await db.studentProjectAllocation.findMany({
+        where: expand(instance.params),
+        include: {
+          student: {
+            include: {
+              studentFlags: { include: { flag: true } },
+              userInInstance: { include: { user: true } },
             },
-          });
+          },
+          project: {
+            include: {
+              readerAllocations: { include: { reader: true } },
+              flagsOnProject: { include: { flag: true } },
+              tagsOnProject: { include: { tag: true } },
+            },
+          },
+        },
+      });
+
+      return studentAllocations.map((a) => {
+        const ra = a.project.readerAllocations.find((r) => !r.thirdMarker);
+        if (!ra) {
+          throw new Error(
+            "instance.getMarkerSubmissions: Reader allocation not found",
+          );
+        }
+
+        const reader = readerMap[ra.readerId];
+
+        if (!reader) {
+          throw new Error("instance.getMarkerSubmissions: Reader not found");
+        }
+
+        const supervisor = supervisorMap[a.project.supervisorId];
+
+        if (!supervisor) {
+          throw new Error(
+            "instance.getMarkerSubmissions: Supervisor not found",
+          );
+        }
+
+        const supervisorScores = submission.assessmentComponents.map((c) => {
+          const supervisorScore = c.scores.find(
+            (s) => s.markerId === supervisor.id,
+          );
+          if (!supervisorScore) return undefined;
+          return { weight: c.weight, score: supervisorScore.grade };
         });
 
-        return { student_guid };
-      },
-    ),
+        let supervisorGrade: string | undefined;
+        if (supervisorScores.every((s) => s !== undefined)) {
+          const mark = supervisorScores.reduce(
+            (acc, val) => acc + val.weight * val.score,
+            0,
+          );
+          supervisorGrade = computeGrade(mark);
+        }
 
-  // pin
-  assignReaders: instanceAdminProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        newReaderAllocations: z.array(newReaderAllocationSchema),
-      }),
+        const readerScores = submission.assessmentComponents.map((c) => {
+          const readerScore = c.scores.find((s) => s.markerId === reader.id);
+          if (!readerScore) return undefined;
+          return { weight: c.weight, score: readerScore.grade };
+        });
+
+        let readerGrade: string | undefined;
+        if (readerScores.every((s) => s !== undefined)) {
+          const mark = readerScores.reduce(
+            (acc, val) => acc + val.weight * val.score,
+            0,
+          );
+          readerGrade = computeGrade(mark);
+        }
+
+        return {
+          project: T.toProjectDTO(a.project),
+          student: T.toStudentDTO(a.student),
+          supervisor,
+          supervisorGrade,
+          reader,
+          readerGrade,
+        };
+      });
+    }),
+
+  // pin @JakeTrevor
+  assignReaders: procedure.instance
+    .inStage([Stage.READER_BIDDING, Stage.READER_ALLOCATION])
+    .subGroupAdmin.input(
+      z.object({ newReaderAllocations: z.array(newReaderAllocationSchema) }),
     )
-    .mutation(async ({ ctx, input: { params, newReaderAllocations } }) => {
-      return await assignReadersTx(ctx.db, newReaderAllocations, params);
+    .mutation(async ({ ctx: { db }, input: { newReaderAllocations } }) => {
+      /**
+       * we are given pairs of (studentId, reader (userDTO))
+       *
+       * we need to check that the student provided is actually a student in the instance
+       * if not, we should flag that in our error response
+       *
+       * for the provided readerIds we need to check:
+       * - if they are already a reader in this instance then you can go ahead and create the ReaderProjectAllocation
+       * - if they are not a reader in the instance but they are a UserInInstance, first create their ReaderDetails and then create the ReaderProjectAllocation
+       * - if they are not a UserInInstance, but they are a User, create the UserInInstance, then the ReaderDetails and then the ReaderProjectAllocation
+       * - if they are not a User, create the User, then the UserInInstance, then the ReaderDetails and then the ReaderProjectAllocation
+       *
+       */
     }),
 });
