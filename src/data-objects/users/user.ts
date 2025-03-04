@@ -95,6 +95,12 @@ export class User extends DataObject {
     }));
   }
 
+  public async isProjectSupervisor(id: string): Promise<boolean> {
+    return !!(await this.db.project.findFirst({
+      where: { id, supervisorId: this.id },
+    }));
+  }
+
   public async isReader(params: InstanceParams): Promise<boolean> {
     return !!(await this.db.readerDetails.findFirst({
       where: { ...expand(params), userId: this.id },

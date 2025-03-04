@@ -33,7 +33,10 @@ import {
   supervisorDtoSchema,
   tagDtoSchema,
 } from "@/dto";
-import { LinkUserResult, LinkUserResultSchema } from "@/dto/link-user-result";
+import {
+  LinkUserResult,
+  LinkUserResultSchema,
+} from "@/dto/result/link-user-result";
 import { newReaderAllocationSchema } from "@/lib/validations/allocate-readers/new-reader-allocation";
 import { expand } from "@/lib/utils/general/instance-params";
 import { Transformers as T } from "@/db/transformers";
@@ -663,19 +666,62 @@ export const instanceRouter = createTRPCRouter({
     .subGroupAdmin.input(
       z.object({ newReaderAllocations: z.array(newReaderAllocationSchema) }),
     )
-    .mutation(async ({ ctx: { db }, input: { newReaderAllocations } }) => {
-      /**
-       * we are given pairs of (studentId, reader (userDTO))
-       *
-       * we need to check that the student provided is actually a student in the instance
-       * if not, we should flag that in our error response
-       *
-       * for the provided readerIds we need to check:
-       * - if they are already a reader in this instance then you can go ahead and create the ReaderProjectAllocation
-       * - if they are not a reader in the instance but they are a UserInInstance, first create their ReaderDetails and then create the ReaderProjectAllocation
-       * - if they are not a UserInInstance, but they are a User, create the UserInInstance, then the ReaderDetails and then the ReaderProjectAllocation
-       * - if they are not a User, create the User, then the UserInInstance, then the ReaderDetails and then the ReaderProjectAllocation
-       *
-       */
-    }),
+    .mutation(
+      async ({ ctx: { db, instance }, input: { newReaderAllocations } }) => {
+        enum readerAssignmentResult {
+          OK,
+          MISSING_STUDENT,
+          MISSING_READER,
+        }
+
+        db.$transaction([
+          db.user.createMany({
+            data: newReaderAllocations.map(({ reader }) => reader),
+            skipDuplicates: true,
+          }),
+
+          db.userInInstance.createMany({
+            data: newReaderAllocations.map(({ reader }) => ({
+              ...expand(instance.params),
+              userId: reader.id,
+            })),
+            skipDuplicates: true,
+          }),
+
+          db.readerDetails.createMany({
+            data: newReaderAllocations.map(({ reader }) => ({
+              ...expand(instance.params),
+              userId: reader.id,
+              projectAllocationLowerBound: 0, // TODO
+              projectAllocationTarget: 10,
+              projectAllocationUpperBound: 100,
+            })),
+            skipDuplicates: true,
+          }),
+
+          db.readerProjectAllocation.createMany({
+            data: newReaderAllocations.map(({ reader, studentId }) => ({
+              ...expand(instance.params),
+              readerId: reader.id,
+              studentId,
+              projectId: "  ", // TODO
+              thirdMarker: false,
+            })),
+          }),
+        ]);
+        /**
+         * we are given pairs of (studentId, reader (userDTO))
+         *
+         * we need to check that the student provided is actually a student in the instance
+         * if not, we should flag that in our error response
+         *
+         * for the provided readerIds we need to check:
+         * - if they are already a reader in this instance then you can go ahead and create the ReaderProjectAllocation
+         * - if they are not a reader in the instance but they are a UserInInstance, first create their ReaderDetails and then create the ReaderProjectAllocation
+         * - if they are not a UserInInstance, but they are a User, create the UserInInstance, then the ReaderDetails and then the ReaderProjectAllocation
+         * - if they are not a User, create the User, then the UserInInstance, then the ReaderDetails and then the ReaderProjectAllocation
+         *
+         */
+      },
+    ),
 });

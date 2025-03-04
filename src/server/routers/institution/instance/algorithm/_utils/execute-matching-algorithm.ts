@@ -9,7 +9,7 @@ import {
 } from "@/lib/validations/matching";
 
 import { AlgorithmFlag } from "@/db/types";
-import { AlgorithmRunResult } from "@/dto/algorithm-run-result";
+import { AlgorithmRunResult } from "@/dto/result/algorithm-run-result";
 import { env } from "@/env";
 
 // ? where should this live

@@ -11,7 +11,7 @@ import { DataObject } from "./data-object";
 import { DB } from "@/db/types";
 import { InstanceDTO } from "@/dto";
 import { Transformers } from "@/db/transformers";
-import { AlgorithmRunResult } from "@/dto/algorithm-run-result";
+import { AlgorithmRunResult } from "@/dto/result/algorithm-run-result";
 
 export class MatchingAlgorithm extends DataObject {
   public params: AlgorithmInstanceParams;
