@@ -18,9 +18,7 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 }
 export default async function Page({ params }: { params: InstanceParams }) {
   const { students, projects, supervisors } =
-    await api.institution.instance.matching.rowData({
-      params,
-    });
+    await api.institution.instance.matching.rowData({ params });
 
   return (
     <PanelWrapper className="mt-10 flex h-full">

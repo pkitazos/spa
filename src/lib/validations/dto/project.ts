@@ -30,16 +30,6 @@ export const projectTableDataDtoSchema = z.object({
 
 export type ProjectTableDataDto = z.infer<typeof projectTableDataDtoSchema>;
 
-export const lateProjectDtoSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  supervisorId: z.string(),
-  flags: z.array(tagTypeSchema),
-  capacityUpperBound: z.number(),
-});
-
-export type LateProjectDto = z.infer<typeof lateProjectDtoSchema>;
-
 export const projectSubmissionDtoSchema = z.object({
   name: z.string(),
   email: z.string(),
@@ -58,19 +48,6 @@ export const newStudentProjectDtoSchema = z.object({
 });
 
 export type NewStudentProjectDto = z.infer<typeof newStudentProjectDtoSchema>;
-
-export const preAllocatedProjectDtoSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  supervisor: z.object({ id: z.string(), name: z.string() }),
-  student: z.object({ id: z.string(), name: z.string() }),
-  flags: z.array(tagTypeSchema),
-  tags: z.array(tagTypeSchema),
-});
-
-export type PreAllocatedProjectDto = z.infer<
-  typeof preAllocatedProjectDtoSchema
->;
 
 export type SupervisorProjectDto = {
   id: string;

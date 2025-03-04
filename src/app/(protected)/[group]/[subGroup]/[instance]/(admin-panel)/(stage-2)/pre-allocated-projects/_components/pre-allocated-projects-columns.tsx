@@ -29,7 +29,13 @@ import {
 } from "@/components/yes-no-action";
 
 import { cn } from "@/lib/utils";
-import { PreAllocatedProjectDto } from "@/lib/validations/dto/project";
+import { ProjectDTO, StudentDTO, SupervisorDTO } from "@/dto";
+
+type PreAllocation = {
+  project: ProjectDTO;
+  supervisor: SupervisorDTO;
+  student: StudentDTO;
+};
 
 export function usePreAllocatedProjectColumns({
   deleteProject,
@@ -37,15 +43,15 @@ export function usePreAllocatedProjectColumns({
 }: {
   deleteProject: (id: string) => Promise<void>;
   deleteSelectedProjects: (ids: string[]) => Promise<void>;
-}): ColumnDef<PreAllocatedProjectDto>[] {
+}): ColumnDef<PreAllocation>[] {
   const instancePath = useInstancePath();
 
-  const selectCol = getSelectColumn<PreAllocatedProjectDto>();
+  const selectCol = getSelectColumn<PreAllocation>();
 
-  const userCols: ColumnDef<PreAllocatedProjectDto>[] = [
+  const userCols: ColumnDef<PreAllocation>[] = [
     {
       id: "ID",
-      accessorFn: ({ id }) => id,
+      accessorFn: ({ project }) => project.id,
       header: ({ column }) => (
         <DataTableColumnHeader
           className="w-24"
@@ -54,7 +60,11 @@ export function usePreAllocatedProjectColumns({
           canFilter
         />
       ),
-      cell: ({ row: { original: project } }) => (
+      cell: ({
+        row: {
+          original: { project },
+        },
+      }) => (
         <WithTooltip
           align="start"
           tip={<div className="max-w-xs">{project.id}</div>}
@@ -65,22 +75,22 @@ export function usePreAllocatedProjectColumns({
     },
     {
       id: "Project Title",
-      accessorFn: ({ title }) => title,
+      accessorFn: ({ project }) => project.title,
       header: () => <div className="min-w-40 py-1 pl-4">Project Title</div>,
       cell: ({
         row: {
-          original: { id, title },
+          original: { project },
         },
       }) => (
-        <WithTooltip tip={<p className="max-w-96">{title}</p>}>
+        <WithTooltip tip={<p className="max-w-96">{project.title}</p>}>
           <Link
             className={cn(
               buttonVariants({ variant: "link" }),
               "inline-block w-40 truncate px-0 text-start",
             )}
-            href={`${instancePath}/projects/${id}`}
+            href={`${instancePath}/projects/${project.id}`}
           >
-            {title}
+            {project.title}
           </Link>
         </WithTooltip>
       ),
@@ -108,7 +118,7 @@ export function usePreAllocatedProjectColumns({
     },
     {
       id: "Flags",
-      accessorFn: (row) => row.flags,
+      accessorFn: ({ project }) => project.flags,
       header: () => <div className="text-center">Flags</div>,
       filterFn: (row, columnId, value) => {
         const ids = value as string[];
@@ -117,7 +127,9 @@ export function usePreAllocatedProjectColumns({
       },
       cell: ({
         row: {
-          original: { flags },
+          original: {
+            project: { flags },
+          },
         },
       }) => (
         <div className="flex flex-col gap-2">
@@ -155,7 +167,7 @@ export function usePreAllocatedProjectColumns({
     },
     {
       id: "Keywords",
-      accessorFn: (row) => row.tags,
+      accessorFn: ({ project }) => project.tags,
       header: () => <div className="text-center">Keywords</div>,
       filterFn: (row, columnId, value) => {
         const ids = value as string[];
@@ -164,7 +176,9 @@ export function usePreAllocatedProjectColumns({
       },
       cell: ({
         row: {
-          original: { tags },
+          original: {
+            project: { tags },
+          },
         },
       }) => (
         <div className="flex flex-col gap-2">
@@ -237,7 +251,7 @@ export function usePreAllocatedProjectColumns({
 
         const selectedProjectIds = table
           .getSelectedRowModel()
-          .rows.map((e) => e.original.id);
+          .rows.map((e) => e.original.project.id);
 
         async function handleDeleteSelected() {
           void deleteSelectedProjects(selectedProjectIds).then(() => {
@@ -287,7 +301,7 @@ export function usePreAllocatedProjectColumns({
       },
       cell: ({
         row: {
-          original: { id, title },
+          original: { project },
         },
       }) => (
         <div className="flex w-24 items-center justify-center">
@@ -299,9 +313,9 @@ export function usePreAllocatedProjectColumns({
               </Button>
             </DropdownMenuTrigger>
             <YesNoActionContainer
-              action={() => deleteProject(id)}
+              action={() => deleteProject(project.id)}
               title="Delete Project?"
-              description={`You are about to delete project ${id}. Do you wish to proceed?`}
+              description={`You are about to delete project ${project.id}. Do you wish to proceed?`}
             >
               <DropdownMenuContent align="center" side="bottom">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
@@ -309,12 +323,12 @@ export function usePreAllocatedProjectColumns({
                 <DropdownMenuItem className="group/item">
                   <Link
                     className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={`${instancePath}/projects/${id}`}
+                    href={`${instancePath}/projects/${project.id}`}
                   >
                     <CornerDownRightIcon className="h-4 w-4" />
                     <p className="flex items-center">
                       View &quot;
-                      <p className="max-w-40 truncate">{title}</p>
+                      <p className="max-w-40 truncate">{project.title}</p>
                       &quot;
                     </p>
                   </Link>
@@ -322,7 +336,7 @@ export function usePreAllocatedProjectColumns({
                 <DropdownMenuItem className="group/item">
                   <Link
                     className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={`${instancePath}/projects/${id}/edit`}
+                    href={`${instancePath}/projects/${project.id}/edit`}
                   >
                     <PenIcon className="h-4 w-4" />
                     <span>Edit Project details</span>

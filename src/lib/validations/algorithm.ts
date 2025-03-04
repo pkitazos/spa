@@ -25,7 +25,7 @@ export const allFlags = [
 ] as const;
 
 // TODO: derive this from existing algorithmSchema
-export function buildNewAlgorithmSchema(takenNames: string[]) {
+export function buildNewAlgorithmSchema(takenNames: Set<string>) {
   // TODO: fix closure issue. takenNames are not updated when algorithms are deleted
   const allTakenNames = new Set([
     "Generous",
@@ -36,7 +36,7 @@ export function buildNewAlgorithmSchema(takenNames: string[]) {
   ]);
 
   return z.object({
-    algName: z
+    displayName: z
       .string({ required_error: "Please select an Algorithm Name" })
       .refine((item) => !allTakenNames.has(item), "This name is already taken"),
     flag1: algorithmFlagSchema,

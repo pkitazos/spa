@@ -7,6 +7,7 @@ import { EditInstanceForm } from "./_components/edit-instance-form";
 
 import { app, metadataTitle } from "@/config/meta";
 import { spacesLabels } from "@/config/spaces";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
@@ -17,17 +18,16 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 }
 
 export default async function Page({ params }: { params: InstanceParams }) {
-  const currentInstance = await api.institution.instance.getEditFormDetails({
-    params,
-  });
+  const { instanceData, flags, tags } =
+    await api.institution.instance.getEditFormDetails({ params });
 
   return (
     <div className="mb-40 mt-6 flex h-max w-full max-w-5xl flex-col gap-10 px-6 pb-20">
       <SubHeading>Edit {spacesLabels.instance.full} Details</SubHeading>
       <EditInstanceForm
-        currentInstance={currentInstance}
+        formDetails={{ instanceData, flags, tags }}
         params={params}
-        isForked={!!currentInstance.parentInstanceId}
+        isForked={!!instanceData.parentInstanceId}
       />
     </div>
   );

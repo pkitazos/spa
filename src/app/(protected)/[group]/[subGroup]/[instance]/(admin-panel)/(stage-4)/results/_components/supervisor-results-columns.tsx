@@ -5,38 +5,42 @@ import { buttonVariants } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 
 import { SupervisorMatchingDetailsDto } from "@/lib/validations/matching";
+import { UserDTO } from "@/dto";
 
-export function useSupervisorResultsColumns(): ColumnDef<SupervisorMatchingDetailsDto>[] {
+export function useSupervisorResultsColumns(): ColumnDef<{
+  supervisor: UserDTO;
+  matchingDetails: SupervisorMatchingDetailsDto;
+}>[] {
   return [
     {
       id: "GUID",
-      accessorFn: (s) => s.supervisorId,
+      accessorFn: (s) => s.supervisor.id,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="GUID" canFilter />
       ),
     },
     {
       id: "Name",
-      accessorFn: (s) => s.supervisorName,
+      accessorFn: (s) => s.supervisor.name,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
       ),
       cell: ({
         row: {
-          original: { supervisorId, supervisorName },
+          original: { supervisor },
         },
       }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`./supervisors/${supervisorId}`}
+          href={`./supervisors/${supervisor.id}`}
         >
-          {supervisorName}
+          {supervisor.name}
         </Link>
       ),
     },
     {
       id: "Target",
-      accessorFn: (s) => s.projectTarget,
+      accessorFn: (s) => s.matchingDetails.projectTarget,
       header: ({ column }) => (
         <DataTableColumnHeader
           className="w-28"
@@ -46,14 +50,16 @@ export function useSupervisorResultsColumns(): ColumnDef<SupervisorMatchingDetai
       ),
       cell: ({ row: { original: s } }) => (
         <p className="w-28 text-center">
-          {s.projectTarget} ({s.actualTarget})
+          {s.matchingDetails.projectTarget} ({s.matchingDetails.actualTarget})
         </p>
       ),
-      sortingFn: (a, b) => a.original.projectTarget - b.original.projectTarget,
+      sortingFn: (a, b) =>
+        a.original.matchingDetails.projectTarget -
+        b.original.matchingDetails.projectTarget,
     },
     {
       id: "Upper Quota",
-      accessorFn: (s) => s.projectUpperQuota,
+      accessorFn: (s) => s.matchingDetails.projectUpperQuota,
       header: ({ column }) => (
         <DataTableColumnHeader
           className="w-28"
@@ -63,15 +69,17 @@ export function useSupervisorResultsColumns(): ColumnDef<SupervisorMatchingDetai
       ),
       cell: ({ row: { original: s } }) => (
         <p className="w-28 text-center">
-          {s.projectUpperQuota} ({s.actualUpperQuota})
+          {s.matchingDetails.projectUpperQuota} (
+          {s.matchingDetails.actualUpperQuota})
         </p>
       ),
       sortingFn: (a, b) =>
-        a.original.projectUpperQuota - b.original.projectUpperQuota,
+        a.original.matchingDetails.projectUpperQuota -
+        b.original.matchingDetails.projectUpperQuota,
     },
     {
       id: "Allocation Count",
-      accessorFn: (s) => s.allocationCount,
+      accessorFn: (s) => s.matchingDetails.allocationCount,
       header: ({ column }) => (
         <DataTableColumnHeader
           className="w-28"
@@ -81,11 +89,13 @@ export function useSupervisorResultsColumns(): ColumnDef<SupervisorMatchingDetai
       ),
       cell: ({ row: { original: s } }) => (
         <p className="w-28 text-center">
-          {s.allocationCount} ({s.preAllocatedCount})
+          {s.matchingDetails.allocationCount} (
+          {s.matchingDetails.preAllocatedCount})
         </p>
       ),
       sortingFn: (a, b) =>
-        a.original.allocationCount - b.original.allocationCount,
+        a.original.matchingDetails.allocationCount -
+        b.original.matchingDetails.allocationCount,
     },
     // {
     //   id: "Algorithm Allocation Difference",
@@ -107,7 +117,7 @@ export function useSupervisorResultsColumns(): ColumnDef<SupervisorMatchingDetai
     // },
     {
       id: "Target Difference",
-      accessorFn: (s) => s.actualTargetDifference,
+      accessorFn: (s) => s.matchingDetails.actualTargetDifference,
       header: ({ column }) => (
         <DataTableColumnHeader
           className="w-28"
@@ -117,9 +127,9 @@ export function useSupervisorResultsColumns(): ColumnDef<SupervisorMatchingDetai
       ),
       cell: ({ row: { original: s } }) => (
         <p className="w-28 text-center">
-          {s.actualTargetDifference > 0
-            ? `+${s.actualTargetDifference}`
-            : s.actualTargetDifference}
+          {s.matchingDetails.actualTargetDifference > 0
+            ? `+${s.matchingDetails.actualTargetDifference}`
+            : s.matchingDetails.actualTargetDifference}
         </p>
       ),
     },

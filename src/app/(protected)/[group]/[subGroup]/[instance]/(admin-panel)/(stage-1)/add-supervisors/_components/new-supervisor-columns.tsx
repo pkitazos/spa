@@ -29,7 +29,7 @@ import {
   YesNoActionTrigger,
 } from "@/components/yes-no-action";
 
-import { NewSupervisor } from "@/lib/validations/add-users/new-user";
+import { SupervisorDTO } from "@/dto";
 
 export function useNewSupervisorColumns({
   removeSupervisor,
@@ -37,44 +37,41 @@ export function useNewSupervisorColumns({
 }: {
   removeSupervisor: (id: string) => Promise<void>;
   removeSelectedSupervisors: (ids: string[]) => Promise<void>;
-}): ColumnDef<NewSupervisor>[] {
+}): ColumnDef<SupervisorDTO>[] {
   const stage = useInstanceStage();
 
-  const selectCol = getSelectColumn<NewSupervisor>();
+  const selectCol = getSelectColumn<SupervisorDTO>();
 
-  const userCols: ColumnDef<NewSupervisor>[] = [
+  const userCols: ColumnDef<SupervisorDTO>[] = [
     {
       id: "Full Name",
-      accessorFn: ({ fullName }) => fullName,
+      accessorFn: ({ name }) => name,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Full Name" />
       ),
       cell: ({
         row: {
-          original: { fullName },
+          original: { name },
         },
       }) => (
-        <WithTooltip
-          align="start"
-          tip={<div className="max-w-xs">{fullName}</div>}
-        >
-          <div className="w-40 truncate">{fullName}</div>
+        <WithTooltip align="start" tip={<div className="max-w-xs">{name}</div>}>
+          <div className="w-40 truncate">{name}</div>
         </WithTooltip>
       ),
     },
     {
       id: "GUID",
-      accessorFn: ({ institutionId }) => institutionId,
+      accessorFn: ({ id }) => id,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="GUID" canFilter />
       ),
       cell: ({
         row: {
-          original: { institutionId: guid },
+          original: { id },
         },
       }) => (
-        <WithTooltip align="start" tip={<div className="max-w-xs">{guid}</div>}>
-          <div className="w-32 truncate">{guid}</div>
+        <WithTooltip align="start" tip={<div className="max-w-xs">{id}</div>}>
+          <div className="w-32 truncate">{id}</div>
         </WithTooltip>
       ),
     },
@@ -87,27 +84,27 @@ export function useNewSupervisorColumns({
     },
     {
       id: "Target",
-      accessorFn: ({ projectTarget }) => projectTarget,
+      accessorFn: ({ allocationTarget }) => allocationTarget,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Target" />
       ),
       cell: ({
         row: {
-          original: { projectTarget },
+          original: { allocationTarget },
         },
-      }) => <div className="text-center">{projectTarget}</div>,
+      }) => <div className="text-center">{allocationTarget}</div>,
     },
     {
       id: "Upper Quota",
-      accessorFn: ({ projectUpperQuota }) => projectUpperQuota,
+      accessorFn: ({ allocationUpperBound }) => allocationUpperBound,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Upper Quota" />
       ),
       cell: ({
         row: {
-          original: { projectUpperQuota },
+          original: { allocationUpperBound },
         },
-      }) => <div className="text-center">{projectUpperQuota}</div>,
+      }) => <div className="text-center">{allocationUpperBound}</div>,
     },
     {
       accessorKey: "actions",
@@ -118,7 +115,7 @@ export function useNewSupervisorColumns({
 
         const selectedSupervisorIds = table
           .getSelectedRowModel()
-          .rows.map((e) => e.original.institutionId);
+          .rows.map((e) => e.original.id);
 
         function handleRemoveSelectedSupervisors() {
           void removeSelectedSupervisors(selectedSupervisorIds).then(() =>
@@ -168,7 +165,7 @@ export function useNewSupervisorColumns({
       },
       cell: ({
         row: {
-          original: { fullName, institutionId },
+          original: { name, id },
         },
       }) => (
         <div className="flex w-14 items-center justify-center">
@@ -180,22 +177,20 @@ export function useNewSupervisorColumns({
               </Button>
             </DropdownMenuTrigger>
             <YesNoActionContainer
-              action={async () => void removeSupervisor(institutionId)}
+              action={async () => void removeSupervisor(id)}
               title="Remove Supervisor?"
-              description={`You are about to remove "${fullName}" from the supervisor list. Do you wish to proceed?`}
+              description={`You are about to remove "${name}" from the supervisor list. Do you wish to proceed?`}
             >
               <DropdownMenuContent align="center" side="bottom">
                 <DropdownMenuLabel>
                   Actions
-                  <span className="ml-2 text-muted-foreground">
-                    for {fullName}
-                  </span>
+                  <span className="ml-2 text-muted-foreground">for {name}</span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="group/item">
                   <Link
                     className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={`./supervisors/${institutionId}`}
+                    href={`./supervisors/${id}`}
                   >
                     <CornerDownRightIcon className="h-4 w-4" />
                     <span>View supervisor details</span>
@@ -204,7 +199,7 @@ export function useNewSupervisorColumns({
                 <DropdownMenuItem className="group/item">
                   <Link
                     className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={`./supervisors/${institutionId}?edit=true`}
+                    href={`./supervisors/${id}?edit=true`}
                   >
                     <PenIcon className="h-4 w-4" />
                     <span>Edit supervisor details</span>

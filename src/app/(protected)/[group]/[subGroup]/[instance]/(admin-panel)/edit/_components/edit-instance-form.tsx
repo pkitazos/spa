@@ -12,14 +12,15 @@ import { ValidatedInstanceDetails } from "@/lib/validations/instance-form";
 import { InstanceParams } from "@/lib/validations/params";
 
 import { spacesLabels } from "@/config/spaces";
+import { FlagDTO, InstanceDTO, TagDTO } from "@/dto";
 
 export function EditInstanceForm({
   params,
-  currentInstance,
+  formDetails,
   isForked,
 }: {
   params: InstanceParams;
-  currentInstance: ValidatedInstanceDetails;
+  formDetails: { instanceData: InstanceDTO; flags: FlagDTO[]; tags: TagDTO[] };
   isForked: boolean;
 }) {
   const router = useRouter();
@@ -34,9 +35,10 @@ export function EditInstanceForm({
         params,
         updatedInstance: {
           ...data,
-          minPreferences: data.minPreferences,
-          maxPreferences: data.maxPreferences,
-          maxPreferencesPerSupervisor: data.maxPreferencesPerSupervisor,
+          minStudentPreferences: data.minStudentPreferences,
+          maxStudentPreferences: data.maxStudentPreferences,
+          maxStudentPreferencesPerSupervisor:
+            data.maxStudentPreferencesPerSupervisor,
         },
       }).then(() => {
         router.push(instancePath);
@@ -52,7 +54,7 @@ export function EditInstanceForm({
 
   return (
     <InstanceForm
-      currentInstanceDetails={currentInstance}
+      formDetails={formDetails}
       submissionButtonLabel={`Update ${spacesLabels.instance.short} Details`}
       onSubmit={onSubmit}
       isForked={isForked}

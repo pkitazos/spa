@@ -52,7 +52,11 @@ import { allFlags, buildNewAlgorithmSchema } from "@/lib/validations/algorithm";
 
 import { useAlgorithmUtils } from "./algorithm-context";
 
-export function NewAlgorithmSection({ takenNames }: { takenNames: string[] }) {
+export function NewAlgorithmSection({
+  takenNames,
+}: {
+  takenNames: Set<string>;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -77,7 +81,7 @@ function NewAlgorithmForm({
   takenNames,
   setShowForm,
 }: {
-  takenNames: string[];
+  takenNames: Set<string>;
   setShowForm: (s: boolean) => void;
 }) {
   const params = useInstanceParams();
@@ -98,27 +102,14 @@ function NewAlgorithmForm({
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      targetModifier: 0,
-      upperBoundModifier: 0,
-      maxRank: -1,
-    },
+    defaultValues: { targetModifier: 0, upperBoundModifier: 0, maxRank: -1 },
   });
 
   function onSubmit(data: z.infer<typeof formSchema>) {
-    const formattedData = {
-      ...data,
-      displayName: data.algName,
-      description: "",
-      flag2: data.flag2 ?? null,
-      flag3: data.flag3 ?? null,
-    };
+    const newAlgorithmData = { ...data, createdAt: new Date() };
 
     void toast.promise(
-      createAlgorithmAsync({
-        params,
-        data: formattedData,
-      }).then(() => {
+      createAlgorithmAsync({ params, data: newAlgorithmData }).then(() => {
         setShowForm(false);
         refetchAlgorithms();
         router.refresh();
@@ -140,7 +131,7 @@ function NewAlgorithmForm({
       >
         <FormField
           control={form.control}
-          name="algName"
+          name="displayName"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Algorithm Name</FormLabel>

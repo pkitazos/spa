@@ -7,8 +7,7 @@ import {
 import { expand } from "@/lib/utils/general/instance-params";
 import { getRandomInt } from "@/lib/utils/general/random";
 import {
-  ProjectDetails,
-  projectDetailsSchema,
+  ProjectInfo,
   projectInfoSchema,
   StudentRow,
   studentRowSchema,
@@ -48,12 +47,12 @@ export const matchingRouter = createTRPCRouter({
 
   // BREAKING
   // move, maybe rename
-  // change output type to something more standard
+  // TODO: change output type to something more standard
   rowData: procedure.instance.subGroupAdmin
     .output(
       z.object({
         students: z.array(studentRowSchema),
-        projects: z.array(projectDetailsSchema),
+        projects: z.array(projectInfoSchema),
         supervisors: z.array(supervisorDetailsSchema),
       }),
     )
@@ -94,15 +93,15 @@ export const matchingRouter = createTRPCRouter({
       const projects = projectData.map(
         (p) =>
           ({
+            id: p.project.id,
+            title: p.project.title,
             capacityLowerBound: p.project.capacityLowerBound,
             capacityUpperBound: p.project.capacityUpperBound,
             allocatedTo: p.allocatedTo,
-            supervisor: {
-              projectAllocationLowerBound: p.supervisor.allocationLowerBound,
-              projectAllocationTarget: p.supervisor.allocationTarget,
-              projectAllocationUpperBound: p.supervisor.allocationUpperBound,
-            },
-          }) satisfies ProjectDetails,
+            projectAllocationLowerBound: p.supervisor.allocationLowerBound,
+            projectAllocationTarget: p.supervisor.allocationTarget,
+            projectAllocationUpperBound: p.supervisor.allocationUpperBound,
+          }) satisfies ProjectInfo,
       );
 
       return { supervisors, students, projects };

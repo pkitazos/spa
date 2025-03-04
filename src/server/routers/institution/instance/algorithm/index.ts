@@ -5,7 +5,7 @@ import { expand } from "@/lib/utils/general/instance-params";
 import { algorithmResultDtoSchema } from "@/lib/validations/algorithm";
 import {
   matchingResultDtoSchema,
-  supervisorMatchingDetailsDtoSchema2,
+  supervisorMatchingDetailsDtoSchema,
 } from "@/lib/validations/matching";
 import { instanceParamsSchema } from "@/lib/validations/params";
 
@@ -29,7 +29,7 @@ export const algorithmRouter = createTRPCRouter({
   // BREAKING input/output type changed
   // pin
   run: procedure.algorithm.subGroupAdmin
-    .input(z.object({ algConfigId: z.string() }))
+    .input(z.object({ algId: z.string() }))
     .output(z.object({ total: z.number(), matched: z.number() }))
     .mutation(async ({ ctx: { alg, instance } }) => {
       const matchingData = await instance.getMatchingData();
@@ -58,7 +58,7 @@ export const algorithmRouter = createTRPCRouter({
     }),
 
   create: procedure.instance.subGroupAdmin
-    .input(z.object({ data: algorithmDtoSchema }))
+    .input(z.object({ data: algorithmDtoSchema.omit({ id: true }) }))
     .output(algorithmDtoSchema)
     .mutation(
       async ({ ctx: { instance }, input: { data } }) =>
@@ -168,7 +168,7 @@ export const algorithmRouter = createTRPCRouter({
             data: z.array(
               z.object({
                 supervisor: userDtoSchema,
-                matchingDetails: supervisorMatchingDetailsDtoSchema2,
+                matchingDetails: supervisorMatchingDetailsDtoSchema,
               }),
             ),
           }),

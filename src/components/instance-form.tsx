@@ -2,7 +2,14 @@
 import { ReactNode } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { addDays, format, setHours, setMinutes, subDays } from "date-fns";
+import {
+  addDays,
+  addMonths,
+  format,
+  setHours,
+  setMinutes,
+  subDays,
+} from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import { CalendarIcon, Plus, X } from "lucide-react";
 import { z } from "zod";
@@ -33,33 +40,35 @@ import { TimePicker } from "./ui/time-picker";
 import { SubHeading } from "./heading";
 
 import { spacesLabels } from "@/config/spaces";
+import { FlagDTO, InstanceDTO, TagDTO } from "@/dto";
 
 export function InstanceForm({
   submissionButtonLabel,
   takenNames = new Set(),
-  currentInstanceDetails,
+  formDetails,
   isForked = false,
   onSubmit,
   children: dismissalButton,
 }: {
   submissionButtonLabel: string;
   takenNames?: Set<string>;
-  currentInstanceDetails?: ValidatedInstanceDetails;
+  formDetails?: { instanceData: InstanceDTO; flags: FlagDTO[]; tags: TagDTO[] };
   isForked?: boolean;
   onSubmit: (data: ValidatedInstanceDetails) => Promise<void>;
   children: ReactNode;
 }) {
-  const defaultInstanceDetails = currentInstanceDetails ?? {
-    instanceName: "",
-    flags: [{ title: "" }],
-    tags: [],
+  const defaultInstanceDetails = formDetails ?? {
+    displayName: "",
     projectSubmissionDeadline: addDays(new Date(), 1),
-    minNumPreferences: 1,
-    maxNumPreferences: 1,
-    maxNumPerSupervisor: 1,
-    preferenceSubmissionDeadline: addDays(new Date(), 2),
-    interimMarkingDeadline: addDays(new Date(), 3),
-    markingSubmissionDeadline: addDays(new Date(), 4),
+    minStudentPreferences: 1,
+    maxStudentPreferences: 1,
+    maxStudentPerSupervisor: 1,
+    studentPreferenceSubmissionDeadline: addDays(new Date(), 2),
+    minReaderPreferences: 1,
+    maxReaderPreferences: 1,
+    readerPreferenceSubmissionDeadline: addMonths(new Date(), 1),
+    flags: [{ title: "", description: "" }],
+    tags: [],
   };
 
   const formSchema = buildInstanceFormSchema(takenNames);
@@ -84,10 +93,7 @@ export function InstanceForm({
     fields: tagFields,
     append: appendTag,
     remove: removeTag,
-  } = useFieldArray({
-    control: form.control,
-    name: "tags",
-  });
+  } = useFieldArray({ control: form.control, name: "tags" });
 
   return (
     <Form {...form}>
@@ -98,12 +104,12 @@ export function InstanceForm({
         <div
           className={cn(
             "flex flex-col items-start gap-3",
-            currentInstanceDetails && "hidden",
+            formDetails && "hidden",
           )}
         >
           <FormField
             control={form.control}
-            name="instanceName"
+            name="displayName"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-2xl">
@@ -167,7 +173,7 @@ export function InstanceForm({
                             if (e.key === "Enter") {
                               e.preventDefault();
                               if (e.currentTarget.value.trim() !== "") {
-                                appendFlag({ title: "" });
+                                appendFlag({ title: "", description: "" });
                               }
                             }
                           }}
@@ -193,7 +199,7 @@ export function InstanceForm({
               className="flex w-80 items-center gap-2"
               variant="outline"
               type="button"
-              onClick={() => appendFlag({ title: "" })}
+              onClick={() => appendFlag({ title: "", description: "" })}
             >
               <Plus />
               <p>Add new Flag</p>
@@ -339,7 +345,7 @@ export function InstanceForm({
           <div className="flex flex-col gap-4">
             <FormField
               control={form.control}
-              name="minPreferences"
+              name="minStudentPreferences"
               render={({ field }) => (
                 <FormItem className="w-96">
                   <div className="flex items-center justify-between gap-4">
@@ -360,7 +366,7 @@ export function InstanceForm({
             />
             <FormField
               control={form.control}
-              name="maxPreferences"
+              name="maxStudentPreferences"
               render={({ field }) => (
                 <FormItem className="w-96">
                   <div className="flex items-center justify-between gap-4">
@@ -381,7 +387,7 @@ export function InstanceForm({
             />
             <FormField
               control={form.control}
-              name="maxPreferencesPerSupervisor"
+              name="maxStudentPreferencesPerSupervisor"
               render={({ field }) => (
                 <FormItem className="w-96">
                   <div className="flex items-center justify-between gap-4">
@@ -405,7 +411,7 @@ export function InstanceForm({
           </div>
           <FormField
             control={form.control}
-            name="preferenceSubmissionDeadline"
+            name="studentPreferenceSubmissionDeadline"
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel className="text-base">
@@ -472,13 +478,57 @@ export function InstanceForm({
         <Separator className="my-14" />
         <SubHeading className="text-2xl">Reader Restrictions</SubHeading>
         <div className="grid w-full gap-16 md:grid-cols-1 lg:grid-cols-2">
+          <div className="flex flex-col gap-4">
+            <FormField
+              control={form.control}
+              name="minReaderPreferences"
+              render={({ field }) => (
+                <FormItem className="w-96">
+                  <div className="flex items-center justify-between gap-4">
+                    <FormLabel className="text-base">
+                      Minimum number of Preferences:
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        className="w-20 text-center placeholder:text-slate-300"
+                        placeholder="1"
+                        {...field}
+                      />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="maxReaderPreferences"
+              render={({ field }) => (
+                <FormItem className="w-96">
+                  <div className="flex items-center justify-between gap-4">
+                    <FormLabel className="text-base">
+                      Maximum number of Preferences:
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        className="w-20 text-center placeholder:text-slate-300"
+                        placeholder="1"
+                        {...field}
+                      />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
           <FormField
             control={form.control}
-            name="interimMarkingDeadline"
+            name="studentPreferenceSubmissionDeadline"
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel className="text-base">
-                  Interim Marking Submission deadline
+                  Preference Submission deadline
                 </FormLabel>
                 <div className="flex items-center justify-start gap-14">
                   <Popover>
@@ -531,72 +581,7 @@ export function InstanceForm({
                   />
                 </div>
                 <FormDescription>
-                  The deadline for readers to submit their interim markings.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="markingSubmissionDeadline"
-            render={({ field }) => (
-              <FormItem className="flex flex-col">
-                <FormLabel className="text-base">
-                  Marking Submission deadline
-                </FormLabel>
-                <div className="flex items-center justify-start gap-14">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-[240px] pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground",
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={(val) => {
-                          if (!val) return;
-                          const newDate = updateDateOnly(field.value, val);
-                          field.onChange(newDate);
-                        }}
-                        disabled={(date) => date < subDays(new Date(), 1)}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <TimePicker
-                    currentTime={field.value}
-                    onHourChange={(val) => {
-                      const newHour = parseInt(val, 10);
-                      const newDate = setHours(field.value, newHour);
-                      const zonedDate = toZonedTime(newDate, "Europe/London");
-                      field.onChange(zonedDate);
-                    }}
-                    onMinuteChange={(val) => {
-                      const newMinute = parseInt(val, 10);
-                      const newDate = setMinutes(field.value, newMinute);
-                      const zonedDate = toZonedTime(newDate, "Europe/London");
-                      field.onChange(zonedDate);
-                    }}
-                  />
-                </div>
-                <FormDescription>
-                  The deadline for readers to submit their markings.
+                  The deadline for students to submit their preference list.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

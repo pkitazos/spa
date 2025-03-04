@@ -34,13 +34,14 @@ export function CreateInstanceForm({
         newInstance: {
           group,
           subGroup,
-          displayName: data.instanceName,
+          displayName: data.displayName,
           projectSubmissionDeadline: data.projectSubmissionDeadline,
-          minStudentPreferences: data.minPreferences,
-          maxStudentPreferences: data.maxPreferences,
-          maxStudentPreferencesPerSupervisor: data.maxPreferencesPerSupervisor,
+          minStudentPreferences: data.minStudentPreferences,
+          maxStudentPreferences: data.maxStudentPreferences,
+          maxStudentPreferencesPerSupervisor:
+            data.maxStudentPreferencesPerSupervisor,
           studentPreferenceSubmissionDeadline:
-            data.preferenceSubmissionDeadline,
+            data.studentPreferenceSubmissionDeadline,
           // TODO: add fields to form
           minReaderPreferences: 0,
           maxReaderPreferences: 0,
@@ -54,7 +55,7 @@ export function CreateInstanceForm({
         flags: data.flags,
         tags: data.tags,
       }).then(() => {
-        router.push(`/${group}/${subGroup}/${slugify(data.instanceName)}`);
+        router.push(`/${group}/${subGroup}/${slugify(data.displayName)}`);
         router.refresh();
       }),
       {

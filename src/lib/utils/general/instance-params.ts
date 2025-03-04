@@ -28,11 +28,8 @@ export function toAlgID(params: AlgorithmInstanceParams) {
 }
 
 // TODO figure this out later
-export function toProjectParams(params: InstanceParams, projectId: string) {
-  return { ...params, projectId };
-}
 
-export function toPP(params: PageParams) {
+export function toPP1(params: PageParams) {
   return {
     group: params.group,
     subGroup: params.subGroup,
@@ -43,4 +40,8 @@ export function toPP(params: PageParams) {
 
 export function toPP2(params: ProjectParams) {
   return { ...expand(params), id: params.projectId };
+}
+
+export function toPP3(params: InstanceParams, projectId: string) {
+  return { ...params, projectId };
 }

@@ -2,14 +2,15 @@ import { isAfter } from "date-fns";
 import { z } from "zod";
 
 const baseSchema = z.object({
-  instanceName: z.string().min(1, "Please enter a name"),
-  minPreferences: z.number(),
-  maxPreferences: z.number(),
-  maxPreferencesPerSupervisor: z.number(),
-  preferenceSubmissionDeadline: z.date(),
+  displayName: z.string().min(1, "Please enter a name"),
+  minStudentPreferences: z.number(),
+  maxStudentPreferences: z.number(),
+  maxStudentPreferencesPerSupervisor: z.number(),
+  studentPreferenceSubmissionDeadline: z.date(),
+  minReaderPreferences: z.number(),
+  maxReaderPreferences: z.number(),
+  readerPreferenceSubmissionDeadline: z.date(),
   projectSubmissionDeadline: z.date(),
-  interimMarkingDeadline: z.date(),
-  markingSubmissionDeadline: z.date(),
   flags: z.array(
     z.object({
       title: z.string().min(3, "Please enter a valid title"),
@@ -23,7 +24,7 @@ const baseSchema = z.object({
 
 export const createdInstanceSchema = baseSchema;
 
-export const updatedInstanceSchema = baseSchema.omit({ instanceName: true });
+export const updatedInstanceSchema = baseSchema.omit({ displayName: true });
 
 export type UpdatedInstance = z.infer<typeof updatedInstanceSchema>;
 
@@ -32,26 +33,42 @@ export type ValidatedInstanceDetails = z.infer<typeof baseSchema>;
 export function buildInstanceFormSchema(takenNames: Set<string>) {
   return baseSchema
     .omit({
-      minPreferences: true,
-      maxPreferences: true,
-      maxPreferencesPerSupervisor: true,
+      minStudentPreferences: true,
+      maxStudentPreferences: true,
+      maxStudentPreferencesPerSupervisor: true,
+      minReaderPreferences: true,
+      maxReaderPreferences: true,
     })
     .extend({
-      minPreferences: z.coerce
+      minStudentPreferences: z.coerce
         .number({
           invalid_type_error: "Please enter an integer",
           required_error: "Please enter an integer",
         })
         .int({ message: "Number must be an integer" })
         .positive(),
-      maxPreferences: z.coerce
+      maxStudentPreferences: z.coerce
         .number({
           invalid_type_error: "Please enter an integer",
           required_error: "Please enter an integer",
         })
         .int({ message: "Number must be an integer" })
         .positive(),
-      maxPreferencesPerSupervisor: z.coerce
+      maxStudentPreferencesPerSupervisor: z.coerce
+        .number({
+          invalid_type_error: "Please enter an integer",
+          required_error: "Please enter an integer",
+        })
+        .int({ message: "Number must be an integer" })
+        .positive(),
+      minReaderPreferences: z.coerce
+        .number({
+          invalid_type_error: "Please enter an integer",
+          required_error: "Please enter an integer",
+        })
+        .int({ message: "Number must be an integer" })
+        .positive(),
+      maxReaderPreferences: z.coerce
         .number({
           invalid_type_error: "Please enter an integer",
           required_error: "Please enter an integer",
@@ -63,52 +80,50 @@ export function buildInstanceFormSchema(takenNames: Set<string>) {
       message: "Please add at least one flag",
       path: ["flags.0.title"],
     })
-    .refine(({ instanceName }) => !takenNames.has(instanceName), {
+    .refine(({ displayName }) => !takenNames.has(displayName), {
       message: "This name is already taken",
-      path: ["instanceName"],
+      path: ["displayName"],
+    })
+    .refine((x) => x.minStudentPreferences <= x.maxStudentPreferences, {
+      message:
+        "Maximum Number of Preferences can't be less than Minimum Number of Preferences",
+      path: ["maxStudentPreferences"],
     })
     .refine(
-      ({ minPreferences, maxPreferences }) => minPreferences <= maxPreferences,
-      {
-        message:
-          "Maximum Number of Preferences can't be less than Minimum Number of Preferences",
-        path: ["maxPreferences"],
-      },
-    )
-    .refine(
-      ({ maxPreferences, maxPreferencesPerSupervisor }) =>
-        maxPreferencesPerSupervisor <= maxPreferences,
+      (x) => x.maxStudentPreferencesPerSupervisor <= x.maxStudentPreferences,
       {
         message:
           "Maximum Number of Preferences per supervisor can't be more than Maximum Number of Preferences",
-        path: ["maxPreferencesPerSupervisor"],
+        path: ["maxStudentPreferencesPerSupervisor"],
       },
     )
     .refine(
-      ({ projectSubmissionDeadline, preferenceSubmissionDeadline }) =>
-        isAfter(preferenceSubmissionDeadline, projectSubmissionDeadline),
+      (x) =>
+        isAfter(
+          x.studentPreferenceSubmissionDeadline,
+          x.projectSubmissionDeadline,
+        ),
       {
         message:
-          "Preference Submission deadline can't be before Project Upload deadline",
-        path: ["preferenceSubmissionDeadline"],
+          "Student Preference Submission deadline can't be before Project Upload deadline",
+        path: ["studentPreferenceSubmissionDeadline"],
       },
     )
+    .refine((x) => x.minReaderPreferences <= x.maxReaderPreferences, {
+      message:
+        "Maximum Number of Preferences can't be less than Minimum Number of Preferences",
+      path: ["maxReaderPreferences"],
+    })
     .refine(
-      ({ preferenceSubmissionDeadline, interimMarkingDeadline }) =>
-        isAfter(interimMarkingDeadline, preferenceSubmissionDeadline),
+      (x) =>
+        isAfter(
+          x.readerPreferenceSubmissionDeadline,
+          x.studentPreferenceSubmissionDeadline,
+        ),
       {
         message:
-          "Interim Marking Submission deadline can't be before Preference Submission deadline",
-        path: ["interimMarkingDeadline"],
-      },
-    )
-    .refine(
-      ({ interimMarkingDeadline, markingSubmissionDeadline }) =>
-        isAfter(markingSubmissionDeadline, interimMarkingDeadline),
-      {
-        message:
-          "Marking Submission deadline can't be before Interim Marking Submission deadline",
-        path: ["markingSubmissionDeadline"],
+          "Reader Preference Submission deadline can't be before Student Preference Submission deadline",
+        path: ["readerPreferenceSubmissionDeadline"],
       },
     )
     .refine(
@@ -121,11 +136,9 @@ export function buildInstanceFormSchema(takenNames: Set<string>) {
 }
 
 const baseForkedSchema = z.object({
-  instanceName: z.string().min(1, "Please enter a name"),
-  preferenceSubmissionDeadline: z.date(),
+  displayName: z.string().min(1, "Please enter a name"),
+  studentPreferenceSubmissionDeadline: z.date(),
   projectSubmissionDeadline: z.date(),
-  interimMarkingDeadline: z.date(),
-  markingSubmissionDeadline: z.date(),
 });
 
 export const forkedInstanceSchema = baseForkedSchema;
@@ -134,43 +147,24 @@ export type ForkedInstanceDetails = z.infer<typeof baseForkedSchema>;
 
 export function buildForkedInstanceSchema(takenNames: Set<string>) {
   return baseForkedSchema
-    .refine(({ instanceName }) => !takenNames.has(instanceName), {
+    .refine((x) => !takenNames.has(x.displayName), {
       message: "This name is already taken",
-      path: ["instanceName"],
+      path: ["displayName"],
+    })
+    .refine((x) => isAfter(x.projectSubmissionDeadline, new Date()), {
+      message: "Project Submission Deadline must be after today",
+      path: ["projectSubmissionDeadline"],
     })
     .refine(
-      ({ projectSubmissionDeadline }) =>
-        isAfter(projectSubmissionDeadline, new Date()),
-      {
-        message: "Project Submission Deadline must be after today",
-        path: ["projectSubmissionDeadline"],
-      },
-    )
-    .refine(
-      ({ projectSubmissionDeadline, preferenceSubmissionDeadline }) =>
-        isAfter(preferenceSubmissionDeadline, projectSubmissionDeadline),
+      (x) =>
+        isAfter(
+          x.studentPreferenceSubmissionDeadline,
+          x.projectSubmissionDeadline,
+        ),
       {
         message:
           "Preference Submission deadline can't be before Project Upload deadline",
         path: ["preferenceSubmissionDeadline"],
-      },
-    )
-    .refine(
-      ({ preferenceSubmissionDeadline, interimMarkingDeadline }) =>
-        isAfter(interimMarkingDeadline, preferenceSubmissionDeadline),
-      {
-        message:
-          "Interim Marking Submission deadline can't be before Preference Submission deadline",
-        path: ["interimMarkingDeadline"],
-      },
-    )
-    .refine(
-      ({ interimMarkingDeadline, markingSubmissionDeadline }) =>
-        isAfter(markingSubmissionDeadline, interimMarkingDeadline),
-      {
-        message:
-          "Marking Submission deadline can't be before Interim Marking Submission deadline",
-        path: ["markingSubmissionDeadline"],
       },
     );
 }

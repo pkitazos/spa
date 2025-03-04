@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 }
 
 export default async function Page({ params }: { params: InstanceParams }) {
-  const projects = await api.project.getAllPreAllocated({ params });
+  const preAllocations = await api.project.getAllPreAllocated({ params });
 
   return (
     <PanelWrapper className="mt-10 flex flex-col items-start gap-16 px-12">
@@ -36,7 +36,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
           <DatabaseIcon className="mr-2 h-6 w-6 text-indigo-500" />
           <span>All data</span>
         </SectionHeading>
-        <PreAllocatedProjectDataTable data={projects} />
+        <PreAllocatedProjectDataTable data={preAllocations} />
       </section>
     </PanelWrapper>
   );

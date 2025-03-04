@@ -121,8 +121,6 @@ export type MatchingDetailsDto = {
 // ---------------------------------------------------------------------------
 
 export const supervisorMatchingDetailsDtoSchema = z.object({
-  supervisorId: z.string(),
-  supervisorName: z.string(),
   projectTarget: z.number(),
   actualTarget: z.number(),
   projectUpperQuota: z.number(),
@@ -136,9 +134,3 @@ export const supervisorMatchingDetailsDtoSchema = z.object({
 export type SupervisorMatchingDetailsDto = z.infer<
   typeof supervisorMatchingDetailsDtoSchema
 >;
-
-export const supervisorMatchingDetailsDtoSchema2 =
-  supervisorMatchingDetailsDtoSchema.omit({
-    supervisorId: true,
-    supervisorName: true,
-  });

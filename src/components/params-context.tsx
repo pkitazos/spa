@@ -1,22 +1,22 @@
 "use client";
 import { createContext, ReactNode, useContext } from "react";
-import { Role, Stage } from "@prisma/client";
 import { ArrowUpLeft } from "lucide-react";
 import Link from "next/link";
 
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import { InstanceParams } from "@/lib/validations/params";
+import { Role, Stage } from "@/db/types";
 
-type Instance = { params: InstanceParams; stage: Stage; roles: Set<Role> };
+type InstanceData = { params: InstanceParams; stage: Stage; roles: Set<Role> };
 
-const InstanceContext = createContext<Instance | undefined>(undefined);
+const InstanceContext = createContext<InstanceData | undefined>(undefined);
 
 export function InstanceParamsProvider({
   children,
   instance,
 }: {
   children: ReactNode;
-  instance: Instance;
+  instance: InstanceData;
 }) {
   return (
     <InstanceContext.Provider value={instance}>

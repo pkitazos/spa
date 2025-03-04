@@ -6,91 +6,95 @@ import { buttonVariants } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
-import { MatchingDetailsDto } from "@/lib/validations/matching";
+import { ProjectDTO, StudentDTO } from "@/dto";
 
-export const studentResultsColumns: ColumnDef<MatchingDetailsDto>[] = [
+export const studentResultsColumns: ColumnDef<{
+  student: StudentDTO;
+  project: ProjectDTO;
+  studentRanking: number;
+}>[] = [
   {
     id: "GUID",
-    accessorFn: ({ studentId }) => studentId,
+    accessorFn: ({ student }) => student.id,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="GUID" canFilter />
     ),
     cell: ({
       row: {
-        original: { studentId },
+        original: { student },
       },
-    }) => <div>{studentId}</div>,
+    }) => <div>{student.id}</div>,
   },
   {
     id: "Student Name",
-    accessorFn: ({ studentName }) => studentName,
+    accessorFn: ({ student }) => student.name,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Student Name" canFilter />
     ),
     cell: ({
       row: {
-        original: { studentName, studentId },
+        original: { student },
       },
     }) => (
       <Link
         className={buttonVariants({ variant: "link" })}
-        href={`./students/${studentId}`}
+        href={`./students/${student.id}`}
       >
-        {studentName}
+        {student.name}
       </Link>
     ),
   },
   {
     id: "Project ID",
-    accessorFn: ({ projectId }) => projectId,
+    accessorFn: ({ project }) => project.id,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Project ID" canFilter />
     ),
     cell: ({
       row: {
-        original: { projectId },
+        original: { project },
       },
     }) => (
       <WithTooltip
         align="start"
-        tip={<div className="max-w-xs">{projectId}</div>}
+        tip={<div className="max-w-xs">{project.id}</div>}
       >
-        <div className="w-40 truncate">{projectId}</div>
+        <div className="w-40 truncate">{project.id}</div>
       </WithTooltip>
     ),
   },
   {
     id: "Project title",
-    accessorFn: ({ projectTitle }) => projectTitle,
+    accessorFn: ({ project }) => project.title,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Project Title" canFilter />
     ),
     cell: ({
       row: {
-        original: { projectTitle, projectId },
+        original: { project },
       },
     }) => (
       <Link
         className={buttonVariants({ variant: "link" })}
-        href={`./projects/${projectId}`}
+        href={`./projects/${project.id}`}
       >
-        {projectTitle}
+        {project.title}
       </Link>
     ),
   },
   {
     id: "Student rank",
-    accessorFn: ({ studentRank }) => studentRank,
+    accessorFn: ({ studentRanking }) => studentRanking,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Student Rank" />
     ),
     cell: ({
       row: {
-        original: { studentRank },
+        original: { studentRanking },
       },
     }) => (
       <div className="w-full text-center">
-        {Number.isNaN(studentRank) ? "-" : studentRank}
+        {Number.isNaN(studentRanking) ? "-" : studentRanking}
       </div>
     ),
   },

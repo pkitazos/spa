@@ -9,7 +9,7 @@ import { api } from "@/lib/trpc/client";
 import { useAlgorithmColumns } from "./algorithm-columns";
 import { NewAlgorithmSection } from "./new-algorithm-section";
 
-export function AlgorithmSection({ takenNames }: { takenNames: string[] }) {
+export function AlgorithmSection({ takenNames }: { takenNames: Set<string> }) {
   const params = useInstanceParams();
   const { status, data } = api.institution.instance.algorithm.getAll.useQuery({
     params,
@@ -19,7 +19,7 @@ export function AlgorithmSection({ takenNames }: { takenNames: string[] }) {
 
   if (status !== "success") return <Skeleton className="h-60 w-full" />;
 
-  // TODO: fix type error
+  // TODO: @JakeTrevor do you think you can figure out what's going on here?z
   return (
     <>
       {/* @ts-expect-error works fine */}

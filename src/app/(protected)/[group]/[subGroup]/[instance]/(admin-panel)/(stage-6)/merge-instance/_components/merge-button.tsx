@@ -1,5 +1,4 @@
 "use client";
-import { AllocationInstance } from "@prisma/client";
 import { MergeIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -21,13 +20,14 @@ import {
 import { api } from "@/lib/trpc/client";
 
 import { spacesLabels } from "@/config/spaces";
+import { InstanceDTO } from "@/dto";
 
 export function MergeButton({
   forkedInstance,
   parentInstance,
 }: {
-  forkedInstance: AllocationInstance;
-  parentInstance: AllocationInstance;
+  forkedInstance: InstanceDTO;
+  parentInstance: InstanceDTO;
 }) {
   const router = useRouter();
   const params = useInstanceParams();
@@ -38,7 +38,9 @@ export function MergeButton({
   async function handleClick() {
     void toast.promise(
       mergeAsync({ params }).then(() => {
-        router.push(`/${params.group}/${params.subGroup}/${parentInstance.id}`);
+        router.push(
+          `/${params.group}/${params.subGroup}/${parentInstance.instance}`,
+        );
         router.refresh();
       }),
       {

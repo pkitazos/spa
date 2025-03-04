@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { useInstanceParams } from "@/components/params-context";
-import { UserCreationErrorCard } from "@/components/toast-card/user-creation-error";
 import DataTable from "@/components/ui/data-table/data-table";
 import { LabelledSeparator } from "@/components/ui/labelled-separator";
 import { Separator } from "@/components/ui/separator";
@@ -19,6 +18,8 @@ import { FormSection } from "./form-section";
 import { useNewStudentColumns } from "./new-student-columns";
 
 import { spacesLabels } from "@/config/spaces";
+import { LinkUserResult } from "@/dto/result/link-user-result";
+import { StudentDTO } from "@/dto";
 
 export function AddStudentsSection() {
   const router = useRouter();
@@ -36,18 +37,25 @@ export function AddStudentsSection() {
     api.institution.instance.addStudent.useMutation();
 
   // TODO: handle error messages properly (add status codes or something)
-  async function handleAddStudent(newStudent: NewStudent) {
+  async function handleAddStudent(data: NewStudent) {
+    const newStudent: StudentDTO = {
+      id: data.institutionId,
+      name: data.fullName,
+      email: data.email,
+      level: data.level,
+      joined: false,
+      latestSubmission: undefined,
+      flags: [], // TODO: update form to accept flags
+    };
+
     void toast.promise(
-      addStudentAsync({
-        params,
-        newStudent,
-      }).then(() => {
+      addStudentAsync({ params, newStudent }).then(() => {
         router.refresh();
         refetchData();
       }),
       {
         loading: "Adding student...",
-        success: `Successfully added student ${newStudent.institutionId} to ${spacesLabels.instance.short}`,
+        success: `Successfully added student ${newStudent.id} to ${spacesLabels.instance.short}`,
         error: (err) =>
           err instanceof TRPCClientError
             ? err.message
@@ -59,34 +67,49 @@ export function AddStudentsSection() {
   const { mutateAsync: addStudentsAsync } =
     api.institution.instance.addStudents.useMutation();
 
-  async function handleAddStudents(newStudents: NewStudent[]) {
+  async function handleAddStudents(data: NewStudent[]) {
+    const newStudents = data.map((s) => ({
+      id: s.institutionId,
+      name: s.fullName,
+      email: s.email,
+      level: s.level,
+      joined: false,
+      latestSubmission: undefined,
+      flags: [], // TODO: update form to accept flags
+    }));
+
     const res = await addStudentsAsync({ params, newStudents }).then((data) => {
       router.refresh();
       refetchData();
-      return data;
-    });
-
-    if (res.successFullyAdded === 0) {
-      toast.error(`No students were added to ${spacesLabels.instance.short}`);
-    } else {
-      toast.success(
-        `Successfully added ${res.successFullyAdded} students to ${spacesLabels.instance.short}`,
-      );
-    }
-
-    const errors = res.errors.reduce(
-      (acc, val) => ({
-        ...acc,
-        [val.msg]: [...(acc[val.msg] ?? []), val.user.institutionId],
-      }),
-      {} as { [key: string]: string[] },
-    );
-
-    Object.entries(errors).forEach(([msg, affectedUsers]) => {
-      toast.error(
-        <UserCreationErrorCard error={msg} affectedUsers={affectedUsers} />,
+      return data.reduce(
+        (acc, val) => ({ ...acc, [val]: (acc[val] ?? 0) + 1 }),
+        {} as Record<LinkUserResult, number>,
       );
     });
+
+    // TODO: report status of csv upload
+
+    // if (res.successFullyAdded === 0) {
+    //   toast.error(`No students were added to ${spacesLabels.instance.short}`);
+    // } else {
+    //   toast.success(
+    //     `Successfully added ${res.successFullyAdded} students to ${spacesLabels.instance.short}`,
+    //   );
+    // }
+
+    // const errors = res.errors.reduce(
+    //   (acc, val) => ({
+    //     ...acc,
+    //     [val.msg]: [...(acc[val.msg] ?? []), val.user.institutionId],
+    //   }),
+    //   {} as { [key: string]: string[] },
+    // );
+
+    // Object.entries(errors).forEach(([msg, affectedUsers]) => {
+    //   toast.error(
+    //     <UserCreationErrorCard error={msg} affectedUsers={affectedUsers} />,
+    //   );
+    // });
   }
 
   const { mutateAsync: removeStudentAsync } =

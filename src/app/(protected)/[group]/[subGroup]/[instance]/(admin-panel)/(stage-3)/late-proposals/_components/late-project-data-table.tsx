@@ -7,11 +7,12 @@ import DataTable from "@/components/ui/data-table/data-table";
 import { useDataTableProjectFilters } from "@/components/ui/data-table/data-table-context";
 
 import { api } from "@/lib/trpc/client";
-import { LateProjectDto } from "@/lib/validations/dto/project";
 
 import { useLateProjectColumns } from "./late-projects-columns";
+import { ProjectDTO } from "@/dto";
+import { toPP3 } from "@/lib/utils/general/instance-params";
 
-export function LateProjectDataTable({ data }: { data: LateProjectDto[] }) {
+export function LateProjectDataTable({ data }: { data: ProjectDTO[] }) {
   const params = useInstanceParams();
   const router = useRouter();
 
@@ -21,7 +22,9 @@ export function LateProjectDataTable({ data }: { data: LateProjectDto[] }) {
 
   async function handleDelete(projectId: string) {
     void toast.promise(
-      deleteAsync({ params, projectId }).then(() => router.refresh()),
+      deleteAsync({ params: toPP3(params, projectId) }).then(() =>
+        router.refresh(),
+      ),
       {
         loading: "Deleting Project...",
         error: "Something went wrong",

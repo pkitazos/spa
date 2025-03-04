@@ -3,7 +3,7 @@ import { PageWrapper } from "@/components/page-wrapper";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
-import { toPP } from "@/lib/utils/general/instance-params";
+import { toPP1 } from "@/lib/utils/general/instance-params";
 import { makeRequiredFlags } from "@/lib/utils/general/make-required-flags";
 import { stageGte } from "@/lib/utils/permissions/stage-check";
 import { InstanceParams } from "@/lib/validations/params";
@@ -51,7 +51,7 @@ export default async function Page({ params }: { params: PageParams }) {
     isPreAllocated: project.preAllocatedStudentId !== "",
   };
 
-  const isForked = await api.project.getIsForked({ params: toPP(params) });
+  const isForked = await api.project.getIsForked({ params: toPP1(params) });
 
   const instanceFlags = await api.institution.instance.getFlags({ params });
   const requiredFlags = makeRequiredFlags(instanceFlags);

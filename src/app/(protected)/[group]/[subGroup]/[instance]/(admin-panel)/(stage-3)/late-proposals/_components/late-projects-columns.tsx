@@ -29,7 +29,7 @@ import {
 } from "@/components/yes-no-action";
 
 import { cn } from "@/lib/utils";
-import { LateProjectDto } from "@/lib/validations/dto/project";
+import { ProjectDTO } from "@/dto";
 
 export function useLateProjectColumns({
   deleteProject,
@@ -37,12 +37,12 @@ export function useLateProjectColumns({
 }: {
   deleteProject: (id: string) => Promise<void>;
   deleteSelectedProjects: (ids: string[]) => Promise<void>;
-}): ColumnDef<LateProjectDto>[] {
+}): ColumnDef<ProjectDTO>[] {
   const instancePath = useInstancePath();
 
-  const selectCol = getSelectColumn<LateProjectDto>();
+  const selectCol = getSelectColumn<ProjectDTO>();
 
-  const userCols: ColumnDef<LateProjectDto>[] = [
+  const userCols: ColumnDef<ProjectDTO>[] = [
     {
       id: "ID",
       accessorFn: ({ id }) => id,

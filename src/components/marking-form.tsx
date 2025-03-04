@@ -31,7 +31,7 @@ import {
 } from "./ui/command";
 import layoutData from "./layout.json";
 
-import { GRADES } from "@/content/grades";
+import { GRADES } from "@/config/grades";
 
 export function MarkingForm({
   submissionButtonLabel,

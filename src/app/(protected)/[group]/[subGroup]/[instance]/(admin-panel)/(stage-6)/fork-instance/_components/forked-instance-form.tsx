@@ -35,17 +35,15 @@ import { cn } from "@/lib/utils";
 import { updateDateOnly } from "@/lib/utils/date/update-date-only";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import { slugify } from "@/lib/utils/general/slugify";
-import {
-  buildForkedInstanceSchema,
-  ForkedInstanceDetails,
-} from "@/lib/validations/instance-form";
+import { buildForkedInstanceSchema } from "@/lib/validations/instance-form";
 
 import { spacesLabels } from "@/config/spaces";
+import { InstanceDTO } from "@/dto";
 
 export function ForkedInstanceForm({
   takenNames,
 }: {
-  currentInstance: ForkedInstanceDetails;
+  currentInstance: InstanceDTO;
   takenNames: Set<string>;
 }) {
   const params = useInstanceParams();
@@ -54,22 +52,22 @@ export function ForkedInstanceForm({
 
   const instancePath = formatParamsAsPath(params);
 
-  const form = useForm<ForkedInstanceDetails>({
+  const form = useForm<InstanceDTO>({
     resolver: zodResolver(buildForkedInstanceSchema(takenNames)),
     defaultValues: {
-      instanceName: "",
+      displayName: "",
       projectSubmissionDeadline: addDays(new Date(), 1),
-      preferenceSubmissionDeadline: addDays(new Date(), 2),
+      studentPreferenceSubmissionDeadline: addDays(new Date(), 2),
     },
   });
 
   const { mutateAsync: forkAsync } =
     api.institution.instance.fork.useMutation();
 
-  function onSubmit(data: ForkedInstanceDetails) {
+  function onSubmit(data: InstanceDTO) {
     void toast.promise(
       forkAsync({ params, newInstance: data }).then(() => {
-        router.push(`/${group}/${subGroup}/${slugify(data.instanceName)}/`);
+        router.push(`/${group}/${subGroup}/${slugify(data.displayName)}/`);
         router.refresh();
       }),
       {
@@ -88,7 +86,7 @@ export function ForkedInstanceForm({
       >
         <FormField
           control={form.control}
-          name="instanceName"
+          name="displayName"
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-2xl">
@@ -188,7 +186,7 @@ export function ForkedInstanceForm({
         <SubHeading className="text-2xl">Student Restrictions</SubHeading>
         <FormField
           control={form.control}
-          name="preferenceSubmissionDeadline"
+          name="studentPreferenceSubmissionDeadline"
           render={({ field }) => (
             <FormItem className="flex flex-col">
               <FormLabel className="text-base">

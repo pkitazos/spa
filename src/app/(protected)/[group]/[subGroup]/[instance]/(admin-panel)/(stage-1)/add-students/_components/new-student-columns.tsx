@@ -29,8 +29,7 @@ import {
   YesNoActionContainer,
   YesNoActionTrigger,
 } from "@/components/yes-no-action";
-
-import { NewStudent } from "@/lib/validations/add-users/new-user";
+import { StudentDTO } from "@/dto";
 
 export function useNewStudentColumns({
   removeStudent,
@@ -38,44 +37,41 @@ export function useNewStudentColumns({
 }: {
   removeStudent: (id: string) => Promise<void>;
   removeSelectedStudents: (ids: string[]) => Promise<void>;
-}): ColumnDef<NewStudent>[] {
+}): ColumnDef<StudentDTO>[] {
   const stage = useInstanceStage();
 
-  const selectCol = getSelectColumn<NewStudent>();
+  const selectCol = getSelectColumn<StudentDTO>();
 
-  const userCols: ColumnDef<NewStudent>[] = [
+  const userCols: ColumnDef<StudentDTO>[] = [
     {
       id: "Full Name",
-      accessorFn: ({ fullName }) => fullName,
+      accessorFn: ({ name }) => name,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Full Name" />
       ),
       cell: ({
         row: {
-          original: { fullName },
+          original: { name },
         },
       }) => (
-        <WithTooltip
-          align="start"
-          tip={<div className="max-w-xs">{fullName}</div>}
-        >
-          <div className="w-40 truncate">{fullName}</div>
+        <WithTooltip align="start" tip={<div className="max-w-xs">{name}</div>}>
+          <div className="w-40 truncate">{name}</div>
         </WithTooltip>
       ),
     },
     {
       id: "GUID",
-      accessorFn: ({ institutionId: guid }) => guid,
+      accessorFn: ({ id }) => id,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="GUID" canFilter />
       ),
       cell: ({
         row: {
-          original: { institutionId: guid },
+          original: { id },
         },
       }) => (
-        <WithTooltip align="start" tip={<div className="max-w-xs">{guid}</div>}>
-          <div className="w-32 truncate">{guid}</div>
+        <WithTooltip align="start" tip={<div className="max-w-xs">{id}</div>}>
+          <div className="w-32 truncate">{id}</div>
         </WithTooltip>
       ),
     },
@@ -122,7 +118,7 @@ export function useNewStudentColumns({
 
         const selectedStudentIds = table
           .getSelectedRowModel()
-          .rows.map((e) => e.original.institutionId);
+          .rows.map((e) => e.original.id);
 
         function handleRemoveSelectedStudents() {
           void removeSelectedStudents(selectedStudentIds).then(() =>
@@ -172,7 +168,7 @@ export function useNewStudentColumns({
       },
       cell: ({
         row: {
-          original: { fullName, institutionId },
+          original: { name, id },
         },
       }) => (
         <div className="flex w-14 items-center justify-center">
@@ -184,9 +180,9 @@ export function useNewStudentColumns({
               </Button>
             </DropdownMenuTrigger>
             <YesNoActionContainer
-              action={() => void removeStudent(institutionId)}
+              action={() => void removeStudent(id)}
               title="Remove Student?"
-              description={`You are about to remove "${fullName}" from the student list. Do you wish to proceed?`}
+              description={`You are about to remove "${name}" from the student list. Do you wish to proceed?`}
             >
               <DropdownMenuContent align="center" side="bottom">
                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
@@ -194,7 +190,7 @@ export function useNewStudentColumns({
                 <DropdownMenuItem className="group/item">
                   <Link
                     className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={`./students/${institutionId}`}
+                    href={`./students/${id}`}
                   >
                     <CornerDownRightIcon className="h-4 w-4" />
                     <span>View student details</span>
@@ -203,7 +199,7 @@ export function useNewStudentColumns({
                 <DropdownMenuItem className="group/item">
                   <Link
                     className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={`./students/${institutionId}?edit=true`}
+                    href={`./students/${id}?edit=true`}
                   >
                     <PenIcon className="h-4 w-4" />
                     <span>Edit student details</span>
@@ -215,7 +211,7 @@ export function useNewStudentColumns({
                       trigger={
                         <button className="flex items-center gap-2 text-sm">
                           <Trash2Icon className="h-4 w-4" />
-                          <span>Remove Student {fullName}</span>
+                          <span>Remove Student {name}</span>
                         </button>
                       }
                     />

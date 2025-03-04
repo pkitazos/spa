@@ -85,7 +85,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
       <MergeButton
         forkedInstance={forkedInstance}
         parentInstance={parentInstance}
-      ></MergeButton>
+      />
     </PanelWrapper>
   );
 }

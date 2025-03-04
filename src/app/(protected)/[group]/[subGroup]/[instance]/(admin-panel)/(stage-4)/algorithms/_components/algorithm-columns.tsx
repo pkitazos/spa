@@ -1,5 +1,4 @@
 "use client";
-import { AlgorithmFlag } from "@prisma/client";
 import { createColumnHelper } from "@tanstack/react-table";
 import { MoreHorizontalIcon as MoreIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
@@ -41,12 +40,12 @@ export function useAlgorithmColumns() {
   const { mutateAsync: deleteAlgAsync } =
     api.institution.instance.algorithm.delete.useMutation();
 
-  async function deleteAlgorithm(algName: string) {
+  async function deleteAlgorithm(algorithm: AlgorithmDTO) {
     void toast.promise(
-      deleteAlgAsync({ params, algName }).then(refetchResults),
+      deleteAlgAsync({ params, algId: algorithm.id }).then(refetchResults),
       {
         loading: "Running...",
-        success: `Successfully deleted algorithm "${algName}"`,
+        success: `Successfully deleted algorithm "${algorithm.displayName}"`,
         error: "Something went wrong",
       },
     );
@@ -58,15 +57,13 @@ export function useAlgorithmColumns() {
     columnHelper.display({
       id: "Actions",
       header: "",
-      cell: ({
-        row: {
-          original: { name: algName, displayName, description },
-        },
-      }) => {
-        if (description !== "") {
+      cell: ({ row: { original: algorithm } }) => {
+        if (algorithm.description !== "") {
           return (
             <div className="flex w-14 items-start justify-center">
-              <MoreInformation side="left">{description}</MoreInformation>
+              <MoreInformation side="left">
+                {algorithm.description}
+              </MoreInformation>
             </div>
           );
         }
@@ -84,15 +81,15 @@ export function useAlgorithmColumns() {
                 </Button>
               </DropdownMenuTrigger>
               <YesNoActionContainer
-                action={async () => void deleteAlgorithm(algName)}
+                action={async () => void deleteAlgorithm(algorithm)}
                 title="Delete Algorithm?"
-                description={`You are about to remove algorithm "${algName}". Do you wish to proceed?`}
+                description={`You are about to remove algorithm "${algorithm.displayName}". Do you wish to proceed?`}
               >
                 <DropdownMenuContent align="center" side="bottom">
                   <DropdownMenuLabel>
                     Actions
                     <span className="ml-2 text-muted-foreground">
-                      for {displayName}
+                      for {algorithm.displayName}
                     </span>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -119,23 +116,24 @@ export function useAlgorithmColumns() {
       header: () => <p className="w-32 py-2 pl-2">Name</p>,
     }),
 
-    columnHelper.accessor((a) => a.flags as AlgorithmFlag[], {
-      id: "Flags",
-      header: () => <p className="py-2 pl-2">Flags</p>,
-      cell: ({
-        row: {
-          original: { flags },
-        },
-      }) => (
-        <div className="flex gap-2">
-          {flags.map((flag, i) => (
-            <Badge variant="outline" className="w-fit" key={flag + i}>
-              {flag}
-            </Badge>
-          ))}
-        </div>
-      ),
-    }),
+    // TODO: rework this perhaps into several columns?
+    // columnHelper.accessor((a) => a.flags as AlgorithmFlag[], {
+    //   id: "Flags",
+    //   header: () => <p className="py-2 pl-2">Flags</p>,
+    //   cell: ({
+    //     row: {
+    //       original: { flags },
+    //     },
+    //   }) => (
+    //     <div className="flex gap-2">
+    //       {flags.map((flag, i) => (
+    //         <Badge variant="outline" className="w-fit" key={flag + i}>
+    //           {flag}
+    //         </Badge>
+    //       ))}
+    //     </div>
+    //   ),
+    // }),
 
     columnHelper.accessor((a) => a.targetModifier, {
       id: "Target Modifier",

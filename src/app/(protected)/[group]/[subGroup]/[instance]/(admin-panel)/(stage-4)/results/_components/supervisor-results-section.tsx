@@ -29,14 +29,14 @@ export function SupervisorResultsSection() {
       <Carousel className="mx-14">
         <TabsList className="w-full">
           <CarouselContent className="-ml-4">
-            {data.results.map((result, i) => (
+            {data.results.map((x, i) => (
               <CarouselItem key={i} className="basis-1/4 pl-4">
                 <TabsTrigger
                   className="w-full data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground"
-                  value={result.algName}
-                  disabled={result.data.length === 0}
+                  value={x.algorithm.id}
+                  disabled={x.data.length === 0}
                 >
-                  {result.displayName}
+                  {x.algorithm.displayName}
                 </TabsTrigger>
               </CarouselItem>
             ))}
@@ -46,9 +46,9 @@ export function SupervisorResultsSection() {
         <CarouselNext className="h-10 w-10 rounded-md" />
       </Carousel>
       <Separator className="my-4" />
-      {data.results.map((result, i) => (
-        <TabsContent key={i} value={result.algName}>
-          <SupervisorResultsDataTable data={result.data} />
+      {data.results.map((x, i) => (
+        <TabsContent key={i} value={x.algorithm.id}>
+          <SupervisorResultsDataTable data={x.data} />
         </TabsContent>
       ))}
     </Tabs>

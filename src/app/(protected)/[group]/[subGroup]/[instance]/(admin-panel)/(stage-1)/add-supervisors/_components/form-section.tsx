@@ -25,6 +25,7 @@ const blankSupervisorForm = {
   projectUpperQuota: "" as unknown as number,
 };
 
+// TODO: refactor csv upload to use more standard data shapes
 export function FormSection({
   handleAddSupervisor,
 }: {

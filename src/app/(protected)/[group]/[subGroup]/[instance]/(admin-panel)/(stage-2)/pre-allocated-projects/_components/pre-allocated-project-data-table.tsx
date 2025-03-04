@@ -7,14 +7,19 @@ import DataTable from "@/components/ui/data-table/data-table";
 import { useDataTableProjectFilters } from "@/components/ui/data-table/data-table-context";
 
 import { api } from "@/lib/trpc/client";
-import { PreAllocatedProjectDto } from "@/lib/validations/dto/project";
 
 import { usePreAllocatedProjectColumns } from "./pre-allocated-projects-columns";
+import { ProjectDTO, StudentDTO, SupervisorDTO } from "@/dto";
+import { toPP3 } from "@/lib/utils/general/instance-params";
 
 export function PreAllocatedProjectDataTable({
   data,
 }: {
-  data: PreAllocatedProjectDto[];
+  data: {
+    project: ProjectDTO;
+    supervisor: SupervisorDTO;
+    student: StudentDTO;
+  }[];
 }) {
   const params = useInstanceParams();
   const router = useRouter();
@@ -25,7 +30,9 @@ export function PreAllocatedProjectDataTable({
 
   async function handleDelete(projectId: string) {
     void toast.promise(
-      deleteAsync({ params, projectId }).then(() => router.refresh()),
+      deleteAsync({ params: toPP3(params, projectId) }).then(() =>
+        router.refresh(),
+      ),
       {
         loading: "Deleting Project...",
         error: "Something went wrong",

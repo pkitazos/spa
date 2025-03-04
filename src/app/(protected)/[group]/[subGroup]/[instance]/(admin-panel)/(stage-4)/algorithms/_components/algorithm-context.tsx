@@ -36,9 +36,9 @@ export function useAlgorithmUtils() {
     });
   }
 
-  function singleResult(algName: string) {
+  function singleResult(algId: string) {
     utils.institution.instance.algorithm.singleResult.refetch({
-      algName,
+      algId,
       params,
     });
   }
