@@ -1,5 +1,4 @@
 "use client";
-import { PreferenceType, Role } from "@prisma/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -21,17 +20,20 @@ import { StudentPreferenceType } from "@/lib/validations/student-preference";
 
 import { useAllProjectsColumns } from "./all-projects-columns";
 
+import { PreferenceType, Role } from "@/db/types";
+import { toPP3 } from "@/lib/utils/general/instance-params";
+
 export function AllProjectsDataTable({
   data,
   user,
-  role,
+  roles,
   projectPreferences,
   hasSelfDefinedProject,
 }: {
   data: ProjectTableDataDto[];
   user: User;
-  role: Role;
-  projectPreferences: Map<string, PreferenceType>;
+  roles: Set<Role>;
+  projectPreferences: Record<string, PreferenceType>;
   hasSelfDefinedProject: boolean;
 }) {
   const params = useInstanceParams();
@@ -44,7 +46,9 @@ export function AllProjectsDataTable({
 
   async function handleDelete(projectId: string) {
     void toast.promise(
-      deleteAsync({ params, projectId }).then(() => router.refresh()),
+      deleteAsync({ params: toPP3(params, projectId) }).then(() =>
+        router.refresh(),
+      ),
       {
         loading: "Deleting project...",
         error: "Something went wrong",
@@ -75,11 +79,9 @@ export function AllProjectsDataTable({
     projectId: string,
   ) {
     void toast.promise(
-      changePreferenceAsync({
-        params,
-        preferenceType,
-        projectId,
-      }).then(() => router.refresh()),
+      changePreferenceAsync({ params, preferenceType, projectId }).then(() =>
+        router.refresh(),
+      ),
       {
         loading: "Updating project preference...",
         error: "Something went wrong",
@@ -140,7 +142,7 @@ export function AllProjectsDataTable({
 
   const columns = useAllProjectsColumns({
     user,
-    role,
+    roles,
     projectPreferences,
     hasSelfDefinedProject,
     deleteProject: handleDelete,

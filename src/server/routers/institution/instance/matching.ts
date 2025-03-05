@@ -1,370 +1,124 @@
-import { Role } from "@prisma/client";
 import { z } from "zod";
 
 import {
   getAllocPairs,
   getStudentRank,
 } from "@/lib/utils/allocation-adjustment/rank";
-import { toSupervisorDetails } from "@/lib/utils/allocation-adjustment/supervisor";
-import { guidToMatric } from "@/lib/utils/external/matriculation";
 import { expand } from "@/lib/utils/general/instance-params";
+import { getRandomInt } from "@/lib/utils/general/random";
 import {
-  ProjectDetails,
+  ProjectInfo,
   projectInfoSchema,
+  StudentRow,
   studentRowSchema,
+  SupervisorDetails,
+  supervisorDetailsSchema,
 } from "@/lib/validations/allocation-adjustment";
-import { matchingResultSchema } from "@/lib/validations/matching";
+import { allocationCsvDataSchema } from "@/lib/validations/allocation-csv-data";
 import { instanceParamsSchema } from "@/lib/validations/params";
 
-import { createTRPCRouter, instanceAdminProcedure } from "@/server/trpc";
-import { getUnallocatedStudents } from "@/server/utils/instance/unallocated-students";
-
-import { getPreAllocatedStudents } from "./_utils/pre-allocated-students";
-import { randomAllocationTrx } from "./algorithm/_utils/random-allocation";
-import { updateAllocation } from "./algorithm/_utils/update-allocation";
+import { procedure } from "@/server/middleware";
+import { createTRPCRouter } from "@/server/trpc";
 
 export const matchingRouter = createTRPCRouter({
-  select: instanceAdminProcedure
-    .input(
+  // ok
+  select: procedure.instance.subGroupAdmin
+    .input(z.object({ algId: z.string() }))
+    .output(z.void())
+    .mutation(
+      async ({ ctx: { instance }, input: { algId } }) =>
+        await instance.selectAlg(algId),
+    ),
+
+  // ok
+  clearSelection: procedure.instance.subGroupAdmin
+    .input(z.object({ params: instanceParamsSchema }))
+    .output(z.void())
+    .mutation(
+      async ({ ctx: { instance } }) => await instance.clearAlgSelection(),
+    ),
+
+  // ok
+  clearAll: procedure.instance.subGroupAdmin
+    .output(z.void())
+    .mutation(
+      async ({ ctx: { instance } }) => await instance.clearAllAlgResults(),
+    ),
+
+  // BREAKING
+  // move, maybe rename
+  // TODO: change output type to something more standard
+  rowData: procedure.instance.subGroupAdmin
+    .output(
       z.object({
-        params: instanceParamsSchema,
-        algName: z.string(),
+        students: z.array(studentRowSchema),
+        projects: z.array(projectInfoSchema),
+        supervisors: z.array(supervisorDetailsSchema),
       }),
     )
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          algName,
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        await ctx.db.$transaction(async (tx) => {
-          const { matchingResultData } = await tx.algorithm.findFirstOrThrow({
-            where: {
-              algName,
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-            },
-            select: { matchingResultData: true },
-          });
+    .query(async ({ ctx: { instance } }) => {
+      const studentData = await instance.getStudentPreferenceDetails();
+      const projectData = await instance.getProjectDetails();
+      const supervisorData = await instance.getSupervisorProjectDetails();
 
-          const { matching } = matchingResultSchema.parse(
-            JSON.parse(matchingResultData as string),
-          );
+      const allocationRecord = await instance
+        .getAllocationData()
+        .then((data) => data.toRecord());
 
-          if (ctx.instance.selectedAlgName) {
-            const preAllocatedStudents = await getPreAllocatedStudents(tx, {
-              group,
-              subGroup,
-              instance,
-            }).then((data) => Array.from(data));
+      const supervisors = supervisorData.map(
+        (s) =>
+          ({
+            supervisorId: s.institutionId,
+            lowerBound: 0,
+            target: s.projectTarget,
+            upperBound: s.projectUpperQuota,
+            projects: s.projects.map((e) => e.id),
+          }) satisfies SupervisorDetails,
+      );
 
-            await tx.projectAllocation.deleteMany({
-              where: {
-                allocationGroupId: group,
-                allocationSubGroupId: subGroup,
-                allocationInstanceId: instance,
-                userId: { notIn: preAllocatedStudents },
-              },
-            });
-          }
-
-          await tx.projectAllocation.createMany({
-            data: matching
-              .filter((e) => e.project_id !== "0")
-              .map(({ student_id, project_id, preference_rank }) => ({
-                userId: student_id,
-                projectId: project_id,
-                allocationGroupId: group,
-                allocationSubGroupId: subGroup,
-                allocationInstanceId: instance,
-                studentRanking: preference_rank,
+      const students = studentData
+        .map(
+          (s) =>
+            ({
+              student: { id: s.institutionId, name: s.fullName },
+              projects: s.submittedPreferences.map(({ projectId: id }) => ({
+                id,
+                selected:
+                  allocationRecord[id]?.includes(s.institutionId) ?? false,
               })),
-          });
+            }) satisfies StudentRow,
+        )
+        .filter((e) => e.projects.length > 0);
 
-          await tx.allocationInstance.update({
-            where: {
-              instanceId: {
-                allocationGroupId: group,
-                allocationSubGroupId: subGroup,
-                id: instance,
-              },
-            },
-            data: { selectedAlgName: algName },
-          });
-        });
-      },
-    ),
+      const projects = projectData.map(
+        (p) =>
+          ({
+            id: p.project.id,
+            title: p.project.title,
+            capacityLowerBound: p.project.capacityLowerBound,
+            capacityUpperBound: p.project.capacityUpperBound,
+            allocatedTo: p.allocatedTo,
+            projectAllocationLowerBound: p.supervisor.allocationLowerBound,
+            projectAllocationTarget: p.supervisor.allocationTarget,
+            projectAllocationUpperBound: p.supervisor.allocationUpperBound,
+          }) satisfies ProjectInfo,
+      );
 
-  clearSelection: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .mutation(async ({ ctx, input: { params } }) => {
-      await ctx.db.$transaction(async (tx) => {
-        const preAllocatedStudents = await getPreAllocatedStudents(
-          tx,
-          params,
-        ).then((data) => Array.from(data));
-
-        await tx.projectAllocation.deleteMany({
-          where: { ...expand(params), userId: { notIn: preAllocatedStudents } },
-        });
-
-        await tx.allocationInstance.update({
-          where: {
-            instanceId: {
-              allocationGroupId: params.group,
-              allocationSubGroupId: params.subGroup,
-              id: params.instance,
-            },
-          },
-          data: { selectedAlgName: null },
-        });
-      });
+      return { supervisors, students, projects };
     }),
 
-  clearAll: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .mutation(async ({ ctx, input: { params } }) => {
-      await ctx.db.$transaction(async (tx) => {
-        await tx.algorithm.updateMany({
-          where: { ...expand(params) },
-          data: { matchingResultData: JSON.stringify({}) },
-        });
-
-        await tx.allocationInstance.update({
-          where: {
-            instanceId: {
-              allocationGroupId: params.group,
-              allocationSubGroupId: params.subGroup,
-              id: params.instance,
-            },
-          },
-          data: { selectedAlgName: null },
-        });
-
-        const preAllocatedStudents = await getPreAllocatedStudents(
-          tx,
-          params,
-        ).then((data) => Array.from(data));
-
-        await tx.projectAllocation.deleteMany({
-          where: { ...expand(params), userId: { notIn: preAllocatedStudents } },
-        });
-      });
-    }),
-
-  /**
-   * @deprecated
-   */
-  preferences: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const data = await ctx.db.userInInstance.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            role: Role.STUDENT,
-          },
-          select: {
-            user: { select: { id: true, name: true } },
-            studentPreferences: {
-              select: {
-                project: {
-                  select: {
-                    id: true,
-                    allocations: { select: { userId: true } },
-                  },
-                },
-                rank: true,
-              },
-              orderBy: { rank: "asc" },
-            },
-          },
-        });
-
-        return data.map((e) => ({
-          student: { id: e.user.id, name: e.user.name! },
-          projectPreferences: e.studentPreferences.map(
-            ({ project: { id, allocations } }) => ({
-              id,
-              selected:
-                allocations.filter((u) => u.userId === e.user.id).length === 1,
-            }),
-          ),
-        }));
-      },
-    ),
-
-  // TODO: refactor to use transaction and extract util functions
-  rowData: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const studentData = await ctx.db.studentDetails.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          },
-          select: {
-            userInInstance: {
-              select: { user: { select: { id: true, name: true } } },
-            },
-            preferences: {
-              select: {
-                project: {
-                  select: {
-                    id: true,
-                    allocations: { select: { userId: true } },
-                  },
-                },
-                rank: true,
-              },
-              orderBy: { rank: "asc" },
-            },
-          },
-        });
-
-        const projectData = await ctx.db.project.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          },
-          select: {
-            id: true,
-            title: true,
-            capacityLowerBound: true,
-            capacityUpperBound: true,
-            supervisor: {
-              select: {
-                supervisorInstanceDetails: {
-                  where: {
-                    allocationGroupId: group,
-                    allocationSubGroupId: subGroup,
-                    allocationInstanceId: instance,
-                  },
-                  select: {
-                    projectAllocationLowerBound: true,
-                    projectAllocationTarget: true,
-                    projectAllocationUpperBound: true,
-                  },
-                },
-              },
-            },
-          },
-        });
-
-        const supervisorData = await ctx.db.supervisorInstanceDetails.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          },
-          select: {
-            projectAllocationLowerBound: true,
-            projectAllocationTarget: true,
-            projectAllocationUpperBound: true,
-            userId: true,
-            userInInstance: {
-              select: {
-                supervisorProjects: {
-                  select: {
-                    id: true,
-                    allocations: { select: { userId: true } },
-                  },
-                },
-              },
-            },
-          },
-        });
-
-        const supervisors = supervisorData.map((s) => toSupervisorDetails(s));
-
-        const allocationData = await ctx.db.projectAllocation.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          },
-          select: { projectId: true, userId: true },
-        });
-
-        // TODO: use reduce
-        const allocationRecord: Record<string, string[]> = {};
-        allocationData.forEach(({ projectId, userId }) => {
-          if (!allocationRecord[projectId]) allocationRecord[projectId] = [];
-          allocationRecord[projectId].push(userId);
-        });
-
-        // TODO: use reduce
-        const projectDetails: Record<string, ProjectDetails> = {};
-        projectData.forEach(({ id, ...rest }) => {
-          projectDetails[id] = {
-            ...rest,
-            allocatedTo: allocationRecord[id] ?? [],
-          };
-        });
-
-        const students = studentData
-          .map(({ userInInstance: { user }, preferences }) => ({
-            student: { id: user.id, name: user.name! },
-            projects: preferences.map(({ project: { id, allocations } }) => ({
-              id,
-              selected:
-                allocations.filter((u) => u.userId === user.id).length === 1,
-            })),
-          }))
-          .filter((e) => e.projects.length > 0);
-
-        const projects = projectData.map((p) => {
-          const supervisor = p.supervisor.supervisorInstanceDetails[0];
-          return {
-            id: p.id,
-            title: p.title,
-            capacityLowerBound: p.capacityLowerBound,
-            capacityUpperBound: p.capacityUpperBound,
-            allocatedTo: allocationRecord[p.id] ?? [],
-            projectAllocationLowerBound: supervisor.projectAllocationLowerBound,
-            projectAllocationTarget: supervisor.projectAllocationTarget,
-            projectAllocationUpperBound: supervisor.projectAllocationUpperBound,
-          };
-        });
-
-        return { students, projects, supervisors };
-      },
-    ),
-
-  updateAllocation: instanceAdminProcedure
+  // TODO
+  updateAllocation: procedure.instance.subGroupAdmin
     .input(
       z.object({
-        params: instanceParamsSchema,
         allProjects: z.array(projectInfoSchema),
         allStudents: z.array(studentRowSchema),
       }),
     )
     .mutation(
       async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          allProjects,
-          allStudents,
-        },
+        ctx: { instance, db },
+        input: { allProjects, allStudents },
       }) => {
         /**
          * ? How do I calculate the updated allocations?
@@ -379,116 +133,143 @@ export const matchingRouter = createTRPCRouter({
          */
         const allocPairs = getAllocPairs(allProjects);
 
-        const updatedAllocations = allocPairs.map(({ projectId, userId }) => {
-          return {
-            projectId,
-            userId,
-            studentRanking: getStudentRank(allStudents, userId, projectId),
-          };
-        });
+        const updatedAllocations = allocPairs.map(({ projectId, userId }) => ({
+          projectId,
+          userId,
+          studentRanking: getStudentRank(allStudents, userId, projectId),
+        }));
 
-        await ctx.db.$transaction(async (tx) => {
-          const preAllocatedStudents = await getPreAllocatedStudents(tx, {
-            group,
-            subGroup,
-            instance,
-          }).then((data) => Array.from(data));
+        const preAllocatedStudentIds = await instance
+          .getPreAllocations()
+          .then((d) => d.map((d) => d.student.id));
 
-          await tx.projectAllocation.deleteMany({
+        await db.$transaction([
+          db.studentProjectAllocation.deleteMany({
             where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              userId: { notIn: preAllocatedStudents },
+              ...expand(instance.params),
+              userId: { notIn: preAllocatedStudentIds },
             },
-          });
+          }),
 
-          await tx.projectAllocation.createMany({
+          db.studentProjectAllocation.createMany({
             data: updatedAllocations.map((e) => ({
-              ...e,
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
+              ...expand(instance.params),
+              projectId: e.projectId,
+              userId: e.userId,
+              studentRanking: e.studentRanking,
             })),
-          });
-        });
+          }),
+        ]);
       },
     ),
 
-  exportCsvData: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const allocationData = await ctx.db.projectAllocation.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          },
-          select: {
-            project: { include: { supervisor: { select: { user: true } } } },
-            student: { select: { user: true, studentDetails: true } },
-            studentRanking: true,
-          },
-        });
-
-        return allocationData
-          .map(({ project, student, ...e }) => ({
-            project: {
-              ...project,
-              supervisor: project.supervisor.user,
-              specialTechnicalRequirements:
-                project.specialTechnicalRequirements ?? "",
-            },
-            student: {
-              id: student.user.id,
-              name: student.user.name,
-              matric: guidToMatric(student.user.id),
-              level: student.studentDetails[0].studentLevel, // TODO: move project allocation information to studentDetails table
-              email: student.user.email,
-              ranking: e.studentRanking,
-            },
-            supervisor: project.supervisor.user,
-          }))
-          .sort((a, b) => a.student.id.localeCompare(b.student.id));
-      },
-    ),
-
-  getRandomAllocation: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
-    .mutation(async ({ ctx, input: { params, studentId } }) => {
-      await randomAllocationTrx(ctx.db, params, studentId);
+  // ok
+  exportCsvData: procedure.instance.subGroupAdmin
+    .output(z.array(allocationCsvDataSchema))
+    .query(async ({ ctx: { instance } }) => {
+      const allocationData = await instance.getAllocationData();
+      return allocationData.toExportData();
     }),
 
-  getRandomAllocationForAll: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .mutation(async ({ ctx, input: { params } }) => {
-      const selectedAlgName = ctx.instance.selectedAlgName;
+  // pin
+  getRandomAllocation: procedure.instance.subGroupAdmin
+    .input(z.object({ studentId: z.string() }))
+    .mutation(async ({ ctx: { instance, db }, input: { studentId } }) => {
+      const projects = await instance.getStudentSuitableProjects(studentId);
+
+      const randomIdx = getRandomInt(projects.length - 1);
+      const randomAllocation = projects[randomIdx];
+
+      if (!randomAllocation) throw new Error("No suitable projects found");
+
+      await db.$transaction([
+        db.studentSubmittedPreference.deleteMany({
+          where: { ...expand(instance.params), userId: studentId },
+        }),
+
+        db.studentSubmittedPreference.create({
+          data: {
+            ...expand(instance.params),
+            projectId: randomAllocation.id,
+            userId: studentId,
+            rank: 1,
+          },
+        }),
+
+        db.studentProjectAllocation.upsert({
+          where: {
+            studentProjectAllocationId: {
+              ...expand(instance.params),
+              userId: studentId,
+            },
+          },
+          create: {
+            ...expand(instance.params),
+            projectId: randomAllocation.id,
+            userId: studentId,
+            studentRanking: 1,
+          },
+          update: { projectId: randomAllocation.id, studentRanking: 1 },
+        }),
+      ]);
+    }),
+
+  // pin
+  getRandomAllocationForAll: procedure.instance.subGroupAdmin.mutation(
+    async ({ ctx: { instance, db } }) => {
+      const { selectedAlgConfigId: selectedAlgName } = await instance.get();
       if (!selectedAlgName) return;
 
-      const data = await getUnallocatedStudents(
-        ctx.db,
-        params,
-        selectedAlgName,
-      );
+      const data = await instance.getStudentsForRandomAllocation();
 
+      // wtf Petro?
       for (const { student } of data) {
-        await randomAllocationTrx(ctx.db, params, student.id);
+        const projects = await instance.getStudentSuitableProjects(student.id);
+        const randomIdx = getRandomInt(projects.length - 1);
+        const randomAllocation = projects[randomIdx];
+
+        if (!randomAllocation) throw new Error("No suitable projects found");
+
+        await db.$transaction([
+          db.studentSubmittedPreference.deleteMany({
+            where: { ...expand(instance.params), userId: student.id },
+          }),
+
+          db.studentSubmittedPreference.create({
+            data: {
+              ...expand(instance.params),
+              projectId: randomAllocation.id,
+              userId: student.id,
+              rank: 1,
+            },
+          }),
+
+          db.studentProjectAllocation.upsert({
+            where: {
+              studentProjectAllocationId: {
+                ...expand(instance.params),
+                userId: student.id,
+              },
+            },
+            create: {
+              ...expand(instance.params),
+              projectId: randomAllocation.id,
+              userId: student.id,
+              studentRanking: 1,
+            },
+            update: { projectId: randomAllocation.id, studentRanking: 1 },
+          }),
+        ]);
       }
-    }),
+    },
+  ),
 
-  removeAllocation: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema, studentId: z.string() }))
-    .mutation(async ({ ctx, input: { params, studentId } }) => {
-      await updateAllocation(ctx.db, params, studentId);
-
-      await ctx.db.savedPreference.deleteMany({
-        where: { ...expand(params), userId: studentId },
-      });
-    }),
+  // ok
+  removeAllocation: procedure.instance.subGroupAdmin
+    .input(z.object({ studentId: z.string() }))
+    .output(z.void())
+    .mutation(
+      async ({ ctx: { instance }, input: { studentId } }) =>
+        await instance.deleteStudentAllocation(studentId),
+    ),
 });

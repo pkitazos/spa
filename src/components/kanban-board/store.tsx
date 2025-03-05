@@ -1,6 +1,5 @@
 "use client";
 import { createContext, useContext, useRef } from "react";
-import { PreferenceType } from "@prisma/client";
 import { createStore, useStore } from "zustand";
 
 import { computeUpdatedRank } from "@/lib/utils/sorting/compute-updated-rank";
@@ -8,6 +7,7 @@ import {
   PreferenceBoard,
   ProjectPreferenceCardDto,
 } from "@/lib/validations/board";
+import { PreferenceType } from "@/db/types";
 
 interface KanbanBoardProps {
   projects: PreferenceBoard;
@@ -41,10 +41,7 @@ const createBoardDetailsStore = (initProps?: Partial<KanbanBoardProps>) => {
 
     addProject: (project: ProjectPreferenceCardDto, columnId: PreferenceType) =>
       set(({ projects }) => ({
-        projects: {
-          ...projects,
-          [columnId]: [...projects[columnId], project],
-        },
+        projects: { ...projects, [columnId]: [...projects[columnId], project] },
       })),
 
     deleteProject: (projectId: string) =>

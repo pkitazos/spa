@@ -1,3 +1,4 @@
 {
+  "objectWrap": "collapse",
   "plugins": ["prettier-plugin-tailwindcss"]
 }

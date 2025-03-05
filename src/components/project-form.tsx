@@ -2,7 +2,6 @@
 import { ReactNode, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Role, Stage, Tag } from "@prisma/client";
 import { Check, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 
@@ -54,7 +53,9 @@ import {
   useInstanceStage,
 } from "./params-context";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
+import { Role, Stage } from "@/db/types";
+import { TagDTO } from "@/dto";
 
 export function ProjectForm({
   formInternalData: { takenTitles, flags, tags, students },
@@ -284,7 +285,7 @@ export function ProjectForm({
                     inputFieldPosition="top"
                     setTags={(newTags) => {
                       setSelectedTags(newTags);
-                      form.setValue("tags", newTags as [Tag, ...Tag[]]);
+                      form.setValue("tags", newTags as TagDTO[]);
                     }}
                     className="sm:min-w-[450px]"
                     {...field}

@@ -1,511 +1,207 @@
-import { Stage } from "@prisma/client";
-import { toZonedTime } from "date-fns-tz";
 import { z } from "zod";
 
-import { getGMTOffset } from "@/lib/utils/date/timezone";
-import { stageGte } from "@/lib/utils/permissions/stage-check";
+import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
+import { subsequentStages } from "@/lib/utils/permissions/stage-check";
 import { instanceParamsSchema } from "@/lib/validations/params";
-import { supervisorInstanceCapacitiesSchema } from "@/lib/validations/supervisor-project-submission-details";
+import { supervisorCapacitiesSchema } from "@/lib/validations/supervisor-project-submission-details";
 
+import { procedure } from "@/server/middleware";
+import { createTRPCRouter } from "@/server/trpc";
+
+import { computeProjectSubmissionTarget } from "@/config/submission-target";
+import { Stage } from "@/db/types";
 import {
-  createTRPCRouter,
-  instanceAdminProcedure,
-  instanceProcedure,
-  roleAwareProcedure,
-} from "@/server/trpc";
-import { computeProjectSubmissionTarget } from "@/server/utils/instance/submission-target";
-
-import { formatSupervisorRowProjects } from "./_utils/supervisor-row-projects";
+  ProjectDTO,
+  projectDtoSchema,
+  StudentDTO,
+  studentDtoSchema,
+  supervisorDtoSchema,
+  userDtoSchema,
+} from "@/dto";
 
 export const supervisorRouter = createTRPCRouter({
-  exists: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema, supervisorId: z.string() }))
+  exists: procedure.instance.user
+    .input(z.object({ supervisorId: z.string() }))
+    .output(z.boolean())
     .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          supervisorId,
-        },
-      }) => {
-        const exists = await ctx.db.supervisorInstanceDetails.findFirst({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            userId: supervisorId,
-          },
-        });
-        return !!exists;
-      },
+      async ({ ctx: { instance }, input: { supervisorId } }) =>
+        await instance.isSupervisor(supervisorId),
     ),
 
-  allocationAccess: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(async ({ ctx }) => ctx.instance.supervisorAllocationAccess),
-
-  setAllocationAccess: instanceAdminProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        access: z.boolean(),
-      }),
-    )
-    .mutation(async ({ ctx, input: { params, access } }) => {
-      await ctx.db.allocationInstance.update({
-        where: {
-          instanceId: {
-            allocationGroupId: params.group,
-            allocationSubGroupId: params.subGroup,
-            id: params.instance,
-          },
-        },
-        data: { supervisorAllocationAccess: access },
-      });
-
-      return access;
+  allocationAccess: procedure.instance.user
+    .output(z.boolean())
+    .query(async ({ ctx: { instance } }) => {
+      const { supervisorAllocationAccess } = await instance.get();
+      return supervisorAllocationAccess;
     }),
 
-  instancePage: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const { displayName, projectSubmissionDeadline } =
-          await ctx.db.allocationInstance.findFirstOrThrow({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              id: instance,
-            },
-            select: {
-              displayName: true,
-              projectSubmissionDeadline: true,
-            },
-          });
-
-        return {
-          displayName,
-          projectSubmissionDeadline: toZonedTime(
-            projectSubmissionDeadline,
-            "Europe/London",
-          ),
-          deadlineTimeZoneOffset: getGMTOffset(projectSubmissionDeadline),
-        };
-      },
+  // TODO stage check?
+  setAllocationAccess: procedure.instance.subGroupAdmin
+    .input(z.object({ access: z.boolean() }))
+    .output(z.boolean())
+    .mutation(
+      async ({ ctx: { instance }, input: { access } }) =>
+        await instance.setSupervisorPublicationAccess(access),
     ),
 
-  instanceData: instanceAdminProcedure
-    .input(
+  // TODO split to e.g. displayname and DeadlineDetails
+  // TODO rename
+  // MOVE to instance router
+  instancePage: procedure.instance.supervisor
+    .input(z.object({ params: instanceParamsSchema }))
+    .output(
       z.object({
-        params: instanceParamsSchema,
-        supervisorId: z.string(),
+        displayName: z.string(),
+        // TODO make DTO for below
+        deadlineTimeZoneOffset: z.string(),
+        projectSubmissionDeadline: z.date(),
       }),
     )
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          supervisorId,
-        },
-      }) => {
-        const supervisorData =
-          await ctx.db.supervisorInstanceDetails.findFirstOrThrow({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              userId: supervisorId,
-            },
-            select: {
-              projectAllocationTarget: true,
-              projectAllocationUpperBound: true,
-              userInInstance: {
-                select: {
-                  user: { select: { id: true, name: true, email: true } },
-                  supervisorProjects: {
-                    select: {
-                      id: true,
-                      title: true,
-                      supervisorId: true,
-                      preAllocatedStudentId: true,
-                      tagOnProject: { select: { tag: true } },
-                      flagOnProjects: { select: { flag: true } },
-                      allocations: {
-                        select: { student: { select: { user: true } } },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          });
+    .query(async ({ ctx: { instance } }) => {
+      const { displayName, projectSubmissionDeadline } = await instance.get();
 
-        const supervisor = {
-          id: supervisorData.userInInstance.user.id,
-          name: supervisorData.userInInstance.user.name,
-          email: supervisorData.userInInstance.user.email,
-          projectTarget: supervisorData.projectAllocationTarget,
-          projectUpperQuota: supervisorData.projectAllocationUpperBound,
-        };
+      return {
+        displayName,
+        deadlineTimeZoneOffset: getGMTOffset(projectSubmissionDeadline),
+        projectSubmissionDeadline: getGMTZoned(projectSubmissionDeadline),
+      };
+    }),
 
-        const projects = supervisorData.userInInstance.supervisorProjects.map(
-          (p) => ({
-            id: p.id,
-            title: p.title,
-            supervisorId: p.supervisorId,
-            preAllocatedStudentId: p.preAllocatedStudentId ?? undefined,
-            tags: p.tagOnProject.map((t) => t.tag),
-            flags: p.flagOnProjects.map((f) => f.flag),
-            allocatedStudents: p.allocations.map((a) => a.student.user),
+  // TODO rename
+  // TODO change output schema
+  // MOVE to instance router
+  instanceData: procedure.instance.subGroupAdmin
+    .input(z.object({ supervisorId: z.string() }))
+    .output(
+      // TODO compose don't extend
+      z.object({
+        supervisor: supervisorDtoSchema,
+        projects: z.array(
+          projectDtoSchema.extend({
+            allocatedStudents: z.array(userDtoSchema),
           }),
+        ),
+      }),
+    )
+    .query(async ({ ctx: { instance }, input: { supervisorId } }) => {
+      const supervisor = await instance.getSupervisor(supervisorId);
+      return {
+        supervisor: await supervisor.toDTO(),
+        projects: await supervisor.getProjectsWithDetails(),
+      };
+    }),
+
+  // ? not sure about the output schema definition here
+  // TODO consider renaming e.g. projectStats?
+  // TODO split
+  projectStats: procedure.instance.supervisor
+    .output(
+      z.object({
+        currentSubmissionCount: z.number(),
+        submissionTarget: z.number(),
+      }),
+    )
+    .query(async ({ ctx: { instance, user } }) => {
+      const { parentInstanceId } = await instance.get();
+
+      // TODO: this call returns allocated students and it does not have to
+      // so the name is lying here
+      const allProjects = await user.getProjects();
+      const { projectTarget: target } = await user.getCapacityDetails();
+
+      let totalCount: number;
+      if (parentInstanceId) {
+        const forkedPreAllocatedCount = allProjects.reduce(
+          (acc, val) => (val.project.preAllocatedStudentId ? acc + 1 : acc),
+          0,
         );
 
-        return { supervisor, projects };
-      },
-    ),
+        const parentCount =
+          await user.countAllocationsInParent(parentInstanceId);
 
-  projects: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const userId = ctx.session.user.id;
-        const parentInstanceId = ctx.instance.parentInstanceId;
+        totalCount = forkedPreAllocatedCount + parentCount;
+      } else {
+        totalCount = await user
+          .getSupervisionAllocations()
+          .then((allocations) => allocations.length);
+      }
 
-        const allProjects = await ctx.db.project.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            supervisorId: userId,
-          },
-          select: {
-            id: true,
-            title: true,
-            description: true,
-            capacityLowerBound: true,
-            capacityUpperBound: true,
-            preAllocatedStudentId: true,
-            allocations: {
-              select: {
-                student: {
-                  select: { user: { select: { id: true, name: true } } },
-                },
-              },
-            },
-          },
-        });
+      return {
+        currentSubmissionCount: allProjects.length,
+        submissionTarget: computeProjectSubmissionTarget(target, totalCount),
+      };
+    }),
 
-        let totalAllocatedCount = 0;
-        if (parentInstanceId) {
-          const forkedPreAllocatedCount = allProjects.reduce(
-            (acc, val) => (val.preAllocatedStudentId ? acc + 1 : acc),
-            0,
-          );
+  // BREAKING output type
+  rowProjects: procedure.instance.supervisor
+    .output(
+      z.array(
+        z.object({
+          project: projectDtoSchema,
+          student: studentDtoSchema.or(z.undefined()),
+        }),
+      ),
+    )
+    .query(async ({ ctx: { user } }) => {
+      type Ret = { project: ProjectDTO; student: StudentDTO | undefined }[];
+      const supervisorProjects = await user.getProjects();
 
-          const parentAllocatedCount = await ctx.db.projectAllocation.count({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: parentInstanceId,
-              project: { supervisorId: userId },
-            },
-          });
-
-          totalAllocatedCount += forkedPreAllocatedCount + parentAllocatedCount;
-        } else {
-          const allocatedCount = await ctx.db.projectAllocation.count({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              project: { supervisorId: userId },
-            },
-          });
-
-          totalAllocatedCount += allocatedCount;
+      return supervisorProjects.flatMap((p) => {
+        if (p.allocatedStudents.length === 0) {
+          return [{ project: p.project, student: undefined }] as Ret;
         }
 
-        const { projectAllocationTarget } =
-          await ctx.db.supervisorInstanceDetails.findFirstOrThrow({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              userId,
-            },
-            select: { projectAllocationTarget: true },
-          });
+        return p.allocatedStudents.map((s) => ({
+          project: p.project,
+          student: s,
+        })) as Ret;
+      });
+    }),
 
-        return {
-          currentSubmissionCount: allProjects.length,
-          submissionTarget: computeProjectSubmissionTarget(
-            projectAllocationTarget,
-            totalAllocatedCount,
-          ),
-          rowProjects: formatSupervisorRowProjects(allProjects),
-        };
-      },
-    ),
-
-    readings: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const userId = ctx.session.user.id;
-
-        const allReadings = await ctx.db.projectAllocationReader.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            readerId: userId,
-          }
-        });
-
-        const projectIds = [];
-
-        for (const read of allReadings) {
-          projectIds.push(read.projectId);
-        }
-
-        const projects = await ctx.db.project.findMany({
-          where: {
-            id: { in: projectIds}
-          }
-        });
-
-        const projectsAndStudents = [];
-
-        for (let i = 0; i < projects.length; i++) {
-          if (projects[i].description.length >= 200) {
-            projects[i].description = projects[i].description.slice(0,100)+"...";
-          }
-          const student = await ctx.db.projectAllocation.findFirst({
-            where: {
-              projectId: projects[i].id,
-            }
-          })
-          let studentId;
-          if (!student) {
-            studentId = "N/A";
-          } else {
-            studentId = student.userId;
-          }
-          
-          projectsAndStudents.push({id: projects[i].id,
-                                    title: projects[i].title,
-                                    description: projects[i].description,
-                                    studentId: studentId})
-        }
-
-
-        return {
-          projectsAndStudents
-        };
-      },
-    ),
-
-    marking: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const userId = ctx.session.user.id;
-
-        const allReadings = await ctx.db.projectAllocationReader.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            readerId: userId,
-          }
-        });
-
-        const projectIds = [];
-
-        for (const read of allReadings) {
-          projectIds.push(read.projectId);
-        }
-
-        const projects = await ctx.db.project.findMany({
-          where: {
-            id: { in: projectIds}
-          }
-        });
-
-        const projectsAndStudents = [];
-
-        for (let i = 0; i < projects.length; i++) {
-          const student = await ctx.db.projectAllocation.findFirst({
-            where: {
-              projectId: projects[i].id,
-            }
-          })
-          let studentId;
-          if (!student) {
-            studentId = "N/A";
-          } else {
-            studentId = student.userId;
-          }
-          
-          projectsAndStudents.push({id: projects[i].id,
-                                    title: projects[i].title,
-                                    studentId: studentId,
-                                    isMarked: projects[i].interimMarked,})
-        }
-
-
-        return {
-          projectsAndStudents
-        };
-      },
-    ),
-
-  updateInstanceCapacities: instanceAdminProcedure
+  updateInstanceCapacities: procedure.instance.subGroupAdmin
     .input(
       z.object({
-        params: instanceParamsSchema,
         supervisorId: z.string(),
-        capacities: supervisorInstanceCapacitiesSchema,
+        capacities: supervisorCapacitiesSchema,
       }),
     )
+    .output(supervisorCapacitiesSchema)
     .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          supervisorId,
-          capacities: { projectTarget, projectUpperQuota },
-        },
-      }) => {
-        await ctx.db.supervisorInstanceDetails.update({
-          where: {
-            detailsId: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              userId: supervisorId,
-            },
-          },
-          data: {
-            projectAllocationTarget: projectTarget,
-            projectAllocationUpperBound: projectUpperQuota,
-          },
-        });
-
-        return { projectTarget, projectUpperQuota };
+      async ({ ctx: { instance }, input: { supervisorId, capacities } }) => {
+        const supervisor = await instance.getSupervisor(supervisorId);
+        return supervisor.setCapacityDetails(capacities);
       },
     ),
 
-  delete: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema, supervisorId: z.string() }))
+  delete: procedure.instance
+    .inStage(subsequentStages(Stage.PROJECT_ALLOCATION))
+    .subGroupAdmin.input(z.object({ supervisorId: z.string() }))
+    .output(z.void())
     .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          supervisorId,
-        },
-      }) => {
-        if (stageGte(ctx.instance.stage, Stage.PROJECT_ALLOCATION)) return;
-
-        await ctx.db.userInInstance.delete({
-          where: {
-            instanceMembership: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              userId: supervisorId,
-            },
-          },
-        });
-      },
+      async ({ ctx: { instance }, input: { supervisorId } }) =>
+        await instance.deleteSupervisor(supervisorId),
     ),
 
-  deleteSelected: instanceAdminProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        supervisorIds: z.array(z.string()),
-      }),
+  deleteMany: procedure.instance
+    .inStage(subsequentStages(Stage.PROJECT_ALLOCATION))
+    .subGroupAdmin.input(z.object({ supervisorIds: z.array(z.string()) }))
+    .output(z.void())
+    .mutation(
+      async ({ ctx: { instance }, input: { supervisorIds } }) =>
+        await instance.deleteSupervisors(supervisorIds),
+    ),
+
+  // BREAKING output type
+  // TODO: change rank to studentRanking
+  allocations: procedure.instance.supervisor
+    .output(
+      z.array(
+        z.object({
+          project: projectDtoSchema,
+          student: studentDtoSchema,
+          rank: z.number(),
+        }),
+      ),
     )
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          supervisorIds,
-        },
-      }) => {
-        if (stageGte(ctx.instance.stage, Stage.PROJECT_ALLOCATION)) return;
-
-        await ctx.db.userInInstance.deleteMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            userId: { in: supervisorIds },
-          },
-        });
-      },
-    ),
-
-  allocations: roleAwareProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const user = ctx.session.user;
-        const data = await ctx.db.projectAllocation.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            project: { supervisorId: user.id },
-          },
-          select: {
-            studentRanking: true,
-            project: { select: { id: true, title: true } },
-            student: {
-              select: {
-                studentDetails: true,
-                user: { select: { id: true, name: true, email: true } },
-              },
-            },
-          },
-        });
-        return data.map(({ project, student, studentRanking: rank }) => ({
-          project,
-          student: {
-            ...student.user,
-            rank,
-            level: student.studentDetails[0].studentLevel,
-          },
-        }));
-      },
-    ),
+    .query(async ({ ctx: { user } }) => user.getSupervisionAllocations()),
 });

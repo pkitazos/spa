@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+// ---------------------------------------------------------------------------
+// this is what the data looks like before we send it to the matching service
+
 const studentMatchingDataSchema = z.object({
   id: z.string(),
   preferences: z.array(z.string()),
@@ -25,7 +28,7 @@ export const matchingDataDtoSchema = z.object({
   supervisors: z.array(supervisorMatchingDataSchema),
 });
 
-export type MatchingDataDto = z.infer<typeof matchingDataDtoSchema>;
+export type MatchingDataDTO = z.infer<typeof matchingDataDtoSchema>;
 
 export const matchingDataWithArgsSchema = matchingDataDtoSchema.extend({
   args: z.array(z.string()),
@@ -33,7 +36,10 @@ export const matchingDataWithArgsSchema = matchingDataDtoSchema.extend({
 
 export type MatchingDataWithArgs = z.infer<typeof matchingDataWithArgsSchema>;
 
-export const matchingDetailsSchema = z.object({
+// ---------------------------------------------------------------------------
+// matching service response
+
+const matchingServiceMatchSchema = z.object({
   student_id: z.string(),
   project_id: z.string(),
   project_capacities: z.object({
@@ -49,9 +55,7 @@ export const matchingDetailsSchema = z.object({
   }),
 });
 
-export type MatchingDetails = z.infer<typeof matchingDetailsSchema>;
-
-export const matchingResultSchema = z.object({
+const matchingServiceResponseDataSchema = z.object({
   profile: z.array(z.number()),
   degree: z.number(),
   size: z.number(),
@@ -60,11 +64,40 @@ export const matchingResultSchema = z.object({
   costSq: z.number(),
   maxLecAbsDiff: z.number(),
   sumLecAbsDiff: z.number(),
-  matching: z.array(matchingDetailsSchema),
+  ranks: z.array(z.number()),
+  matching: z.array(matchingServiceMatchSchema),
+});
+
+export const matchingServiceResponseSchema = z.object({
+  status: z.number(),
+  message: z.string(),
+  data: matchingServiceResponseDataSchema.optional(),
+});
+
+// ---------------------------------------------------------------------------
+
+const matchingPairSchema = z.object({
+  userId: z.string(),
+  projectId: z.string(),
+  studentRanking: z.number(),
+});
+
+export const matchingResultDtoSchema = z.object({
+  profile: z.array(z.number()),
+  degree: z.number(),
+  size: z.number(),
+  weight: z.number(),
+  cost: z.number(),
+  costSq: z.number(),
+  maxLecAbsDiff: z.number(),
+  sumLecAbsDiff: z.number(),
+  matching: z.array(matchingPairSchema),
   ranks: z.array(z.number()),
 });
 
-export const blankResult: MatchingResult = {
+export type MatchingResultDTO = z.infer<typeof matchingResultDtoSchema>;
+
+export const blankResult: MatchingResultDTO = {
   profile: [],
   degree: NaN,
   size: NaN,
@@ -77,14 +110,6 @@ export const blankResult: MatchingResult = {
   ranks: [],
 };
 
-export type MatchingResult = z.infer<typeof matchingResultSchema>;
-
-export const serverResponseSchema = z.object({
-  status: z.number(),
-  message: z.string(),
-  data: matchingResultSchema.optional(),
-});
-
 export type MatchingDetailsDto = {
   studentId: string;
   studentName: string;
@@ -93,9 +118,9 @@ export type MatchingDetailsDto = {
   studentRank: number;
 };
 
+// ---------------------------------------------------------------------------
+
 export const supervisorMatchingDetailsDtoSchema = z.object({
-  supervisorId: z.string(),
-  supervisorName: z.string(),
   projectTarget: z.number(),
   actualTarget: z.number(),
   projectUpperQuota: z.number(),

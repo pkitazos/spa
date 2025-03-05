@@ -1,15 +1,16 @@
-import { Role, Stage } from "@prisma/client";
-
 import { Heading } from "@/components/heading";
 import { PageWrapper } from "@/components/page-wrapper";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
+import { toPP1 } from "@/lib/utils/general/instance-params";
 import { makeRequiredFlags } from "@/lib/utils/general/make-required-flags";
 import { stageGte } from "@/lib/utils/permissions/stage-check";
 import { InstanceParams } from "@/lib/validations/params";
 
 import { EditProjectForm } from "./_components/edit-project-form";
+
+import { Role, Stage } from "@/db/types";
 
 type PageParams = InstanceParams & { id: string };
 
@@ -17,12 +18,14 @@ export default async function Page({ params }: { params: PageParams }) {
   const projectId = params.id;
 
   const user = await api.user.get();
-  const role = await api.user.role({ params });
+  const roles = await api.user.roles({ params });
   const stage = await api.institution.instance.currentStage({ params });
 
-  const project = await api.project.getById({ projectId });
+  const { project, supervisor } = await api.project.getByIdWithSupervisor({
+    params: toPP1(params),
+  });
 
-  if (role !== Role.ADMIN && user.id !== project.supervisor.id) {
+  if (!roles.has(Role.ADMIN) && user.id !== supervisor.id) {
     return (
       <Unauthorised message="You need to be an Admin to access this page" />
     );
@@ -34,15 +37,12 @@ export default async function Page({ params }: { params: PageParams }) {
     );
   }
 
-  const { takenTitles, ...rest } = await api.project.getFormDetails({
+  const formInternalData = await api.project.getFormDetails({
     params,
     projectId,
   });
-  const availableTitles = takenTitles.filter((t) => t !== project.title);
-  const formInternalData = { takenTitles: availableTitles, ...rest };
 
   const projectDetails = {
-    id: projectId,
     ...project,
     flagTitles: project.flags.map((f) => f.title),
     capacityUpperBound: project.capacityUpperBound,
@@ -50,7 +50,7 @@ export default async function Page({ params }: { params: PageParams }) {
     isPreAllocated: project.preAllocatedStudentId !== "",
   };
 
-  const isForked = await api.project.getIsForked({ params, projectId });
+  const isForked = await api.project.getIsForked({ params: toPP1(params) });
 
   const instanceFlags = await api.institution.instance.getFlags({ params });
   const requiredFlags = makeRequiredFlags(instanceFlags);

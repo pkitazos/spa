@@ -2,7 +2,10 @@ import { z } from "zod";
 
 import { TagType, tagTypeSchema } from "@/components/tag/tag-input";
 
-export const projectDtoSchema = z.object({
+/**
+ * @deprecated
+ */
+export const DEPR_projectDtoSchema = z.object({
   title: z.string(),
   description: z.string(),
   supervisor: z.object({ id: z.string(), name: z.string() }),
@@ -13,43 +16,19 @@ export const projectDtoSchema = z.object({
   tags: z.array(tagTypeSchema),
 });
 
-export type ProjectDto = z.infer<typeof projectDtoSchema>;
+export type DEPR_ProjectDto = z.infer<typeof DEPR_projectDtoSchema>;
 
 export const projectTableDataDtoSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string(),
   specialTechnicalRequirements: z.string(),
-  supervisor: z.object({
-    id: z.string(),
-    name: z.string(),
-    email: z.string(),
-  }),
-  flags: z.array(
-    z.object({
-      id: z.string(),
-      title: z.string(),
-    }),
-  ),
-  tags: z.array(
-    z.object({
-      id: z.string(),
-      title: z.string(),
-    }),
-  ),
+  supervisor: z.object({ id: z.string(), name: z.string(), email: z.string() }),
+  flags: z.array(z.object({ id: z.string(), title: z.string() })),
+  tags: z.array(z.object({ id: z.string(), title: z.string() })),
 });
 
 export type ProjectTableDataDto = z.infer<typeof projectTableDataDtoSchema>;
-
-export const lateProjectDtoSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  supervisorId: z.string(),
-  flags: z.array(tagTypeSchema),
-  capacityUpperBound: z.number(),
-});
-
-export type LateProjectDto = z.infer<typeof lateProjectDtoSchema>;
 
 export const projectSubmissionDtoSchema = z.object({
   name: z.string(),
@@ -69,19 +48,6 @@ export const newStudentProjectDtoSchema = z.object({
 });
 
 export type NewStudentProjectDto = z.infer<typeof newStudentProjectDtoSchema>;
-
-export const preAllocatedProjectDtoSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  supervisor: z.object({ id: z.string(), name: z.string() }),
-  student: z.object({ id: z.string(), name: z.string() }),
-  flags: z.array(tagTypeSchema),
-  tags: z.array(tagTypeSchema),
-});
-
-export type PreAllocatedProjectDto = z.infer<
-  typeof preAllocatedProjectDtoSchema
->;
 
 export type SupervisorProjectDto = {
   id: string;

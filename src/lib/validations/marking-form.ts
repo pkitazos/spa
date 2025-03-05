@@ -10,14 +10,8 @@ const markingFormSchema = z.object({
 
 export type markingFormZ = z.infer<typeof markingFormSchema>;
 
-export const currentMarksSchema = markingFormSchema
-  .extend({
-    id: z.string(),
-  
-  });
+export const currentMarksSchema = markingFormSchema.extend({ id: z.string() });
 
-export type CurrentMarks = z.infer<
-  typeof currentMarksSchema
->;
+export type CurrentMarks = z.infer<typeof currentMarksSchema>;
 
 export type UpdatedMarks = z.infer<typeof markingFormSchema>;

@@ -5,13 +5,13 @@ import { format } from "date-fns";
 import { AlertCircleIcon, ClockIcon } from "lucide-react";
 import { toast } from "sonner";
 
+import { getSubmissionErrors } from "@/components/pages/student-preferences/get-submission-errors";
 import { useInstanceParams } from "@/components/params-context";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { api } from "@/lib/trpc/client";
-import { getSubmissionErrors } from "@/lib/utils/preferences/get-errors";
 import { PreferenceBoard } from "@/lib/validations/board";
 
 export function SubmissionArea({

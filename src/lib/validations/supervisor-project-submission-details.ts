@@ -14,7 +14,7 @@ export type SupervisorProjectSubmissionDetails = z.infer<
   typeof supervisorProjectSubmissionDetailsSchema
 >;
 
-export const supervisorInstanceCapacitiesSchema = z
+export const supervisorCapacitiesSchema = z
   .object({
     projectTarget: z.coerce
       .number({
@@ -39,7 +39,3 @@ export const supervisorInstanceCapacitiesSchema = z
       path: ["projectTarget"],
     },
   );
-
-export type SupervisorInstanceCapacities = z.infer<
-  typeof supervisorInstanceCapacitiesSchema
->;

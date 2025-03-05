@@ -5,8 +5,6 @@ import { AdminPanelButton } from "./admin-panel-button";
 import { InstanceHeader } from "./instance-header";
 import { UserButton } from "./user-button";
 
-import whiteLogo from "@/assets/uofg-white.png";
-
 export async function Header() {
   return (
     <nav className="sticky top-0 z-50 flex h-[8dvh] max-h-[5rem] w-full items-center justify-between gap-6 bg-primary px-10 py-5 shadow-md">
@@ -15,7 +13,7 @@ export async function Header() {
           className="max-w-[10rem] object-scale-down"
           width={300}
           height={100}
-          src={whiteLogo}
+          src="/uofg-white.png"
           alt=""
         />
       </Link>
