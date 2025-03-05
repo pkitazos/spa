@@ -13,7 +13,7 @@ export function AdminPanelButton() {
   return (
     <InstanceLink
       className="flex items-center gap-2 border"
-      href={data[0].path}
+      href={data[0]?.path ?? ""}
     >
       <SlidersHorizontal className="h-4 w-4" />
       My Admin Panel

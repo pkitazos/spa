@@ -11,7 +11,7 @@ import { useAllSupervisorsColumns } from "./all-supervisors-columns";
 
 import { spacesLabels } from "@/config/spaces";
 import { Role } from "@/db/types";
-import { SupervisorDTO } from "@/dto/user/supervisor";
+import { SupervisorDTO } from "@/dto";
 
 export function SupervisorsDataTable({
   roles,

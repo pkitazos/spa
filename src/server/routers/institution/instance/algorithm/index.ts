@@ -2,7 +2,7 @@ import { compareAsc } from "date-fns";
 import { z } from "zod";
 
 import { expand } from "@/lib/utils/general/instance-params";
-import { algorithmResultDtoSchema } from "@/lib/validations/algorithm";
+
 import {
   matchingResultDtoSchema,
   supervisorMatchingDetailsDtoSchema,
@@ -15,6 +15,7 @@ import { createTRPCRouter } from "@/server/trpc";
 import { Transformers as T } from "@/db/transformers";
 import {
   algorithmDtoSchema,
+  algorithmResultDtoSchema,
   projectDtoSchema,
   studentDtoSchema,
   userDtoSchema,

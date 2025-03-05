@@ -19,9 +19,9 @@ import {
   linkProjectTags,
 } from "@/db/transactions/project-flags";
 import { flagDtoSchema, tagDtoSchema } from "@/dto";
-import { projectDtoSchema, updateProjectSchema } from "@/dto/project";
-import { studentDtoSchema } from "@/dto/user/student";
-import { supervisorDtoSchema } from "@/dto/user/supervisor";
+import { projectDtoSchema, updateProjectSchema } from "@/dto";
+import { studentDtoSchema } from "@/dto";
+import { supervisorDtoSchema } from "@/dto";
 import { Transformers as T } from "@/db/transformers";
 import { Role } from "@/db/types";
 import {

@@ -11,7 +11,7 @@ import { createTRPCRouter } from "@/server/trpc";
 import { preferenceRouter } from "./preference";
 
 import { Supervisor } from "@/data-objects";
-import { studentDtoSchema } from "@/dto/user/student";
+import { studentDtoSchema } from "@/dto";
 import { projectDtoSchema, supervisorDtoSchema } from "@/dto";
 
 export const studentRouter = createTRPCRouter({

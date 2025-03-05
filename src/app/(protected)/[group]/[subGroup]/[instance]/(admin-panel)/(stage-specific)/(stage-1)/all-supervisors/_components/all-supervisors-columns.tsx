@@ -35,7 +35,7 @@ import {
 } from "@/lib/utils/permissions/stage-check";
 
 import { Role, Stage } from "@/db/types";
-import { SupervisorDTO } from "@/dto/user/supervisor";
+import { SupervisorDTO } from "@/dto";
 
 export function useAllSupervisorsColumns({
   roles,

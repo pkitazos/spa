@@ -15,7 +15,6 @@ import { slugify } from "@/lib/utils/general/slugify";
 import { uniqueById } from "@/lib/utils/list-unique";
 
 import { toInstanceId } from "@/lib/utils/general/instance-params";
-import { builtInAlgorithms } from "@/lib/validations/algorithm";
 
 import { New } from "@/db/types";
 
@@ -28,6 +27,7 @@ import {
   StudentDTO,
   SupervisorDTO,
   AlgorithmDTO,
+  builtInAlgorithms,
 } from "@/dto/";
 
 import {
@@ -64,7 +64,7 @@ import {
 import { AlgorithmInstanceParams } from "@/lib/validations/params";
 import { executeMatchingAlgorithm } from "@/server/routers/institution/instance/algorithm/_utils/execute-matching-algorithm";
 import { Transformers } from "@/db/transformers";
-import { GradedSubmissionDTO } from "@/dto/marking";
+import { GradedSubmissionDTO } from "@/dto";
 import { sortPreferenceType } from "@/lib/utils/sorting/by-preference-type";
 import { ProjectPreferenceCardDto } from "@/lib/validations/board";
 import { updatePreferenceTransaction } from "@/db/transactions/update-preference";
@@ -2494,6 +2494,9 @@ export class MatchingAlgorithm extends DataObject {
     if (res.status !== AlgorithmRunResult.OK) return res.status;
 
     const { data } = res;
+
+    // TODO: fix discriminated union
+    if (!data) throw new Error("No data returned from algorithm");
 
     const matchingResult = {
       profile: data.profile,
