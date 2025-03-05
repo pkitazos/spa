@@ -14,9 +14,13 @@ import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
-import { linkProjectFlags } from "@/db/transactions/project-flags";
+import {
+  linkPreallocatedStudent,
+  linkProjectFlags,
+  linkProjectTags,
+} from "@/db/transactions/project-flags";
 import { flagDtoSchema, tagDtoSchema } from "@/dto";
-import { projectDtoSchema } from "@/dto/project";
+import { projectDtoSchema, updateProjectSchema } from "@/dto/project";
 import { studentDtoSchema } from "@/dto/user/student";
 import { supervisorDtoSchema } from "@/dto/user/supervisor";
 import { Transformers as T } from "@/db/transformers";
@@ -35,127 +39,52 @@ export const projectRouter = createTRPCRouter({
   // pin
   edit: procedure.project
     .inStage(subsequentStages(Stage.PROJECT_ALLOCATION))
-    .supervisor.input(z.object({ updatedProject: updatedProjectSchema }))
+    .supervisor.input(z.object({ updatedProject: updateProjectSchema }))
     .output(z.void())
     .mutation(
       async ({
         ctx: { db, project },
         input: {
           updatedProject: {
+            id,
             title,
             description,
             capacityUpperBound,
             preAllocatedStudentId,
             specialTechnicalRequirements,
             tags,
-            flagTitles,
+            flags,
           },
         },
       }) => {
-        const newPreAllocatedStudentId = preAllocatedStudentId || undefined;
-
         await db.$transaction(async (tx) => {
-          const oldProjectData = await tx.project.findFirstOrThrow({
-            where: toPP2(project.params),
-            select: { preAllocatedStudentId: true },
-          });
-
-          const prevPreAllocatedStudentId =
-            oldProjectData.preAllocatedStudentId;
-
-          const requiresDelete =
-            !!prevPreAllocatedStudentId && // if there is an old version
-            prevPreAllocatedStudentId !== newPreAllocatedStudentId; // and it doesn't match
-
-          const requiresCreate =
-            !!newPreAllocatedStudentId && // if there is a new student
-            prevPreAllocatedStudentId !== newPreAllocatedStudentId; // and it doesn't match
-
-          if (requiresDelete) {
-            await tx.studentProjectAllocation.delete({
-              where: {
-                studentProjectAllocationId: {
-                  allocationGroupId: project.params.group,
-                  allocationSubGroupId: project.params.subGroup,
-                  allocationInstanceId: project.params.instance,
-                  userId: prevPreAllocatedStudentId,
-                },
-              },
-            });
-          }
-
-          if (requiresCreate) {
-            await db.studentProjectAllocation.upsert({
-              where: {
-                studentProjectAllocationId: {
-                  ...expand(project.params),
-                  userId: newPreAllocatedStudentId,
-                },
-              },
-              create: {
-                ...expand(project.params),
-                userId: newPreAllocatedStudentId,
-                projectId: project.params.projectId,
-                studentRanking: 1,
-              },
-              update: {
-                projectId: project.params.projectId,
-                studentRanking: 1,
-              },
-            });
-          }
-
           await tx.project.update({
             where: toPP2(project.params),
             data: {
-              title: title,
-              description: description,
-              capacityUpperBound: capacityUpperBound,
-              preAllocatedStudentId: newPreAllocatedStudentId ?? null,
+              title,
+              description,
+              capacityUpperBound,
+              preAllocatedStudentId,
               latestEditDateTime: new Date(),
-              specialTechnicalRequirements:
-                specialTechnicalRequirements ?? null,
+              specialTechnicalRequirements,
             },
           });
 
-          await tx.flagOnProject.deleteMany({
-            where: {
-              projectId: project.params.projectId,
-              AND: { flag: { title: { notIn: flagTitles } } },
-            },
-          });
+          if (preAllocatedStudentId) {
+            await linkPreallocatedStudent(
+              tx,
+              project.params,
+              preAllocatedStudentId,
+            );
+          }
 
-          await linkProjectFlags(
-            tx,
-            project.instance.params,
-            project.params.projectId,
-            flagTitles,
-          );
+          if (flags) {
+            await linkProjectFlags(tx, project.params, flags);
+          }
 
-          await tx.tag.createMany({
-            data: tags.map((tag) => ({
-              allocationGroupId: project.params.group,
-              allocationSubGroupId: project.params.subGroup,
-              allocationInstanceId: project.params.instance,
-              ...tag,
-            })),
-            skipDuplicates: true,
-          });
-
-          await tx.tagOnProject.deleteMany({
-            where: {
-              projectId: project.params.projectId,
-              AND: { tagId: { notIn: tags.map(({ id }) => id) } },
-            },
-          });
-
-          await tx.tagOnProject.createMany({
-            data: tags.map(({ id }) => ({
-              tagId: id,
-              projectId: project.params.projectId,
-            })),
-            skipDuplicates: true,
-          });
+          if (tags) {
+            await linkProjectTags(tx, project.params, tags);
+          }
         });
       },
     ),
@@ -193,40 +122,6 @@ export const projectRouter = createTRPCRouter({
           title: p.project.title,
           flags: p.project.flags,
         }));
-    }),
-
-  // TODO: @JakeTrevor this should just be an update + allow supervisor of the project to edit it also
-  editSpecialCircumstances: procedure.project.subGroupAdmin
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        studentId: z.string(),
-        projectId: z.string(),
-        specialCircumstances: z.string().optional(),
-      }),
-    )
-    .mutation(async ({ ctx, input: { projectId, specialCircumstances } }) => {
-      // TODO: make project method
-      // TODO: add to data model
-      await ctx.db.project.update({
-        where: { id: projectId },
-        data: { specialCircumstances },
-      });
-    }),
-
-  /**
-   * @deprecated use project.get
-   */
-  // TODO: @JakeTrevor
-  getSpecialCircumstances: instanceProcedure
-    .input(z.object({ params: instanceParamsSchema, projectId: z.string() }))
-    .query(async ({ ctx, input: { projectId } }) => {
-      const project = await ctx.db.project.findFirst({
-        where: { id: projectId },
-        select: { specialCircumstances: true },
-      });
-
-      return project?.specialCircumstances ?? "";
     }),
 
   // BREAKING input/output type
@@ -550,8 +445,7 @@ export const projectRouter = createTRPCRouter({
 
           await linkProjectFlags(
             tx,
-            instance.params,
-            project.id,
+            { ...instance.params, projectId: project.id },
             newProject.flagTitles,
           );
 
@@ -577,7 +471,8 @@ export const projectRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx: { instance }, input: { projectId } }) => {
-      // make sure only students with the correct data are returned (big asterisk considering you can change the flags on a project)
+      // make sure only students with the correct data are returned
+      // (big asterisk considering you can change the flags on a project)
       // so instead get all unallocated students and filter them on the client based on the selected flags
 
       const allProjects = await instance.getProjectDetails();
