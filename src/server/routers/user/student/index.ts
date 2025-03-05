@@ -10,7 +10,7 @@ import { createTRPCRouter } from "@/server/trpc";
 
 import { preferenceRouter } from "./preference";
 
-import { Supervisor } from "@/data-objects/users/supervisor";
+import { Supervisor } from "@/data-objects";
 import { studentDtoSchema } from "@/dto/user/student";
 import { projectDtoSchema, supervisorDtoSchema } from "@/dto";
 

@@ -8,10 +8,9 @@ import { createTRPCRouter } from "@/server/trpc";
 import { studentRouter } from "./student";
 import { supervisorRouter } from "./supervisor";
 
-import { User } from "@/data-objects/users/user";
 import { Role } from "@/db/types";
 import { instanceDisplayDataSchema, userDtoSchema } from "@/dto";
-import { AllocationInstance } from "@/data-objects/spaces/instance";
+import { User, AllocationInstance } from "@/data-objects";
 import { markerRouter } from "./marker";
 
 export const userRouter = createTRPCRouter({

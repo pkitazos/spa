@@ -18,6 +18,7 @@ export {
   type UserDTO,
   userDtoSchema,
 } from "./user";
+export { type SuperAdminDTO, superAdminDtoSchema } from "./user/admin";
 export { type SupervisorDTO, supervisorDtoSchema } from "./user/supervisor";
 export { type ReaderDTO, readerDtoSchema } from "./user/reader";
 export { type StudentDTO, studentDtoSchema } from "./user/student";

@@ -16,7 +16,7 @@ import { matchingRouter } from "./matching";
 import { preferenceRouter } from "./preference";
 
 import { PAGES } from "@/config/pages";
-import { AllocationInstance } from "@/data-objects/spaces/instance";
+import { AllocationInstance } from "@/data-objects";
 import { forkInstanceTransaction } from "@/db/transactions/fork/transaction";
 import { mergeInstanceTrx } from "@/db/transactions/merge/transaction";
 import { Role, Stage } from "@/db/types";

@@ -7,8 +7,8 @@ import { studentPreferenceSchema } from "@/lib/validations/student-preference";
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
-import type { AllocationInstance } from "@/data-objects/spaces/instance";
-import type { User } from "@/data-objects/users/user";
+import type { User, AllocationInstance } from "@/data-objects";
+
 import { Role } from "@/db/types";
 import { PreferenceType, Stage } from "@/db/types";
 import { userDtoSchema } from "@/dto";

@@ -10,14 +10,16 @@ import {
 
 import { t } from "./trpc";
 
-import { AllocationGroup } from "@/data-objects/spaces/group";
-import { AllocationInstance } from "@/data-objects/spaces/instance";
-import { Institution } from "@/data-objects/spaces/institution";
-import { Project } from "@/data-objects/spaces/project";
-import { AllocationSubGroup } from "@/data-objects/spaces/subgroup";
-import { User } from "@/data-objects/users/user";
+import {
+  AllocationGroup,
+  AllocationInstance,
+  Institution,
+  Project,
+  AllocationSubGroup,
+  User,
+  MatchingAlgorithm,
+} from "@/data-objects";
 import { Role, Stage } from "@/db/types";
-import { MatchingAlgorithm } from "@/data-objects/algorithm";
 
 // We should re-imagine how our middleware works
 
