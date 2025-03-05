@@ -19,10 +19,8 @@ export function AlgorithmSection({ takenNames }: { takenNames: Set<string> }) {
 
   if (status !== "success") return <Skeleton className="h-60 w-full" />;
 
-  // TODO: @JakeTrevor do you think you can figure out what's going on here?z
   return (
     <>
-      {/* @ts-expect-error works fine */}
       <DataTable columns={columns} data={data} />
       <NewAlgorithmSection takenNames={takenNames} />
     </>

@@ -1,5 +1,5 @@
 "use client";
-import { createColumnHelper } from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontalIcon as MoreIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -51,10 +51,8 @@ export function useAlgorithmColumns() {
     );
   }
 
-  const columnHelper = createColumnHelper<AlgorithmDTO>();
-
-  const columns = [
-    columnHelper.display({
+  const columns: ColumnDef<AlgorithmDTO>[] = [
+    {
       id: "Actions",
       header: "",
       cell: ({ row: { original: algorithm } }) => {
@@ -109,15 +107,16 @@ export function useAlgorithmColumns() {
           </div>
         );
       },
-    }),
+    },
 
-    columnHelper.accessor((a) => a.displayName, {
+    {
+      accessorFn: (a) => a.displayName,
       id: "Name",
       header: () => <p className="w-32 py-2 pl-2">Name</p>,
-    }),
+    },
 
     // TODO: rework this perhaps into several columns?
-    // columnHelper.accessor((a) => a.flags as AlgorithmFlag[], {
+    // { accessorFn: (a) => a.flags as AlgorithmFlag[],
     //   id: "Flags",
     //   header: () => <p className="py-2 pl-2">Flags</p>,
     //   cell: ({
@@ -135,7 +134,8 @@ export function useAlgorithmColumns() {
     //   ),
     // }),
 
-    columnHelper.accessor((a) => a.targetModifier, {
+    {
+      accessorFn: (a) => a.targetModifier,
       id: "Target Modifier",
       header: () => <p className="w-20 text-wrap py-2">Target Modifier</p>,
       cell: ({
@@ -151,9 +151,10 @@ export function useAlgorithmColumns() {
           )}
         </p>
       ),
-    }),
+    },
 
-    columnHelper.accessor((a) => a.upperBoundModifier, {
+    {
+      accessorFn: (a) => a.upperBoundModifier,
       id: "Upper Quota Modifier",
       header: () => <p className="w-20 text-wrap py-2">Upper Quota Modifier</p>,
       cell: ({
@@ -169,9 +170,10 @@ export function useAlgorithmColumns() {
           )}
         </p>
       ),
-    }),
+    },
 
-    columnHelper.accessor((a) => a.maxRank, {
+    {
+      accessorFn: (a) => a.maxRank,
       id: "Max Rank",
       header: () => <p className="w-20 text-wrap py-2">Max Rank</p>,
       cell: ({
@@ -187,15 +189,15 @@ export function useAlgorithmColumns() {
           )}
         </p>
       ),
-    }),
+    },
 
-    columnHelper.display({
+    {
       id: "Run",
       header: "",
       cell: ({ row: { original: algorithm } }) => (
         <RunAlgorithmButton algorithm={algorithm} />
       ),
-    }),
+    },
   ];
 
   return columns;
