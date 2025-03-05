@@ -52,6 +52,7 @@ export class Student extends User {
 
   public async getAllocation(): Promise<{
     project: ProjectDTO;
+    supervisor: SupervisorDTO;
     studentRanking: number;
   }> {
     return await this.db.studentProjectAllocation
@@ -71,6 +72,7 @@ export class Student extends User {
       })
       .then((x) => ({
         project: T.toProjectDTO(x.project),
+        supervisor: T.toSupervisorDTO(x.project.supervisor),
         studentRanking: x.studentRanking,
       }));
   }

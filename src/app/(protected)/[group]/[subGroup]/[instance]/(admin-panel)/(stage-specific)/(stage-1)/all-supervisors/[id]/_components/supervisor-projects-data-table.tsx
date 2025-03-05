@@ -10,6 +10,7 @@ import { api } from "@/lib/trpc/client";
 import { SupervisorProjectDto } from "@/lib/validations/dto/project";
 
 import { useSupervisorProjectsColumns } from "./supervisor-projects-columns";
+import { toPP3 } from "@/lib/utils/general/instance-params";
 
 export function SupervisorProjectsDataTable({
   data,
@@ -25,7 +26,9 @@ export function SupervisorProjectsDataTable({
 
   async function handleDelete(projectId: string) {
     void toast.promise(
-      deleteAsync({ params, projectId }).then(() => router.refresh()),
+      deleteAsync({ params: toPP3(params, projectId) }).then(() =>
+        router.refresh(),
+      ),
       {
         loading: "Deleting Project...",
         error: "Something went wrong",

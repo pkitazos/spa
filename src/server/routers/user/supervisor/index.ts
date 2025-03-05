@@ -192,6 +192,7 @@ export const supervisorRouter = createTRPCRouter({
     ),
 
   // BREAKING output type
+  // TODO: change rank to studentRanking
   allocations: procedure.instance.supervisor
     .output(
       z.array(

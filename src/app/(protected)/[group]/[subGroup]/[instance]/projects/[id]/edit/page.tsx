@@ -21,9 +21,11 @@ export default async function Page({ params }: { params: PageParams }) {
   const roles = await api.user.roles({ params });
   const stage = await api.institution.instance.currentStage({ params });
 
-  const project = await api.project.getById({ projectId });
+  const { project, supervisor } = await api.project.getByIdWithSupervisor({
+    params: toPP1(params),
+  });
 
-  if (!roles.has(Role.ADMIN) && user.id !== project.supervisor.id) {
+  if (!roles.has(Role.ADMIN) && user.id !== supervisor.id) {
     return (
       <Unauthorised message="You need to be an Admin to access this page" />
     );
@@ -35,15 +37,12 @@ export default async function Page({ params }: { params: PageParams }) {
     );
   }
 
-  const { takenTitles, ...rest } = await api.project.getFormDetails({
+  const formInternalData = await api.project.getFormDetails({
     params,
     projectId,
   });
-  const availableTitles = takenTitles.filter((t) => t !== project.title);
-  const formInternalData = { takenTitles: availableTitles, ...rest };
 
   const projectDetails = {
-    id: projectId,
     ...project,
     flagTitles: project.flags.map((f) => f.title),
     capacityUpperBound: project.capacityUpperBound,

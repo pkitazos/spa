@@ -7,7 +7,6 @@ import {
   previousStages,
   subsequentStages,
 } from "@/lib/utils/permissions/stage-check";
-import { instanceParamsSchema } from "@/lib/validations/params";
 import { updatedProjectSchema } from "@/lib/validations/project-form";
 
 import { procedure } from "@/server/middleware";
@@ -202,6 +201,29 @@ export const projectRouter = createTRPCRouter({
       return T.toProjectDTO(data);
     }),
 
+  getByIdWithSupervisor: procedure.project.user
+    .output(
+      z.object({ project: projectDtoSchema, supervisor: supervisorDtoSchema }),
+    )
+    .query(async ({ ctx: { db, project } }) => {
+      // project.get
+      const data = await db.project.findFirstOrThrow({
+        where: toPP2(project.params),
+        include: {
+          supervisor: {
+            include: { userInInstance: { include: { user: true } } },
+          },
+          flagsOnProject: { include: { flag: true } },
+          tagsOnProject: { include: { tag: true } },
+        },
+      });
+
+      return {
+        project: T.toProjectDTO(data),
+        supervisor: T.toSupervisorDTO(data.supervisor),
+      };
+    }),
+
   // ok
   getIsForked: procedure.project.user.query(
     async ({
@@ -229,7 +251,6 @@ export const projectRouter = createTRPCRouter({
   // MOVE to ac
   // ok
   getUserAccess: procedure.project.user
-    .input(z.object({ params: instanceParamsSchema, projectId: z.string() }))
     .output(
       z.discriminatedUnion("access", [
         z.object({ access: z.literal(true) }),
@@ -493,13 +514,12 @@ export const projectRouter = createTRPCRouter({
 
   // ok
   getAllocation: procedure.project.user
-    .input(z.object({ projectId: z.string() }))
     .output(
       z.object({ student: studentDtoSchema, rank: z.number() }).optional(),
     )
-    .query(async ({ ctx: { db }, input: { projectId } }) => {
+    .query(async ({ ctx: { project, db } }) => {
       const allocation = await db.studentProjectAllocation.findFirst({
-        where: { projectId },
+        where: { projectId: project.params.projectId },
         include: {
           student: {
             include: {

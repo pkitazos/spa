@@ -21,18 +21,20 @@ import { Input } from "@/components/ui/input";
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { api } from "@/lib/trpc/client";
-import { User } from "@/lib/validations/auth";
-import {
-  supervisorCapacitiesSchema,
-  SupervisorInstanceCapacities,
-} from "@/lib/validations/supervisor-project-submission-details";
+import { supervisorCapacitiesSchema } from "@/lib/validations/supervisor-project-submission-details";
 
 import { spacesLabels } from "@/config/spaces";
+import { SupervisorDTO } from "@/dto";
+
+type SupervisorInstanceCapacities = {
+  projectTarget: number;
+  projectUpperQuota: number;
+};
 
 export function InstanceDetailsCard({
   supervisor,
 }: {
-  supervisor: User & SupervisorInstanceCapacities;
+  supervisor: SupervisorDTO;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -40,8 +42,10 @@ export function InstanceDetailsCard({
   const editMode = searchParams.get("edit") ?? false;
 
   const params = useInstanceParams();
-  const [capacities, setCapacities] =
-    useState<SupervisorInstanceCapacities>(supervisor);
+  const [capacities, setCapacities] = useState<SupervisorInstanceCapacities>({
+    projectTarget: supervisor.allocationTarget,
+    projectUpperQuota: supervisor.allocationUpperBound,
+  });
 
   const form = useForm<SupervisorInstanceCapacities>({
     resolver: zodResolver(supervisorCapacitiesSchema),

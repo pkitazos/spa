@@ -6,13 +6,17 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { cn } from "@/lib/utils";
-import { StudentProjectAllocationDto } from "@/lib/validations/allocation/data-table-dto";
+import { ProjectDTO, SupervisorDTO } from "@/dto";
 
 export function StudentAllocation({
-  allocation: { project, rank },
+  allocation: { project, supervisor, studentRanking },
   className,
 }: {
-  allocation: StudentProjectAllocationDto;
+  allocation: {
+    project: ProjectDTO;
+    supervisor: SupervisorDTO;
+    studentRanking: number;
+  };
   className?: ClassValue;
 }) {
   return (
@@ -48,15 +52,15 @@ export function StudentAllocation({
                 buttonVariants({ variant: "link" }),
                 "mr-2 h-max p-0 text-base font-medium leading-5",
               )}
-              href={`../supervisors/${project.supervisor.id}`}
+              href={`../supervisors/${supervisor.id}`}
             >
-              {project.supervisor.name}
+              {supervisor.name}
             </Link>
           </div>
           <div className="flex items-center gap-2">
             <HashIcon className="h-4 w-4 text-muted-foreground" />
             <span className="mr-2 font-medium">Rank:</span>
-            {rank}
+            {studentRanking}
           </div>
         </div>
       </CardContent>

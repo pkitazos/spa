@@ -11,36 +11,31 @@ import {
   CurrentSpecialCircumstances,
   specialCircumstances,
 } from "@/lib/validations/special-circumstances-form";
+import { toPP3 } from "@/lib/utils/general/instance-params";
 
 export function SpecialCircumstancesPage({
   formInternalData,
   project,
-  studentId,
 }: {
   formInternalData: specialCircumstances;
   project: CurrentSpecialCircumstances;
-  studentId: string;
 }) {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const params = useInstanceParams();
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const router = useRouter();
   const instancePath = formatParamsAsPath(params);
 
-  const { mutateAsync: editAsync } =
-    api.project.editSpecialCircumstances.useMutation();
+  const { mutateAsync: editAsync } = api.project.edit.useMutation();
 
   function onSubmit(data: specialCircumstances) {
+    const updatedProject = { id: project.id, ...data };
+
     void toast.promise(
-      editAsync({
-        params,
-        projectId: project.id,
-        studentId,
-        specialCircumstances: data.specialCircumstances,
-      }).then(() => {
-        router.push(`${instancePath}/projects/${project.id}`);
-        router.refresh();
-      }),
+      editAsync({ params: toPP3(params, project.id), updatedProject }).then(
+        () => {
+          router.push(`${instancePath}/projects/${project.id}`);
+          router.refresh();
+        },
+      ),
       {
         loading: `Updating special circumstances for Project ${project.id}...`,
         error: "Something went wrong",

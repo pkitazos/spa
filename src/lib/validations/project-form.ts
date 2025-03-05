@@ -3,6 +3,7 @@ import { z } from "zod";
 import { tagTypeSchema } from "@/components/tag/tag-input";
 
 import { projectFlags } from "@/config/config/flags";
+import { FlagDTO, StudentDTO, TagDTO } from "@/dto";
 
 // eslint-disable-next-line no-control-regex
 const ascii_pattern = /^[\x00-\x7F]+$/;
@@ -51,11 +52,11 @@ export const updatedProjectSchema = baseProjectFormSchema.refine(
 export type UpdatedProject = z.infer<typeof updatedProjectSchema>;
 
 export function buildUpdatedProjectSchema(
-  takenTitles: string[],
+  takenTitles: Set<string>,
   requiredFlags: string[] = [],
 ) {
   return updatedProjectSchema
-    .refine(({ title }) => !takenTitles.includes(title), {
+    .refine(({ title }) => !takenTitles.has(title), {
       message: "This title is already taken",
       path: ["title"],
     })
@@ -90,4 +91,11 @@ const formInternalDataSchema = z.object({
   students: z.array(z.object({ id: z.string() })),
 });
 
-export type FormInternalData = z.infer<typeof formInternalDataSchema>;
+// export type FormInternalData = z.infer<typeof formInternalDataSchema>;
+
+export type FormInternalData = {
+  flags: FlagDTO[];
+  tags: TagDTO[];
+  students: StudentDTO[];
+  takenTitles: Set<string>;
+};

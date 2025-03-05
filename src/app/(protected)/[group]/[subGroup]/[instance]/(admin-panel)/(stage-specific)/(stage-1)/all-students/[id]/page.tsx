@@ -32,16 +32,11 @@ export async function generateMetadata({ params }: { params: PageParams }) {
 
 export default async function Page({ params }: { params: PageParams }) {
   const studentId = params.id;
-  const exists = await api.user.student.exists({
-    params,
-    studentId,
-  });
+  const exists = await api.user.student.exists({ params, studentId });
   if (!exists) notFound();
 
-  const student = await api.user.student.getById({
-    params,
-    studentId,
-  });
+  const { student, selfDefinedProjectId, allocation } =
+    await api.user.student.getById({ params, studentId });
 
   return (
     <PageWrapper>
@@ -49,14 +44,11 @@ export default async function Page({ params }: { params: PageParams }) {
       <SubHeading>Details</SubHeading>
       <section className="flex gap-10">
         <StudentDetailsCard className="w-1/2" student={student} />
-        {!student.selfDefinedProjectId && student.allocation && (
-          <StudentAllocation
-            className="w-1/2"
-            allocation={student.allocation}
-          />
+        {!!selfDefinedProjectId && !!allocation && (
+          <StudentAllocation className="w-1/2" allocation={allocation} />
         )}
       </section>
-      {!student.selfDefinedProjectId ? (
+      {!!selfDefinedProjectId ? (
         <StudentPreferencesSection params={params} />
       ) : (
         <StudentProjectSection params={params} />

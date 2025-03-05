@@ -356,22 +356,32 @@ export class AllocationInstance extends DataObject {
     }));
   }
 
-  public async getStudentAllocationDetails() {
+  public async getStudentAllocationDetails(): Promise<
+    { student: StudentDTO; allocation: ProjectDTO | undefined }[]
+  > {
     const students = await this.db.studentDetails.findMany({
       where: expand(this.params),
       include: {
+        studentFlags: { include: { flag: true } },
         userInInstance: { include: { user: true } },
-        projectAllocation: { include: { project: true } },
+        projectAllocation: {
+          include: {
+            project: {
+              include: {
+                flagsOnProject: { include: { flag: true } },
+                tagsOnProject: { include: { tag: true } },
+              },
+            },
+          },
+        },
       },
     });
 
     return students.map((u) => ({
-      institutionId: u.userId,
-      fullName: u.userInInstance.user.name,
-      email: u.userInInstance.user.email,
-      joined: u.userInInstance.joined,
-      level: u.studentLevel,
-      allocatedProject: u.projectAllocation?.project,
+      student: T.toStudentDTO(u),
+      allocation: u.projectAllocation?.project
+        ? T.toProjectDTO(u.projectAllocation.project)
+        : undefined,
     }));
   }
 

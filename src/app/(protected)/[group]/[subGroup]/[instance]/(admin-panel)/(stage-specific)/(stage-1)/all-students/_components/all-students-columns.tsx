@@ -36,9 +36,11 @@ import {
   stageGt,
   stageLte,
 } from "@/lib/utils/permissions/stage-check";
-import { StudentDto } from "@/lib/validations/dto/student";
 
 import { Role, Stage } from "@/db/types";
+import { ProjectDTO, StudentDTO } from "@/dto";
+
+type StudentWithAllocation = { student: StudentDTO; allocation?: ProjectDTO };
 
 export function useAllStudentsColumns({
   roles,
@@ -48,19 +50,23 @@ export function useAllStudentsColumns({
   roles: Set<Role>;
   deleteStudent: (id: string) => Promise<void>;
   deleteSelectedStudents: (ids: string[]) => Promise<void>;
-}): ColumnDef<StudentDto>[] {
+}): ColumnDef<StudentWithAllocation>[] {
   const stage = useInstanceStage();
 
-  const selectCol = getSelectColumn<StudentDto>();
+  const selectCol = getSelectColumn<StudentWithAllocation>();
 
-  const userCols: ColumnDef<StudentDto>[] = [
+  const userCols: ColumnDef<StudentWithAllocation>[] = [
     {
       id: "GUID",
-      accessorFn: ({ id }) => id,
+      accessorFn: ({ student }) => student.id,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="GUID" canFilter />
       ),
-      cell: ({ row: { original: student } }) => (
+      cell: ({
+        row: {
+          original: { student },
+        },
+      }) => (
         <WithTooltip
           align="start"
           tip={<div className="max-w-xs">{student.id}</div>}
@@ -71,43 +77,43 @@ export function useAllStudentsColumns({
     },
     {
       id: "Name",
-      accessorFn: ({ name }) => name,
+      accessorFn: ({ student }) => student.name,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
       ),
       cell: ({
         row: {
-          original: { name, id },
+          original: { student },
         },
       }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`./students/${id}`}
+          href={`./students/${student.id}`}
         >
-          {name}
+          {student.name}
         </Link>
       ),
     },
     {
       id: "Email",
-      accessorFn: ({ email }) => email,
+      accessorFn: ({ student }) => student.email,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Email" />
       ),
     },
     {
       id: "Level",
-      accessorFn: ({ level }) => level,
+      accessorFn: ({ student }) => student.level,
       header: ({ column }) => (
         <DataTableColumnHeader className="w-20" column={column} title="Level" />
       ),
       cell: ({
         row: {
-          original: { level },
+          original: { student },
         },
       }) => (
         <div className="grid w-20 place-items-center">
-          <Badge variant="accent">{level}</Badge>
+          <Badge variant="accent">{student.level}</Badge>
         </div>
       ),
       filterFn: (row, columnId, value) => {
@@ -120,7 +126,7 @@ export function useAllStudentsColumns({
     },
     {
       id: "Project Allocation",
-      accessorFn: ({ projectAllocation }) => projectAllocation?.title,
+      accessorFn: ({ allocation }) => allocation?.title,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -130,23 +136,20 @@ export function useAllStudentsColumns({
       ),
       cell: ({
         row: {
-          original: { projectAllocation },
+          original: { allocation },
         },
       }) => {
-        console.log({ projectAllocation });
-        if (stageGt(stage, Stage.SETUP) && projectAllocation) {
+        if (stageGt(stage, Stage.SETUP) && allocation) {
           return (
-            <WithTooltip
-              tip={<p className="max-w-96">{projectAllocation.title}</p>}
-            >
+            <WithTooltip tip={<p className="max-w-96">{allocation.title}</p>}>
               <Link
                 className={cn(
                   buttonVariants({ variant: "link" }),
                   "inline-block w-40 truncate px-0 text-start",
                 )}
-                href={`./projects/${projectAllocation.id}`}
+                href={`./projects/${allocation.id}`}
               >
-                {projectAllocation.title}
+                {allocation.title}
               </Link>
             </WithTooltip>
           );
@@ -155,7 +158,7 @@ export function useAllStudentsColumns({
     },
   ];
 
-  const actionsCol: ColumnDef<StudentDto> = {
+  const actionsCol: ColumnDef<StudentWithAllocation> = {
     accessorKey: "actions",
     id: "Actions",
     header: ({ table }) => {
@@ -164,7 +167,7 @@ export function useAllStudentsColumns({
 
       const selectedStudentIds = table
         .getSelectedRowModel()
-        .rows.map((e) => e.original.id);
+        .rows.map((e) => e.original.student.id);
 
       function handleRemoveSelectedStudents() {
         void deleteSelectedStudents(selectedStudentIds).then(() =>
@@ -216,7 +219,11 @@ export function useAllStudentsColumns({
 
       return <ActionColumnLabel />;
     },
-    cell: ({ row: { original: student } }) => (
+    cell: ({
+      row: {
+        original: { student },
+      },
+    }) => (
       <div className="flex w-14 items-center justify-center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

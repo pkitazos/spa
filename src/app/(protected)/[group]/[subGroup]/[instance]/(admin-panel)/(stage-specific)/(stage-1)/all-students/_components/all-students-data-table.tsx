@@ -8,19 +8,19 @@ import DataTable from "@/components/ui/data-table/data-table";
 import { studentLevelFilter } from "@/components/ui/data-table/data-table-context";
 
 import { api } from "@/lib/trpc/client";
-import { StudentDto } from "@/lib/validations/dto/student";
 
 import { useAllStudentsColumns } from "./all-students-columns";
 
 import { spacesLabels } from "@/config/spaces";
 import { Role } from "@/db/types";
+import { ProjectDTO, StudentDTO } from "@/dto";
 
 export function StudentsDataTable({
   roles,
   data,
 }: {
   roles: Set<Role>;
-  data: StudentDto[];
+  data: { student: StudentDTO; allocation?: ProjectDTO }[];
 }) {
   const params = useInstanceParams();
   const router = useRouter();
@@ -56,10 +56,6 @@ export function StudentsDataTable({
     deleteStudent: handleDelete,
     deleteSelectedStudents: handleDeleteSelected,
   });
-
-  const allocations = data.map((student) => student.projectAllocation);
-
-  console.log(allocations.length);
 
   return (
     <DataTable

@@ -303,28 +303,15 @@ export const instanceRouter = createTRPCRouter({
     .output(
       z.array(
         z.object({
-          level: z.number(),
-          projectAllocation: z
-            .object({ id: z.string(), title: z.string() })
-            .optional(),
-          id: z.string(),
-          name: z.string(),
-          email: z.string(),
+          student: studentDtoSchema,
+          allocation: projectDtoSchema.optional(),
         }),
       ),
     )
-    .query(async ({ ctx: { instance } }) => {
-      const studentData = await instance.getStudentAllocationDetails();
-
-      return studentData.map((u) => ({
-        id: u.institutionId,
-        name: u.fullName,
-        email: u.email,
-        joined: u.joined,
-        level: u.level,
-        projectAllocation: u.allocatedProject,
-      }));
-    }),
+    .query(
+      async ({ ctx: { instance } }) =>
+        await instance.getStudentAllocationDetails(),
+    ),
 
   // BREAKING output type changed
   getStudents: procedure.instance.subGroupAdmin
@@ -674,9 +661,7 @@ export const instanceRouter = createTRPCRouter({
       async ({ ctx: { db, instance }, input: { newReaderAllocations } }) => {
         const projectAllocationData =
           await instance.getStudentAllocationDetails();
-        const studentIds = projectAllocationData.map(
-          (student) => student.institutionId,
-        );
+        const studentIds = projectAllocationData.map((a) => a.student.id);
 
         const readers = await instance.getReaders();
         const readerIds = readers.map(({ id }) => id);
@@ -694,10 +679,7 @@ export const instanceRouter = createTRPCRouter({
         });
 
         const studentProjectMap = projectAllocationData.reduce(
-          (acc, val) => ({
-            ...acc,
-            [val.institutionId]: val.allocatedProject?.id!,
-          }),
+          (acc, val) => ({ ...acc, [val.student.id]: val.allocation?.id! }),
           {} as Record<string, string>,
         );
 

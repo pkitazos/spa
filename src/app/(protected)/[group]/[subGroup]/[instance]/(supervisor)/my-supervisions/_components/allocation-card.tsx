@@ -16,12 +16,14 @@ type StudentInfo = {
   level: number;
 };
 
-type ProjectCardProps = {
+// TODO: standardise prop types
+export function AllocationCard({
+  title,
+  student,
+}: {
   title: string;
   student: StudentInfo;
-};
-
-export function AllocationCard({ title, student }: ProjectCardProps) {
+}) {
   return (
     <Card className="w-full overflow-hidden">
       <CardHeader className="bg-accent p-4">

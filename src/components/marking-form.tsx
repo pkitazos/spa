@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/popover";
 
 import { cn } from "@/lib/utils";
-import { CurrentMarks, UpdatedMarks } from "@/lib/validations/marking-form";
 
 import {
   Command,
@@ -33,22 +32,32 @@ import layoutData from "./layout.json";
 
 import { GRADES } from "@/config/grades";
 
+type TEMPMarkingFormData2 = {
+  marks: {
+    assessmentComponentId: string;
+    mark: number;
+    justification: string;
+  }[];
+  finalComment: string;
+  recommendation: boolean;
+  draft: boolean;
+};
+
 export function MarkingForm({
   submissionButtonLabel,
   project,
   onSubmit,
 }: {
   submissionButtonLabel: string;
-  onSubmit: (data: UpdatedMarks) => void;
-  project: CurrentMarks;
+  onSubmit: (data: TEMPMarkingFormData2) => void;
+  project: TEMPMarkingFormData2;
 }) {
-  const form = useForm({
+  const form = useForm<TEMPMarkingFormData2>({
     defaultValues: {
-      marks: project?.marks ?? [],
-      finalComments: project?.finalComments ?? "",
-      prize: project?.prize ?? false,
-      markerId: project?.markerId ?? "",
-      studentId: project?.studentId ?? "",
+      draft: true,
+      finalComment: project.finalComment,
+      recommendation: project.recommendation,
+      marks: project.marks,
     },
   });
 

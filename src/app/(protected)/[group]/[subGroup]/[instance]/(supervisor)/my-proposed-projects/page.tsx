@@ -27,7 +27,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
   });
 
   const rowProjects = await api.user.supervisor.rowProjects({ params });
-  const uniqueProjectIds = new Set(rowProjects.map((project) => project.id));
+  const uniqueProjectIds = new Set(rowProjects.map((p) => p.project.id));
 
   return (
     <>
@@ -59,7 +59,15 @@ export default async function Page({ params }: { params: InstanceParams }) {
             )}
           </Card>
         </AccessControl>
-        <MyProjectsDataTable projects={rowProjects} />
+        <MyProjectsDataTable
+          projects={rowProjects.map((r) => ({
+            id: r.project.id,
+            title: r.project.title,
+            capacityUpperBound: r.project.capacityUpperBound,
+            allocatedStudentId: r.student?.id,
+            allocatedStudentName: r.student?.name,
+          }))}
+        />
       </PanelWrapper>
     </>
   );

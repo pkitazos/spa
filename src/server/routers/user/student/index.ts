@@ -3,10 +3,7 @@ import { z } from "zod";
 
 import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
 import { stageGte } from "@/lib/utils/permissions/stage-check";
-import {
-  randomAllocationDtoSchema,
-  studentProjectAllocationDtoSchema,
-} from "@/lib/validations/allocation/data-table-dto";
+import { randomAllocationDtoSchema } from "@/lib/validations/allocation/data-table-dto";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
@@ -15,6 +12,7 @@ import { preferenceRouter } from "./preference";
 
 import { Supervisor } from "@/data-objects/users/supervisor";
 import { studentDtoSchema } from "@/dto/user/student";
+import { projectDtoSchema, supervisorDtoSchema } from "@/dto";
 
 export const studentRouter = createTRPCRouter({
   preference: preferenceRouter,
@@ -34,7 +32,13 @@ export const studentRouter = createTRPCRouter({
       z.object({
         student: studentDtoSchema,
         selfDefinedProjectId: z.string().optional(),
-        allocation: studentProjectAllocationDtoSchema.optional(),
+        allocation: z
+          .object({
+            project: projectDtoSchema,
+            supervisor: supervisorDtoSchema,
+            studentRanking: z.number(),
+          })
+          .optional(),
       }),
     )
     .query(async ({ ctx: { instance }, input: { studentId } }) => {
@@ -51,12 +55,13 @@ export const studentRouter = createTRPCRouter({
       }
 
       // definitely has allocation
-      const { project, studentRanking } = await student.getAllocation();
+      const { project, supervisor, studentRanking } =
+        await student.getAllocation();
 
       if (!(await student.hasSelfDefinedProject())) {
         // no self defined project
         return {
-          allocation: { project, rank: studentRanking },
+          allocation: { project, supervisor, studentRanking },
           selfDefinedProjectId: undefined,
           student: studentData,
         };
@@ -64,7 +69,7 @@ export const studentRouter = createTRPCRouter({
 
       // definitely has self defined project
       return {
-        allocation: { project, rank: studentRanking },
+        allocation: { project, supervisor, studentRanking },
         selfDefinedProjectId: project.id,
         student: studentData,
       };
@@ -124,6 +129,16 @@ export const studentRouter = createTRPCRouter({
   isPreAllocated: procedure.instance.student
     .output(z.boolean())
     .query(async ({ ctx: { user } }) => await user.hasSelfDefinedProject()),
+
+  getPreAllocation: procedure.instance.student
+    .output(
+      z.object({
+        project: projectDtoSchema,
+        supervisor: supervisorDtoSchema,
+        studentRanking: z.number(),
+      }),
+    )
+    .query(async ({ ctx: { user } }) => await user.getAllocation()),
 
   // MOVE to instance router
   // this sucks actually

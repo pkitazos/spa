@@ -29,6 +29,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
     );
   }
 
+  // pin output type is not standard
   const allocations = await api.user.supervisor.allocations({ params });
 
   return (
@@ -42,8 +43,18 @@ export default async function Page({ params }: { params: InstanceParams }) {
           </div>
         ) : (
           <div className="ml-10 mt-16 flex flex-col gap-6">
-            {allocations.map(({ project, student }, i) => (
-              <AllocationCard key={i} title={project.title} student={student} />
+            {allocations.map(({ project, student, rank }, i) => (
+              <AllocationCard
+                key={i}
+                title={project.title}
+                student={{
+                  id: student.id,
+                  name: student.name,
+                  email: student.email,
+                  level: student.level,
+                  rank: rank,
+                }}
+              />
             ))}
           </div>
         )}

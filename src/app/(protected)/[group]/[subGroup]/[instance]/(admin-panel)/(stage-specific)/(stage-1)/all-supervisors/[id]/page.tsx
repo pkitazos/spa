@@ -33,10 +33,7 @@ export async function generateMetadata({ params }: { params: PageParams }) {
 
 export default async function Page({ params }: { params: PageParams }) {
   const supervisorId = params.id;
-  const exists = await api.user.supervisor.exists({
-    params,
-    supervisorId,
-  });
+  const exists = await api.user.supervisor.exists({ params, supervisorId });
   if (!exists) notFound();
 
   const { supervisor, projects } = await api.user.supervisor.instanceData({
@@ -71,7 +68,17 @@ export default async function Page({ params }: { params: PageParams }) {
           <p>New Project</p>
         </Link>
       </div>
-      <SupervisorProjectsDataTable data={projects} />
+      <SupervisorProjectsDataTable
+        data={projects.map((p) => ({
+          id: p.id,
+          title: p.title,
+          supervisorId: p.supervisorId,
+          preAllocatedStudentId: p.preAllocatedStudentId,
+          allocatedStudents: p.allocatedStudents,
+          flags: p.flags,
+          tags: p.tags,
+        }))}
+      />
     </PageWrapper>
   );
 }

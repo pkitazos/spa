@@ -12,10 +12,12 @@ import { User } from "@/data-objects/users/user";
 import { Role } from "@/db/types";
 import { instanceDisplayDataSchema, userDtoSchema } from "@/dto";
 import { AllocationInstance } from "@/data-objects/spaces/instance";
+import { markerRouter } from "./marker";
 
 export const userRouter = createTRPCRouter({
   student: studentRouter,
   supervisor: supervisorRouter,
+  marker: markerRouter,
 
   get: procedure.user
     .output(userDtoSchema)

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { AccessControl } from "@/components/access-control";
-import { Heading, SectionHeading, SubHeading } from "@/components/heading";
+import { Heading, SubHeading } from "@/components/heading";
 import { MarkdownRenderer } from "@/components/markdown-editor";
 import { PageWrapper } from "@/components/page-wrapper";
 import { Badge } from "@/components/ui/badge";
@@ -17,17 +17,17 @@ import { cn } from "@/lib/utils";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import { toPositional } from "@/lib/utils/general/to-positional";
 import { previousStages } from "@/lib/utils/permissions/stage-check";
-import { DEPR_ProjectDto } from "@/lib/validations/dto/project";
 import { InstanceParams } from "@/lib/validations/params";
 import { StudentPreferenceType } from "@/lib/validations/student-preference";
 
-import { SpecialCircumstancesPage } from "./_components/special-circumstances";
 import { StudentPreferenceButton } from "./_components/student-preference-button";
 import { StudentPreferenceDataTable } from "./_components/student-preference-data-table";
 
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
-import { Role, Stage } from "@/db/types";
+import { PreferenceType, Role, Stage } from "@/db/types";
+import { toPP1 } from "@/lib/utils/general/instance-params";
+import { ProjectDTO, StudentDTO, SupervisorDTO } from "@/dto";
 
 type PageParams = InstanceParams & { id: string };
 
@@ -49,25 +49,24 @@ export async function generateMetadata({ params }: { params: PageParams }) {
 
 export default async function Project({ params }: { params: PageParams }) {
   const projectId = params.id;
-  const exists = await api.project.exists({ params, projectId: params.id });
+  const exists = await api.project.exists({ params: toPP1(params) });
   if (!exists) notFound();
 
   const instancePath = formatParamsAsPath(params);
 
-  const { access, studentFlagLabel } = await api.project.getUserAccess({
-    params,
-    projectId,
-  });
+  const userAccess = await api.project.getUserAccess({ params: toPP1(params) });
 
-  if (!access) {
+  if (!userAccess.access) {
     return (
       <Unauthorised
-        message={`This project is not suitable for ${studentFlagLabel} students`}
+        message={`This project is not suitable for ${userAccess.error} students`}
       />
     );
   }
 
-  const project = await api.project.getById({ projectId });
+  const { project, supervisor } = await api.project.getByIdWithSupervisor({
+    params: toPP1(params),
+  });
   const user = await api.user.get();
   const roles = await api.user.roles({ params });
 
@@ -83,13 +82,11 @@ export default async function Project({ params }: { params: PageParams }) {
   }
 
   const studentPreferences = await api.project.getAllStudentPreferences({
-    params,
-    projectId,
+    params: toPP1(params),
   });
 
   const allocatedStudent = await api.project.getAllocation({
-    params,
-    projectId,
+    params: toPP1(params),
   });
 
   return (
@@ -114,7 +111,7 @@ export default async function Project({ params }: { params: PageParams }) {
         <AccessControl
           allowedRoles={[Role.ADMIN]}
           allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-          extraConditions={{ RBAC: { OR: project.supervisor.id === user.id } }}
+          extraConditions={{ RBAC: { OR: project.supervisorId === user.id } }}
         >
           <Link
             className={cn(buttonVariants(), "min-w-32 text-nowrap")}
@@ -144,7 +141,10 @@ export default async function Project({ params }: { params: PageParams }) {
           </section>
         </div>
         <div className="w-1/4">
-          <ProjectDetailsCard project={project} roles={roles} />
+          <ProjectDetailsCard
+            projectData={{ project, supervisor }}
+            roles={roles}
+          />
         </div>
       </div>
 
@@ -152,7 +152,7 @@ export default async function Project({ params }: { params: PageParams }) {
         allowedRoles={[Role.ADMIN]}
         extraConditions={{
           RBAC: {
-            OR: project.supervisor.id === user.id,
+            OR: project.supervisorId === user.id,
             AND: !!allocatedStudent,
           },
         }}
@@ -160,11 +160,12 @@ export default async function Project({ params }: { params: PageParams }) {
         <section className={cn("mt-16 flex flex-col gap-8")}>
           <SubHeading>Allocation</SubHeading>
           <AllocatedStudentCard
-            student={allocatedStudent!}
+            studentAllocation={allocatedStudent!}
             preAllocated={!!project.preAllocatedStudentId}
           />
         </section>
-        <section className="mb-16 flex flex-col">
+        {/* TODO: fix type errors */}
+        {/* <section className="mb-16 flex flex-col">
           <SectionHeading>Special Circumstances</SectionHeading>
           <SpecialCircumstancesPage
             formInternalData={{
@@ -178,7 +179,7 @@ export default async function Project({ params }: { params: PageParams }) {
                 allocatedStudent?.specialCircumstances ?? "",
             }}
           />
-        </section>
+        </section> */}
         <Separator />
       </AccessControl>
       <AccessControl
@@ -187,7 +188,16 @@ export default async function Project({ params }: { params: PageParams }) {
       >
         <section className="mt-16 flex flex-col gap-8">
           <SubHeading>Student Preferences</SubHeading>
-          <StudentPreferenceDataTable data={studentPreferences} />
+          <StudentPreferenceDataTable
+            data={studentPreferences.map((s) => ({
+              id: s.student.id,
+              name: s.student.name,
+              level: s.student.level,
+              // TODO: fix data table display for submitted projects
+              type: s.preference.type as PreferenceType,
+              rank: s.preference.rank! ?? NaN,
+            }))}
+          />
         </section>
       </AccessControl>
     </PageWrapper>
@@ -196,10 +206,10 @@ export default async function Project({ params }: { params: PageParams }) {
 
 function ProjectDetailsCard({
   roles,
-  project,
+  projectData,
 }: {
   roles: Set<Role>;
-  project: DEPR_ProjectDto;
+  projectData: { project: ProjectDTO; supervisor: SupervisorDTO };
 }) {
   return (
     <Card className="w-full max-w-sm border-none bg-accent">
@@ -220,32 +230,32 @@ function ProjectDetailsCard({
                     buttonVariants({ variant: "link" }),
                     "p-0 text-lg",
                   )}
-                  href={`../supervisors/${project.supervisor.id}`}
+                  href={`../supervisors/${projectData.supervisor.id}`}
                 >
-                  {project.supervisor.name}
+                  {projectData.supervisor.name}
                 </Link>
               ) : (
                 <p className="text-lg font-semibold">
-                  {project.supervisor.name}
+                  {projectData.supervisor.name}
                 </p>
               )}
             </div>
           </div>
         </AccessControl>
-        <div className={cn(project.flags.length === 0 && "hidden")}>
+        <div className={cn(projectData.project.flags.length === 0 && "hidden")}>
           <div className="mb-2 flex items-center space-x-4">
             <FlagIcon className="h-6 w-6 text-fuchsia-500" />
             <h3 className="text-sm font-medium text-muted-foreground">Flags</h3>
           </div>
           <div className="flex flex-wrap gap-2">
-            {project.flags.map((flag, i) => (
+            {projectData.project.flags.map((flag, i) => (
               <Badge className="w-max" variant="outline" key={i}>
                 {flag.title}
               </Badge>
             ))}
           </div>
         </div>
-        <div className={cn(project.tags.length === 0 && "hidden")}>
+        <div className={cn(projectData.project.tags.length === 0 && "hidden")}>
           <div className="mb-2 flex items-center space-x-4">
             <TagIcon className="h-6 w-6 text-purple-500" />
             <h3 className="text-sm font-medium text-muted-foreground">
@@ -253,7 +263,7 @@ function ProjectDetailsCard({
             </h3>
           </div>
           <div className="flex flex-wrap gap-2">
-            {project.tags.map((tag, i) => (
+            {projectData.project.tags.map((tag, i) => (
               <Badge className="w-max" key={i} variant="outline">
                 {tag.title}
               </Badge>
@@ -265,11 +275,12 @@ function ProjectDetailsCard({
   );
 }
 
+// TODO: standardise params type
 function AllocatedStudentCard({
-  student,
+  studentAllocation,
   preAllocated,
 }: {
-  student: { id: string; name: string; rank: number };
+  studentAllocation: { student: StudentDTO; rank: number };
   preAllocated: boolean;
 }) {
   return (
@@ -287,9 +298,9 @@ function AllocatedStudentCard({
                   buttonVariants({ variant: "link" }),
                   "text-nowrap p-0 text-base",
                 )}
-                href={`../students/${student.id}`}
+                href={`../students/${studentAllocation.student.id}`}
               >
-                {student.name}
+                {studentAllocation.student.name}
               </Link>
             </div>
           </div>
@@ -301,7 +312,7 @@ function AllocatedStudentCard({
         <p>
           This was the student&apos;s{" "}
           <span className="font-semibold text-indigo-600">
-            {toPositional(student.rank)}
+            {toPositional(studentAllocation.rank)}
           </span>{" "}
           choice.
         </p>

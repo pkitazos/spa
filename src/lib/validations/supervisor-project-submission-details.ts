@@ -39,7 +39,3 @@ export const supervisorCapacitiesSchema = z
       path: ["projectTarget"],
     },
   );
-
-export type SupervisorInstanceCapacities = z.infer<
-  typeof supervisorCapacitiesSchema
->;

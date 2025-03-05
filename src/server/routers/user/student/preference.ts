@@ -95,10 +95,10 @@ export const preferenceRouter = createTRPCRouter({
       }),
     )
     .output(
-      z.record(
-        z.nativeEnum(PreferenceType),
-        z.array(projectPreferenceCardDtoSchema),
-      ),
+      z.object({
+        [PreferenceType.PREFERENCE]: z.array(projectPreferenceCardDtoSchema),
+        [PreferenceType.SHORTLIST]: z.array(projectPreferenceCardDtoSchema),
+      }),
     )
     .mutation(
       async ({
@@ -258,10 +258,10 @@ export const preferenceRouter = createTRPCRouter({
     .input(z.object({ studentId: z.string() }))
     .output(
       z.object({
-        initialProjects: z.record(
-          z.nativeEnum(PreferenceType),
-          z.array(projectPreferenceCardDtoSchema),
-        ),
+        initialProjects: z.object({
+          [PreferenceType.PREFERENCE]: z.array(projectPreferenceCardDtoSchema),
+          [PreferenceType.SHORTLIST]: z.array(projectPreferenceCardDtoSchema),
+        }),
       }),
     )
     .query(async ({ ctx: { instance, user }, input: { studentId } }) => {

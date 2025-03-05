@@ -34,8 +34,12 @@ export async function StudentOverview({ params }: { params: InstanceParams }) {
     const preAllocatedProject = await api.user.student.isPreAllocated({
       params,
     });
+
     const instancePath = formatParamsAsPath(params);
+
     if (preAllocatedProject) {
+      const { project } = await api.user.student.getPreAllocation({ params });
+
       return (
         <ThinLayout pageName={displayName} params={params}>
           <div className="mt-9 flex justify-between">
@@ -49,13 +53,13 @@ export async function StudentOverview({ params }: { params: InstanceParams }) {
                 <p className="flex items-center justify-start gap-2">
                   View your project:
                   <Link
-                    href={`${instancePath}/projects/${preAllocatedProject.id}`}
+                    href={`${instancePath}/projects/${project.id}`}
                     className={cn(
                       buttonVariants({ variant: "link" }),
                       "text-base",
                     )}
                   >
-                    {preAllocatedProject.title}
+                    {project.title}
                   </Link>
                 </p>
               </div>

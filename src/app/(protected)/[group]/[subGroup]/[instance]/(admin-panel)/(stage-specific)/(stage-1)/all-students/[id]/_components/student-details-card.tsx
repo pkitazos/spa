@@ -60,14 +60,12 @@ export function StudentDetailsCard({
 
   function onSubmit(data: StudentInstanceDetails) {
     void toast.promise(
-      mutateAsync({
-        params,
-        studentId: student.id,
-        level: data.level,
-      }).then((newLevel) => {
-        setStudentLevel(newLevel);
-        changeEditMode(false);
-      }),
+      mutateAsync({ params, studentId: student.id, level: data.level }).then(
+        (s) => {
+          setStudentLevel(s.level);
+          changeEditMode(false);
+        },
+      ),
       {
         loading: `Updating student ${spacesLabels.instance.short} level...`,
         success: `Successfully updated student ${spacesLabels.instance.short} level`,

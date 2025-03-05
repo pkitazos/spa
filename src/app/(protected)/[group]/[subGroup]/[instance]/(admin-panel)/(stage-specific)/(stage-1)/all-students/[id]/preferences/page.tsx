@@ -27,7 +27,7 @@ export default async function Page({ params }: { params: PageParams }) {
       <Unauthorised message="You are not allowed to access this resource at this time" />
     );
   }
-  const student = await api.user.student.getById({ params, studentId });
+  const { student } = await api.user.student.getById({ params, studentId });
 
   const { initialProjects } =
     await api.user.student.preference.initialBoardState({ params, studentId });

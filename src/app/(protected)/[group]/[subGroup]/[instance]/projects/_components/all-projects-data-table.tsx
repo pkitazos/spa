@@ -21,6 +21,7 @@ import { StudentPreferenceType } from "@/lib/validations/student-preference";
 import { useAllProjectsColumns } from "./all-projects-columns";
 
 import { PreferenceType, Role } from "@/db/types";
+import { toPP3 } from "@/lib/utils/general/instance-params";
 
 export function AllProjectsDataTable({
   data,
@@ -45,7 +46,9 @@ export function AllProjectsDataTable({
 
   async function handleDelete(projectId: string) {
     void toast.promise(
-      deleteAsync({ params, projectId }).then(() => router.refresh()),
+      deleteAsync({ params: toPP3(params, projectId) }).then(() =>
+        router.refresh(),
+      ),
       {
         loading: "Deleting project...",
         error: "Something went wrong",
