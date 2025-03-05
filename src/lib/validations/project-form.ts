@@ -2,7 +2,8 @@ import { z } from "zod";
 
 import { tagTypeSchema } from "@/components/tag/tag-input";
 
-import { projectFlags } from "@/content/config/flags";
+import { projectFlags } from "@/config/config/flags";
+import { FlagDTO, StudentDTO, TagDTO } from "@/dto";
 
 // eslint-disable-next-line no-control-regex
 const ascii_pattern = /^[\x00-\x7F]+$/;
@@ -38,26 +39,24 @@ const baseProjectFormSchema = z.object({
   tags: z.array(z.object({ id: z.string(), title: z.string() })),
   isPreAllocated: z.boolean().optional(),
   capacityUpperBound: z.coerce.number().int().positive().default(1),
-  preAllocatedStudentId: z.string().optional(),
+  preAllocatedStudentId: z.string().min(1).optional(),
   specialTechnicalRequirements: z.string().optional(),
 });
 
 export const updatedProjectSchema = baseProjectFormSchema.refine(
-  ({ isPreAllocated, preAllocatedStudentId }) => {
-    isPreAllocated = Boolean(isPreAllocated);
-    return !(isPreAllocated && preAllocatedStudentId === "");
-  },
+  ({ isPreAllocated, preAllocatedStudentId }) =>
+    !(!!isPreAllocated && preAllocatedStudentId === ""),
   { message: "Please select a student", path: ["preAllocatedStudentId"] },
 );
 
 export type UpdatedProject = z.infer<typeof updatedProjectSchema>;
 
 export function buildUpdatedProjectSchema(
-  takenTitles: string[],
+  takenTitles: Set<string>,
   requiredFlags: string[] = [],
 ) {
   return updatedProjectSchema
-    .refine(({ title }) => !takenTitles.includes(title), {
+    .refine(({ title }) => !takenTitles.has(title), {
       message: "This title is already taken",
       path: ["title"],
     })
@@ -74,10 +73,7 @@ export function buildUpdatedProjectSchema(
 }
 
 export const currentProjectFormDetailsSchema = baseProjectFormSchema
-  .omit({
-    capacityUpperBound: true,
-    preAllocatedStudentId: true,
-  })
+  .omit({ capacityUpperBound: true, preAllocatedStudentId: true })
   .extend({
     id: z.string(),
     capacityUpperBound: z.number(),
@@ -95,4 +91,11 @@ const formInternalDataSchema = z.object({
   students: z.array(z.object({ id: z.string() })),
 });
 
-export type FormInternalData = z.infer<typeof formInternalDataSchema>;
+// export type FormInternalData = z.infer<typeof formInternalDataSchema>;
+
+export type FormInternalData = {
+  flags: FlagDTO[];
+  tags: TagDTO[];
+  students: StudentDTO[];
+  takenTitles: Set<string>;
+};

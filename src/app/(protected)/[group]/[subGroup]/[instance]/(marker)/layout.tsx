@@ -1,11 +1,11 @@
 import { ReactNode } from "react";
-import { Role } from "@prisma/client";
 
 import SidePanel from "@/components/side-panel";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
 import { InstanceParams } from "@/lib/validations/params";
+import { Role } from "@/db/types";
 
 export default async function Layout({
   params,
@@ -16,8 +16,7 @@ export default async function Layout({
 }) {
   const roles = await api.user.roles({ params });
 
-  //   if (!roles.has(Role.SUPERVISOR) || !roles.has(Role.READER)) {
-  if (!roles.has(Role.SUPERVISOR)) {
+  if (!roles.has(Role.SUPERVISOR) || !roles.has(Role.READER)) {
     return (
       <Unauthorised message="You need to be a Supervisor to access this page" />
     );

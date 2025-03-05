@@ -1,7 +1,5 @@
-import { Stage } from "@prisma/client";
-
-import { stageOrd } from "@/lib/db";
-import { stageSchema } from "@/lib/validations/stage";
+import { Stage, stageOrd } from "@/db/types";
+import { stageSchema } from "@/db/types";
 
 /**
  *
@@ -59,6 +57,19 @@ export function subsequentStages(minStage: Stage): Stage[] {
  */
 export function previousStages(maxStage: Stage): Stage[] {
   return stageSchema.options.filter((s) => stageOrd[s] <= stageOrd[maxStage]);
+}
+
+/**
+ * Get stages in the specified range
+ * @param minStage The maximum stage to include in the returned array
+ * @param maxStage The minimum stage to include in the returned array
+ * @returns All stages between min and max (inclusive)
+ */
+export function stageRange(minStage: Stage, maxStage: Stage): Stage[] {
+  return stageSchema.options.filter(
+    (s) =>
+      stageOrd[s] <= stageOrd[maxStage] && stageOrd[s] >= stageOrd[minStage],
+  );
 }
 
 /**

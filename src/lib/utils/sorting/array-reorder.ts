@@ -13,5 +13,7 @@ export function arrayReorder<T>(items: T[], from: number, to: number): T[] {
 
   if (no_change || too_small || too_large || too_few) return items;
 
-  return items.toSpliced(from, 1).toSpliced(to, 0, items[from]);
+  const item = items[from];
+  if (item === undefined) return items;
+  return items.toSpliced(from, 1).toSpliced(to, 0, item);
 }

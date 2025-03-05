@@ -3,7 +3,6 @@ import { Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-// import { DestructiveButton } from "@/components/destructive-button";
 import {
   useInstanceParams,
   useInstancePath,
@@ -11,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 import { api } from "@/lib/trpc/client";
+import { toPP3 } from "@/lib/utils/general/instance-params";
 
 export function ProjectRemovalButton({ projectId }: { projectId: string }) {
   const params = useInstanceParams();
@@ -22,7 +22,7 @@ export function ProjectRemovalButton({ projectId }: { projectId: string }) {
   // TODO: change redirect based on role
   function handleDelete() {
     void toast.promise(
-      deleteAsync({ params, projectId }).then(() => {
+      deleteAsync({ params: toPP3(params, projectId) }).then(() => {
         router.push(`${instancePath}/projects`);
         router.refresh();
       }),

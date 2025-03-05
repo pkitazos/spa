@@ -36,7 +36,7 @@ import {
 } from "@/lib/validations/add-admins/new-admin";
 import { GroupParams } from "@/lib/validations/params";
 
-import { spacesLabels } from "@/content/spaces";
+import { spacesLabels } from "@/config/spaces";
 
 export function FormButton({ params }: { params: GroupParams }) {
   const router = useRouter();
@@ -46,7 +46,13 @@ export function FormButton({ params }: { params: GroupParams }) {
 
   const { mutateAsync } = api.institution.group.addAdmin.useMutation();
 
-  function onSubmit(newAdmin: NewAdmin) {
+  function onSubmit(data: NewAdmin) {
+    const newAdmin = {
+      id: data.institutionId,
+      name: data.name,
+      email: data.email,
+    };
+
     void toast.promise(
       mutateAsync({ params, newAdmin }).then(() => {
         form.reset();
@@ -127,8 +133,7 @@ export function FormButton({ params }: { params: GroupParams }) {
             </div>
             <Separator />
             <FormDescription>
-              Ensure that the GUID and email correspond to the same
-              user account
+              Ensure that the GUID and email correspond to the same user account
             </FormDescription>
             <DialogFooter>
               <Button type="submit">

@@ -26,7 +26,7 @@ export default async function Layout({
   // if they are an admin in this instance, they should have access
   // if they are not an admin in this instance, they should have access if they are a supervisor or student in this instance
 
-  const memberAccess = await api.ac.memberAccess({ params });
+  const memberAccess = await api.ac.instanceMembership({ params });
   if (!memberAccess) {
     return (
       <Unauthorised
@@ -50,13 +50,12 @@ export default async function Layout({
 
   const { flags, tags } = await api.project.details({ params });
 
-  const tabGroups = await api.institution.instance.getSidePanelTabs({
-    params,
-  });
+  const tabGroups = await api.institution.instance.getSidePanelTabs({ params });
 
   return (
     <SidebarProvider>
       <InstanceParamsProvider instance={{ params, stage, roles }}>
+        {/* this is really stupid actually, I should just be able to pass tha flags and tags directly to data tables */}
         <DataTableProvider details={{ flags, tags }}>
           <InstanceSidebar className="mt-[8dvh]" tabGroups={tabGroups} />
           <header className="sticky top-0 flex h-[5.5rem] w-[5.5rem] flex-1 shrink items-center justify-center gap-2 rounded-md bg-background px-4">

@@ -7,22 +7,23 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { AllProjectsDataTable } from "./_components/all-projects-data-table";
 
-import { app, metadataTitle } from "@/content/config/app";
-import { pages } from "@/content/pages";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([pages.allProjects.title, displayName, app.name]),
+    title: metadataTitle([PAGES.allProjects.title, displayName, app.name]),
   };
 }
 
 export default async function Projects({ params }: { params: InstanceParams }) {
   const user = await auth();
-  const role = await api.user.role({ params });
-  const projects = await api.project.getAllForUser({ params, userId: user.id });
+  const roles = await api.user.roles({ params });
+  const projects = await api.project.getAllForUser({ params });
 
+  // TODO: should only be run if user has role student
   const preferencesByProject = await api.user.student.preference.getByProject({
     params,
   });
@@ -33,11 +34,20 @@ export default async function Projects({ params }: { params: InstanceParams }) {
 
   return (
     <PageWrapper>
-      <Heading>{pages.allProjects.title}</Heading>
+      <Heading>{PAGES.allProjects.title}</Heading>
       <AllProjectsDataTable
         user={user}
-        role={role}
-        data={projects}
+        roles={roles}
+        data={projects.map((p) => ({
+          id: p.project.id,
+          description: p.project.description,
+          title: p.project.title,
+          specialTechnicalRequirements:
+            p.project.specialTechnicalRequirements ?? "",
+          flags: p.project.flags,
+          tags: p.project.tags,
+          supervisor: p.supervisor,
+        }))}
         projectPreferences={preferencesByProject}
         hasSelfDefinedProject={hasSelfDefinedProject}
       />

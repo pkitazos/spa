@@ -1,11 +1,11 @@
 "use client";
 import { ReactNode } from "react";
-import { AdminLevel } from "@prisma/client";
 import { useParams } from "next/navigation";
 
 import { api } from "@/lib/trpc/client";
 import { permissionCheck } from "@/lib/utils/permissions/permission-check";
 import { RefinedSpaceParams } from "@/lib/validations/params";
+import { AdminLevel } from "@/db/types";
 
 export function AdminLevelAC({
   children,

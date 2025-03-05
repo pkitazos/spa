@@ -1,0 +1,79 @@
+enum AlgorithmFlag {
+    MAXSIZE
+    GEN
+    GRE
+    MINCOST
+    MINSQCOST
+    LSB
+
+    @@map("algorithm_flag")
+}
+
+model Algorithm {
+    id                   String             @id @default(uuid())
+    displayName          String             @map("display_name")
+    createdAt            DateTime           @default(now()) @map("created_at")
+    description          String?
+    targetModifier       Int                @default(0) @map("target_modifier")
+    upperBoundModifier   Int                @default(0) @map("upper_bound_modifier")
+    maxRank              Int                @default(-1) @map("max_rank")
+    flag1                AlgorithmFlag      @map("flag_1")
+    flag2                AlgorithmFlag?     @map("flag_2")
+    flag3                AlgorithmFlag?     @map("flag_3")
+    // ---
+    matchingResult       MatchingResult?    @relation(map: "alg_config_in_instance")
+    // ---
+    allocationGroupId    String             @map("allocation_group_id")
+    allocationSubGroupId String             @map("allocation_sub_group_id")
+    allocationInstanceId String             @map("allocation_instance_id")
+    AllocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id])
+
+    @@map("algorithm")
+}
+
+model MatchingResult {
+    id                   String             @id @default(uuid())
+    modifiedAt           DateTime           @updatedAt @map("modified_at")
+    // details 
+    profile              Int[]
+    degree               Int
+    size                 Int
+    weight               Int
+    cost                 Int
+    costSq               Int                @map("cost_sq")
+    maxLecAbsDiff        Int                @map("max_lec_abs_diff")
+    sumLecAbsDiff        Int                @map("sum_lec_abs_diff")
+    matching             MatchingPair[]
+    ranks                Int[]
+    // ---
+    allocationGroupId    String             @map("allocation_group_id")
+    allocationSubGroupId String             @map("allocation_sub_group_id")
+    allocationInstanceId String             @map("allocation_instance_id")
+    algorithmId          String             @map("algorithm_config_id")
+    // ---
+    allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+    algorithm            Algorithm          @relation(map: "algorithm", fields: [algorithmId], references: [id])
+
+    @@unique(name: "algConfigInInstanceId", [algorithmId])
+    @@map("matching_result")
+}
+
+model MatchingPair {
+    userId               String             @map("user_id")
+    projectId            String             @map("project_id")
+    studentRanking       Int                @map("student_ranking")
+    // ---
+    student              StudentDetails     @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+    project              Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    // ---
+    matchingResultId     String             @map("matching_result_id")
+    allocationGroupId    String             @map("allocation_group_id")
+    allocationSubGroupId String             @map("allocation_sub_group_id")
+    allocationInstanceId String             @map("allocation_instance_id")
+    // ---
+    allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+    matchingResult       MatchingResult     @relation(fields: [matchingResultId], references: [id], onDelete: Cascade)
+
+    @@id(name: "matchingPairId", [userId, matchingResultId])
+    @@map("matching_pair")
+}

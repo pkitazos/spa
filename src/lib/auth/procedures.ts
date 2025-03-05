@@ -1,9 +1,9 @@
 import { headers } from "next/headers";
 import { z } from "zod";
 
-import { db } from "@/lib/db";
 import { ShibUser } from "@/lib/validations/auth";
 
+import { db } from "@/db";
 import { env } from "@/env";
 
 export async function getShibUserFromHeaders() {
@@ -55,7 +55,7 @@ export async function retrieveUser(user: ShibUser) {
       },
     });
     return newUser;
-  } catch (e) {
+  } catch (_) {
     throw new Error("No valid invite found for this user");
   }
 }

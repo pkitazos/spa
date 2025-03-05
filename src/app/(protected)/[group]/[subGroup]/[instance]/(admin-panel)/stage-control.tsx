@@ -8,11 +8,11 @@ import { useInstanceParams } from "@/components/params-context";
 import { Button } from "@/components/ui/button";
 
 import { api } from "@/lib/trpc/client";
-import { stageSchema } from "@/lib/validations/stage";
 
 import { StageButton } from "./_components/stage-button";
 
-import { CHAPTER } from "@/content/config/stage";
+import { stageSchema } from "@/db/types";
+import { CHAPTER } from "@/config/config/stage";
 
 export function StageControl({ stage }: { stage: Stage }) {
   const params = useInstanceParams();
@@ -29,10 +29,7 @@ export function StageControl({ stage }: { stage: Stage }) {
 
   const handleConfirmation = (idx: number) => {
     toast.promise(
-      mutateAsync({
-        params,
-        stage: stages[idx - 1],
-      }).then(() => {
+      mutateAsync({ params, stage: stages[idx - 1]! }).then(() => {
         setSelectedIdx(-1);
         setConfirmedIdx(idx);
         router.refresh();

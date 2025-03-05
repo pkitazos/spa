@@ -1,498 +1,279 @@
-import { Role } from "@prisma/client";
+import { compareAsc } from "date-fns";
 import { z } from "zod";
 
+import { expand } from "@/lib/utils/general/instance-params";
+import { algorithmResultDtoSchema } from "@/lib/validations/algorithm";
 import {
-  AlgorithmResultDto,
-  algorithmSchema,
-  builtInAlgSchema,
-} from "@/lib/validations/algorithm";
-import {
-  blankResult,
-  MatchingDetailsDto,
-  matchingResultSchema,
-  SupervisorMatchingDetailsDto,
+  matchingResultDtoSchema,
+  supervisorMatchingDetailsDtoSchema,
 } from "@/lib/validations/matching";
 import { instanceParamsSchema } from "@/lib/validations/params";
 
-import { createTRPCRouter, instanceAdminProcedure } from "@/server/trpc";
+import { procedure } from "@/server/middleware";
+import { createTRPCRouter } from "@/server/trpc";
 
-import { getSupervisorPreAllocatedProjects } from "../_utils/supervisor-pre-allocations";
-
-import { applyModifiers } from "./_utils/apply-modifiers";
-import { executeMatchingAlgorithm } from "./_utils/execute-matching-algorithm";
+import { Transformers as T } from "@/db/transformers";
 import {
-  extractMatchingDetails,
-  parseMatchingResult,
-} from "./_utils/extract-matching-details";
-import { getAlgorithmsInOrder } from "./_utils/get-algorithms-in-order";
-import { getBuiltInAlgorithm } from "./_utils/get-built-in-algorithm";
-import { getMatchingData } from "./_utils/get-matching-data";
+  algorithmDtoSchema,
+  projectDtoSchema,
+  studentDtoSchema,
+  userDtoSchema,
+} from "@/dto";
+import { AlgorithmRunResult } from "@/dto/result/algorithm-run-result";
+import {
+  adjustTarget,
+  adjustUpperBound,
+} from "@/lib/utils/algorithm/modifiers";
 
 export const algorithmRouter = createTRPCRouter({
-  run: instanceAdminProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        algorithm: algorithmSchema,
-      }),
-    )
+  // BREAKING input/output type changed
+  // pin
+  run: procedure.algorithm.subGroupAdmin
+    .input(z.object({ algId: z.string() }))
+    .output(z.object({ total: z.number(), matched: z.number() }))
+    .mutation(async ({ ctx: { alg, instance } }) => {
+      const matchingData = await instance.getMatchingData();
+      const res = await alg.run(matchingData);
+
+      if (res !== AlgorithmRunResult.OK) {
+        // ? perhaps we should just propagate the error and handle it on the client
+        throw new Error("Algorithm failed to run");
+      }
+
+      const matchingResults = await alg.getResults();
+
+      return {
+        total: matchingData.students.length,
+        matched: matchingResults.matching.length,
+      };
+    }),
+
+  // BREAKING return type is now set
+  // ! same problem as with renaming allocation instances
+  takenNames: procedure.instance.subGroupAdmin
+    .output(z.set(z.string()))
+    .query(async ({ ctx: { instance } }) => {
+      const takenNames = await instance.getAllAlgorithms();
+      return new Set(takenNames.map((a) => a.displayName));
+    }),
+
+  create: procedure.instance.subGroupAdmin
+    .input(z.object({ data: algorithmDtoSchema.omit({ id: true }) }))
+    .output(algorithmDtoSchema)
     .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          algorithm,
-        },
-      }) => {
-        const matchingData = await getMatchingData(ctx.db, ctx.instance).then(
-          (data) => applyModifiers(data, algorithm),
-        );
-
-        const matchingResults = await executeMatchingAlgorithm({
-          algorithm,
-          matchingData,
-        });
-
-        const builtInAlg = getBuiltInAlgorithm(algorithm.algName);
-
-        if (builtInAlg) {
-          await ctx.db.algorithm.upsert({
-            where: {
-              algorithmId: {
-                algName: algorithm.algName,
-                allocationGroupId: group,
-                allocationSubGroupId: subGroup,
-                allocationInstanceId: instance,
-              },
-            },
-            update: { matchingResultData: JSON.stringify(matchingResults) },
-            create: {
-              ...builtInAlg,
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-              matchingResultData: JSON.stringify(matchingResults),
-            },
-          });
-        } else {
-          await ctx.db.algorithm.update({
-            where: {
-              algorithmId: {
-                algName: algorithm.algName,
-                allocationGroupId: group,
-                allocationSubGroupId: subGroup,
-                allocationInstanceId: instance,
-              },
-            },
-            data: { matchingResultData: JSON.stringify(matchingResults) },
-          });
-        }
-
-        return {
-          totalStudents: matchingData.students.length,
-          matchedStudents: matchingResults.size,
-        };
-      },
+      async ({ ctx: { instance }, input: { data } }) =>
+        await instance.createAlgorithm(data),
     ),
 
-  takenNames: instanceAdminProcedure
+  delete: procedure.algorithm.subGroupAdmin
+    .output(z.void())
+    .mutation(async ({ ctx: { alg } }) => await alg.delete()),
+
+  // BREAKING output type changed
+  getAll: procedure.instance.subGroupAdmin
     .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const takenNames = await ctx.db.algorithm.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          },
-          select: { algName: true },
-        });
-        return takenNames.map(({ algName }) => algName);
-      },
-    ),
+    .output(z.array(algorithmDtoSchema))
+    .query(async ({ ctx: { instance } }) => await instance.getAllAlgorithms()),
 
-  create: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema, data: algorithmSchema }))
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          data: {
-            algName,
-            flag1,
-            flag2,
-            flag3,
-            targetModifier,
-            upperBoundModifier,
-            maxRank,
-          },
-        },
-      }) => {
-        await ctx.db.algorithm.create({
-          data: {
-            algName,
-            displayName: algName,
-            flag1,
-            flag2,
-            flag3,
-            targetModifier,
-            upperBoundModifier,
-            maxRank,
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            matchingResultData: JSON.stringify({}),
-          },
-        });
-      },
-    ),
+  // BREAKING output type changed
+  // TODO: review how this is used on the client
+  getAllSummaryResults: procedure.instance.subGroupAdmin
+    .output(z.array(algorithmResultDtoSchema))
+    .query(async ({ ctx: { instance } }) => await instance.getSummaryResults()),
 
-  delete: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema, algName: z.string() }))
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-          algName,
-        },
-      }) => {
-        await ctx.db.algorithm.delete({
-          where: {
-            algorithmId: {
-              algName,
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-            },
-          },
-        });
-      },
-    ),
+  // BREAKING input/output type changed
+  singleResult: procedure.algorithm.subGroupAdmin
+    .output(matchingResultDtoSchema)
+    .query(async ({ ctx: { alg } }) => await alg.getMatching()),
 
-  getAll: instanceAdminProcedure
-    .input(
+  allStudentResults: procedure.instance.subGroupAdmin
+    .output(
       z.object({
-        params: instanceParamsSchema,
-      }),
-    )
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const customAlgorithms = await ctx.db.algorithm.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-            NOT: builtInAlgSchema.options.map((algName) => ({ algName })),
-          },
-        });
-
-        const allAlgorithms = getAlgorithmsInOrder(customAlgorithms);
-
-        return allAlgorithms.map((a) => ({
-          algName: a.algName,
-          displayName: a.displayName,
-          description: a.description ?? "",
-          targetModifier: a.targetModifier,
-          upperBoundModifier: a.upperBoundModifier,
-          maxRank: a.maxRank,
-          flags: [a.flag1, a.flag2, a.flag3].filter((f) => f !== null),
-        }));
-      },
-    ),
-
-  getAllSummaryResults: instanceAdminProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-      }),
-    )
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const algorithmData = await ctx.db.algorithm.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          },
-          select: {
-            algName: true,
-            displayName: true,
-            matchingResultData: true,
-          },
-          orderBy: { algName: "asc" },
-        });
-
-        const resultsByAlgName = new Map<string, AlgorithmResultDto>();
-
-        for (const {
-          algName,
-          displayName,
-          matchingResultData: data,
-        } of algorithmData) {
-          const { weight, size, profile, cost } = parseMatchingResult(data);
-          const dto = { algName, displayName, weight, size, profile, cost };
-          resultsByAlgName.set(algName, dto);
-        }
-
-        const algs = getAlgorithmsInOrder(algorithmData);
-        return algs.map((a) => resultsByAlgName.get(a.algName)!);
-      },
-    ),
-
-  singleResult: instanceAdminProcedure
-    .input(
-      z.object({
-        params: instanceParamsSchema,
-        algName: z.string(),
-      }),
-    )
-    .query(
-      async ({
-        ctx,
-        input: {
-          algName,
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const res = await ctx.db.algorithm.findFirst({
-          where: {
-            algName,
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          },
-          select: { matchingResultData: true },
-        });
-
-        if (!res) return blankResult;
-
-        const result = matchingResultSchema.safeParse(
-          JSON.parse(res.matchingResultData as string),
-        );
-
-        if (!result.success) return blankResult;
-
-        return result.data;
-      },
-    ),
-
-  allStudentResults: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const algorithmData = await ctx.db.algorithm.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          },
-          select: {
-            algName: true,
-            displayName: true,
-            matchingResultData: true,
-          },
-          orderBy: { algName: "asc" },
-        });
-
-        const { projects, users } =
-          await ctx.db.allocationInstance.findFirstOrThrow({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              id: instance,
-            },
-            select: {
-              projects: true,
-              users: {
-                where: { role: Role.STUDENT },
-                select: { user: { select: { id: true, name: true } } },
-              },
-            },
-          });
-
-        const students = users.map((u) => u.user);
-
-        const resultsByAlgName = new Map<string, MatchingDetailsDto[]>();
-
-        for (const { algName, matchingResultData: data } of algorithmData) {
-          const matching = parseMatchingResult(data).matching;
-
-          const details = matching.map((m) =>
-            extractMatchingDetails(
-              students,
-              projects,
-              m.student_id,
-              m.project_id,
-              m.preference_rank,
+        firstNonEmpty: z.string().or(z.undefined()),
+        results: z.array(
+          z.object({
+            algorithm: algorithmDtoSchema,
+            matchingPairs: z.array(
+              z.object({
+                student: studentDtoSchema,
+                project: projectDtoSchema,
+                studentRanking: z.number(),
+              }),
             ),
-          );
-
-          resultsByAlgName.set(algName, details);
-        }
-
-        const allAlgorithms = getAlgorithmsInOrder(algorithmData);
-
-        const results = allAlgorithms.map(({ algName, displayName }) => ({
-          algName,
-          displayName,
-          data: resultsByAlgName.get(algName) ?? [],
-        }));
-
-        const firstNonEmptyIdx = results.findIndex((r) => r.data.length > 0);
-
-        return {
-          results,
-          firstNonEmpty: results.at(firstNonEmptyIdx)?.algName,
-        };
-      },
-    ),
-
-  allSupervisorResults: instanceAdminProcedure
-    .input(z.object({ params: instanceParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup, instance },
-        },
-      }) => {
-        const algorithmData = await ctx.db.algorithm.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: subGroup,
-            allocationInstanceId: instance,
-          },
-          select: {
-            algName: true,
-            displayName: true,
-            matchingResultData: true,
-          },
-          orderBy: { algName: "asc" },
-        });
-
-        const supervisorPreAllocations =
-          await getSupervisorPreAllocatedProjects(ctx.db, {
-            group,
-            subGroup,
-            instance,
-          });
-
-        const supervisors = await ctx.db.supervisorInstanceDetails
-          .findMany({
-            where: {
-              allocationGroupId: group,
-              allocationSubGroupId: subGroup,
-              allocationInstanceId: instance,
-            },
-            select: {
-              projectAllocationTarget: true,
-              projectAllocationUpperBound: true,
-              userInInstance: {
-                select: { user: { select: { id: true, name: true } } },
+          }),
+        ),
+      }),
+    )
+    .query(async ({ ctx: { instance, db } }) => {
+      // instance.getStudentResults
+      const algorithmData = await db.algorithm.findMany({
+        where: expand(instance.params),
+        include: {
+          matchingResult: {
+            include: {
+              matching: {
+                include: {
+                  student: {
+                    include: {
+                      studentFlags: { include: { flag: true } },
+                      userInInstance: { include: { user: true } },
+                    },
+                  },
+                  project: {
+                    include: {
+                      flagsOnProject: { include: { flag: true } },
+                      tagsOnProject: { include: { tag: true } },
+                    },
+                  },
+                },
               },
             },
-          })
-          .then((data) =>
-            data.map((s) => ({
-              ...s.userInInstance.user,
-              projectAllocationTarget: s.projectAllocationTarget,
-              projectAllocationUpperBound: s.projectAllocationUpperBound,
-              preAllocations:
-                supervisorPreAllocations[s.userInInstance.user.id] ?? 0,
-            })),
-          );
+          },
+        },
+        orderBy: { createdAt: "asc" },
+      });
 
-        // TODO: refactor this to use a Record instead of a Map
-        const resultsByAlgName = new Map<
-          string,
-          SupervisorMatchingDetailsDto[]
-        >();
+      const results = algorithmData
+        .map((a) => ({
+          algorithm: T.toAlgorithmDTO(a),
+          matchingPairs:
+            a.matchingResult?.matching.map((m) => ({
+              project: T.toProjectDTO(m.project),
+              student: T.toStudentDTO(m.student),
+              studentRanking: m.studentRanking,
+            })) ?? [],
+        }))
+        .sort((a, b) =>
+          compareAsc(a.algorithm.createdAt, b.algorithm.createdAt),
+        );
 
-        // TODO: clean this whole thing up
-        for (const { algName, matchingResultData: data } of algorithmData) {
-          const matching = parseMatchingResult(data).matching;
+      const firstNonEmptyIdx = results.findIndex(
+        (r) => r.matchingPairs.length > 0,
+      );
 
-          const details = matching.reduce(
-            (acc, m) => {
-              const supervisorDetails = supervisors.find(
-                (s) => s.id === m.supervisor_id,
-              );
+      return {
+        results,
+        firstNonEmpty: results.at(firstNonEmptyIdx)?.algorithm.id,
+      };
+    }),
 
-              if (!supervisorDetails) {
-                throw new Error(`Supervisor ${m.supervisor_id} not found`);
-              }
-
-              const algorithmAllocationCount =
-                (acc[m.supervisor_id]?.allocationCount ?? 0) + 1;
-
-              const trueCount =
-                algorithmAllocationCount + supervisorDetails.preAllocations;
-
-              acc[m.supervisor_id] = {
-                supervisorId: m.supervisor_id,
-                supervisorName: supervisorDetails.name,
-
-                projectTarget: m.supervisor_capacities.target,
-                actualTarget: supervisorDetails.projectAllocationTarget,
-
-                projectUpperQuota: m.supervisor_capacities.upper_bound,
-                actualUpperQuota: supervisorDetails.projectAllocationUpperBound,
-
-                allocationCount: algorithmAllocationCount,
-                preAllocatedCount: supervisorDetails.preAllocations,
-
-                algorithmTargetDifference:
-                  algorithmAllocationCount -
-                  supervisorDetails.projectAllocationTarget,
-
-                actualTargetDifference:
-                  trueCount - supervisorDetails.projectAllocationTarget,
-              };
-
-              return acc;
+  // BREAKING output type changed
+  allSupervisorResults: procedure.instance.subGroupAdmin
+    .output(
+      z.object({
+        firstNonEmpty: z.string().or(z.undefined()),
+        results: z.array(
+          z.object({
+            algorithm: algorithmDtoSchema,
+            data: z.array(
+              z.object({
+                supervisor: userDtoSchema,
+                matchingDetails: supervisorMatchingDetailsDtoSchema,
+              }),
+            ),
+          }),
+        ),
+      }),
+    )
+    .query(async ({ ctx: { instance, db } }) => {
+      // instance.getSupervisorResults
+      const algorithmData = await db.algorithm.findMany({
+        where: expand(instance.params),
+        include: {
+          matchingResult: {
+            include: {
+              matching: {
+                include: {
+                  student: true,
+                  project: {
+                    include: {
+                      supervisor: {
+                        include: {
+                          userInInstance: { include: { user: true } },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
             },
-            {} as Record<string, SupervisorMatchingDetailsDto>,
+          },
+        },
+        orderBy: { createdAt: "asc" },
+      });
+
+      const preAllocationsMap = await instance.getSupervisorPreAllocations();
+
+      const results = algorithmData
+        .sort((a, b) => compareAsc(a.createdAt, b.createdAt))
+        .map((x) => {
+          const algorithm = T.toAlgorithmDTO(x);
+          const matchingData = x.matchingResult?.matching ?? [];
+
+          const algAllocationsMap = matchingData.reduce(
+            (acc, { project }) => ({
+              ...acc,
+              [project.supervisorId]: (acc[project.supervisorId] ?? 0) + 1,
+            }),
+            {} as Record<string, number>,
           );
 
-          resultsByAlgName.set(algName, Object.values(details));
-        }
+          const targetModifier = x.targetModifier;
+          const upperBoundModifier = x.upperBoundModifier;
 
-        const allAlgorithms = getAlgorithmsInOrder(algorithmData);
+          return {
+            algorithm,
+            data: matchingData.map(({ project }) => {
+              const s = T.toSupervisorDTO(project.supervisor);
 
-        const results = allAlgorithms.map(({ algName, displayName }) => ({
-          algName,
-          displayName,
-          data: resultsByAlgName.get(algName) ?? [],
-        }));
+              const preAllocationCount = preAllocationsMap[s.id] ?? 0;
+              const algAllocationCount = algAllocationsMap[s.id] ?? 0;
+              const totalCount = algAllocationCount + preAllocationCount;
 
-        const firstNonEmptyIdx = results.findIndex((r) => r.data.length > 0);
+              return {
+                supervisor: s,
+                matchingDetails: {
+                  // the supervisor's target that was given to the algorithm
+                  projectTarget: adjustTarget(
+                    s.allocationTarget,
+                    targetModifier,
+                  ),
 
-        return {
-          results,
-          firstNonEmpty: results.at(firstNonEmptyIdx)?.algName,
-        };
-      },
-    ),
+                  // the supervisor's target that setup in the allocation instance
+                  actualTarget: s.allocationTarget,
+
+                  // the supervisor's upper quota that was given to the algorithm
+                  projectUpperQuota: adjustUpperBound(
+                    s.allocationUpperBound,
+                    upperBoundModifier,
+                  ),
+
+                  // the supervisor's upper quota that setup in the allocation instance
+                  actualUpperQuota: s.allocationUpperBound,
+
+                  // the number of students that were allocated to the supervisor by the algorithm
+                  allocationCount: algAllocationCount,
+
+                  // the number of students that were pre-allocated to the supervisor
+                  preAllocatedCount: preAllocationCount,
+
+                  // the difference between the number of students that were allocated to the supervisor by the algorithm and the supervisor's target in the allocation instance
+                  algorithmTargetDifference:
+                    algAllocationCount - s.allocationTarget,
+
+                  // the difference between the number of students that were allocated to the supervisor in total and the supervisor's target in the allocation instance
+                  actualTargetDifference: totalCount - s.allocationTarget,
+                },
+              };
+            }),
+          };
+        });
+
+      const firstNonEmptyIdx = results.findIndex((r) => r.data.length > 0);
+
+      return {
+        firstNonEmpty: results.at(firstNonEmptyIdx)?.algorithm.id,
+        results,
+      };
+    }),
 });

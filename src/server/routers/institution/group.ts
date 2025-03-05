@@ -1,237 +1,90 @@
-import { AdminLevel } from "@prisma/client";
-import { TRPCClientError } from "@trpc/client";
 import { z } from "zod";
 
-import { slugify } from "@/lib/utils/general/slugify";
-import { newAdminSchema } from "@/lib/validations/add-admins/new-admin";
-import {
-  groupParamsSchema,
-  subGroupParamsSchema,
-} from "@/lib/validations/params";
+import { procedure } from "@/server/middleware";
+import { createTRPCRouter } from "@/server/trpc";
 
+import { groupDtoSchema, subGroupDtoSchema, userDtoSchema } from "@/dto";
 import {
-  adminProcedure,
-  createTRPCRouter,
-  protectedProcedure,
-} from "@/server/trpc";
-import { isGroupAdmin } from "@/server/utils/admin/is-group-admin";
-import { isSuperAdmin } from "@/server/utils/admin/is-super-admin";
-import { validateEmailGUIDMatch } from "@/server/utils/id-email-check";
+  LinkUserResult,
+  LinkUserResultSchema,
+} from "@/dto/result/link-user-result";
 
 export const groupRouter = createTRPCRouter({
-  exists: protectedProcedure
-    .input(z.object({ params: groupParamsSchema }))
+  exists: procedure.group.user
+    .output(z.boolean())
+    .query(async ({ ctx: { group } }) => await group.exists()),
+
+  get: procedure.group.user
+    .output(groupDtoSchema)
+    .query(async ({ ctx: { group } }) => await group.get()),
+
+  /**
+   * returns true if the current user can access the specified group
+   *
+   */
+  // MOVE to ac
+  access: procedure.group.user
+    .output(z.boolean())
     .query(
-      async ({
-        ctx,
-        input: {
-          params: { group },
-        },
-      }) => {
-        return await ctx.db.allocationGroup.findFirst({
-          where: { id: group },
-        });
-      },
+      async ({ ctx: { user, group } }) =>
+        await user.isGroupAdminOrBetter(group.params),
     ),
 
-  get: protectedProcedure
-    .input(z.object({ params: groupParamsSchema }))
-    .query(async ({ ctx, input: { params } }) => {
-      return await ctx.db.allocationGroup.findFirstOrThrow({
-        where: { id: params.group },
-      });
+  subGroups: procedure.group.groupAdmin
+    .output(z.array(subGroupDtoSchema))
+    .query(async ({ ctx: { group } }) => await group.getSubGroups()),
+
+  groupAdmins: procedure.group.groupAdmin
+    .output(z.array(userDtoSchema))
+    .query(async ({ ctx: { group } }) => await group.getAdmins()),
+
+  takenSubGroupNames: procedure.group.groupAdmin
+    .output(z.set(z.string()))
+    .query(
+      async ({ ctx: { group } }) =>
+        await group
+          .getSubGroups()
+          .then((data) => new Set(data.map((x) => x.displayName))),
+    ),
+
+  createSubGroup: procedure.group.groupAdmin
+    .input(z.object({ name: z.string() }))
+    .output(subGroupDtoSchema)
+    .mutation(async ({ ctx: { group }, input: { name } }) =>
+      group.createSubGroup(name),
+    ),
+
+  deleteSubGroup: procedure.subgroup.groupAdmin
+    .output(z.void())
+    .mutation(async ({ ctx: { subGroup } }) => {
+      await subGroup.delete();
     }),
 
-  access: protectedProcedure
-    .input(z.object({ params: groupParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group },
-        },
-      }) => {
-        const user = ctx.session.user;
+  // BREAKING input and return types changed
+  addAdmin: procedure.group.superAdmin
+    .input(z.object({ newAdmin: userDtoSchema }))
+    .output(LinkUserResultSchema)
+    .mutation(async ({ ctx: { group, institution }, input: { newAdmin } }) => {
+      const { id } = newAdmin;
+      const userIsGroupAdmin = await group.isGroupAdmin(id);
 
-        const superAdmin = await isSuperAdmin(ctx.db, user.id);
-        if (superAdmin) return true;
+      if (userIsGroupAdmin) return LinkUserResult.PRE_EXISTING;
 
-        const admin = await ctx.db.adminInSpace.findFirst({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: null,
-            userId: user.id,
-          },
-        });
-        return !!admin;
-      },
-    ),
+      const userExists = await institution.userExists(id);
+      if (!userExists) institution.createUser(newAdmin);
 
-  subGroupManagement: adminProcedure
-    .input(z.object({ params: groupParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group },
-        },
-      }) => {
-        const { displayName, allocationSubGroups } =
-          await ctx.db.allocationGroup.findFirstOrThrow({
-            where: { id: group },
-            select: { displayName: true, allocationSubGroups: true },
-          });
+      await group.linkAdmin(id);
 
-        const data = await ctx.db.adminInSpace.findMany({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: null,
-            adminLevel: AdminLevel.GROUP,
-          },
-          select: { user: { select: { id: true, name: true, email: true } } },
-        });
+      if (!userExists) return LinkUserResult.CREATED_NEW;
 
-        return {
-          displayName,
-          allocationSubGroups,
-          groupAdmins: data.map(({ user }) => user),
-        };
-      },
-    ),
+      return LinkUserResult.OK;
+    }),
 
-  takenSubGroupNames: adminProcedure
-    .input(z.object({ params: groupParamsSchema }))
-    .query(
-      async ({
-        ctx,
-        input: {
-          params: { group },
-        },
-      }) => {
-        const data = await ctx.db.allocationGroup.findFirstOrThrow({
-          where: { id: group },
-          select: { allocationSubGroups: { select: { displayName: true } } },
-        });
-        return data.allocationSubGroups.map((item) => item.displayName);
-      },
-    ),
-
-  createSubGroup: adminProcedure
-    .input(z.object({ params: groupParamsSchema, name: z.string() }))
+  removeAdmin: procedure.group.superAdmin
+    .input(z.object({ userId: z.string() }))
+    .output(z.void())
     .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group },
-          name,
-        },
-      }) => {
-        await ctx.db.allocationSubGroup.create({
-          data: {
-            displayName: name,
-            id: slugify(name),
-            allocationGroupId: group,
-          },
-        });
-      },
-    ),
-
-  deleteSubGroup: adminProcedure
-    .input(z.object({ params: subGroupParamsSchema }))
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group, subGroup },
-        },
-      }) => {
-        await ctx.db.allocationSubGroup.delete({
-          where: {
-            subGroupId: {
-              allocationGroupId: group,
-              id: subGroup,
-            },
-          },
-        });
-      },
-    ),
-
-  // TODO: refactor after auth is implemented
-  /**
-   * Handles the form submission to add a new admin to a specified Group.
-   *
-   * @description
-   * 1. Checks if the user (identified by `institutionId`) is already an admin in the specified Group.
-   *    - If so, throws a `TRPCClientError` with the message "User is already an admin".
-   *
-   * 2. If the user is not already an admin:
-   *    - Attempts to find the user in the database based on `institutionId` and `email`.
-   *    - If the user is not found:
-   *      - Tries to create a new user with the provided `institutionId`, `name`, and `email`.
-   *      - If the user creation fails (e.g., due to a GUID/email mismatch), throws a `TRPCClientError` with the message "GUID and email do not match".
-   *
-   * 3. Finally, if the user exists (either found or newly created):
-   *    - Creates an `adminInSpace` record associating the user with the specified Group and admin level.
-   *
-   * @throws {TRPCClientError} If the user is already an admin or if there's a GUID/email mismatch during user creation.
-   */
-  addAdmin: adminProcedure
-    .input(
-      z.object({
-        params: groupParamsSchema,
-        newAdmin: newAdminSchema,
-      }),
-    )
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group },
-          newAdmin: { institutionId, name, email },
-        },
-      }) => {
-        await ctx.db.$transaction(async (tx) => {
-          const exists = await isGroupAdmin(tx, { group }, institutionId);
-          if (exists) throw new TRPCClientError("User is already an admin");
-
-          const user = await validateEmailGUIDMatch(
-            tx,
-            institutionId,
-            email,
-            name,
-          );
-
-          await tx.adminInSpace.create({
-            data: {
-              userId: user.id,
-              allocationGroupId: group,
-              allocationSubGroupId: null,
-              adminLevel: AdminLevel.GROUP,
-            },
-          });
-        });
-      },
-    ),
-
-  removeAdmin: adminProcedure
-    .input(z.object({ params: groupParamsSchema, userId: z.string() }))
-    .mutation(
-      async ({
-        ctx,
-        input: {
-          params: { group },
-          userId,
-        },
-      }) => {
-        const { systemId } = await ctx.db.adminInSpace.findFirstOrThrow({
-          where: {
-            allocationGroupId: group,
-            allocationSubGroupId: null,
-            userId,
-          },
-        });
-
-        await ctx.db.adminInSpace.delete({ where: { systemId } });
-      },
+      async ({ ctx: { group }, input: { userId } }) =>
+        await group.unlinkAdmin(userId),
     ),
 });

@@ -8,7 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 
 import { TRPCReactProvider } from "@/lib/trpc/client";
 
-import "@/styles/globals.css";
+import "./app.css";
 
 const inter = Inter({ subsets: ["latin"] });
 

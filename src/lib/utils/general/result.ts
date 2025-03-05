@@ -6,6 +6,6 @@ export function OK<T>(data: T) {
   return { success: true as const, data };
 }
 
-export function Err<T>(msg: T) {
+export function Err<E>(msg: E) {
   return { success: false as const, msg };
 }
