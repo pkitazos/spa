@@ -2,6 +2,7 @@
 
 # dev
 .temp
+*.patch
 
 # dependencies
 /node_modules
