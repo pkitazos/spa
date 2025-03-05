@@ -14,7 +14,7 @@ export async function forkInstanceTransaction(
   forked: ForkedInstanceDetails,
   params: InstanceParams,
 ) {
-  const forkedInstanceId = slugify(forked.instanceName);
+  const forkedInstanceId = slugify(forked.displayName);
 
   await db.$transaction(async (tx) => {
     const parentInstance = await tx.allocationInstance.findFirstOrThrow({
@@ -31,12 +31,18 @@ export async function forkInstanceTransaction(
         allocationSubGroupId: params.subGroup,
         id: forkedInstanceId,
         parentInstanceId: params.instance,
-        displayName: forked.instanceName,
+        displayName: forked.displayName,
         projectSubmissionDeadline: forked.projectSubmissionDeadline,
-        preferenceSubmissionDeadline: forked.preferenceSubmissionDeadline,
-        minPreferences: parentInstance.minPreferences,
-        maxPreferences: parentInstance.maxPreferences,
-        maxPreferencesPerSupervisor: parentInstance.maxPreferencesPerSupervisor,
+        studentPreferenceSubmissionDeadline:
+          forked.studentPreferenceSubmissionDeadline,
+        minStudentPreferences: parentInstance.minStudentPreferences,
+        maxStudentPreferences: parentInstance.maxStudentPreferences,
+        maxStudentPreferencesPerSupervisor:
+          parentInstance.maxStudentPreferencesPerSupervisor,
+        minReaderPreferences: parentInstance.minReaderPreferences,
+        maxReaderPreferences: parentInstance.maxReaderPreferences,
+        readerPreferenceSubmissionDeadline:
+          parentInstance.readerPreferenceSubmissionDeadline,
       },
     });
 

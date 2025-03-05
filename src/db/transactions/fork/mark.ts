@@ -39,19 +39,10 @@ async function getSupervisorsWithSlack(
   supervisorCounts: Record<string, number>,
   projectCounts: Record<string, number>,
 ) {
-  const supervisorData = await tx.supervisorInstanceDetails.findMany({
+  const supervisorData = await tx.supervisorDetails.findMany({
     where: expand(params),
-    select: {
-      userId: true,
-      projectAllocationTarget: true,
-      projectAllocationUpperBound: true,
-      userInInstance: {
-        select: {
-          supervisorProjects: {
-            include: { flagOnProjects: true, tagOnProject: true },
-          },
-        },
-      },
+    include: {
+      projects: { include: { flagsOnProject: true, tagsOnProject: true } },
     },
   });
 
@@ -63,7 +54,7 @@ async function getSupervisorsWithSlack(
       userId: s.userId,
       projectAllocationTarget: s.projectAllocationTarget,
       projectAllocationUpperBound: s.projectAllocationUpperBound,
-      projectIds: s.userInInstance.supervisorProjects.filter(
+      projectIds: s.projects.filter(
         (p) => p.capacityUpperBound > (projectCounts[p.id] ?? 0),
       ),
     }));
@@ -79,17 +70,7 @@ async function getSupervisorsWithSlack(
 
 async function getAvailableStudents(tx: TX, params: InstanceParams) {
   return await tx.studentDetails.findMany({
-    where: {
-      ...expand(params),
-      userInInstance: { studentAllocation: { is: null } },
-    },
-    select: {
-      userId: true,
-      studentLevel: true,
-      preferences: { select: { project: true }, orderBy: { rank: "asc" } },
-      userInInstance: {
-        select: { studentPreferences: { include: { project: true } } },
-      },
-    },
+    where: { ...expand(params), projectAllocation: { is: null } },
+    select: { userId: true, studentLevel: true },
   });
 }

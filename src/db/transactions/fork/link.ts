@@ -19,7 +19,7 @@ export async function linkTags(
 ) {
   await tx.tagOnProject.createMany({
     data: parentInstanceProjects.flatMap((p) =>
-      p.tagOnProject.map((t) => ({
+      p.tagsOnProject.map((t) => ({
         x: p.title,
         oldId: t.tagId,
         tagId: tag[t.tagId],
@@ -36,7 +36,7 @@ export async function linkFlags(
 ) {
   await tx.flagOnProject.createMany({
     data: parentInstanceProjects.flatMap((p) =>
-      p.flagOnProjects.map((f) => ({
+      p.flagsOnProject.map((f) => ({
         flagId: flag[f.flagId],
         projectId: project[p.id],
       })),

@@ -4,7 +4,7 @@ import { setIntersection } from "@/lib/utils/general/set-intersection";
 import { compareTitle } from "@/lib/utils/sorting/by-title";
 import { InstanceParams } from "@/lib/validations/params";
 
-import { Role, TX } from "@/db/types";
+import { TX } from "@/db/types";
 
 export async function mark(tx: TX, params: InstanceParams) {
   const forkedInstanceDetails = await getInstanceDetails(tx, params);
@@ -51,64 +51,58 @@ export async function mark(tx: TX, params: InstanceParams) {
 export type MergeMarkedData = Awaited<ReturnType<typeof mark>>;
 
 async function getInstanceDetails(tx: TX, params: InstanceParams) {
-  const { users, projects, flags, tags, ...data } =
-    await tx.allocationInstance.findFirstOrThrow({
-      where: {
-        allocationGroupId: params.group,
-        allocationSubGroupId: params.subGroup,
-        id: params.instance,
-      },
-      include: {
-        users: {
-          include: {
-            supervisorInstanceDetails: { where: expand(params) },
-            studentPreferences: {
-              where: expand(params),
-              include: { project: true },
-            },
-            studentDetails: {
-              where: expand(params),
-              select: { studentLevel: true, latestSubmissionDateTime: true },
-            },
-          },
-        },
-        projects: { include: { allocations: { include: { project: true } } } },
-        flags: {
-          include: {
-            flagOnProjects: { select: { flag: true, project: true } },
-          },
-        },
-        tags: {
-          include: { tagOnProject: { select: { tag: true, project: true } } },
-        },
-      },
-    });
+  const instanceData = await tx.allocationInstance.findFirstOrThrow({
+    where: {
+      allocationGroupId: params.group,
+      allocationSubGroupId: params.subGroup,
+      id: params.instance,
+    },
+  });
+
+  const projects = await tx.project.findMany({
+    where: expand(params),
+    include: { studentAllocations: true },
+  });
+
+  const flags = await tx.flag.findMany({
+    where: expand(params),
+    include: {
+      flagOnProjects: { include: { project: true } },
+      flagOnStudents: true,
+    },
+  });
+
+  const tags = await tx.tag.findMany({
+    where: expand(params),
+    include: { tagOnProject: { include: { project: true } } },
+  });
+
+  const students = await tx.studentDetails.findMany({
+    where: expand(params),
+    include: { studentSubmittedPreferences: { include: { project: true } } },
+  });
+
+  const supervisors = await tx.supervisorDetails.findMany({
+    where: expand(params),
+  });
 
   return {
-    ...data,
+    ...instanceData,
 
-    students: users
-      .filter((u) => u.role === Role.STUDENT)
-      .map((s) => ({
-        id: s.userId,
-        level: s.studentDetails[0].studentLevel,
-        latestSubmissionDateTime: s.studentDetails[0].latestSubmissionDateTime,
-        preferences: s.studentPreferences.map((p) => ({
-          projectTitle: p.project.title,
-          type: p.type,
-          rank: p.rank,
-        })),
+    students: students.map((s) => ({
+      id: s.userId,
+      level: s.studentLevel,
+      submittedPreferences: s.studentSubmittedPreferences.map((p) => ({
+        projectTitle: p.project.title,
+        rank: p.rank,
       })),
+    })),
 
-    supervisors: users
-      .filter((u) => u.role === Role.SUPERVISOR)
-      .map((s) => ({
-        id: s.userId,
-        projectAllocationTarget:
-          s.supervisorInstanceDetails[0].projectAllocationTarget,
-        projectAllocationUpperBound:
-          s.supervisorInstanceDetails[0].projectAllocationUpperBound,
-      })),
+    supervisors: supervisors.map((s) => ({
+      id: s.userId,
+      projectAllocationTarget: s.projectAllocationTarget,
+      projectAllocationUpperBound: s.projectAllocationUpperBound,
+    })),
 
     projects: projects.map((p) => ({
       id: p.id,
@@ -139,9 +133,9 @@ async function getInstanceDetails(tx: TX, params: InstanceParams) {
     ),
 
     projectAllocations: projects.flatMap((p) =>
-      p.allocations.map((a) => ({
+      p.studentAllocations.map((a) => ({
         studentId: a.userId,
-        projectTitle: a.project.title,
+        projectTitle: p.title,
         rank: a.studentRanking,
       })),
     ),

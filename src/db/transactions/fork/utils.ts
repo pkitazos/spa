@@ -1,4 +1,4 @@
-import { PrismaTransactionClient } from "@/db";
+import { TX } from "@/db/types";
 import { expand } from "@/lib/utils/general/instance-params";
 import { InstanceParams } from "@/lib/validations/params";
 
@@ -6,10 +6,7 @@ export function updateSupervisorCapacities(
   {
     projectAllocationTarget: target,
     projectAllocationUpperBound: upperBound,
-  }: {
-    projectAllocationTarget: number;
-    projectAllocationUpperBound: number;
-  },
+  }: { projectAllocationTarget: number; projectAllocationUpperBound: number },
   allocationCount: number,
 ) {
   return {
@@ -29,11 +26,8 @@ export function updateProjectCapacities(
   };
 }
 
-export async function getSupervisorAllocations(
-  tx: PrismaTransactionClient,
-  params: InstanceParams,
-) {
-  return await tx.projectAllocation
+export async function getSupervisorAllocations(tx: TX, params: InstanceParams) {
+  return await tx.studentProjectAllocation
     .findMany({
       where: expand(params),
       include: { project: { select: { supervisorId: true } } },
@@ -50,10 +44,10 @@ export async function getSupervisorAllocations(
 }
 
 export async function getProjectAllocationCount(
-  tx: PrismaTransactionClient,
+  tx: TX,
   params: InstanceParams,
 ) {
-  return await tx.projectAllocation
+  return await tx.studentProjectAllocation
     .findMany({ where: expand(params), select: { projectId: true } })
     .then((data) =>
       data.reduce(

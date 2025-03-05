@@ -61,7 +61,7 @@ async function copySupervisors(
     })),
   });
 
-  await tx.supervisorInstanceDetails.createMany({
+  await tx.supervisorDetails.createMany({
     data: parentInstanceSupervisors.map((supervisor) => ({
       ...expand(params, forkedInstanceId),
       ...updateSupervisorCapacities(
@@ -147,6 +147,7 @@ export async function copyInstanceFlags(
     data: parentInstanceFlags.map(({ title }) => ({
       ...expand(params, forkedInstanceId),
       title,
+      description: "",
     })),
   });
 

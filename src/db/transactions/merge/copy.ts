@@ -112,7 +112,6 @@ async function generateStudentDetailsRecords(
     userId: student.id,
     studentLevel: student.level,
     submittedPreferences: true,
-    latestSubmissionDateTime: student.latestSubmissionDateTime,
     ...expand(params),
   }));
 }
@@ -172,9 +171,7 @@ async function createNewSupervisors(
     params,
     supervisors,
   );
-  await tx.supervisorInstanceDetails.createMany({
-    data: supervisorDetailsRecords,
-  });
+  await tx.supervisorDetails.createMany({ data: supervisorDetailsRecords });
 }
 
 async function createNewFlags(
@@ -187,7 +184,10 @@ async function createNewFlags(
     ...expand(params),
   }));
 
-  await tx.flag.createMany({ data: flagRecords, skipDuplicates: true });
+  await tx.flag.createMany({
+    data: flagRecords.map((f) => ({ ...f, description: "" })),
+    skipDuplicates: true,
+  });
 }
 
 async function createNewTags(
@@ -344,23 +344,22 @@ async function createUpdatedPreferences(
   projectMap: Record<string, string>,
 ) {
   const updatedPreferences = students.flatMap((student) =>
-    student.preferences.map((preference) => ({
+    student.submittedPreferences.map((preference) => ({
       userId: student.id,
       projectId: projectMap[preference.projectTitle],
-      type: preference.type,
       rank: preference.rank,
       ...expand(params),
     })),
   );
 
-  await tx.preference.deleteMany({
+  await tx.studentSubmittedPreference.deleteMany({
     where: {
       ...expand(params),
       userId: { in: students.map((student) => student.id) },
     },
   });
 
-  await tx.preference.createMany({ data: updatedPreferences });
+  await tx.studentSubmittedPreference.createMany({ data: updatedPreferences });
 }
 
 async function createUpdatedProjectAllocations(
@@ -376,5 +375,5 @@ async function createUpdatedProjectAllocations(
     ...expand(params),
   }));
 
-  await tx.projectAllocation.createMany({ data: newAllocations });
+  await tx.studentProjectAllocation.createMany({ data: newAllocations });
 }
