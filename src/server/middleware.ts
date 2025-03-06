@@ -424,9 +424,6 @@ procedure.instance.groupAdmin
   .query(({ ctx: _c, input: _ }) => {});
 // NB the types - no `| undefined` freakiness
 
-// A procedure in a subgroup with simple log-in required would be:
-procedure.subgroup.user;
-
 // an example procedure specifying the stage:
 procedure.instance
   .inStage([Stage.ALLOCATION_ADJUSTMENT])

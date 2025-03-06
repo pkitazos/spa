@@ -37,7 +37,7 @@ export const projectRouter = createTRPCRouter({
 
   // pin
   edit: procedure.project
-    .inStage(subsequentStages(Stage.PROJECT_ALLOCATION))
+    .inStage(previousStages(Stage.STUDENT_BIDDING))
     .supervisor.input(z.object({ updatedProject: updateProjectSchema }))
     .output(z.void())
     .mutation(

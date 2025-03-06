@@ -6,9 +6,10 @@ import { users } from "./migrations/1_users";
 import { spaces } from "./migrations/2_spaces";
 import { admins } from "./migrations/3_admins";
 import { tags_flags_algs } from "./migrations/4_tags_flags_algs";
-import { users_in_instance } from "./migrations/5_users_in_instance";
+import { student_flags } from "./migrations/5b_student_flags";
 import { projects_and_pre_allocations } from "./migrations/6_projects_and_pre_allocations";
 import { student_preferences } from "./migrations/7_student_preferences";
+import { users_in_instance } from "./migrations/5_users_in_instance";
 
 const db = new PrismaClient();
 
@@ -38,6 +39,10 @@ async function main() {
   await users_in_instance(db, params)
     .then(() => console.log("users in instance seeded"))
     .catch((e) => console.error("error: users in instance", e));
+
+  await student_flags(db, params)
+    .then(() => console.log("student flags seeded"))
+    .catch((e) => console.error("error: student flags", e));
 
   await projects_and_pre_allocations(db, params)
     .then(() => console.log("projects and pre-allocations seeded"))

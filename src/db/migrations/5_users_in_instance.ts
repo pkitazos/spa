@@ -63,6 +63,5 @@ export async function users_in_instance(
       data: supervisorData,
       skipDuplicates: true,
     }),
-    // Add student flags here
   ]);
 }
