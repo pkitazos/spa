@@ -25,7 +25,7 @@ model GradedSubmission {
 model AssessmentComponent {
     id                   String             @id @default(uuid())
     flagId               String             @map("flag_id")
-    submissionId         String             @map("submission_id")
+    gradedSubmissionId   String             @map("graded_submission_id")
     title                String
     description          String
     weight               Int
@@ -35,7 +35,6 @@ model AssessmentComponent {
     allocationGroupId    String             @map("allocation_group_id")
     allocationSubGroupId String             @map("allocation_sub_group_id")
     allocationInstanceId String             @map("allocation_instance_id")
-    gradedSubmissionId   String             @map("flag_submission_id")
     // ---
     allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
     gradedSubmission     GradedSubmission   @relation(fields: [gradedSubmissionId], references: [id], onDelete: Cascade)

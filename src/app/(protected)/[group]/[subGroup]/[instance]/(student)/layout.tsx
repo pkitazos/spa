@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
 
-import SidePanel from "@/components/side-panel";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
@@ -31,14 +30,5 @@ export default async function Layout({
     );
   }
 
-  const tabGroups = await api.institution.instance.getSidePanelTabs({ params });
-
-  return (
-    <div className="grid w-full grid-cols-11">
-      <div className="col-span-2 mt-28 flex justify-center border-r pr-2.5">
-        <SidePanel tabGroups={tabGroups} />
-      </div>
-      <section className="col-span-9 max-w-6xl pb-32">{children}</section>
-    </div>
-  );
+  return <section className="mr-12 w-full">{children}</section>;
 }

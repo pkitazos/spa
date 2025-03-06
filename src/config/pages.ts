@@ -118,15 +118,20 @@ export const PAGES = {
   instanceHome: { title: "Instance Home", href: "", icon: "home" },
   instanceTasks: { title: "Tasks", href: "", icon: "list-checks" },
 
-  myProjects: { title: "My Projects", href: "my-projects", icon: "folder" },
+  myProjects: {
+    title: "My Proposed Projects",
+    href: "my-proposed-projects",
+    icon: "folder",
+  },
+
   newProject: {
     title: "New Project",
     href: "new-project",
     icon: "file-plus-2",
   },
   myAllocations: {
-    title: "My Allocations",
-    href: "my-allocations",
+    title: "My Supervisions",
+    href: "my-supervisions",
     icon: "folder-check",
   },
 
@@ -141,7 +146,6 @@ export const PAGES = {
     icon: "file-check-2",
   },
 
-  myReadings: { title: "My Readings", href: "my-readings", icon: "folder" },
   uploadReadings: {
     title: "Upload Readings",
     href: "upload-readings",

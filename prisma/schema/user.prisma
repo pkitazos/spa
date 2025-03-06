@@ -43,7 +43,7 @@ model StudentDetails {
     submittedPreferences     StudentSubmittedPreference[]
     matchingPairs            MatchingPair[]
     preAllocatedProjects     Project[]
-    readers                  ReaderProjectAllocation[]
+    readers                  ReaderProjectAllocation[]    @relation(name: "student_reader")
 
     @@id(name: "studentDetailsId", map: "student_details_id", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@map("student_details")
@@ -77,7 +77,7 @@ model ReaderDetails {
     allocationInstanceId        String                      @map("allocation_instance_id")
     // ---
     userInInstance              UserInInstance              @relation(name: "reader_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, onUpdate: Cascade)
-    projectAllocations          ReaderProjectAllocation[]
+    projectAllocations          ReaderProjectAllocation[]   @relation(name: "reader_project_allocation")
     draftPreference             ReaderDraftPreference[]
     submittedPreference         ReaderSubmittedPreference[]
 

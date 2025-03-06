@@ -40,7 +40,8 @@ export const userRouter = createTRPCRouter({
   hasSelfDefinedProject: procedure.instance.user
     .output(z.boolean())
     .query(async ({ ctx: { user, instance } }) => {
-      if (!user.isStudent(instance.params)) return false;
+      if (!(await user.isStudent(instance.params))) return false;
+
       return await user
         .toStudent(instance.params)
         .then((student) => student.hasSelfDefinedProject());
