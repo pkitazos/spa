@@ -3,10 +3,12 @@ enum MarkerType {
     READER
 }
 
+// rename to Unit of Assessment
 model GradedSubmission {
     id                   String                     @id @default(uuid())
     flagId               String                     @map("flag_id")
     title                String
+    open                 Boolean                    @default(false)
     deadline             DateTime
     weight               Int
     // ---
