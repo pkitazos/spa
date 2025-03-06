@@ -1,31 +1,24 @@
 export const PAGES = {
-  newGroup: {
-    title: "New Group",
-    href: "create-group",
-  },
-  newSubGroup: {
-    title: "New Sub-Group",
-    href: "create-sub-group",
-  },
-  newInstance: {
-    title: "New Instance",
-    href: "create-instance",
-  },
+  newGroup: { title: "New Group", href: "create-group" },
+  newSubGroup: { title: "New Sub-Group", href: "create-sub-group" },
+  newInstance: { title: "New Instance", href: "create-instance" },
 
-  settings: {
-    title: "Settings",
-    href: "settings",
-    icon: "settings",
-  },
-  instanceEdit: {
-    title: "Edit",
-    href: "edit",
-    icon: "pen",
-  },
+  settings: { title: "Settings", href: "settings", icon: "settings" },
+  instanceEdit: { title: "Edit", href: "edit", icon: "pen" },
   stageControl: {
     title: "Stage Control",
-    href: "",
+    href: "stage-control",
     icon: "layers",
+  },
+  allSupervisors: {
+    title: "All Supervisors",
+    href: "all-supervisors",
+    icon: "users",
+  },
+  allStudents: {
+    title: "All Students",
+    href: "all-students",
+    icon: "graduation-cap",
   },
   addSupervisors: {
     title: "Add Supervisors",
@@ -67,16 +60,8 @@ export const PAGES = {
     href: "late-proposals",
     icon: "folder-clock",
   },
-  algorithms: {
-    title: "Algorithms",
-    href: "algorithms",
-    icon: "server",
-  },
-  results: {
-    title: "Results",
-    href: "results",
-    icon: "square-kanban",
-  },
+  algorithms: { title: "Algorithms", href: "algorithms", icon: "server" },
+  results: { title: "Results", href: "results", icon: "square-kanban" },
   preferenceStatistics: {
     title: "Preference Statistics",
     href: "preference-statistics",
@@ -128,35 +113,12 @@ export const PAGES = {
     icon: "list-checks",
   },
 
-  allProjects: {
-    title: "All Projects",
-    href: "projects",
-  },
-  allSupervisors: {
-    title: "All Supervisors",
-    href: "supervisors",
-  },
-  allStudents: {
-    title: "All Students",
-    href: "students",
-  },
+  allProjects: { title: "All Projects", href: "projects" },
 
-  instanceHome: {
-    title: "Instance Home",
-    href: "",
-    icon: "home",
-  },
-  instanceTasks: {
-    title: "Tasks",
-    href: "",
-    icon: "list-checks",
-  },
+  instanceHome: { title: "Instance Home", href: "", icon: "home" },
+  instanceTasks: { title: "Tasks", href: "", icon: "list-checks" },
 
-  myProjects: {
-    title: "My Projects",
-    href: "my-projects",
-    icon: "folder",
-  },
+  myProjects: { title: "My Projects", href: "my-projects", icon: "folder" },
   newProject: {
     title: "New Project",
     href: "new-project",
@@ -177,21 +139,13 @@ export const PAGES = {
     title: "My Allocation",
     href: "my-allocation",
     icon: "file-check-2",
-  },  
-  
-  myReadings: {
-    title: "My Readings",
-    href: "my-readings",
-    icon: "folder",
   },
+
+  myReadings: { title: "My Readings", href: "my-readings", icon: "folder" },
   uploadReadings: {
     title: "Upload Readings",
     href: "upload-readings",
     icon: "file-plus-2",
   },
-  myMarking: {
-    title: "My Marking",
-    href: "my-marking",
-    icon: "file-check-2",
-  },
+  myMarking: { title: "My Marking", href: "my-marking", icon: "file-check-2" },
 };

@@ -230,7 +230,7 @@ function ProjectDetailsCard({
                     buttonVariants({ variant: "link" }),
                     "p-0 text-lg",
                   )}
-                  href={`../supervisors/${projectData.supervisor.id}`}
+                  href={`../${PAGES.allSupervisors.href}/${projectData.supervisor.id}`}
                 >
                   {projectData.supervisor.name}
                 </Link>
@@ -298,7 +298,7 @@ function AllocatedStudentCard({
                   buttonVariants({ variant: "link" }),
                   "text-nowrap p-0 text-base",
                 )}
-                href={`../students/${studentAllocation.student.id}`}
+                href={`../${PAGES.allStudents.href}/${studentAllocation.student.id}`}
               >
                 {studentAllocation.student.name}
               </Link>

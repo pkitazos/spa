@@ -26,6 +26,7 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 import { cn } from "@/lib/utils";
 import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
 import { StudentInviteDto } from "@/lib/validations/dto/student";
+import { PAGES } from "@/config/pages";
 
 export function useStudentInvitesColumns(): ColumnDef<StudentInviteDto>[] {
   const selectCol = getSelectColumn<StudentInviteDto>();
@@ -44,7 +45,7 @@ export function useStudentInvitesColumns(): ColumnDef<StudentInviteDto>[] {
       }) => (
         <Link
           className={cn(buttonVariants({ variant: "link" }), "pl-0")}
-          href={`./students/${id}`}
+          href={`./${PAGES.allStudents.href}/${id}`}
         >
           {name}
         </Link>
@@ -219,7 +220,7 @@ export function useStudentInvitesColumns(): ColumnDef<StudentInviteDto>[] {
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./students/${id}`}
+                  href={`./${PAGES.allStudents.href}/${id}`}
                 >
                   <CornerDownRightIcon className="h-4 w-4" />
                   <span>View student details</span>
@@ -228,7 +229,7 @@ export function useStudentInvitesColumns(): ColumnDef<StudentInviteDto>[] {
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./students/${id}?edit=true`}
+                  href={`./${PAGES.allStudents.href}/${id}?edit=true`}
                 >
                   <PenIcon className="h-4 w-4" />
                   <span>Edit student details</span>

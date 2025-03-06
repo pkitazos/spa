@@ -25,6 +25,7 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
 import { SupervisorInviteDto } from "@/lib/validations/dto/supervisor";
+import { PAGES } from "@/config/pages";
 
 export function useSupervisorInvitesColumns(): ColumnDef<SupervisorInviteDto>[] {
   const selectCol = getSelectColumn<SupervisorInviteDto>();
@@ -164,7 +165,7 @@ export function useSupervisorInvitesColumns(): ColumnDef<SupervisorInviteDto>[] 
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./supervisors/${id}`}
+                  href={`./${PAGES.allSupervisors.href}/${id}`}
                 >
                   <CornerDownRightIcon className="h-4 w-4" />
                   <span>View supervisor details</span>
@@ -173,7 +174,7 @@ export function useSupervisorInvitesColumns(): ColumnDef<SupervisorInviteDto>[] 
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./supervisors/${id}?edit=true`}
+                  href={`./${PAGES.allSupervisors.href}/${id}?edit=true`}
                 >
                   <PenIcon className="h-4 w-4" />
                   <span>Edit supervisor details</span>

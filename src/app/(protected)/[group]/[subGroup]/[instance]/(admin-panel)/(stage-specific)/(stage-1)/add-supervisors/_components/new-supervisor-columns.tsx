@@ -30,6 +30,7 @@ import {
 } from "@/components/yes-no-action";
 
 import { SupervisorDTO } from "@/dto";
+import { PAGES } from "@/config/pages";
 
 export function useNewSupervisorColumns({
   removeSupervisor,
@@ -190,7 +191,7 @@ export function useNewSupervisorColumns({
                 <DropdownMenuItem className="group/item">
                   <Link
                     className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={`./supervisors/${id}`}
+                    href={`./${PAGES.allSupervisors.href}/${id}`}
                   >
                     <CornerDownRightIcon className="h-4 w-4" />
                     <span>View supervisor details</span>
@@ -199,7 +200,7 @@ export function useNewSupervisorColumns({
                 <DropdownMenuItem className="group/item">
                   <Link
                     className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={`./supervisors/${id}?edit=true`}
+                    href={`./${PAGES.allSupervisors.href}/${id}?edit=true`}
                   >
                     <PenIcon className="h-4 w-4" />
                     <span>Edit supervisor details</span>

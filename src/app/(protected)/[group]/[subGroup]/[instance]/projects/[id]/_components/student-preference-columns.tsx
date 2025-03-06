@@ -23,6 +23,7 @@ import {
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { ProjectStudentDto } from "@/lib/validations/dto/preference";
+import { PAGES } from "@/config/pages";
 
 export function useStudentPreferenceColumns(): ColumnDef<ProjectStudentDto>[] {
   const instancePath = useInstancePath();
@@ -56,7 +57,7 @@ export function useStudentPreferenceColumns(): ColumnDef<ProjectStudentDto>[] {
       }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`${instancePath}/students/${id}`}
+          href={`${instancePath}/${PAGES.allStudents.href}/${id}`}
         >
           {name}
         </Link>

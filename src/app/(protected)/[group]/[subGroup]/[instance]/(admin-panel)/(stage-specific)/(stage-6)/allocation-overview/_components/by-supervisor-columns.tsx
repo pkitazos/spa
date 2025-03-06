@@ -8,6 +8,7 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { cn } from "@/lib/utils";
 import { AllocationBySupervisorDto } from "@/lib/validations/allocation/data-table-dto";
+import { PAGES } from "@/config/pages";
 
 export const bySupervisorColumns: ColumnDef<AllocationBySupervisorDto>[] = [
   {
@@ -41,7 +42,7 @@ export const bySupervisorColumns: ColumnDef<AllocationBySupervisorDto>[] = [
     }) => (
       <Link
         className={cn(buttonVariants({ variant: "link" }), "pl-2 text-left")}
-        href={`./supervisors/${id}`}
+        href={`./${PAGES.allSupervisors.href}/${id}`}
         scroll={true}
       >
         {name}
@@ -149,7 +150,7 @@ export const bySupervisorColumns: ColumnDef<AllocationBySupervisorDto>[] = [
     }) => (
       <Link
         className={cn(buttonVariants({ variant: "link" }), "pl-2 text-left")}
-        href={`./students/${id}`}
+        href={`./${PAGES.allStudents.href}/${id}`}
         scroll={true}
       >
         {name}

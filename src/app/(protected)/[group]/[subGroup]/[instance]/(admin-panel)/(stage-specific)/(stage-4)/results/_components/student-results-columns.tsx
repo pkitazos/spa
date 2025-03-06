@@ -7,6 +7,7 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-col
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { ProjectDTO, StudentDTO } from "@/dto";
+import { PAGES } from "@/config/pages";
 
 export const studentResultsColumns: ColumnDef<{
   student: StudentDTO;
@@ -38,7 +39,7 @@ export const studentResultsColumns: ColumnDef<{
     }) => (
       <Link
         className={buttonVariants({ variant: "link" })}
-        href={`./students/${student.id}`}
+        href={`./${PAGES.allStudents.href}/${student.id}`}
       >
         {student.name}
       </Link>

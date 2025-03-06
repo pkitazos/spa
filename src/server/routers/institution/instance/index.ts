@@ -448,12 +448,10 @@ export const instanceRouter = createTRPCRouter({
         };
       }
 
-      const adminTabs = [PAGES.allSupervisors, PAGES.allStudents];
-
       const headerTabs =
         instanceData.stage === Stage.SETUP
-          ? [PAGES.instanceHome, ...adminTabs]
-          : [PAGES.instanceHome, PAGES.allProjects, ...adminTabs];
+          ? [PAGES.instanceHome]
+          : [PAGES.instanceHome, PAGES.allProjects];
 
       return { headerTabs, instancePath };
     }),
@@ -471,8 +469,13 @@ export const instanceRouter = createTRPCRouter({
 
       if (roles.has(Role.ADMIN)) {
         tabGroups.push({
-          title: "Admin",
-          tabs: [PAGES.stageControl, PAGES.settings],
+          title: "General",
+          tabs: [
+            PAGES.stageControl,
+            PAGES.settings,
+            PAGES.allSupervisors,
+            PAGES.allStudents,
+          ],
         });
 
         tabGroups.push({

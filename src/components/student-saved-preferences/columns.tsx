@@ -10,6 +10,7 @@ import { SavedPreferenceDto } from "@/lib/validations/dto/preference";
 import { useInstanceRoles } from "../params-context";
 
 import { Role } from "@/db/types";
+import { PAGES } from "@/config/pages";
 
 export function useSavedPreferencesColumns(): ColumnDef<SavedPreferenceDto>[] {
   const roles = useInstanceRoles();
@@ -62,7 +63,7 @@ export function useSavedPreferencesColumns(): ColumnDef<SavedPreferenceDto>[] {
         roles.has(Role.ADMIN) ? (
           <Link
             className={buttonVariants({ variant: "link" })}
-            href={`../supervisors/${id}`}
+            href={`../${PAGES.allSupervisors.href}/${id}`}
           >
             {name}
           </Link>

@@ -214,7 +214,7 @@ export class User extends DataObject {
   }
 
   public async toGroupAdmin(groupParams: GroupParams): Promise<GroupAdmin> {
-    if (!(await this.isGroupAdmin(groupParams)))
+    if (!(await this.isGroupAdminOrBetter(groupParams)))
       throw new Error("unauthorised");
     return new GroupAdmin(this.db, this.id, groupParams);
   }
@@ -222,7 +222,7 @@ export class User extends DataObject {
   public async toSubGroupAdmin(
     subGroupParams: SubGroupParams,
   ): Promise<SubGroupAdmin> {
-    if (!(await this.isSubGroupAdmin(subGroupParams)))
+    if (!(await this.isSubGroupAdminOrBetter(subGroupParams)))
       throw new Error("unauthorised");
     return new SubGroupAdmin(this.db, this.id, subGroupParams);
   }
@@ -715,14 +715,14 @@ export class AllocationInstance extends DataObject {
 
   public async exists(): Promise<boolean> {
     return !!(await this.db.allocationInstance.findFirst({
-      where: expand(this.params),
+      where: toInstanceId(this.params),
     }));
   }
 
   public async get(refetch = false): Promise<InstanceDTO> {
     if (refetch || !this._data) {
       this._data = await this.db.allocationInstance
-        .findFirstOrThrow({ where: expand(this.params) })
+        .findFirstOrThrow({ where: toInstanceId(this.params) })
         .then(T.toAllocationInstanceDTO);
     }
 

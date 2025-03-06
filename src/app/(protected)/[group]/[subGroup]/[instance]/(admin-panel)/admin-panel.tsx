@@ -1,19 +1,23 @@
-import { api } from "@/lib/trpc/server";
 import { InstanceParams } from "@/lib/validations/params";
 
 import Layout from "./layout";
-import { StageControl } from "./stage-control";
+import { api } from "@/lib/trpc/server";
 
 export default async function AdminPanel({
   params,
 }: {
   params: InstanceParams;
 }) {
-  const stage = await api.institution.instance.currentStage({ params });
-
+  const instance = await api.institution.instance.get({ params });
+  // TODO use parallel routes for home page
   return (
     <Layout params={params}>
-      <StageControl stage={stage} />
+      <div className="grid h-full w-full place-items-center">
+        <p>
+          This instance is in stage:{" "}
+          <span className="font-bold">{instance.stage}</span>
+        </p>
+      </div>
     </Layout>
   );
 }

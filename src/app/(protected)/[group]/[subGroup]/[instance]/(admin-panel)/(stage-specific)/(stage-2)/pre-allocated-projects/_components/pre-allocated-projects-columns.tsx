@@ -30,6 +30,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { ProjectDTO, StudentDTO, SupervisorDTO } from "@/dto";
+import { PAGES } from "@/config/pages";
 
 type PreAllocation = {
   project: ProjectDTO;
@@ -110,7 +111,7 @@ export function usePreAllocatedProjectColumns({
       }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`${instancePath}/supervisors/${supervisor.id}`}
+          href={`${instancePath}/${PAGES.allSupervisors.href}/${supervisor.id}`}
         >
           {supervisor.id}
         </Link>
@@ -236,7 +237,7 @@ export function usePreAllocatedProjectColumns({
       }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`${instancePath}/students/${student.id}`}
+          href={`${instancePath}/${PAGES.allStudents.href}/${student.id}`}
         >
           {student.id}
         </Link>

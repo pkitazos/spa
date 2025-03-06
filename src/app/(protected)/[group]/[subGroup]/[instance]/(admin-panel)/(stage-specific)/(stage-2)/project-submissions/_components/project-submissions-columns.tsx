@@ -27,6 +27,7 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
 import { ProjectSubmissionDto } from "@/lib/validations/dto/project";
+import { PAGES } from "@/config/pages";
 
 export function useProjectSubmissionColumns(): ColumnDef<ProjectSubmissionDto>[] {
   const selectCol = getSelectColumn<ProjectSubmissionDto>();
@@ -45,7 +46,7 @@ export function useProjectSubmissionColumns(): ColumnDef<ProjectSubmissionDto>[]
       }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`./supervisors/${userId}`}
+          href={`./${PAGES.allSupervisors.href}/${userId}`}
         >
           {name}
         </Link>
@@ -244,7 +245,7 @@ export function useProjectSubmissionColumns(): ColumnDef<ProjectSubmissionDto>[]
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./supervisors/${userId}`}
+                  href={`./${PAGES.allSupervisors.href}/${userId}`}
                 >
                   <CornerDownRightIcon className="h-4 w-4" />
                   <span>View supervisor details</span>
@@ -253,7 +254,7 @@ export function useProjectSubmissionColumns(): ColumnDef<ProjectSubmissionDto>[]
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./supervisors/${userId}?edit=true`}
+                  href={`./${PAGES.allSupervisors.href}/${userId}?edit=true`}
                 >
                   <PenIcon className="h-4 w-4" />
                   <span>Edit supervisor details</span>
@@ -271,7 +272,7 @@ export function useProjectSubmissionColumns(): ColumnDef<ProjectSubmissionDto>[]
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./supervisors/${userId}/new-project`}
+                  href={`./${PAGES.allSupervisors.href}/${userId}/new-project`}
                 >
                   <FilePlus2 className="h-4 w-4" />
                   <span>Create new project</span>

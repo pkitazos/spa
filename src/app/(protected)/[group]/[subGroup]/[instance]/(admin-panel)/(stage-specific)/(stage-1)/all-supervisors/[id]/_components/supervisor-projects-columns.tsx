@@ -39,6 +39,7 @@ import {
 import { SupervisorProjectDto } from "@/lib/validations/dto/project";
 
 import { Stage } from "@/db/types";
+import { PAGES } from "@/config/pages";
 
 export function useSupervisorProjectsColumns({
   deleteProject,
@@ -217,7 +218,7 @@ export function useSupervisorProjectsColumns({
                     buttonVariants({ variant: "link" }),
                     "flex items-center gap-2",
                   )}
-                  href={`../students/${student.id}`}
+                  href={`../${PAGES.allStudents.href}/${student.id}`}
                 >
                   <span>{student.id}</span>
                   {student.id === preAllocatedStudentId && (
@@ -237,7 +238,7 @@ export function useSupervisorProjectsColumns({
           return (
             <Link
               className={buttonVariants({ variant: "link" })}
-              href={`../students/${preAllocatedStudentId}`}
+              href={`../${PAGES.allStudents.href}/${preAllocatedStudentId}`}
             >
               {preAllocatedStudentId}
             </Link>

@@ -30,6 +30,7 @@ import {
   YesNoActionTrigger,
 } from "@/components/yes-no-action";
 import { StudentDTO } from "@/dto";
+import { PAGES } from "@/config/pages";
 
 export function useNewStudentColumns({
   removeStudent,
@@ -190,7 +191,7 @@ export function useNewStudentColumns({
                 <DropdownMenuItem className="group/item">
                   <Link
                     className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={`./students/${id}`}
+                    href={`./${PAGES.allStudents.href}/${id}`}
                   >
                     <CornerDownRightIcon className="h-4 w-4" />
                     <span>View student details</span>
@@ -199,7 +200,7 @@ export function useNewStudentColumns({
                 <DropdownMenuItem className="group/item">
                   <Link
                     className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={`./students/${id}?edit=true`}
+                    href={`./${PAGES.allStudents.href}/${id}?edit=true`}
                   >
                     <PenIcon className="h-4 w-4" />
                     <span>Edit student details</span>

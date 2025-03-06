@@ -1,4 +1,4 @@
-import { Heading } from "@/components/heading";
+import { SubHeading } from "@/components/heading";
 import { PageWrapper } from "@/components/page-wrapper";
 
 import { api } from "@/lib/trpc/server";
@@ -23,7 +23,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
 
   return (
     <PageWrapper>
-      <Heading>All Supervisors</Heading>
+      <SubHeading>{PAGES.allSupervisors.title}</SubHeading>
       <SupervisorsDataTable roles={roles} data={data} />
     </PageWrapper>
   );

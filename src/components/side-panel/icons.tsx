@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  BriefcaseIcon,
   FileCheck2Icon,
   FilePlus2Icon,
   FileSpreadsheetIcon,
@@ -9,11 +10,13 @@ import {
   FolderIcon,
   FolderLockIcon,
   FolderOutputIcon,
+  GraduationCapIcon,
   HomeIcon,
   LayersIcon,
   ListChecksIcon,
   MergeIcon,
   MousePointerSquareIcon,
+  School2Icon,
   ServerIcon,
   SettingsIcon,
   ShuffleIcon,
@@ -28,6 +31,9 @@ export function Icon({ type }: { type: string }) {
   switch (type) {
     case "bar-chart":
       return <BarChart3 className="mr-2 h-4 w-4" />;
+
+    case "briefcase":
+      return <BriefcaseIcon className="mr-2 h-4 w-4" />;
 
     case "file-check-2":
       return <FileCheck2Icon className="mr-2 h-4 w-4" />;
@@ -55,6 +61,9 @@ export function Icon({ type }: { type: string }) {
 
     case "folder-output":
       return <FolderOutputIcon className="mr-2 h-4 w-4" />;
+
+    case "graduation-cap":
+      return <GraduationCapIcon className="mr-2 h-4 w-4" />;
 
     case "home":
       return <HomeIcon className="mr-2 h-4 w-4" />;
@@ -85,6 +94,9 @@ export function Icon({ type }: { type: string }) {
 
     case "square-kanban":
       return <SquareKanbanIcon className="mr-2 h-4 w-4" />;
+
+    case "university":
+      return <School2Icon />;
 
     case "user-cog":
       return <UserCog2 className="mr-2 h-4 w-4" />;

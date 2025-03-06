@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { cn } from "@/lib/utils";
 import { ProjectDTO, SupervisorDTO } from "@/dto";
+import { PAGES } from "@/config/pages";
 
 export function StudentAllocation({
   allocation: { project, supervisor, studentRanking },
@@ -52,7 +53,7 @@ export function StudentAllocation({
                 buttonVariants({ variant: "link" }),
                 "mr-2 h-max p-0 text-base font-medium leading-5",
               )}
-              href={`../supervisors/${supervisor.id}`}
+              href={`../${PAGES.allSupervisors.href}/${supervisor.id}`}
             >
               {supervisor.name}
             </Link>
