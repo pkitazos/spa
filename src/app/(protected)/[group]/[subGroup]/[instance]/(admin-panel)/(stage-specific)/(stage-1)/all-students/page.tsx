@@ -1,4 +1,3 @@
-import { Heading } from "@/components/heading";
 import { PageWrapper } from "@/components/page-wrapper";
 
 import { api } from "@/lib/trpc/server";
@@ -8,6 +7,7 @@ import { StudentsDataTable } from "./_components/all-students-data-table";
 
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
+import { SubHeading } from "@/components/heading";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
@@ -23,7 +23,7 @@ export default async function Students({ params }: { params: InstanceParams }) {
 
   return (
     <PageWrapper>
-      <Heading>All Students</Heading>
+      <SubHeading>{PAGES.allStudents.title}</SubHeading>
       <StudentsDataTable roles={roles} data={tableData} />
     </PageWrapper>
   );

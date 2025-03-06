@@ -41,6 +41,7 @@ import { StudentPreferenceType } from "@/lib/validations/student-preference";
 
 import { spacesLabels } from "@/config/spaces";
 import { PreferenceType, Role, Stage } from "@/db/types";
+import { PAGES } from "@/config/pages";
 
 export function useAllProjectsColumns({
   user,
@@ -111,7 +112,7 @@ export function useAllProjectsColumns({
         roles.has(Role.ADMIN) ? (
           <Link
             className={buttonVariants({ variant: "link" })}
-            href={`${instancePath}/supervisors/${id}`}
+            href={`${instancePath}/${PAGES.allSupervisors.href}/${id}`}
           >
             {name}
           </Link>

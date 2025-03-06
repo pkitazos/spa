@@ -29,6 +29,7 @@ import { previousStages, stageLt } from "@/lib/utils/permissions/stage-check";
 import { StudentPreferenceType } from "@/lib/validations/student-preference";
 
 import { PreferenceType, Stage } from "@/db/types";
+import { PAGES } from "@/config/pages";
 
 export type PreferenceData = {
   project: { id: string; title: string };
@@ -108,7 +109,7 @@ export function useStudentPreferencesColumns({
       }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`../supervisors/${id}`}
+          href={`../${PAGES.allSupervisors.href}/${id}`}
         >
           {name}
         </Link>

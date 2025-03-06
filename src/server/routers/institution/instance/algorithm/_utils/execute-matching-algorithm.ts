@@ -1,7 +1,6 @@
 import axios from "axios";
 
-import { builtInAlgSchema } from "@/lib/validations/algorithm";
-import { AlgorithmDTO } from "@/dto/algorithm";
+import { AlgorithmDTO, builtInAlgSchema } from "@/dto";
 import {
   MatchingDataDTO,
   MatchingDataWithArgs,
@@ -9,8 +8,9 @@ import {
 } from "@/lib/validations/matching";
 
 import { AlgorithmFlag } from "@/db/types";
-import { AlgorithmRunResult } from "@/dto/result/algorithm-run-result";
+
 import { env } from "@/env";
+import { AlgorithmRunResult } from "@/dto/result/algorithm-run-result";
 
 // ? where should this live
 

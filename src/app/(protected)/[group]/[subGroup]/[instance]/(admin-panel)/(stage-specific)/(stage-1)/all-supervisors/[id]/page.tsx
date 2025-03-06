@@ -62,7 +62,7 @@ export default async function Page({ params }: { params: PageParams }) {
             buttonVariants({ variant: "secondary" }),
             "flex items-center justify-center gap-2 text-nowrap",
           )}
-          href={`../supervisors/${supervisorId}/new-project`}
+          href={`../${PAGES.allSupervisors.href}/${supervisorId}/new-project`}
         >
           <FilePlus2Icon className="h-4 w-4" />
           <p>New Project</p>

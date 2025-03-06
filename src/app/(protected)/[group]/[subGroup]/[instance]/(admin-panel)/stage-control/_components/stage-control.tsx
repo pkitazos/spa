@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { Stage } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -9,14 +8,15 @@ import { Button } from "@/components/ui/button";
 
 import { api } from "@/lib/trpc/client";
 
-import { StageButton } from "./_components/stage-button";
+import { StageButton } from "./stage-button";
 
 import { stageSchema } from "@/db/types";
 import { CHAPTER } from "@/config/config/stage";
 
+import { Stage } from "@/db/types";
+
 export function StageControl({ stage }: { stage: Stage }) {
   const params = useInstanceParams();
-
   const router = useRouter();
   const stages = stageSchema.options;
   const [selectedIdx, setSelectedIdx] = useState(-1);
@@ -42,7 +42,6 @@ export function StageControl({ stage }: { stage: Stage }) {
       },
     );
   };
-
   return (
     <div className="mx-16 mt-12 flex justify-between px-6">
       <ol className="grid w-full grid-cols-2">

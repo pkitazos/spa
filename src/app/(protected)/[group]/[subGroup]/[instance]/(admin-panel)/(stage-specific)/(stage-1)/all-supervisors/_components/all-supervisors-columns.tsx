@@ -35,7 +35,8 @@ import {
 } from "@/lib/utils/permissions/stage-check";
 
 import { Role, Stage } from "@/db/types";
-import { SupervisorDTO } from "@/dto/user/supervisor";
+import { SupervisorDTO } from "@/dto";
+import { PAGES } from "@/config/pages";
 
 export function useAllSupervisorsColumns({
   roles,
@@ -79,7 +80,7 @@ export function useAllSupervisorsColumns({
       }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`./supervisors/${id}`}
+          href={`./${PAGES.allSupervisors.href}/${id}`}
         >
           {name}
         </Link>
@@ -208,7 +209,7 @@ export function useAllSupervisorsColumns({
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./supervisors/${supervisor.id}`}
+                  href={`./${PAGES.allSupervisors.href}/${supervisor.id}`}
                 >
                   <CornerDownRightIcon className="h-4 w-4" />
                   <span>View supervisor details</span>
@@ -217,7 +218,7 @@ export function useAllSupervisorsColumns({
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./supervisors/${supervisor.id}?edit=true`}
+                  href={`./${PAGES.allSupervisors.href}/${supervisor.id}?edit=true`}
                 >
                   <PenIcon className="h-4 w-4" />
                   <span>Edit supervisor details</span>
@@ -229,7 +230,7 @@ export function useAllSupervisorsColumns({
                 <DropdownMenuItem className="group/item">
                   <Link
                     className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={`./supervisors/${supervisor.id}/new-project`}
+                    href={`./${PAGES.allSupervisors.href}/${supervisor.id}/new-project`}
                   >
                     <FilePlus2 className="h-4 w-4" />
                     <span>Create new project</span>

@@ -12,10 +12,7 @@ export function PageWrapper({
 }) {
   return (
     <div
-      className={cn(
-        "mt-6 flex h-max w-full max-w-5xl flex-col gap-10 px-6 pb-20",
-        className,
-      )}
+      className={cn("mt-6 flex h-max w-full flex-col gap-10 pb-20", className)}
     >
       {children}
     </div>

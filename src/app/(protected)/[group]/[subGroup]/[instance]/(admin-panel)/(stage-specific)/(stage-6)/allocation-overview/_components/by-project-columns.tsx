@@ -8,6 +8,7 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { cn } from "@/lib/utils";
 import { AllocationByProjectDto } from "@/lib/validations/allocation/data-table-dto";
+import { PAGES } from "@/config/pages";
 
 export const byProjectColumns: ColumnDef<AllocationByProjectDto>[] = [
   {
@@ -105,7 +106,7 @@ export const byProjectColumns: ColumnDef<AllocationByProjectDto>[] = [
     }) => (
       <Link
         className={cn(buttonVariants({ variant: "link" }), "pl-0 text-left")}
-        href={`./supervisors/${id}`}
+        href={`./${PAGES.allSupervisors.href}/${id}`}
         scroll={true}
       >
         {name}
@@ -139,7 +140,7 @@ export const byProjectColumns: ColumnDef<AllocationByProjectDto>[] = [
     }) => (
       <Link
         className={cn(buttonVariants({ variant: "link" }), "pl-2 text-left")}
-        href={`./students/${id}`}
+        href={`./${PAGES.allStudents.href}/${id}`}
         scroll={true}
       >
         {name}

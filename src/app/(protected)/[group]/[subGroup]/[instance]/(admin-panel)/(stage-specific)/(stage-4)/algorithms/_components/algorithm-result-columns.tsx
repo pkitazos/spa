@@ -23,9 +23,9 @@ import {
   formatSize,
   formatWeight,
 } from "@/lib/utils/algorithm/format";
-import { AlgorithmResultDTO } from "@/lib/validations/algorithm";
 
 import { useAlgorithmUtils } from "./algorithm-context";
+import { AlgorithmResultDTO } from "@/dto";
 
 export function useAlgorithmResultColumns({
   selectedAlgName,

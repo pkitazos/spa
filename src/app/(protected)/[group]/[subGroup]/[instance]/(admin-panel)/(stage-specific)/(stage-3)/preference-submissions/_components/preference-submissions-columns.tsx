@@ -28,6 +28,7 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 import { cn } from "@/lib/utils";
 import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
 import { StudentPreferenceSubmissionDto } from "@/lib/validations/dto/preference";
+import { PAGES } from "@/config/pages";
 
 export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSubmissionDto>[] {
   const selectCol = getSelectColumn<StudentPreferenceSubmissionDto>();
@@ -58,7 +59,7 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
       }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`./students/${id}`}
+          href={`./${PAGES.allStudents.href}/${id}`}
         >
           {name}
         </Link>
@@ -215,7 +216,7 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./students/${id}`}
+                  href={`./${PAGES.allStudents.href}/${id}`}
                 >
                   <CornerDownRightIcon className="h-4 w-4" />
                   <span>View student details</span>
@@ -224,7 +225,7 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./students/${id}?edit=true`}
+                  href={`./${PAGES.allStudents.href}/${id}?edit=true`}
                 >
                   <PenIcon className="h-4 w-4" />
                   <span>Edit student details</span>

@@ -8,10 +8,9 @@ import { createTRPCRouter } from "@/server/trpc";
 import { studentRouter } from "./student";
 import { supervisorRouter } from "./supervisor";
 
-import { User } from "@/data-objects/users/user";
 import { Role } from "@/db/types";
 import { instanceDisplayDataSchema, userDtoSchema } from "@/dto";
-import { AllocationInstance } from "@/data-objects/spaces/instance";
+import { User, AllocationInstance } from "@/data-objects";
 import { markerRouter } from "./marker";
 
 export const userRouter = createTRPCRouter({
@@ -41,7 +40,8 @@ export const userRouter = createTRPCRouter({
   hasSelfDefinedProject: procedure.instance.user
     .output(z.boolean())
     .query(async ({ ctx: { user, instance } }) => {
-      if (!user.isStudent(instance.params)) return false;
+      if (!(await user.isStudent(instance.params))) return false;
+
       return await user
         .toStudent(instance.params)
         .then((student) => student.hasSelfDefinedProject());

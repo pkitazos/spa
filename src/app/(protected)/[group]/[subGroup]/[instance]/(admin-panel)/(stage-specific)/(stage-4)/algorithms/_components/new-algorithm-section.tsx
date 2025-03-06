@@ -48,9 +48,9 @@ import { Separator } from "@/components/ui/separator";
 
 import { api } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { allFlags, buildNewAlgorithmSchema } from "@/lib/validations/algorithm";
 
 import { useAlgorithmUtils } from "./algorithm-context";
+import { allAlgorithmFlags, buildNewAlgorithmSchema } from "@/dto";
 
 export function NewAlgorithmSection({
   takenNames,
@@ -165,8 +165,9 @@ function NewAlgorithmForm({
                         )}
                       >
                         {field.value
-                          ? allFlags.find((flag) => flag.label === field.value)
-                              ?.label
+                          ? allAlgorithmFlags.find(
+                              (flag) => flag.label === field.value,
+                            )?.label
                           : "Select flag"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -177,7 +178,7 @@ function NewAlgorithmForm({
                       <CommandInput placeholder="Search flags..." />
                       <CommandEmpty>No flag found.</CommandEmpty>
                       <CommandGroup>
-                        {allFlags.map((flag) => (
+                        {allAlgorithmFlags.map((flag) => (
                           <CommandItem
                             value={flag.value}
                             key={flag.value}
@@ -221,8 +222,9 @@ function NewAlgorithmForm({
                         )}
                       >
                         {field.value
-                          ? allFlags.find((flag) => flag.label === field.value)
-                              ?.label
+                          ? allAlgorithmFlags.find(
+                              (flag) => flag.label === field.value,
+                            )?.label
                           : "Select flag"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -233,7 +235,7 @@ function NewAlgorithmForm({
                       <CommandInput placeholder="Search flags..." />
                       <CommandEmpty>No flag found.</CommandEmpty>
                       <CommandGroup>
-                        {allFlags.map((flag) => (
+                        {allAlgorithmFlags.map((flag) => (
                           <CommandItem
                             value={flag.value}
                             key={flag.value}
@@ -277,8 +279,9 @@ function NewAlgorithmForm({
                         )}
                       >
                         {field.value
-                          ? allFlags.find((flag) => flag.label === field.value)
-                              ?.label
+                          ? allAlgorithmFlags.find(
+                              (flag) => flag.label === field.value,
+                            )?.label
                           : "Select flag"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -289,7 +292,7 @@ function NewAlgorithmForm({
                       <CommandInput placeholder="Search flags..." />
                       <CommandEmpty>No flag found.</CommandEmpty>
                       <CommandGroup>
-                        {allFlags.map((flag) => (
+                        {allAlgorithmFlags.map((flag) => (
                           <CommandItem
                             value={flag.value}
                             key={flag.value}

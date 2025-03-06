@@ -6,6 +6,7 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-col
 
 import { SupervisorMatchingDetailsDto } from "@/lib/validations/matching";
 import { UserDTO } from "@/dto";
+import { PAGES } from "@/config/pages";
 
 export function useSupervisorResultsColumns(): ColumnDef<{
   supervisor: UserDTO;
@@ -32,7 +33,7 @@ export function useSupervisorResultsColumns(): ColumnDef<{
       }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`./supervisors/${supervisor.id}`}
+          href={`./${PAGES.allSupervisors.href}/${supervisor.id}`}
         >
           {supervisor.name}
         </Link>

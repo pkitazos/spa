@@ -1,6 +1,6 @@
 // MOVE these to some other file
 
-import { GradedSubmissionDTO } from "@/dto/marking";
+import { GradedSubmissionDTO } from "@/dto";
 import {
   DB_Algorithm,
   DB_AllocationGroup,

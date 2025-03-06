@@ -1,6 +1,6 @@
 import { markerTypeSchema, Stage } from "@/db/types";
 import { projectDtoSchema, studentDtoSchema } from "@/dto";
-import { gradedSubmissionDtoSchema } from "@/dto/marking";
+import { gradedSubmissionDtoSchema } from "@/dto";
 import { expand } from "@/lib/utils/general/instance-params";
 import { subsequentStages } from "@/lib/utils/permissions/stage-check";
 import { procedure } from "@/server/middleware";

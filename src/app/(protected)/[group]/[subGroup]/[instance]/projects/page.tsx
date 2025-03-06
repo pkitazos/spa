@@ -9,6 +9,7 @@ import { AllProjectsDataTable } from "./_components/all-projects-data-table";
 
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
+import { PreferenceType, Role } from "@/db/types";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
@@ -23,10 +24,14 @@ export default async function Projects({ params }: { params: InstanceParams }) {
   const roles = await api.user.roles({ params });
   const projects = await api.project.getAllForUser({ params });
 
-  // TODO: should only be run if user has role student
-  const preferencesByProject = await api.user.student.preference.getByProject({
-    params,
-  });
+  // TODO: fix this it's kinda janky
+  let projectPreferences: Record<string, PreferenceType> = {};
+
+  if (roles.has(Role.STUDENT)) {
+    projectPreferences = await api.user.student.preference.getByProject({
+      params,
+    });
+  }
 
   const hasSelfDefinedProject = await api.user.hasSelfDefinedProject({
     params,
@@ -48,7 +53,7 @@ export default async function Projects({ params }: { params: InstanceParams }) {
           tags: p.project.tags,
           supervisor: p.supervisor,
         }))}
-        projectPreferences={preferencesByProject}
+        projectPreferences={projectPreferences}
         hasSelfDefinedProject={hasSelfDefinedProject}
       />
     </PageWrapper>

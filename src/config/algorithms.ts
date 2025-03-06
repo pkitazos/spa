@@ -1,4 +1,4 @@
-import { AlgorithmDTO } from "@/dto/algorithm";
+import { AlgorithmDTO } from "@/dto";
 
 import { AlgorithmFlag } from "@/db/types";
 

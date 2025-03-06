@@ -39,6 +39,7 @@ import {
 
 import { Role, Stage } from "@/db/types";
 import { ProjectDTO, StudentDTO } from "@/dto";
+import { PAGES } from "@/config/pages";
 
 type StudentWithAllocation = { student: StudentDTO; allocation?: ProjectDTO };
 
@@ -88,7 +89,7 @@ export function useAllStudentsColumns({
       }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`./students/${student.id}`}
+          href={`./${PAGES.allStudents.href}/${student.id}`}
         >
           {student.name}
         </Link>
@@ -248,7 +249,7 @@ export function useAllStudentsColumns({
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./students/${student.id}`}
+                  href={`./${PAGES.allStudents.href}/${student.id}`}
                 >
                   <CornerDownRightIcon className="h-4 w-4" />
                   <span>View Student Details</span>
@@ -257,7 +258,7 @@ export function useAllStudentsColumns({
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./students/${student.id}?edit=true`}
+                  href={`./${PAGES.allStudents.href}/${student.id}?edit=true`}
                 >
                   <PenIcon className="h-4 w-4" />
                   <span>Edit student details</span>
