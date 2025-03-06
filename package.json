@@ -17,6 +17,7 @@
     "docker:db": "docker compose -f docker/docker-compose.yml up -d",
     "docker:prod": "docker compose -f docker/docker-compose.yml -f docker/docker-compose.prod.override.yml up -d",
     "dev:patch": "tsx src/lib/scripts/patch.ts",
+    "dev:seed": "tsx src/db/seed.ts",
     "schema:change": "pnpm run db:generate && pnpm run db:push"
   },
   "dependencies": {

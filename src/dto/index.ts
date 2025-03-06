@@ -246,7 +246,7 @@ export type InstanceDTO = z.infer<typeof instanceDtoSchema>;
 
 // TODO: centralise built-in algorithm names
 
-export const allFlags = [
+export const allAlgorithmFlags = [
   { label: "GRE", value: AlgorithmFlag.GRE },
   { label: "GEN", value: AlgorithmFlag.GEN },
   { label: "LSB", value: AlgorithmFlag.LSB },

@@ -1,4 +1,4 @@
-import { PrismaClient, Stage } from "@prisma/client";
+import { PreferenceType, PrismaClient, Stage } from "@prisma/client";
 import { z } from "zod";
 
 export type PrismaTransactionClient = Omit<
@@ -52,6 +52,13 @@ export const Role = {
 
 export type Role = (typeof Role)[keyof typeof Role];
 
+export const roleSchema = z.enum([
+  Role.ADMIN,
+  Role.SUPERVISOR,
+  Role.READER,
+  Role.STUDENT,
+]);
+
 export const stageOrd = {
   [Stage.SETUP]: 1,
   [Stage.PROJECT_SUBMISSION]: 2,
@@ -102,6 +109,11 @@ export const adminLevelSchema = z.enum([
 export type AdminLevel = z.infer<typeof adminLevelSchema>;
 
 export const markerTypeSchema = z.enum([Role.SUPERVISOR, Role.READER]);
+
+export const preferenceTypeSchema = z.enum([
+  PreferenceType.SHORTLIST,
+  PreferenceType.PREFERENCE,
+]);
 
 export {
   AlgorithmFlag,

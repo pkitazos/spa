@@ -79,7 +79,7 @@ async function getInstanceDetails(tx: TX, params: InstanceParams) {
 
   const students = await tx.studentDetails.findMany({
     where: expand(params),
-    include: { studentSubmittedPreferences: { include: { project: true } } },
+    include: { submittedPreferences: { include: { project: true } } },
   });
 
   const supervisors = await tx.supervisorDetails.findMany({
@@ -92,7 +92,7 @@ async function getInstanceDetails(tx: TX, params: InstanceParams) {
     students: students.map((s) => ({
       id: s.userId,
       level: s.studentLevel,
-      submittedPreferences: s.studentSubmittedPreferences.map((p) => ({
+      submittedPreferences: s.submittedPreferences.map((p) => ({
         projectTitle: p.project.title,
         rank: p.rank,
       })),

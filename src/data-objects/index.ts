@@ -970,8 +970,8 @@ export class AllocationInstance extends DataObject {
       where: expand(this.params),
       include: {
         userInInstance: { include: { user: true } },
-        studentDraftPreferences: true,
-        studentSubmittedPreferences: true,
+        draftPreferences: true,
+        submittedPreferences: true,
       },
     });
 
@@ -981,8 +981,8 @@ export class AllocationInstance extends DataObject {
       email: u.userInInstance.user.email,
       joined: u.userInInstance.joined,
       level: u.studentLevel,
-      draftPreferences: u.studentDraftPreferences,
-      submittedPreferences: u.studentSubmittedPreferences,
+      draftPreferences: u.draftPreferences,
+      submittedPreferences: u.submittedPreferences,
     }));
   }
 
@@ -2139,7 +2139,7 @@ export class Student extends User {
       .findFirstOrThrow({
         where: { userId: this.id, ...expand(this.instance.params) },
         include: {
-          studentSubmittedPreferences: {
+          submittedPreferences: {
             include: {
               project: {
                 include: {
@@ -2156,7 +2156,7 @@ export class Student extends User {
         },
       })
       .then((data) =>
-        data.studentSubmittedPreferences.map((x) => ({
+        data.submittedPreferences.map((x) => ({
           project: T.toProjectDTO(x.project),
           supervisor: T.toSupervisorDTO(x.project.supervisor),
           rank: x.rank,

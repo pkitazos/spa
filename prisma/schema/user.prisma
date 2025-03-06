@@ -28,22 +28,22 @@ model FlagOnStudent {
 }
 
 model StudentDetails {
-    studentLevel                Int                          @map("student_level")
-    latestSubmissionDateTime    DateTime?                    @map("latest_submission_date_time")
-    projectAllocation           StudentProjectAllocation?    @relation(name: "project_allocation")
+    studentLevel             Int                          @map("student_level")
+    latestSubmissionDateTime DateTime?                    @map("latest_submission_date_time")
+    projectAllocation        StudentProjectAllocation?    @relation(name: "project_allocation")
     // ---
-    userId                      String                       @map("user_id")
-    allocationGroupId           String                       @map("allocation_group_id")
-    allocationSubGroupId        String                       @map("allocation_sub_group_id")
-    allocationInstanceId        String                       @map("allocation_instance_id")
+    userId                   String                       @map("user_id")
+    allocationGroupId        String                       @map("allocation_group_id")
+    allocationSubGroupId     String                       @map("allocation_sub_group_id")
+    allocationInstanceId     String                       @map("allocation_instance_id")
     // ---
-    userInInstance              UserInInstance               @relation(name: "student_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, onUpdate: Cascade)
-    studentFlags                FlagOnStudent[]
-    studentDraftPreferences     StudentDraftPreference[]
-    studentSubmittedPreferences StudentSubmittedPreference[]
-    matchingPairs               MatchingPair[]
-    preAllocatedProjects        Project[]
-    readers                     ReaderProjectAllocation[]
+    userInInstance           UserInInstance               @relation(name: "student_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, onUpdate: Cascade)
+    studentFlags             FlagOnStudent[]
+    draftPreferences         StudentDraftPreference[]
+    submittedPreferences     StudentSubmittedPreference[]
+    matchingPairs            MatchingPair[]
+    preAllocatedProjects     Project[]
+    readers                  ReaderProjectAllocation[]
 
     @@id(name: "studentDetailsId", map: "student_details_id", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@map("student_details")
@@ -67,17 +67,19 @@ model SupervisorDetails {
 }
 
 model ReaderDetails {
-    projectAllocationLowerBound Int                       @map("project_allocation_lower_bound")
-    projectAllocationTarget     Int                       @map("project_allocation_target")
-    projectAllocationUpperBound Int                       @map("project_allocation_upper_bound")
+    projectAllocationLowerBound Int                         @map("project_allocation_lower_bound")
+    projectAllocationTarget     Int                         @map("project_allocation_target")
+    projectAllocationUpperBound Int                         @map("project_allocation_upper_bound")
     // ---
-    userId                      String                    @map("user_id")
-    allocationGroupId           String                    @map("allocation_group_id")
-    allocationSubGroupId        String                    @map("allocation_sub_group_id")
-    allocationInstanceId        String                    @map("allocation_instance_id")
+    userId                      String                      @map("user_id")
+    allocationGroupId           String                      @map("allocation_group_id")
+    allocationSubGroupId        String                      @map("allocation_sub_group_id")
+    allocationInstanceId        String                      @map("allocation_instance_id")
     // ---
-    userInInstance              UserInInstance            @relation(name: "reader_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, onUpdate: Cascade)
+    userInInstance              UserInInstance              @relation(name: "reader_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, onUpdate: Cascade)
     projectAllocations          ReaderProjectAllocation[]
+    draftPreference             ReaderDraftPreference[]
+    submittedPreference         ReaderSubmittedPreference[]
 
     @@id(name: "readerDetailsId", map: "reader_details_id", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@map("reader_details")

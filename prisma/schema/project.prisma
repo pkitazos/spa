@@ -1,3 +1,4 @@
+// TODO: fix
 enum PreferenceType {
     SHORTLIST
     PREFERENCE
@@ -10,6 +11,7 @@ model Project {
     title                         String
     description                   String
     specialTechnicalRequirements  String?                      @map("special_technical_requirements")
+    extraInformation              String?                      @map("extra_information")
     latestEditDateTime            DateTime                     @default(now()) @map("latest_edit_date_time")
     capacityLowerBound            Int                          @map("capacity_lower_bound")
     capacityUpperBound            Int                          @map("capacity_upper_bound")
@@ -52,6 +54,7 @@ model StudentDraftPreference {
     student              StudentDetails @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
 
     @@id(name: "draftPreferenceId", [projectId, userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("student_draft_preference")
 }
 
 model StudentSubmittedPreference {
@@ -98,20 +101,23 @@ model ReaderDraftPreference {
     allocationInstanceId String         @map("allocation_instance_id")
     // ---
     project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    reader               ReaderDetails  @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
 
     @@id(name: "readerDraftPreferenceId", [projectId, userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+    @@map("reader_draft_preference")
 }
 
 model ReaderSubmittedPreference {
-    projectId            String  @map("project_id")
-    userId               String  @map("user_id")
+    projectId            String        @map("project_id")
+    userId               String        @map("user_id")
     rank                 Int
     // ---
-    allocationGroupId    String  @map("allocation_group_id")
-    allocationSubGroupId String  @map("allocation_sub_group_id")
-    allocationInstanceId String  @map("allocation_instance_id")
+    allocationGroupId    String        @map("allocation_group_id")
+    allocationSubGroupId String        @map("allocation_sub_group_id")
+    allocationInstanceId String        @map("allocation_instance_id")
     // ---
-    project              Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    project              Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    reader               ReaderDetails @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
 
     @@id(name: "readerSubmittedPreferenceId", map: "reader_submitted_preference_id", [projectId, userId])
     @@map("reader_submitted_preference")

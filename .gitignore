@@ -3,6 +3,7 @@
 # dev
 .temp
 *.patch
+**/migrations/data/*
 
 # dependencies
 /node_modules

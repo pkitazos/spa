@@ -39,7 +39,7 @@ export async function collectMatchingData(db: DB, instanceData: InstanceDTO) {
         projectAllocation: { is: null },
       },
       include: {
-        studentSubmittedPreferences: {
+        submittedPreferences: {
           include: { project: true },
           orderBy: { rank: "asc" },
         },
@@ -49,17 +49,14 @@ export async function collectMatchingData(db: DB, instanceData: InstanceDTO) {
       data
         .filter((s) => {
           return (
-            s.studentSubmittedPreferences.length >=
+            s.submittedPreferences.length >=
               instanceData.minStudentPreferences &&
-            s.studentSubmittedPreferences.length <=
-              instanceData.maxStudentPreferences
+            s.submittedPreferences.length <= instanceData.maxStudentPreferences
           );
         })
         .map((s) => ({
           id: s.userId,
-          preferences: s.studentSubmittedPreferences.map(
-            ({ project }) => project.id,
-          ),
+          preferences: s.submittedPreferences.map(({ project }) => project.id),
         })),
     );
 
