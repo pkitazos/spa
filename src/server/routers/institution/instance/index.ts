@@ -589,69 +589,87 @@ export const instanceRouter = createTRPCRouter({
         },
       });
 
-      return studentAllocations.map((a) => {
-        const ra = a.project.readerAllocations.find((r) => !r.thirdMarker);
-        if (!ra) {
-          throw new Error(
-            "instance.getMarkerSubmissions: Reader allocation not found",
-          );
-        }
+      return (
+        studentAllocations
+          // WARNING: remove filter before deploying to prod
+          .filter((a) => {
+            const has_reader = a.project.readerAllocations.length > 0;
+            if (!has_reader) {
+              console.log("no reader: ", a.project.title);
+            }
+            return has_reader;
+          })
 
-        const reader = readerMap[ra.readerId];
+          .map((a) => {
+            const ra = a.project.readerAllocations.find((r) => !r.thirdMarker);
+            if (!ra) {
+              throw new Error(
+                "instance.getMarkerSubmissions: Reader allocation not found",
+              );
+            }
 
-        if (!reader) {
-          throw new Error("instance.getMarkerSubmissions: Reader not found");
-        }
+            const reader = readerMap[ra.readerId];
 
-        const supervisor = supervisorMap[a.project.supervisorId];
+            if (!reader) {
+              throw new Error(
+                "instance.getMarkerSubmissions: Reader not found",
+              );
+            }
 
-        if (!supervisor) {
-          throw new Error(
-            "instance.getMarkerSubmissions: Supervisor not found",
-          );
-        }
+            const supervisor = supervisorMap[a.project.supervisorId];
 
-        const supervisorScores = submission.assessmentComponents.map((c) => {
-          const supervisorScore = c.scores.find(
-            (s) => s.markerId === supervisor.id,
-          );
-          if (!supervisorScore) return undefined;
-          return { weight: c.weight, score: supervisorScore.grade };
-        });
+            if (!supervisor) {
+              throw new Error(
+                "instance.getMarkerSubmissions: Supervisor not found",
+              );
+            }
 
-        let supervisorGrade: string | undefined;
-        if (supervisorScores.every((s) => s !== undefined)) {
-          const mark = supervisorScores.reduce(
-            (acc, val) => acc + val.weight * val.score,
-            0,
-          );
-          supervisorGrade = computeGrade(mark);
-        }
+            const supervisorScores = submission.assessmentComponents.map(
+              (c) => {
+                const supervisorScore = c.scores.find(
+                  (s) => s.markerId === supervisor.id,
+                );
+                if (!supervisorScore) return undefined;
+                return { weight: c.weight, score: supervisorScore.grade };
+              },
+            );
 
-        const readerScores = submission.assessmentComponents.map((c) => {
-          const readerScore = c.scores.find((s) => s.markerId === reader.id);
-          if (!readerScore) return undefined;
-          return { weight: c.weight, score: readerScore.grade };
-        });
+            let supervisorGrade: string | undefined;
+            if (supervisorScores.every((s) => s !== undefined)) {
+              const mark = supervisorScores.reduce(
+                (acc, val) => acc + val.weight * val.score,
+                0,
+              );
+              supervisorGrade = computeGrade(mark);
+            }
 
-        let readerGrade: string | undefined;
-        if (readerScores.every((s) => s !== undefined)) {
-          const mark = readerScores.reduce(
-            (acc, val) => acc + val.weight * val.score,
-            0,
-          );
-          readerGrade = computeGrade(mark);
-        }
+            const readerScores = submission.assessmentComponents.map((c) => {
+              const readerScore = c.scores.find(
+                (s) => s.markerId === reader.id,
+              );
+              if (!readerScore) return undefined;
+              return { weight: c.weight, score: readerScore.grade };
+            });
 
-        return {
-          project: T.toProjectDTO(a.project),
-          student: T.toStudentDTO(a.student),
-          supervisor,
-          supervisorGrade,
-          reader,
-          readerGrade,
-        };
-      });
+            let readerGrade: string | undefined;
+            if (readerScores.every((s) => s !== undefined)) {
+              const mark = readerScores.reduce(
+                (acc, val) => acc + val.weight * val.score,
+                0,
+              );
+              readerGrade = computeGrade(mark);
+            }
+
+            return {
+              project: T.toProjectDTO(a.project),
+              student: T.toStudentDTO(a.student),
+              supervisor,
+              supervisorGrade,
+              reader,
+              readerGrade,
+            };
+          })
+      );
     }),
 
   assignReaders: procedure.instance

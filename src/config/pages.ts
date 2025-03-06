@@ -15,6 +15,7 @@ export const PAGES = {
     href: "all-supervisors",
     icon: "users",
   },
+  allReaders: { title: "All Readers", href: "all-readers", icon: "users" },
   allStudents: {
     title: "All Students",
     href: "all-students",

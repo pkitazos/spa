@@ -1270,23 +1270,23 @@ export class AllocationInstance extends DataObject {
       ],
       [Stage.READER_BIDDING]: [
         PAGES.myProjects,
-        PAGES.myMarking,
         ...allocationsTab,
+        PAGES.myMarking,
       ],
       [Stage.READER_ALLOCATION]: [
         PAGES.myProjects,
-        PAGES.myMarking,
         ...allocationsTab,
+        PAGES.myMarking,
       ],
       [Stage.MARK_SUBMISSION]: [
         PAGES.myProjects,
-        PAGES.myMarking,
         ...allocationsTab,
+        PAGES.myMarking,
       ],
       [Stage.GRADE_PUBLICATION]: [
         PAGES.myProjects,
-        PAGES.myMarking,
         ...allocationsTab,
+        PAGES.myMarking,
       ],
     };
 
@@ -1714,42 +1714,40 @@ export class Marker extends User {
       gradedSubmissions: GradedSubmissionDTO[];
     }[] = [];
 
-    // if (await this.isSupervisor(this.instance.params)) {
-    //   console.log("defo a supervisor");
-    //   const data = await this.db.studentProjectAllocation.findMany({
-    //     where: { project: { supervisorId: this.id } },
-    //     include: {
-    //       student: {
-    //         include: {
-    //           userInInstance: { include: { user: true } },
-    //           studentFlags: {
-    //             include: { flag: { include: { gradedSubmissions: true } } },
-    //           },
-    //         },
-    //       },
-    //       project: {
-    //         include: {
-    //           flagsOnProject: { include: { flag: true } },
-    //           tagsOnProject: { include: { tag: true } },
-    //         },
-    //       },
-    //     },
-    //   });
-    //   console.log("defo a supervisor", data);
+    if (await this.isSupervisor(this.instance.params)) {
+      const data = await this.db.studentProjectAllocation.findMany({
+        where: { project: { supervisorId: this.id } },
+        include: {
+          student: {
+            include: {
+              userInInstance: { include: { user: true } },
+              studentFlags: {
+                include: { flag: { include: { gradedSubmissions: true } } },
+              },
+            },
+          },
+          project: {
+            include: {
+              flagsOnProject: { include: { flag: true } },
+              tagsOnProject: { include: { tag: true } },
+            },
+          },
+        },
+      });
 
-    //   assignedProjects.push(
-    //     ...data.flatMap((a) =>
-    //       a.student.studentFlags.flatMap((f) => ({
-    //         project: T.toProjectDTO(a.project),
-    //         student: T.toStudentDTO(a.student),
-    //         markerType: MarkerType.SUPERVISOR,
-    //         gradedSubmissions: f.flag.gradedSubmissions.map((x) =>
-    //           T.toGradedSubmissionDTO(x),
-    //         ),
-    //       })),
-    //     ),
-    //   );
-    // }
+      assignedProjects.push(
+        ...data.flatMap((a) =>
+          a.student.studentFlags.flatMap((f) => ({
+            project: T.toProjectDTO(a.project),
+            student: T.toStudentDTO(a.student),
+            markerType: MarkerType.SUPERVISOR,
+            gradedSubmissions: f.flag.gradedSubmissions.map((x) =>
+              T.toGradedSubmissionDTO(x),
+            ),
+          })),
+        ),
+      );
+    }
 
     if (await this.isReader(this.instance.params)) {
       const readerAllocations = await this.db.readerProjectAllocation.findMany({
@@ -1786,13 +1784,6 @@ export class Marker extends User {
         ),
       );
       assignedProjects = [...assignedProjects, ...hello];
-      console.log(
-        "defo a reader",
-        readerAllocations.length,
-        readerAllocations[0],
-        hello.length,
-        hello[0],
-      );
     }
 
     return assignedProjects.sort((a, b) =>
