@@ -4,11 +4,10 @@ import { Unauthorised } from "@/components/unauthorised";
 import { api } from "@/lib/trpc/server";
 import { SubGroupParams } from "@/lib/validations/params";
 
-import { CreateInstanceForm } from "./_components/create-instance-form";
-
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 import { spacesLabels } from "@/config/spaces";
+import { WizardSection } from "./_components/wizard-section";
 
 export async function generateMetadata({ params }: { params: SubGroupParams }) {
   const { displayName } = await api.institution.subGroup.get({ params });
@@ -36,7 +35,8 @@ export default async function Page({ params }: { params: SubGroupParams }) {
       <Heading className="text-4xl">
         Create new {spacesLabels.instance.full}
       </Heading>
-      <CreateInstanceForm params={params} takenNames={takenNames} />
+      <WizardSection />
+      {/* <CreateInstanceForm params={params} takenNames={takenNames} /> */}
     </div>
   );
 }

@@ -8,11 +8,34 @@ import { Button } from "@/components/ui/button";
 
 import { api } from "@/lib/trpc/client";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
-import { ValidatedInstanceDetails } from "@/lib/validations/instance-form";
 import { InstanceParams } from "@/lib/validations/params";
 
 import { spacesLabels } from "@/config/spaces";
 import { FlagDTO, InstanceDTO, TagDTO } from "@/dto";
+import { z } from "zod";
+
+const baseSchema = z.object({
+  displayName: z.string().min(1, "Please enter a name"),
+  minStudentPreferences: z.number(),
+  maxStudentPreferences: z.number(),
+  maxStudentPreferencesPerSupervisor: z.number(),
+  studentPreferenceSubmissionDeadline: z.date(),
+  minReaderPreferences: z.number(),
+  maxReaderPreferences: z.number(),
+  readerPreferenceSubmissionDeadline: z.date(),
+  projectSubmissionDeadline: z.date(),
+  flags: z.array(
+    z.object({
+      title: z.string().min(3, "Please enter a valid title"),
+      description: z.string().min(3, "Please enter a valid description"),
+    }),
+  ),
+  tags: z.array(
+    z.object({ title: z.string().min(2, "Please enter a valid title") }),
+  ),
+});
+
+export type ValidatedInstanceDetails = z.infer<typeof baseSchema>;
 
 export function EditInstanceForm({
   params,
