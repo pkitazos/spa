@@ -1,15 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { PrismaClient } from "@prisma/client";
-import { student_project_allocations } from "./migrations/9_student_project_allocations";
-import { algorithm_matching_results } from "./migrations/8_algorithm_matching_results";
+import { student_project_allocations } from "./migrations/11_student_project_allocations";
+import { algorithm_matching_results } from "./migrations/10_algorithm_matching_results";
 import { users } from "./migrations/1_users";
 import { spaces } from "./migrations/2_spaces";
 import { admins } from "./migrations/3_admins";
 import { tags_flags_algs } from "./migrations/4_tags_flags_algs";
-import { student_flags } from "./migrations/5b_student_flags";
-import { projects_and_pre_allocations } from "./migrations/6_projects_and_pre_allocations";
-import { student_preferences } from "./migrations/7_student_preferences";
+import { student_flags } from "./migrations/7_student_flags";
+import { projects_and_pre_allocations } from "./migrations/8_projects_and_pre_allocations";
+import { student_preferences } from "./migrations/9_student_preferences";
 import { users_in_instance } from "./migrations/5_users_in_instance";
+import { reader_details } from "./migrations/6_readers";
 
 const db = new PrismaClient();
 
@@ -39,6 +40,10 @@ async function main() {
   await users_in_instance(db, params)
     .then(() => console.log("users in instance seeded"))
     .catch((e) => console.error("error: users in instance", e));
+
+  await reader_details(db, params)
+    .then(() => console.log("reader details seeded"))
+    .catch((e) => console.error("error: reader details", e));
 
   await student_flags(db, params)
     .then(() => console.log("student flags seeded"))
