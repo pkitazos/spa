@@ -24,12 +24,6 @@ import { DateTimePicker } from "@/components/date-time-picker";
 import TagInput from "@/components/tag-input";
 import { TimelineSequence } from "./timeline-sequence";
 
-import { MarkingSchemeStoreProvider } from "./marking-scheme-builder/_components/state";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { SidePanel } from "./marking-scheme-builder/_components/side-panel";
-import { CentrePanel } from "./marking-scheme-builder/_components/centre-panel";
-import { Classification } from "./marking-scheme-builder/_components/state/store";
-
 const WIZARD_STEPS = [
   { id: "basic-details", title: "Basic Details" },
   { id: "flags-assessment", title: "Flags & Assessments" },
@@ -43,6 +37,7 @@ const WIZARD_STEPS = [
 function buildWizardSchema(takenNames: Set<string> = new Set()) {
   return z
     .object({
+      // basic details
       displayName: z
         .string()
         .min(1, "Please enter a name")
@@ -50,6 +45,34 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
           message: "This name is already taken",
         }),
 
+      // flags and assessment
+      flags: z.array(
+        z.object({
+          title: z.string().min(3, "Please enter a valid title"),
+          description: z.string().min(3, "Please enter a valid description"),
+        }),
+      ),
+
+      // project tags
+      tags: z.array(
+        z.object({ title: z.string().min(2, "Please enter a valid title") }),
+      ),
+
+      // deadlines
+      projectSubmissionDeadline: z.date({
+        required_error: "Please select a project submission deadline",
+      }),
+
+      studentPreferenceSubmissionDeadline: z.date({
+        required_error:
+          "Please select a student preference submission deadline",
+      }),
+
+      readerPreferenceSubmissionDeadline: z.date({
+        required_error: "Please select a reader preference submission deadline",
+      }),
+
+      // student preferences
       minStudentPreferences: z.coerce
         .number({
           invalid_type_error: "Please enter an integer",
@@ -72,6 +95,7 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
         .int({ message: "Number must be an integer" })
         .positive(),
 
+      // reader preferences
       minReaderPreferences: z.coerce
         .number({
           invalid_type_error: "Please enter an integer",
@@ -86,29 +110,6 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
         })
         .int({ message: "Number must be an integer" })
         .positive(),
-
-      projectSubmissionDeadline: z.date({
-        required_error: "Please select a project submission deadline",
-      }),
-
-      studentPreferenceSubmissionDeadline: z.date({
-        required_error:
-          "Please select a student preference submission deadline",
-      }),
-
-      readerPreferenceSubmissionDeadline: z.date({
-        required_error: "Please select a reader preference submission deadline",
-      }),
-
-      flags: z.array(
-        z.object({
-          title: z.string().min(3, "Please enter a valid title"),
-          description: z.string().min(3, "Please enter a valid description"),
-        }),
-      ),
-      tags: z.array(
-        z.object({ title: z.string().min(2, "Please enter a valid title") }),
-      ),
     })
     .refine(
       (data) => data.minStudentPreferences <= data.maxStudentPreferences,
@@ -192,13 +193,13 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
         ))}
       </div>
       <div className="relative mt-2">
-        <div className="absolute top-0 h-1 w-full bg-muted"></div>
+        <div className="absolute top-0 h-1 w-full bg-muted" />
         <div
           className="absolute h-1 bg-primary transition-all"
           style={{
             width: `${(currentStep / (WIZARD_STEPS.length - 1)) * 100}%`,
           }}
-        ></div>
+        />
       </div>
     </div>
   );
@@ -224,7 +225,7 @@ function WizardPage({ children, title, description }: WizardPageProps) {
 }
 
 function BasicDetailsPage() {
-  const { control } = useFormContext();
+  const { control } = useFormContext<WizardFormData>();
 
   return (
     <WizardPage
@@ -269,31 +270,28 @@ function BasicDetailsPage() {
 }
 
 function FlagsAssessmentPage() {
+  /**
+   * need to create a bridge between the store and form
+   * can add an effect that syncs data between them ?
+   *
+   * - should initialise state using the current form values
+   * - need a way to update the form when the marking scheme changes
+   * - "New Flag" button should add flags to both the Zustand store and the form
+   * - flag deletion must update both states
+   *
+   */
   return (
     <WizardPage
       title="Flags & Assessment Configuration"
       description="Configure flags to categorize students and define assessments for each flag."
     >
-      <MarkingSchemeStoreProvider
-        initialState={{
-          flags: [] as Classification[],
-          selectedFlagIndex: undefined,
-          selectedSubmissionIndex: undefined,
-        }}
-      >
-        <SidebarProvider className="relative">
-          <div className="flex w-full">
-            <SidePanel />
-            <CentrePanel />
-          </div>
-        </SidebarProvider>
-      </MarkingSchemeStoreProvider>
+      <p>hello</p>
     </WizardPage>
   );
 }
 
 function ProjectTagsPage() {
-  const { control, setValue, watch } = useFormContext();
+  const { control, setValue, watch } = useFormContext<WizardFormData>();
   const tags = watch("tags") || [];
 
   const tagStrings = tags.map((tag: { title: string }) => tag.title);
@@ -343,7 +341,7 @@ function ProjectTagsPage() {
 }
 
 function DeadlinesPage() {
-  const { control } = useFormContext();
+  const { control } = useFormContext<WizardFormData>();
 
   return (
     <WizardPage
@@ -440,7 +438,7 @@ function DeadlinesPage() {
 }
 
 function StudentPreferencesPage() {
-  const { control } = useFormContext();
+  const { control } = useFormContext<WizardFormData>();
 
   return (
     <WizardPage
@@ -529,7 +527,7 @@ function StudentPreferencesPage() {
 }
 
 function ReaderPreferencesPage() {
-  const { control } = useFormContext();
+  const { control } = useFormContext<WizardFormData>();
 
   return (
     <WizardPage
@@ -636,27 +634,12 @@ export function InstanceWizard({
 
     let fieldsToValidate: (keyof WizardFormData)[] = [];
 
-    // @ts-ignore
-    let fields: (keyof WizardFormData)[] = [
-      ["displayName"],
-      [],
-      ["tags"],
-      [
-        "projectSubmissionDeadline",
-        "studentPreferenceSubmissionDeadline",
-        "readerPreferenceSubmissionDeadline",
-      ],
-      [
-        "minStudentPreferences",
-        "maxStudentPreferences",
-        "maxStudentPreferencesPerSupervisor",
-      ],
-      ["minReaderPreferences", "maxReaderPreferences"],
-    ][currentStep];
-
     switch (currentStep) {
       case 0:
         fieldsToValidate = ["displayName"];
+        break;
+      case 2:
+        fieldsToValidate = ["flags"];
         break;
       case 2:
         fieldsToValidate = ["tags"];

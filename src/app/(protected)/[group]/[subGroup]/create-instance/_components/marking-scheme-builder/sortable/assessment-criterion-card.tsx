@@ -28,10 +28,7 @@ export function AssessmentCriterionCard({
     transition,
     isDragging,
     isOver,
-  } = useSortable({
-    id: item.id,
-    data: { item },
-  });
+  } = useSortable({ id: item.id, data: { item } });
 
   const style = { transition, transform: CSS.Transform.toString(transform) };
 
