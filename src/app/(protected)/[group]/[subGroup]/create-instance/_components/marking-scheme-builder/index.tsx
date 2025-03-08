@@ -5,8 +5,6 @@ import { SidePanel } from "./_components/side-panel";
 import { MarkingSchemeStoreProvider } from "./_components/state";
 import { Classification, State } from "./_components/state/store";
 
-// TODO: this is gonna break stuff when we add the second sidebar for sure
-
 type SearchParams = { [key: string]: string | undefined };
 
 export async function MarkingSchemeBuilder({

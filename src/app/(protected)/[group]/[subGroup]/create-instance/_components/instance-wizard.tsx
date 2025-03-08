@@ -1,27 +1,38 @@
 "use client";
-import { ReactNode, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ReactNode, useState } from "react";
+import { FormProvider, useForm, useFormContext } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-
+import { spacesLabels } from "@/config/spaces";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { InstanceParams } from "@/lib/validations/params";
+import { isAfter } from "date-fns";
+import { DateTimePicker } from "@/components/date-time-picker";
+import TagInput from "@/components/tag-input";
+import { TimelineSequence } from "./timeline-sequence";
+
+import { MarkingSchemeStoreProvider } from "./marking-scheme-builder/_components/state";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidePanel } from "./marking-scheme-builder/_components/side-panel";
+import { CentrePanel } from "./marking-scheme-builder/_components/centre-panel";
+import { Classification } from "./marking-scheme-builder/_components/state/store";
 
 const WIZARD_STEPS = [
   { id: "basic-details", title: "Basic Details" },
-  { id: "flags-assessment", title: "Flags & Assessment" },
+  { id: "flags-assessment", title: "Flags & Assessments" },
   { id: "project-tags", title: "Project Keywords" },
   { id: "deadlines", title: "Deadlines & Timeline" },
   { id: "student-preferences", title: "Student Preferences" },
@@ -29,9 +40,134 @@ const WIZARD_STEPS = [
   { id: "review", title: "Review & Submit" },
 ];
 
-const wizardSchema = z.object({ displayName: z.string().optional() });
+function buildWizardSchema(takenNames: Set<string> = new Set()) {
+  return z
+    .object({
+      displayName: z
+        .string()
+        .min(1, "Please enter a name")
+        .refine((name) => !takenNames.has(name), {
+          message: "This name is already taken",
+        }),
 
-type WizardFormData = z.infer<typeof wizardSchema>;
+      minStudentPreferences: z.coerce
+        .number({
+          invalid_type_error: "Please enter an integer",
+          required_error: "Please enter an integer",
+        })
+        .int({ message: "Number must be an integer" })
+        .positive(),
+      maxStudentPreferences: z.coerce
+        .number({
+          invalid_type_error: "Please enter an integer",
+          required_error: "Please enter an integer",
+        })
+        .int({ message: "Number must be an integer" })
+        .positive(),
+      maxStudentPreferencesPerSupervisor: z.coerce
+        .number({
+          invalid_type_error: "Please enter an integer",
+          required_error: "Please enter an integer",
+        })
+        .int({ message: "Number must be an integer" })
+        .positive(),
+
+      minReaderPreferences: z.coerce
+        .number({
+          invalid_type_error: "Please enter an integer",
+          required_error: "Please enter an integer",
+        })
+        .int({ message: "Number must be an integer" })
+        .positive(),
+      maxReaderPreferences: z.coerce
+        .number({
+          invalid_type_error: "Please enter an integer",
+          required_error: "Please enter an integer",
+        })
+        .int({ message: "Number must be an integer" })
+        .positive(),
+
+      projectSubmissionDeadline: z.date({
+        required_error: "Please select a project submission deadline",
+      }),
+
+      studentPreferenceSubmissionDeadline: z.date({
+        required_error:
+          "Please select a student preference submission deadline",
+      }),
+
+      readerPreferenceSubmissionDeadline: z.date({
+        required_error: "Please select a reader preference submission deadline",
+      }),
+
+      flags: z.array(
+        z.object({
+          title: z.string().min(3, "Please enter a valid title"),
+          description: z.string().min(3, "Please enter a valid description"),
+        }),
+      ),
+      tags: z.array(
+        z.object({ title: z.string().min(2, "Please enter a valid title") }),
+      ),
+    })
+    .refine(
+      (data) => data.minStudentPreferences <= data.maxStudentPreferences,
+      {
+        message:
+          "Maximum Number of Preferences can't be less than Minimum Number of Preferences",
+        path: ["maxStudentPreferences"],
+      },
+    )
+    .refine(
+      (data) =>
+        data.maxStudentPreferencesPerSupervisor <= data.maxStudentPreferences,
+      {
+        message:
+          "Maximum Number of Preferences per supervisor can't be more than Maximum Number of Preferences",
+        path: ["maxStudentPreferencesPerSupervisor"],
+      },
+    )
+    .refine((data) => data.minReaderPreferences <= data.maxReaderPreferences, {
+      message:
+        "Maximum Number of Preferences can't be less than Minimum Number of Preferences",
+      path: ["maxReaderPreferences"],
+    })
+    .refine(
+      (data) => data.minStudentPreferences <= data.maxStudentPreferences,
+      {
+        message:
+          "Maximum Number of Preferences can't be less than Minimum Number of Preferences",
+
+        path: ["maxStudentPreferences"],
+      },
+    )
+    .refine(
+      (data) =>
+        isAfter(
+          data.studentPreferenceSubmissionDeadline,
+          data.projectSubmissionDeadline,
+        ),
+      {
+        message:
+          "Student Preference Submission deadline must be after Project Upload deadline",
+        path: ["studentPreferenceSubmissionDeadline"],
+      },
+    )
+    .refine(
+      (data) =>
+        isAfter(
+          data.readerPreferenceSubmissionDeadline,
+          data.studentPreferenceSubmissionDeadline,
+        ),
+      {
+        message:
+          "Reader Preference Submission deadline must be after Student Preference Submission deadline",
+        path: ["readerPreferenceSubmissionDeadline"],
+      },
+    );
+}
+
+type WizardFormData = z.infer<ReturnType<typeof buildWizardSchema>>;
 
 function StepIndicator({ currentStep }: { currentStep: number }) {
   return (
@@ -43,10 +179,10 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
               className={cn(
                 "flex h-8 w-8 items-center justify-center rounded-full font-medium",
                 index < currentStep
-                  ? "bg-primary text-primary-foreground" // Completed
+                  ? "bg-primary text-primary-foreground" // completed
                   : index === currentStep
-                    ? "border-2 border-primary text-primary" // Current
-                    : "border-2 border-muted text-muted-foreground", // Upcoming
+                    ? "border-2 border-primary text-primary" // current
+                    : "border-2 border-muted text-muted-foreground", // next
               )}
             >
               {index + 1}
@@ -74,7 +210,6 @@ interface WizardPageProps {
   description?: string;
 }
 
-// Reusable wrapper for wizard pages
 function WizardPage({ children, title, description }: WizardPageProps) {
   return (
     <div className="space-y-4">
@@ -88,15 +223,46 @@ function WizardPage({ children, title, description }: WizardPageProps) {
   );
 }
 
-// Page content components - these are just placeholders
 function BasicDetailsPage() {
+  const { control } = useFormContext();
+
   return (
     <WizardPage
       title="Basic Details"
       description="Enter the basic information for your allocation instance."
     >
-      <div className="py-8 text-center text-muted-foreground">
-        [Instance name field will go here]
+      <div className="max-w-2xl space-y-6">
+        <FormField
+          control={control}
+          name="displayName"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xl">
+                {spacesLabels.instance.full} Name
+              </FormLabel>
+              <FormControl>
+                <Input
+                  placeholder={`${spacesLabels.instance.short} Name`}
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Please select a unique name within the{" "}
+                {spacesLabels.group.short} and {spacesLabels.subGroup.short} for
+                this {spacesLabels.instance.short}.
+                <br />
+                <p className="pt-1 text-black">
+                  Please note: This name{" "}
+                  <span className="font-semibold underline">
+                    cannot be changed
+                  </span>{" "}
+                  later.
+                </p>
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     </WizardPage>
   );
@@ -108,60 +274,318 @@ function FlagsAssessmentPage() {
       title="Flags & Assessment Configuration"
       description="Configure flags to categorize students and define assessments for each flag."
     >
-      <div className="py-8 text-center text-muted-foreground">
-        [Flags and assessment configuration will go here]
-      </div>
+      <MarkingSchemeStoreProvider
+        initialState={{
+          flags: [] as Classification[],
+          selectedFlagIndex: undefined,
+          selectedSubmissionIndex: undefined,
+        }}
+      >
+        <SidebarProvider className="relative">
+          <div className="flex w-full">
+            <SidePanel />
+            <CentrePanel />
+          </div>
+        </SidebarProvider>
+      </MarkingSchemeStoreProvider>
     </WizardPage>
   );
 }
 
 function ProjectTagsPage() {
+  const { control, setValue, watch } = useFormContext();
+  const tags = watch("tags") || [];
+
+  const tagStrings = tags.map((tag: { title: string }) => tag.title);
+
+  function handleTagsChange(newTags: string[]) {
+    const tagObjects = newTags.map((title) => ({ title }));
+    setValue("tags", tagObjects, { shouldValidate: true });
+  }
+
   return (
     <WizardPage
       title="Project Keywords"
       description="Define tags that supervisors can use to label their projects."
     >
-      <div className="py-8 text-center text-muted-foreground">
-        [Project tags/keywords fields will go here]
+      <div className="max-w-2xl space-y-6">
+        <TagInput
+          label="Project Keywords"
+          description="Add keywords that supervisors can use to categorise their projects. These help students find relevant projects."
+          placeholder="Add a keyword and press Enter"
+          defaultTags={tagStrings}
+          onChange={handleTagsChange}
+        />
+
+        <div className="mt-6 rounded-md bg-muted p-4">
+          <h3 className="mb-2 text-base font-medium">About Project Keywords</h3>
+          <p className="text-sm text-muted-foreground">
+            Keywords help organize and categorise projects. They make it easier
+            for students to search and filter projects based on their interests
+            and skills.
+          </p>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+            <li>
+              Add common technology keywords (e.g., "Machine Learning", "Web
+              Development")
+            </li>
+            <li>Include research areas relevant to your department</li>
+            <li>Include subjects students may have taken</li>
+            <li>
+              Consider including programming languages relevant to the project
+              (e.g., "Rust", "Python", "Haskell")
+            </li>
+          </ul>
+        </div>
       </div>
     </WizardPage>
   );
 }
 
 function DeadlinesPage() {
+  const { control } = useFormContext();
+
   return (
     <WizardPage
       title="Deadlines & Timeline"
       description="Set the important deadlines for your allocation instance."
     >
-      <div className="py-8 text-center text-muted-foreground">
-        [Deadline selection fields will go here]
+      <div className="flex max-w-2xl flex-col gap-8">
+        <FormField
+          control={control}
+          name="projectSubmissionDeadline"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel className="mb-2 text-base">
+                Project Submission Deadline
+              </FormLabel>
+
+              <FormControl>
+                <DateTimePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select project submission deadline"
+                  label=""
+                />
+              </FormControl>
+
+              <FormDescription className="mt-1">
+                The deadline for supervisors to submit their projects.
+              </FormDescription>
+
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="studentPreferenceSubmissionDeadline"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel className="mb-2 text-base">
+                Student Preference Submission Deadline
+              </FormLabel>
+
+              <FormControl>
+                <DateTimePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select student preference deadline"
+                  label=""
+                />
+              </FormControl>
+
+              <FormDescription className="mt-1">
+                The deadline for students to submit their preference list. This
+                must be after the project submission deadline.
+              </FormDescription>
+
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="readerPreferenceSubmissionDeadline"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel className="mb-2 text-base">
+                Reader Preference Submission Deadline
+              </FormLabel>
+
+              <FormControl>
+                <DateTimePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  placeholder="Select reader preference deadline"
+                  label=""
+                />
+              </FormControl>
+
+              <FormDescription className="mt-1">
+                The deadline for readers to submit their preference list. This
+                must be after the student preference submission deadline.
+              </FormDescription>
+
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <TimelineSequence />
       </div>
     </WizardPage>
   );
 }
 
 function StudentPreferencesPage() {
+  const { control } = useFormContext();
+
   return (
     <WizardPage
       title="Student Preferences"
       description="Configure settings for student project preferences."
     >
-      <div className="py-8 text-center text-muted-foreground">
-        [Student preference settings will go here]
+      <div className="flex max-w-2xl flex-col gap-6">
+        <FormField
+          control={control}
+          name="minStudentPreferences"
+          render={({ field }) => (
+            <FormItem className="w-full">
+              <div className="flex items-center justify-between gap-4">
+                <FormLabel className="text-base">
+                  Minimum number of Preferences:
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    className="w-20 text-center placeholder:text-slate-300"
+                    placeholder="1"
+                    {...field}
+                  />
+                </FormControl>
+              </div>
+              <FormDescription>
+                The minimum number of preferences a student must submit.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="maxStudentPreferences"
+          render={({ field }) => (
+            <FormItem className="w-full">
+              <div className="flex items-center justify-between gap-4">
+                <FormLabel className="text-base">
+                  Maximum number of Preferences:
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    className="w-20 text-center placeholder:text-slate-300"
+                    placeholder="1"
+                    {...field}
+                  />
+                </FormControl>
+              </div>
+              <FormDescription>
+                The maximum number of preferences a student can submit.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="maxStudentPreferencesPerSupervisor"
+          render={({ field }) => (
+            <FormItem className="w-full">
+              <div className="flex items-center justify-between gap-4">
+                <FormLabel className="text-base">
+                  Maximum Preferences per Supervisor:
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    className="w-20 text-center placeholder:text-slate-300"
+                    placeholder="1"
+                    {...field}
+                  />
+                </FormControl>
+              </div>
+              <FormDescription>
+                The maximum number of projects belonging to the same supervisor
+                a student is able to select.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     </WizardPage>
   );
 }
 
 function ReaderPreferencesPage() {
+  const { control } = useFormContext();
+
   return (
     <WizardPage
       title="Reader Preferences"
       description="Configure settings for reader project preferences."
     >
-      <div className="py-8 text-center text-muted-foreground">
-        [Reader preference settings will go here]
+      <div className="flex max-w-2xl flex-col gap-6">
+        <FormField
+          control={control}
+          name="minReaderPreferences"
+          render={({ field }) => (
+            <FormItem className="w-full">
+              <div className="flex items-center justify-between gap-4">
+                <FormLabel className="text-base">
+                  Minimum number of Preferences:
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    className="w-20 text-center placeholder:text-slate-300"
+                    placeholder="1"
+                    {...field}
+                  />
+                </FormControl>
+              </div>
+              <FormDescription>
+                The minimum number of preferences a reader must submit.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name="maxReaderPreferences"
+          render={({ field }) => (
+            <FormItem className="w-full">
+              <div className="flex items-center justify-between gap-4">
+                <FormLabel className="text-base">
+                  Maximum number of Preferences:
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    className="w-20 text-center placeholder:text-slate-300"
+                    placeholder="1"
+                    {...field}
+                  />
+                </FormControl>
+              </div>
+              <FormDescription>
+                The maximum number of preferences a reader can submit.
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
       </div>
     </WizardPage>
   );
@@ -180,161 +604,146 @@ function ReviewPage() {
   );
 }
 
-// Main wizard component
-interface InstanceWizardProps {
+type InstanceWizardProps = {
   onSubmit: (data: WizardFormData) => Promise<void>;
   onCancel: () => void;
   defaultValues?: Partial<WizardFormData>;
-}
+  takenNames?: Set<string>;
+};
 
 export function InstanceWizard({
   onSubmit,
   onCancel,
   defaultValues = {},
+  takenNames = new Set(),
 }: InstanceWizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
 
-  // Set up form with react-hook-form
+  const wizardSchema = buildWizardSchema(takenNames);
+
   const methods = useForm<WizardFormData>({
     resolver: zodResolver(wizardSchema),
     defaultValues,
     mode: "onChange",
   });
 
-  // Handle next step
-  const handleNext = async () => {
-    // For the last step, submit the form
+  async function handleNext() {
     if (currentStep === WIZARD_STEPS.length - 1) {
       const result = await methods.trigger();
-      if (result) {
-        await onSubmit(methods.getValues());
-      }
+      if (result) await onSubmit(methods.getValues());
       return;
     }
 
-    // Validate current step before proceeding
-    const result = await methods.trigger();
+    let fieldsToValidate: (keyof WizardFormData)[] = [];
+
+    // @ts-ignore
+    let fields: (keyof WizardFormData)[] = [
+      ["displayName"],
+      [],
+      ["tags"],
+      [
+        "projectSubmissionDeadline",
+        "studentPreferenceSubmissionDeadline",
+        "readerPreferenceSubmissionDeadline",
+      ],
+      [
+        "minStudentPreferences",
+        "maxStudentPreferences",
+        "maxStudentPreferencesPerSupervisor",
+      ],
+      ["minReaderPreferences", "maxReaderPreferences"],
+    ][currentStep];
+
+    switch (currentStep) {
+      case 0:
+        fieldsToValidate = ["displayName"];
+        break;
+      case 2:
+        fieldsToValidate = ["tags"];
+        break;
+      case 3:
+        fieldsToValidate = [
+          "projectSubmissionDeadline",
+          "studentPreferenceSubmissionDeadline",
+          "readerPreferenceSubmissionDeadline",
+        ];
+        break;
+      case 4:
+        fieldsToValidate = [
+          "minStudentPreferences",
+          "maxStudentPreferences",
+          "maxStudentPreferencesPerSupervisor",
+        ];
+        break;
+      case 5:
+        fieldsToValidate = ["minReaderPreferences", "maxReaderPreferences"];
+        break;
+    }
+
+    const result = await methods.trigger(fieldsToValidate);
     if (result) {
       setCurrentStep((prev) => Math.min(prev + 1, WIZARD_STEPS.length - 1));
     }
-  };
+  }
 
-  // Handle previous step
-  const handlePrevious = () => {
+  function handlePrevious() {
     setCurrentStep((prev) => Math.max(prev - 1, 0));
-  };
-
-  // Render the current step content
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 0:
-        return <BasicDetailsPage />;
-      case 1:
-        return <FlagsAssessmentPage />;
-      case 2:
-        return <ProjectTagsPage />;
-      case 3:
-        return <DeadlinesPage />;
-      case 4:
-        return <StudentPreferencesPage />;
-      case 5:
-        return <ReaderPreferencesPage />;
-      case 6:
-        return <ReviewPage />;
-      default:
-        return <div>Unknown step</div>;
-    }
-  };
+  }
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle>Create Allocation Instance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <StepIndicator currentStep={currentStep} />
-            {renderStepContent()}
-          </CardContent>
-          <CardFooter className="flex justify-between">
-            <div>
-              {currentStep > 0 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePrevious}
-                >
-                  Previous
-                </Button>
-              )}
-              {currentStep === 0 && (
-                <Button type="button" variant="outline" onClick={onCancel}>
-                  Cancel
-                </Button>
-              )}
-            </div>
-            <Button type="button" onClick={handleNext}>
-              {currentStep === WIZARD_STEPS.length - 1 ? "Submit" : "Next"}
-            </Button>
-          </CardFooter>
-        </Card>
-      </form>
+      <Form {...methods}>
+        <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
+          <Card className="w-full pt-6">
+            <CardContent>
+              <StepIndicator currentStep={currentStep} />
+              <CurrentStepContent currentStep={currentStep} />
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <div>
+                {currentStep > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handlePrevious}
+                  >
+                    Previous
+                  </Button>
+                )}
+                {currentStep === 0 && (
+                  <Button type="button" variant="outline" onClick={onCancel}>
+                    Cancel
+                  </Button>
+                )}
+              </div>
+              <Button type="button" onClick={handleNext}>
+                {currentStep === WIZARD_STEPS.length - 1 ? "Submit" : "Next"}
+              </Button>
+            </CardFooter>
+          </Card>
+        </form>
+      </Form>
     </FormProvider>
   );
 }
 
-// Create wrapper component to handle API calls and navigation
-export function CreateInstanceWizard({
-  params,
-  takenNames,
-}: {
-  params: any; // Replace with your actual params type
-  takenNames: Set<string>;
-}) {
-  const router = useRouter();
-
-  const handleSubmit = async (data: WizardFormData) => {
-    // This will be replaced with your actual API call
-    console.log("Form submitted with:", data);
-    // Navigate away after submission
-    // router.push("/success-page");
-    toast.success("Instance created successfully");
-  };
-
-  const handleCancel = () => {
-    router.back();
-  };
-
-  return <InstanceWizard onSubmit={handleSubmit} onCancel={handleCancel} />;
-}
-
-// Edit wrapper component to handle API calls and navigation
-export function EditInstanceWizard({
-  params,
-  formDetails,
-  isForked,
-}: {
-  params: InstanceParams;
-  formDetails: any; // replace with appropriate DTO
-  isForked: boolean;
-}) {
-  const router = useRouter();
-
-  const handleSubmit = async (data: WizardFormData) => {
-    // This will be replaced with your actual API call
-    console.log("Form updated with:", data);
-  };
-
-  const handleCancel = () => {
-    router.back();
-  };
-
-  return (
-    <InstanceWizard
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-      defaultValues={formDetails?.instanceData}
-    />
-  );
+function CurrentStepContent({ currentStep }: { currentStep: number }) {
+  switch (currentStep) {
+    case 0:
+      return <BasicDetailsPage />;
+    case 1:
+      return <FlagsAssessmentPage />;
+    case 2:
+      return <ProjectTagsPage />;
+    case 3:
+      return <DeadlinesPage />;
+    case 4:
+      return <StudentPreferencesPage />;
+    case 5:
+      return <ReaderPreferencesPage />;
+    case 6:
+      return <ReviewPage />;
+    default:
+      return <div>Unknown step</div>;
+  }
 }

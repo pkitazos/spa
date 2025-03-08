@@ -31,7 +31,7 @@ export default async function Page({ params }: { params: SubGroupParams }) {
   });
 
   return (
-    <div className="mb-40 mt-6 flex h-max w-full max-w-5xl flex-col gap-10 px-6 pb-20">
+    <div className="mx-20 flex w-full max-w-9xl flex-col gap-4">
       <Heading className="text-4xl">
         Create new {spacesLabels.instance.full}
       </Heading>
