@@ -23,7 +23,6 @@ import { Role, Stage } from "@/db/types";
 import { stageSchema } from "@/db/types";
 
 import {
-  FlagDTO,
   flagDtoSchema,
   instanceDtoSchema,
   projectDtoSchema,
@@ -33,7 +32,6 @@ import {
   SupervisorDTO,
   supervisorDtoSchema,
   tagDtoSchema,
-  UnitOfAssessmentDTO,
   unitOfAssessmentSchema,
 } from "@/dto";
 import {
@@ -733,29 +731,21 @@ export const instanceRouter = createTRPCRouter({
       ),
     )
     .query(async ({ ctx: { instance, db } }) => {
-      const unitsOfAssessment = await db.unitOfAssessment.findMany({
+      const flags = await db.flag.findMany({
         where: expand(instance.params),
-        include: { assessmentCriteria: true, flag: true },
-        orderBy: [{ markerSubmissionDeadline: "asc" }],
+        include: {
+          unitsOfAssessment: {
+            include: { flag: true, assessmentCriteria: true },
+            orderBy: [{ markerSubmissionDeadline: "asc" }],
+          },
+        },
+        orderBy: [{ title: "asc" }],
       });
 
-      // @JakeTrevor Something seems to break the sort order after I update the open state of a unit of assessment
-      // I think it's the Object.values, but I'm not sure
-      return Object.values(
-        unitsOfAssessment.reduce(
-          (acc, unit) => {
-            const flagTitle = unit.flag.title;
-
-            if (!acc[flagTitle]) {
-              acc[flagTitle] = { flag: T.toFlagDTO(unit.flag), units: [] };
-            }
-
-            acc[flagTitle].units.push(T.toUnitOfAssessmentDTO(unit));
-            return acc;
-          },
-          {} as Record<string, { flag: FlagDTO; units: UnitOfAssessmentDTO[] }>,
-        ),
-      );
+      return flags.map((f) => ({
+        flag: T.toFlagDTO(f),
+        units: f.unitsOfAssessment.map(T.toUnitOfAssessmentDTO),
+      }));
     }),
 
   setUnitOfAssessmentAccess: procedure.instance

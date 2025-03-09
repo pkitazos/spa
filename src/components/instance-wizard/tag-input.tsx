@@ -14,8 +14,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
-import { WizardFormData } from "@/app/(protected)/[group]/[subGroup]/create-instance/_components/instance-wizard";
 import { cn } from "@/lib/utils";
+import { WizardFormData } from "./instance-wizard";
 
 interface TagInputProps {
   label?: string;
