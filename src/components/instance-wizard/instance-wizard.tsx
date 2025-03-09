@@ -1,13 +1,9 @@
 "use client";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ReactNode, useState } from "react";
-import { FormProvider, useForm, useFormContext } from "react-hook-form";
+import { ReactNode } from "react";
+import { useFormContext } from "react-hook-form";
 import { z } from "zod";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
-  Form,
   FormControl,
   FormDescription,
   FormField,
@@ -18,24 +14,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { spacesLabels } from "@/config/spaces";
-import { cn } from "@/lib/utils";
 import { format, isAfter } from "date-fns";
 import { DateTimePicker } from "@/components/date-time-picker";
 import { TimelineSequence } from "./timeline-sequence";
 import { UploadJsonArea } from "./flag-json-upload";
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import TagInput from "./tag-input";
-
-const WIZARD_STEPS = [
-  { id: "basic-details", title: "Basic Details" },
-  { id: "flags-assessment", title: "Flags & Assessments" },
-  { id: "project-tags", title: "Project Keywords" },
-  { id: "deadlines", title: "Deadlines & Timeline" },
-  { id: "student-preferences", title: "Student Preferences" },
-  { id: "reader-preferences", title: "Reader Preferences" },
-  { id: "review", title: "Review & Submit" },
-];
+import { FormWizard, WizardStep } from "../wizard-form";
 
 export const flagsAssessmentSchema = z
   .array(
@@ -212,41 +197,6 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
 }
 
 export type WizardFormData = z.infer<ReturnType<typeof buildWizardSchema>>;
-
-function StepIndicator({ currentStep }: { currentStep: number }) {
-  return (
-    <div className="mb-8">
-      <div className="flex justify-between">
-        {WIZARD_STEPS.map((step, index) => (
-          <div key={step.id} className="flex flex-col items-center">
-            <div
-              className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-full font-medium",
-                index < currentStep
-                  ? "bg-primary text-primary-foreground" // completed
-                  : index === currentStep
-                    ? "border-2 border-primary text-primary" // current
-                    : "border-2 border-muted text-muted-foreground", // next
-              )}
-            >
-              {index + 1}
-            </div>
-            <div className="mt-1 w-16 text-center text-xs">{step.title}</div>
-          </div>
-        ))}
-      </div>
-      <div className="relative mt-2">
-        <div className="absolute top-0 h-1 w-full bg-muted" />
-        <div
-          className="absolute h-1 bg-primary transition-all"
-          style={{
-            width: `${(currentStep / (WIZARD_STEPS.length - 1)) * 100}%`,
-          }}
-        />
-      </div>
-    </div>
-  );
-}
 
 interface WizardPageProps {
   children: ReactNode;
@@ -736,6 +686,59 @@ function ReviewPage() {
   );
 }
 
+export const WIZARD_STEPS: WizardStep<WizardFormData>[] = [
+  {
+    id: "basic-details",
+    title: "Basic Details",
+    fieldsToValidate: ["displayName"],
+    render: () => <BasicDetailsPage />,
+  },
+  {
+    id: "flags-assessment",
+    title: "Flags & Assessments",
+    fieldsToValidate: ["flags"],
+    render: () => <FlagsAssessmentPage />,
+  },
+  {
+    id: "project-tags",
+    title: "Project Keywords",
+    fieldsToValidate: ["tags"],
+    render: () => <ProjectTagsPage />,
+  },
+  {
+    id: "deadlines",
+    title: "Deadlines & Timeline",
+    fieldsToValidate: [
+      "projectSubmissionDeadline",
+      "studentPreferenceSubmissionDeadline",
+      "readerPreferenceSubmissionDeadline",
+    ],
+    render: () => <DeadlinesPage />,
+  },
+  {
+    id: "student-preferences",
+    title: "Student Preferences",
+    fieldsToValidate: [
+      "minStudentPreferences",
+      "maxStudentPreferences",
+      "maxStudentPreferencesPerSupervisor",
+    ],
+    render: () => <StudentPreferencesPage />,
+  },
+  {
+    id: "reader-preferences",
+    title: "Reader Preferences",
+    fieldsToValidate: ["minReaderPreferences", "maxReaderPreferences"],
+    render: () => <ReaderPreferencesPage />,
+  },
+  {
+    id: "review",
+    title: "Review & Submit",
+    fieldsToValidate: [],
+    render: () => <ReviewPage />,
+  },
+];
+
 export function InstanceWizard({
   onSubmit,
   defaultValues,
@@ -745,128 +748,14 @@ export function InstanceWizard({
   defaultValues: WizardFormData;
   takenNames: Set<string>;
 }) {
-  const [currentStep, setCurrentStep] = useState(0);
-
   const wizardSchema = buildWizardSchema(takenNames);
 
-  const methods = useForm<WizardFormData>({
-    resolver: zodResolver(wizardSchema),
-    defaultValues,
-  });
-
-  async function handleNext() {
-    if (currentStep === WIZARD_STEPS.length - 1) {
-      await methods.trigger();
-      if (methods.formState.isValid) {
-        console.log("submitting form");
-        methods.handleSubmit(async (data) => {
-          console.log("hello from inside the submit function");
-          return onSubmit(data);
-        })();
-      }
-      return;
-    }
-
-    let fieldsToValidate: (keyof WizardFormData)[] = [];
-
-    switch (currentStep) {
-      case 0:
-        fieldsToValidate = ["displayName"];
-        break;
-      case 1:
-        fieldsToValidate = ["flags"];
-        break;
-      case 2:
-        fieldsToValidate = ["tags"];
-        break;
-      case 3:
-        fieldsToValidate = [
-          "projectSubmissionDeadline",
-          "studentPreferenceSubmissionDeadline",
-          "readerPreferenceSubmissionDeadline",
-        ];
-        break;
-      case 4:
-        fieldsToValidate = [
-          "minStudentPreferences",
-          "maxStudentPreferences",
-          "maxStudentPreferencesPerSupervisor",
-        ];
-        break;
-      case 5:
-        fieldsToValidate = ["minReaderPreferences", "maxReaderPreferences"];
-        break;
-    }
-
-    await methods.trigger(fieldsToValidate);
-
-    const valid = fieldsToValidate.every(
-      (val) => !methods.getFieldState(val).invalid,
-    );
-
-    if (valid) {
-      setCurrentStep((prev) => Math.min(prev + 1, WIZARD_STEPS.length - 1));
-    }
-  }
-
-  function handlePrevious() {
-    setCurrentStep((prev) => Math.max(prev - 1, 0));
-  }
-
   return (
-    <FormProvider {...methods}>
-      <Form {...methods}>
-        <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-8">
-          <Card className="w-full pt-6">
-            <CardContent>
-              <StepIndicator currentStep={currentStep} />
-              <CurrentStepContent currentStep={currentStep} />
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <div>
-                {currentStep > 0 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handlePrevious}
-                  >
-                    Previous
-                  </Button>
-                )}
-                {currentStep === 0 && (
-                  <Button type="button" size="lg" variant="outline" asChild>
-                    <Link href="./settings">Cancel</Link>
-                  </Button>
-                )}
-              </div>
-              <Button type="button" onClick={handleNext}>
-                {currentStep === WIZARD_STEPS.length - 1 ? "Submit" : "Next"}
-              </Button>
-            </CardFooter>
-          </Card>
-        </form>
-      </Form>
-    </FormProvider>
+    <FormWizard
+      onSubmit={onSubmit}
+      steps={WIZARD_STEPS}
+      defaultValues={defaultValues}
+      schema={wizardSchema}
+    />
   );
-}
-
-function CurrentStepContent({ currentStep }: { currentStep: number }) {
-  switch (currentStep) {
-    case 0:
-      return <BasicDetailsPage />;
-    case 1:
-      return <FlagsAssessmentPage />;
-    case 2:
-      return <ProjectTagsPage />;
-    case 3:
-      return <DeadlinesPage />;
-    case 4:
-      return <StudentPreferencesPage />;
-    case 5:
-      return <ReaderPreferencesPage />;
-    case 6:
-      return <ReviewPage />;
-    default:
-      return <div>Unknown step</div>;
-  }
 }
