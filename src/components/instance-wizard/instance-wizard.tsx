@@ -19,10 +19,13 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { spacesLabels } from "@/config/spaces";
 import { cn } from "@/lib/utils";
-import { isAfter } from "date-fns";
+import { format, isAfter } from "date-fns";
 import { DateTimePicker } from "@/components/date-time-picker";
-import TagInput from "@/components/tag-input";
 import { TimelineSequence } from "./timeline-sequence";
+import { UploadJsonArea } from "./flag-json-upload";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import TagInput from "./tag-input";
 
 const WIZARD_STEPS = [
   { id: "basic-details", title: "Basic Details" },
@@ -33,6 +36,45 @@ const WIZARD_STEPS = [
   { id: "reader-preferences", title: "Reader Preferences" },
   { id: "review", title: "Review & Submit" },
 ];
+
+export const flagsAssessmentSchema = z
+  .array(
+    z.object({
+      flag: z.string(),
+      description: z.string(),
+      units_of_assessment: z.array(
+        z.object({
+          title: z.string(),
+          student_submission_deadline: z.coerce.date(),
+          marker_submission_deadline: z.coerce.date(),
+          weight: z.number(),
+          allowed_marker_types: z
+            .array(
+              z.union([z.literal("supervisor"), z.literal("reader")], {
+                errorMap(err) {
+                  if (err.code === "invalid_union") {
+                    return {
+                      message: "Values must be either supervisor or reader",
+                    };
+                  } else return { message: err.message ?? "freaky error" };
+                },
+              }),
+            )
+            .refine((arr) => arr.length === new Set(arr).size, {
+              message: "no duplicate values",
+            }),
+          assessment_criteria: z.array(
+            z.object({
+              title: z.string(),
+              description: z.string(),
+              weight: z.number(),
+            }),
+          ),
+        }),
+      ),
+    }),
+  )
+  .min(1);
 
 function buildWizardSchema(takenNames: Set<string> = new Set()) {
   return z
@@ -46,19 +88,17 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
         }),
 
       // flags and assessment
-      flags: z.array(
-        z.object({
-          title: z.string().min(3, "Please enter a valid title"),
-          description: z.string().min(3, "Please enter a valid description"),
-        }),
-      ),
+      flags: flagsAssessmentSchema,
 
       // project tags
-      tags: z.array(
-        z.object({ title: z.string().min(2, "Please enter a valid title") }),
-      ),
+      tags: z
+        .array(
+          z.object({ title: z.string().min(2, "Please enter a valid title") }),
+        )
+        .min(1, "You must provide at least one flag"),
 
       // deadlines
+      //deadlines should validate after input
       projectSubmissionDeadline: z.date({
         required_error: "Please select a project submission deadline",
       }),
@@ -80,6 +120,7 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
         })
         .int({ message: "Number must be an integer" })
         .positive(),
+
       maxStudentPreferences: z.coerce
         .number({
           invalid_type_error: "Please enter an integer",
@@ -87,6 +128,7 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
         })
         .int({ message: "Number must be an integer" })
         .positive(),
+
       maxStudentPreferencesPerSupervisor: z.coerce
         .number({
           invalid_type_error: "Please enter an integer",
@@ -103,6 +145,7 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
         })
         .int({ message: "Number must be an integer" })
         .positive(),
+
       maxReaderPreferences: z.coerce
         .number({
           invalid_type_error: "Please enter an integer",
@@ -168,7 +211,7 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
     );
 }
 
-type WizardFormData = z.infer<ReturnType<typeof buildWizardSchema>>;
+export type WizardFormData = z.infer<ReturnType<typeof buildWizardSchema>>;
 
 function StepIndicator({ currentStep }: { currentStep: number }) {
   return (
@@ -271,6 +314,7 @@ function BasicDetailsPage() {
 
 function FlagsAssessmentPage() {
   /**
+   * TODO hook up visual component (i.e. re-write with form control)
    * need to create a bridge between the store and form
    * can add an effect that syncs data between them ?
    *
@@ -285,22 +329,12 @@ function FlagsAssessmentPage() {
       title="Flags & Assessment Configuration"
       description="Configure flags to categorize students and define assessments for each flag."
     >
-      <p>hello</p>
+      <UploadJsonArea />
     </WizardPage>
   );
 }
 
 function ProjectTagsPage() {
-  const { control, setValue, watch } = useFormContext<WizardFormData>();
-  const tags = watch("tags") || [];
-
-  const tagStrings = tags.map((tag: { title: string }) => tag.title);
-
-  function handleTagsChange(newTags: string[]) {
-    const tagObjects = newTags.map((title) => ({ title }));
-    setValue("tags", tagObjects, { shouldValidate: true });
-  }
-
   return (
     <WizardPage
       title="Project Keywords"
@@ -311,8 +345,6 @@ function ProjectTagsPage() {
           label="Project Keywords"
           description="Add keywords that supervisors can use to categorise their projects. These help students find relevant projects."
           placeholder="Add a keyword and press Enter"
-          defaultTags={tagStrings}
-          onChange={handleTagsChange}
         />
 
         <div className="mt-6 rounded-md bg-muted p-4">
@@ -590,31 +622,129 @@ function ReaderPreferencesPage() {
 }
 
 function ReviewPage() {
+  const form = useFormContext<WizardFormData>();
+  const formData = form.getValues();
   return (
     <WizardPage
       title="Review & Submit"
       description="Review your settings and create your allocation instance."
     >
-      <div className="py-8 text-center text-muted-foreground">
-        [Summary of all settings will go here]
+      <div className="flex flex-col items-start justify-start gap-4">
+        <div>
+          <p className="text-sm text-muted-foreground">Display Name</p>
+          <p>{formData.displayName}</p>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">Flags</p>
+          <p>
+            {formData.flags.map((f) => (
+              <div key={f.flag}>
+                <p className="font-semibold">{f.flag}</p>
+                <p>{f.description}</p>
+                <div>
+                  {f.units_of_assessment.map((u) => (
+                    <div key={`${f.flag}-${u.title}`} className="pl-6">
+                      <p className="font-semibold">{u.title}</p>
+                      <p>weight: {u.weight}</p>
+                      <p>
+                        allowed marker types:{" "}
+                        {u.allowed_marker_types.join(", ")}
+                      </p>
+                      <p>
+                        <span>Student Submission Deadline: </span>
+                        {format(
+                          u.student_submission_deadline,
+                          "dd MMM yyyy - HH:mm",
+                        )}
+                      </p>
+                      <p>
+                        <span>Marker Submission Deadline: </span>
+                        {format(
+                          u.marker_submission_deadline,
+                          "dd MMM yyyy - HH:mm",
+                        )}
+                      </p>
+                      <div className="pl-6">
+                        {u.assessment_criteria.map((c) => (
+                          <div
+                            className="pl-6"
+                            key={`${f.flag}-${u.title}-${c.title}`}
+                          >
+                            <p className="font-semibold">{c.title}</p>
+                            <p>{c.description}</p>
+                            <p>{c.weight}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">Tags</p>
+          <div className="flex flex-wrap gap-2">
+            {formData.tags.map((t, i) => (
+              <Badge variant="accent" key={i}>
+                {t.title}
+              </Badge>
+            ))}
+          </div>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">Deadlines</p>
+          <p>
+            Project Submission:
+            {format(formData.projectSubmissionDeadline, "dd MMM yyyy - HH:mm")}
+          </p>
+          <p>
+            Student Preference Submission:
+            {format(
+              formData.studentPreferenceSubmissionDeadline,
+              "dd MMM yyyy - HH:mm ",
+            )}
+          </p>
+          <p>
+            Reader Preference Submission:
+            {format(
+              formData.readerPreferenceSubmissionDeadline,
+              "dd MMM yyyy - HH:mm ",
+            )}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">
+            Student Preference Restrictions
+          </p>
+          <p>min: {formData.minStudentPreferences}</p>
+          <p>max: {formData.maxStudentPreferences}</p>
+          <p>
+            max per supervisor: {formData.maxStudentPreferencesPerSupervisor}
+          </p>
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">
+            Reader Preference Restrictions
+          </p>
+          <p>min: {formData.minReaderPreferences}</p>
+          <p>max: {formData.maxReaderPreferences}</p>
+        </div>
       </div>
     </WizardPage>
   );
 }
 
-type InstanceWizardProps = {
-  onSubmit: (data: WizardFormData) => Promise<void>;
-  onCancel: () => void;
-  defaultValues?: Partial<WizardFormData>;
-  takenNames?: Set<string>;
-};
-
 export function InstanceWizard({
   onSubmit,
-  onCancel,
-  defaultValues = {},
+  defaultValues,
   takenNames = new Set(),
-}: InstanceWizardProps) {
+}: {
+  onSubmit: (data: WizardFormData) => Promise<void>;
+  defaultValues: WizardFormData;
+  takenNames: Set<string>;
+}) {
   const [currentStep, setCurrentStep] = useState(0);
 
   const wizardSchema = buildWizardSchema(takenNames);
@@ -622,13 +752,18 @@ export function InstanceWizard({
   const methods = useForm<WizardFormData>({
     resolver: zodResolver(wizardSchema),
     defaultValues,
-    mode: "onChange",
   });
 
   async function handleNext() {
     if (currentStep === WIZARD_STEPS.length - 1) {
-      const result = await methods.trigger();
-      if (result) await onSubmit(methods.getValues());
+      await methods.trigger();
+      if (methods.formState.isValid) {
+        console.log("submitting form");
+        methods.handleSubmit(async (data) => {
+          console.log("hello from inside the submit function");
+          return onSubmit(data);
+        })();
+      }
       return;
     }
 
@@ -638,7 +773,7 @@ export function InstanceWizard({
       case 0:
         fieldsToValidate = ["displayName"];
         break;
-      case 2:
+      case 1:
         fieldsToValidate = ["flags"];
         break;
       case 2:
@@ -663,8 +798,13 @@ export function InstanceWizard({
         break;
     }
 
-    const result = await methods.trigger(fieldsToValidate);
-    if (result) {
+    await methods.trigger(fieldsToValidate);
+
+    const valid = fieldsToValidate.every(
+      (val) => !methods.getFieldState(val).invalid,
+    );
+
+    if (valid) {
       setCurrentStep((prev) => Math.min(prev + 1, WIZARD_STEPS.length - 1));
     }
   }
@@ -694,8 +834,8 @@ export function InstanceWizard({
                   </Button>
                 )}
                 {currentStep === 0 && (
-                  <Button type="button" variant="outline" onClick={onCancel}>
-                    Cancel
+                  <Button type="button" size="lg" variant="outline" asChild>
+                    <Link href="./settings">Cancel</Link>
                   </Button>
                 )}
               </div>

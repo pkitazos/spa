@@ -55,7 +55,7 @@ type TEMPMarkingFormData = {
   submissionId: string;
   studentId: string;
   marks: {
-    assessmentComponentId: string;
+    assessmentCriterionId: string;
     mark: number;
     justification: string;
   }[];
@@ -66,7 +66,7 @@ type TEMPMarkingFormData = {
 
 type TEMPMarkingFormData2 = {
   marks: {
-    assessmentComponentId: string;
+    assessmentCriterionId: string;
     mark: number;
     justification: string;
   }[];

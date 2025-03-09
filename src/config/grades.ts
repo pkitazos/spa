@@ -1,3 +1,5 @@
+import { GradingResult } from "@/dto/result/grading-result";
+
 export const GRADES = [
   { label: "A1", value: 22 },
   { label: "A2", value: 21 },
@@ -24,8 +26,69 @@ export const GRADES = [
   { label: "H", value: 0 },
 ];
 
-export function computeGrade(mark: number): string {
-  const grade = GRADES.find((g) => g.value === Math.ceil(mark));
-  if (!grade) throw new Error(`Computed mark not valid: ${mark}`);
-  return grade.label;
+export class Grade {
+  public static toLetter(mark: number): string {
+    const grade = GRADES.find((g) => g.value === Math.ceil(mark));
+    if (!grade) throw new Error(`Computed mark not valid: ${mark}`);
+    return grade.label;
+  }
+
+  public static toInt(grade: string): number {
+    const gradeObj = GRADES.find((g) => g.label === grade);
+    if (!gradeObj) throw new Error(`Grade not valid: ${grade}`);
+    return gradeObj.value;
+  }
+
+  public static getBand(grade: string): string {
+    if (!GRADES.map((g) => g.label).includes(grade)) {
+      throw new Error(`Grade not valid: ${grade}`);
+    }
+    return grade[0];
+  }
+
+  public static haveBandDifference(grade1: string, grade2: string): boolean {
+    return this.getBand(grade1) === this.getBand(grade2);
+  }
+
+  public static isOnBoundary(grade: string): boolean {
+    return ["A1", "H"].includes(grade);
+  }
+
+  public static average(grade1: string, grade2: string): string {
+    const grade1Value = this.toInt(grade1);
+    const grade2Value = this.toInt(grade2);
+    const average = Math.ceil((grade1Value + grade2Value) / 2);
+    return this.toLetter(average);
+  }
+}
+
+export function autoResolve(supervisorGrade: string, readerGrade: string) {
+  if (Grade.haveBandDifference(supervisorGrade, readerGrade)) {
+    return { status: GradingResult.MODERATE };
+  }
+
+  const supervisorValue = Grade.toInt(supervisorGrade);
+  const readerValue = Grade.toInt(readerGrade);
+  const diff = Math.abs(supervisorValue - readerValue);
+
+  if (diff <= 1) {
+    if (Grade.isOnBoundary(supervisorGrade)) {
+      return { status: GradingResult.MODERATE };
+    } else {
+      return { status: GradingResult.AUTO_RESOLVED, grade: supervisorGrade };
+    }
+  }
+
+  if (diff <= 2) {
+    const average = Math.ceil((supervisorValue + readerValue) / 2);
+    const averageGrade = Grade.toLetter(average);
+
+    if (Grade.isOnBoundary(averageGrade)) {
+      return { status: GradingResult.MODERATE };
+    } else {
+      return { status: GradingResult.AUTO_RESOLVED, grade: averageGrade };
+    }
+  }
+
+  return { status: GradingResult.MODERATE };
 }

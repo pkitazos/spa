@@ -20,6 +20,7 @@ model Algorithm {
     flag1                AlgorithmFlag      @map("flag_1")
     flag2                AlgorithmFlag?     @map("flag_2")
     flag3                AlgorithmFlag?     @map("flag_3")
+    builtIn              Boolean            @default(false)
     // ---
     matchingResult       MatchingResult?    @relation(map: "alg_config_in_instance")
     // ---

@@ -5,7 +5,7 @@ import { api } from "@/lib/trpc/server";
 export default async function Page({ params }: { params: PageParams }) {
   const data = await api.institution.instance.getMarkerSubmissions({
     params,
-    gradedSubmissionId: params.id,
+    unitOfAssessmentId: params.id,
   });
 
   return (

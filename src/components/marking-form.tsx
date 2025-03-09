@@ -34,7 +34,7 @@ import { GRADES } from "@/config/grades";
 
 type TEMPMarkingFormData2 = {
   marks: {
-    assessmentComponentId: string;
+    assessmentCriterionId: string;
     mark: number;
     justification: string;
   }[];

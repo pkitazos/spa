@@ -36,10 +36,10 @@ export default async function Page({ params }: { params: InstanceParams }) {
             role:
               p.markerType === MarkerType.SUPERVISOR ? "Supervisor" : "Reader",
 
-            submissions: p.gradedSubmissions.map((s) => ({
+            submissions: p.unitsOfAssessment.map((s) => ({
               id: s.id,
               title: s.title,
-              dueDate: format(s.deadline, "MM/dd/yy"),
+              dueDate: format(s.markerSubmissionDeadline, "MM/dd/yy"),
               status: "not_open",
             })),
           }))}

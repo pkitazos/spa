@@ -6,7 +6,7 @@ import { InstanceParams } from "@/lib/validations/params";
 import algs from "./data/Algorithm.json";
 import flags from "./data/Flag.json";
 import tags from "./data/Tag.json";
-import { algorithmFlagSchema } from "@/dto";
+import { algorithmFlagSchema, builtInAlgorithms } from "@/dto";
 import { DB_Algorithm } from "../types";
 import { addHours } from "date-fns";
 
@@ -62,6 +62,10 @@ export async function tags_flags_algs(
               flag2: x.flag_2 ? algorithmFlagSchema.parse(x.flag_2) : null,
               flag3: x.flag_3 ? algorithmFlagSchema.parse(x.flag_3) : null,
               maxRank: x.max_rank,
+              builtIn:
+                builtInAlgorithms.findIndex(
+                  (a) => a.displayName === x.display_name,
+                ) !== -1,
               targetModifier: x.target_modifier,
               upperBoundModifier: x.upper_bound_modifier,
               createdAt: addHours(new Date(), i),

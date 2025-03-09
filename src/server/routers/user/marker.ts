@@ -1,6 +1,9 @@
 import { markerTypeSchema, Stage } from "@/db/types";
-import { projectDtoSchema, studentDtoSchema } from "@/dto";
-import { gradedSubmissionDtoSchema } from "@/dto";
+import {
+  projectDtoSchema,
+  studentDtoSchema,
+  unitOfAssessmentSchema,
+} from "@/dto";
 import { expand } from "@/lib/utils/general/instance-params";
 import { subsequentStages } from "@/lib/utils/permissions/stage-check";
 import { procedure } from "@/server/middleware";
@@ -16,7 +19,7 @@ export const markerRouter = createTRPCRouter({
           project: projectDtoSchema,
           student: studentDtoSchema,
           markerType: markerTypeSchema,
-          gradedSubmissions: z.array(gradedSubmissionDtoSchema),
+          unitsOfAssessment: z.array(unitOfAssessmentSchema),
         }),
       ),
     )
@@ -33,7 +36,7 @@ export const markerRouter = createTRPCRouter({
         studentId: z.string(),
         marks: z.array(
           z.object({
-            assessmentComponentId: z.string(),
+            assessmentCriterionId: z.string(),
             mark: z.number(),
             justification: z.string(),
           }),
@@ -72,7 +75,7 @@ export const markerRouter = createTRPCRouter({
               justification: m.justification,
               draft,
               markerType,
-              assessmentComponentId: m.assessmentComponentId,
+              assessmentCriterionId: m.assessmentCriterionId,
             })),
             skipDuplicates: true,
           }),

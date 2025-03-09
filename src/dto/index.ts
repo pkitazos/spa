@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { subsequentStages } from "@/lib/utils/permissions/stage-check";
 
-import { AlgorithmFlag, MarkerType, Stage, stageSchema } from "@/db/types";
+import { AlgorithmFlag, MarkerType, New, Stage, stageSchema } from "@/db/types";
 import { matchingResultDtoSchema } from "@/lib/validations/matching";
 import {
   GenerousAlgorithm,
@@ -116,6 +116,7 @@ export const algorithmDtoSchema = z.object({
   displayName: z.string(),
   createdAt: z.date(),
   description: z.string().optional(),
+  builtIn: z.boolean(),
   flag1: algorithmFlagSchema,
   flag2: algorithmFlagSchema.optional(),
   flag3: algorithmFlagSchema.optional(),
@@ -126,19 +127,10 @@ export const algorithmDtoSchema = z.object({
 
 export type AlgorithmDTO = z.infer<typeof algorithmDtoSchema>;
 
-export const gradedSubmissionDtoSchema = z.object({
+export const assessmentCriterionDtoSchema = z.object({
   id: z.string(),
   flagId: z.string(),
-  title: z.string(),
-  deadline: z.date(),
-  weight: z.number(),
-});
-
-export type GradedSubmissionDTO = z.infer<typeof gradedSubmissionDtoSchema>;
-
-export const assessmentComponentDtoSchema = z.object({
-  flagId: z.string(),
-  submissionId: z.string(),
+  unitOfAssessmentId: z.string(),
   title: z.string(),
   description: z.string(),
   weight: z.number(),
@@ -146,9 +138,22 @@ export const assessmentComponentDtoSchema = z.object({
   markerType: z.nativeEnum(MarkerType),
 });
 
-export type AssessmentComponentDTO = z.infer<
-  typeof assessmentComponentDtoSchema
+export type AssessmentCriterionDTO = z.infer<
+  typeof assessmentCriterionDtoSchema
 >;
+
+export const unitOfAssessmentSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  studentSubmissionDeadline: z.date(),
+  markerSubmissionDeadline: z.date(),
+  weight: z.number(),
+  isOpen: z.boolean(),
+  components: z.array(assessmentCriterionDtoSchema),
+  flag: flagDtoSchema,
+});
+
+export type UnitOfAssessmentDTO = z.infer<typeof unitOfAssessmentSchema>;
 
 export const submissionMarkerGradeDtoSchema = z.object({
   gradedSubmissionId: z.string(),
@@ -287,18 +292,28 @@ export const algorithmResultDtoSchema = z.object({
 
 export type AlgorithmResultDTO = z.infer<typeof algorithmResultDtoSchema>;
 
-export const builtInAlgorithms: AlgorithmDTO[] = [
+export const builtInAlgorithms: New<AlgorithmDTO>[] = [
   GenerousAlgorithm,
   GreedyAlgorithm,
   MinCostAlgorithm,
   GreedyGenAlgorithm,
 ];
 
-export const builtInAlgSchema = z.enum([
-  GenerousAlgorithm.id,
-  GreedyAlgorithm.id,
-  MinCostAlgorithm.id,
-  GreedyGenAlgorithm.id,
-]);
+export const newUnitOfAssessmentSchema = z.object({
+  title: z.string(),
+  studentSubmissionDeadline: z.date(),
+  markerSubmissionDeadline: z.date(),
+  weight: z.number(),
+  isOpen: z.boolean(),
+  components: z.array(
+    z.object({
+      title: z.string(),
+      weight: z.number(),
+      description: z.string(),
+      layoutIndex: z.number(),
+      markerType: z.union([z.literal("SUPERVISOR"), z.literal("READER")]),
+    }),
+  ),
+});
 
-export type BuiltInAlg = z.infer<typeof builtInAlgSchema>;
+export type NewUnitOfAssessmentDTO = z.infer<typeof newUnitOfAssessmentSchema>;

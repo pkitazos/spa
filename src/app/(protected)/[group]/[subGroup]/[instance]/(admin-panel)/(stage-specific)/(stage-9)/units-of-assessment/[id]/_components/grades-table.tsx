@@ -12,7 +12,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -24,6 +23,8 @@ import {
 } from "@/components/ui/table";
 import { columns } from "./grades-columns";
 import { ProjectDTO, ReaderDTO, StudentDTO, SupervisorDTO } from "@/dto";
+import { CircleCheckIcon } from "@/components/icons/circle-check";
+import { CircleXIcon } from "@/components/icons/circle-x";
 
 export function GradesTable({
   data,
@@ -125,7 +126,7 @@ export function GradesTable({
 
 export function StatusIcon({ status }: { status: boolean }) {
   if (status) {
-    return <Check className="h-4 w-4 text-green-500" />;
+    return <CircleCheckIcon className="h-4 w-4 text-green-500" />;
   }
-  return <X className="h-4 w-4 text-red-500" />;
+  return <CircleXIcon className="h-4 w-4 text-red-500" />;
 }

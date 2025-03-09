@@ -33,8 +33,7 @@ export default async function Page({ params }: { params: SubGroupParams }) {
       {/* <Heading className="text-4xl">
         Create new {spacesLabels.instance.full}
       </Heading> */}
-      <WizardSection />
-      {/* <CreateInstanceForm params={params} takenNames={takenNames} /> */}
+      <WizardSection params={params} takenNames={takenNames} />
     </div>
   );
 }

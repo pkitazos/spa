@@ -1,15 +1,16 @@
 // MOVE these to some other file
 
-import { GradedSubmissionDTO } from "@/dto";
+import { AssessmentCriterionDTO, UnitOfAssessmentDTO } from "@/dto";
 import {
   DB_Algorithm,
   DB_AllocationGroup,
   DB_AllocationInstance,
   DB_AllocationSubGroup,
+  DB_AssessmentCriterion,
   DB_Flag,
   DB_FlagOnProject,
   DB_FlagOnStudent,
-  DB_GradedSubmission,
+  DB_UnitOfAssessment,
   DB_Project,
   DB_ReaderDetails,
   DB_StudentDetails,
@@ -178,18 +179,40 @@ export class Transformers {
       maxRank: a.maxRank,
       targetModifier: a.targetModifier,
       upperBoundModifier: a.upperBoundModifier,
+      builtIn: a.builtIn,
     };
   }
 
-  public static toGradedSubmissionDTO(
-    data: DB_GradedSubmission,
-  ): GradedSubmissionDTO {
+  public static toAssessmentComponentDTO(
+    data: DB_AssessmentCriterion,
+  ): AssessmentCriterionDTO {
+    return {
+      id: data.id,
+      flagId: data.flagId,
+      unitOfAssessmentId: data.unitOfAssessmentId,
+      title: data.title,
+      description: data.description,
+      weight: data.weight,
+      layoutIndex: data.layoutIndex,
+      markerType: data.markerType,
+    };
+  }
+
+  public static toUnitOfAssessmentDTO(
+    data: DB_UnitOfAssessment & {
+      flag: DB_Flag;
+      assessmentCriteria: DB_AssessmentCriterion[];
+    },
+  ): UnitOfAssessmentDTO {
     return {
       id: data.id,
       title: data.title,
-      flagId: data.flagId,
+      flag: this.toFlagDTO(data.flag),
+      components: data.assessmentCriteria.map(this.toAssessmentComponentDTO),
+      studentSubmissionDeadline: data.studentSubmissionDeadline,
+      markerSubmissionDeadline: data.markerSubmissionDeadline,
       weight: data.weight,
-      deadline: data.deadline,
+      isOpen: data.open,
     };
   }
 }

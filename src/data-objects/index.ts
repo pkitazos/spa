@@ -28,6 +28,8 @@ import {
   SupervisorDTO,
   AlgorithmDTO,
   builtInAlgorithms,
+  NewUnitOfAssessmentDTO,
+  UnitOfAssessmentDTO,
 } from "@/dto/";
 
 import {
@@ -64,7 +66,6 @@ import {
 import { AlgorithmInstanceParams } from "@/lib/validations/params";
 import { executeMatchingAlgorithm } from "@/server/routers/institution/instance/algorithm/_utils/execute-matching-algorithm";
 import { Transformers } from "@/db/transformers";
-import { GradedSubmissionDTO } from "@/dto";
 import { sortPreferenceType } from "@/lib/utils/sorting/by-preference-type";
 import { ProjectPreferenceCardDto } from "@/lib/validations/board";
 import { updatePreferenceTransaction } from "@/db/transactions/update-preference";
@@ -568,12 +569,12 @@ export class AllocationSubGroup extends DataObject {
   }
 
   public async createInstance({
-    newInstance,
+    newInstance: { group, subGroup, ...newInstance },
     flags,
     tags,
   }: {
     newInstance: Omit<InstanceDTO, "instance">;
-    flags: New<FlagDTO>[];
+    flags: (New<FlagDTO> & { unitsOfAssessment: NewUnitOfAssessmentDTO[] })[];
     tags: New<TagDTO>[];
   }) {
     const instanceSlug = slugify(newInstance.displayName);
@@ -585,13 +586,19 @@ export class AllocationSubGroup extends DataObject {
         data: { ...toInstanceId(params), ...newInstance },
       });
 
-      await tx.flag.createMany({
+      const flagData = await tx.flag.createManyAndReturn({
         data: flags.map((f) => ({
           ...expand(params),
           title: f.title,
           description: f.description,
         })),
+        skipDuplicates: true,
       });
+
+      const flagTitleToId = flagData.reduce(
+        (acc, val) => ({ ...acc, [val.title]: val.id }),
+        {} as Record<string, string>,
+      );
 
       await tx.tag.createMany({
         data: tags.map((t) => ({ ...expand(params), title: t.title })),
@@ -599,6 +606,42 @@ export class AllocationSubGroup extends DataObject {
 
       await tx.algorithm.createMany({
         data: builtInAlgorithms.map((alg) => ({ ...expand(params), ...alg })),
+      });
+
+      const units = await tx.unitOfAssessment.createManyAndReturn({
+        data: flags.flatMap((f) =>
+          f.unitsOfAssessment.map((a) => ({
+            ...expand(params),
+            flagId: flagTitleToId[f.title],
+            title: a.title,
+            weight: a.weight,
+            studentSubmissionDeadline: a.studentSubmissionDeadline,
+            markerSubmissionDeadline: a.markerSubmissionDeadline,
+          })),
+        ),
+      });
+
+      const unitTitleToId = units.reduce(
+        (acc, val) => ({ ...acc, [`${val.flagId}${val.title}`]: val.id }),
+        {} as Record<string, string>,
+      );
+
+      await tx.assessmentCriterion.createMany({
+        data: flags.flatMap((f) =>
+          f.unitsOfAssessment.flatMap((u) =>
+            u.components.map((c) => ({
+              ...expand(params),
+              flagId: flagTitleToId[f.title],
+              unitOfAssessmentId:
+                unitTitleToId[`${flagTitleToId[f.title]}${u.title}`],
+              title: c.title,
+              description: c.description,
+              weight: c.weight,
+              layoutIndex: c.layoutIndex,
+              markerType: c.markerType,
+            })),
+          ),
+        ),
       });
     });
   }
@@ -1697,21 +1740,21 @@ export class Marker extends User {
       project: ProjectDTO;
       student: StudentDTO;
       markerType: MarkerType;
-      gradedSubmissions: GradedSubmissionDTO[];
+      unitsOfAssessment: UnitOfAssessmentDTO[];
     }[]
   > {
     type Ret = {
       project: ProjectDTO;
       student: StudentDTO;
       markerType: MarkerType;
-      gradedSubmissions: GradedSubmissionDTO[];
+      unitsOfAssessment: UnitOfAssessmentDTO[];
     };
 
     let assignedProjects: {
       project: ProjectDTO;
       student: StudentDTO;
       markerType: MarkerType;
-      gradedSubmissions: GradedSubmissionDTO[];
+      unitsOfAssessment: UnitOfAssessmentDTO[];
     }[] = [];
 
     if (await this.isSupervisor(this.instance.params)) {
@@ -1722,7 +1765,15 @@ export class Marker extends User {
             include: {
               userInInstance: { include: { user: true } },
               studentFlags: {
-                include: { flag: { include: { gradedSubmissions: true } } },
+                include: {
+                  flag: {
+                    include: {
+                      unitsOfAssessment: {
+                        include: { assessmentCriteria: true, flag: true },
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -1741,8 +1792,8 @@ export class Marker extends User {
             project: T.toProjectDTO(a.project),
             student: T.toStudentDTO(a.student),
             markerType: MarkerType.SUPERVISOR,
-            gradedSubmissions: f.flag.gradedSubmissions.map((x) =>
-              T.toGradedSubmissionDTO(x),
+            unitsOfAssessment: f.flag.unitsOfAssessment.map((x) =>
+              T.toUnitOfAssessmentDTO(x),
             ),
           })),
         ),
@@ -1757,7 +1808,15 @@ export class Marker extends User {
             include: {
               userInInstance: { include: { user: true } },
               studentFlags: {
-                include: { flag: { include: { gradedSubmissions: true } } },
+                include: {
+                  flag: {
+                    include: {
+                      unitsOfAssessment: {
+                        include: { assessmentCriteria: true, flag: true },
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -1777,8 +1836,8 @@ export class Marker extends User {
               project: T.toProjectDTO(a.project),
               student: T.toStudentDTO(a.student),
               markerType: MarkerType.READER,
-              gradedSubmissions: f.flag.gradedSubmissions.map((x) =>
-                T.toGradedSubmissionDTO(x),
+              unitsOfAssessment: f.flag.unitsOfAssessment.map((x) =>
+                T.toUnitOfAssessmentDTO(x),
               ),
             }) satisfies Ret,
         ),
@@ -2001,7 +2060,15 @@ export class Reader extends Marker {
           include: {
             userInInstance: { include: { user: true } },
             studentFlags: {
-              include: { flag: { include: { gradedSubmissions: true } } },
+              include: {
+                flag: {
+                  include: {
+                    unitsOfAssessment: {
+                      include: { assessmentCriteria: true, flag: true },
+                    },
+                  },
+                },
+              },
             },
           },
         },

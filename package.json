@@ -10,15 +10,14 @@
     "tc": "tsc",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
+    "db:generate:push": "pnpm run db:generate && pnpm run db:push",
     "db:studio": "prisma studio",
     "db:push": "eval $(grep '^DATABASE_URL' .env) && prisma db push",
     "db:drop": "eval $(grep '^DATABASE_URL' .env) && prisma migrate reset",
-    "db:populate": "pnpm run db:push --force-reset && eval $(grep '^DATABASE_URL' .env) && tsx src/lib/scripts/seed.ts",
+    "db:seed": "eval $(grep '^DATABASE_URL' .env) && tsx src/db/seed.ts",
     "docker:db": "docker compose -f docker/docker-compose.yml up -d",
     "docker:prod": "docker compose -f docker/docker-compose.yml -f docker/docker-compose.prod.override.yml up -d",
-    "dev:patch": "tsx src/db/scripts/patch.ts",
-    "dev:seed": "tsx src/db/seed.ts",
-    "schema:change": "pnpm run db:generate && pnpm run db:push"
+    "dev:patch": "tsx src/db/scripts/patch.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",

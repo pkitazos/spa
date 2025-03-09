@@ -113,6 +113,11 @@ export const PAGES = {
     href: "supervisor-tasks",
     icon: "list-checks",
   },
+  unitsOfAssessment: {
+    title: "Units of Assessment",
+    href: "units-of-assessment",
+    icon: "file-check-2",
+  },
 
   allProjects: { title: "All Projects", href: "projects" },
 
