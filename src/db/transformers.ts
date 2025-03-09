@@ -154,8 +154,8 @@ export class Transformers {
       capacityLowerBound: data.capacityLowerBound,
       capacityUpperBound: data.capacityUpperBound,
       supervisorId: data.supervisorId,
-      flags: data.flagsOnProject.map((f) => this.toFlagDTO(f.flag)),
-      tags: data.tagsOnProject.map((t) => this.toTagDTO(t.tag)),
+      flags: data.flagsOnProject.map((f) => Transformers.toFlagDTO(f.flag)),
+      tags: data.tagsOnProject.map((t) => Transformers.toTagDTO(t.tag)),
     };
   }
 
@@ -207,8 +207,10 @@ export class Transformers {
     return {
       id: data.id,
       title: data.title,
-      flag: this.toFlagDTO(data.flag),
-      components: data.assessmentCriteria.map(this.toAssessmentComponentDTO),
+      flag: Transformers.toFlagDTO(data.flag),
+      components: data.assessmentCriteria.map(
+        Transformers.toAssessmentComponentDTO,
+      ),
       studentSubmissionDeadline: data.studentSubmissionDeadline,
       markerSubmissionDeadline: data.markerSubmissionDeadline,
       weight: data.weight,

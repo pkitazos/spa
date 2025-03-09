@@ -23,6 +23,7 @@ import { Role, Stage } from "@/db/types";
 import { stageSchema } from "@/db/types";
 
 import {
+  FlagDTO,
   flagDtoSchema,
   instanceDtoSchema,
   projectDtoSchema,
@@ -32,6 +33,7 @@ import {
   SupervisorDTO,
   supervisorDtoSchema,
   tagDtoSchema,
+  UnitOfAssessmentDTO,
   unitOfAssessmentSchema,
 } from "@/dto";
 import {
@@ -722,13 +724,50 @@ export const instanceRouter = createTRPCRouter({
 
   getAllUnitsOfAssessment: procedure.instance
     .inStage([Stage.MARK_SUBMISSION])
-    .subGroupAdmin.output(z.array(unitOfAssessmentSchema))
+    .subGroupAdmin.output(
+      z.array(
+        z.object({
+          flag: flagDtoSchema,
+          units: z.array(unitOfAssessmentSchema),
+        }),
+      ),
+    )
     .query(async ({ ctx: { instance, db } }) => {
       const unitsOfAssessment = await db.unitOfAssessment.findMany({
         where: expand(instance.params),
         include: { assessmentCriteria: true, flag: true },
+        orderBy: [{ markerSubmissionDeadline: "asc" }],
       });
 
-      return unitsOfAssessment.map(T.toUnitOfAssessmentDTO);
+      // @JakeTrevor Something seems to break the sort order after I update the open state of a unit of assessment
+      // I think it's the Object.values, but I'm not sure
+      return Object.values(
+        unitsOfAssessment.reduce(
+          (acc, unit) => {
+            const flagTitle = unit.flag.title;
+
+            if (!acc[flagTitle]) {
+              acc[flagTitle] = { flag: T.toFlagDTO(unit.flag), units: [] };
+            }
+
+            acc[flagTitle].units.push(T.toUnitOfAssessmentDTO(unit));
+            return acc;
+          },
+          {} as Record<string, { flag: FlagDTO; units: UnitOfAssessmentDTO[] }>,
+        ),
+      );
+    }),
+
+  setUnitOfAssessmentAccess: procedure.instance
+    .inStage([Stage.MARK_SUBMISSION])
+    .subGroupAdmin.input(
+      z.object({ unitOfAssessmentId: z.string(), open: z.boolean() }),
+    )
+    .output(z.void())
+    .mutation(async ({ ctx: { db }, input: { unitOfAssessmentId, open } }) => {
+      await db.unitOfAssessment.update({
+        where: { id: unitOfAssessmentId },
+        data: { open },
+      });
     }),
 });
