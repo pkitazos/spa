@@ -22,6 +22,8 @@ import { Badge } from "@/components/ui/badge";
 import TagInput from "./tag-input";
 import { FormWizard, WizardStep } from "../wizard-form";
 
+// TODO these need reset buttons
+
 export const flagsAssessmentSchema = z
   .array(
     z.object({
@@ -78,7 +80,7 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
       // project tags
       tags: z
         .array(
-          z.object({ title: z.string().min(2, "Please enter a valid title") }),
+          z.object({ title: z.string().min(1, "Please enter a valid title") }),
         )
         .min(1, "You must provide at least one flag"),
 

@@ -11,6 +11,7 @@ model UnitOfAssessment {
     studentSubmissionDeadline   DateTime                     @map("student_submission_deadline")
     markerSubmissionDeadline    DateTime                     @map("marker_submission_deadline")
     weight                      Int
+    allowedMarkerTypes          MarkerType[]
     // ---
     allocationGroupId           String                       @map("allocation_group_id")
     allocationSubGroupId        String                       @map("allocation_sub_group_id")
@@ -33,7 +34,6 @@ model AssessmentCriterion {
     description          String
     weight               Int
     layoutIndex          Int                @map("layout_index")
-    markerType           MarkerType         @map("marker_type")
     // ---
     allocationGroupId    String             @map("allocation_group_id")
     allocationSubGroupId String             @map("allocation_sub_group_id")

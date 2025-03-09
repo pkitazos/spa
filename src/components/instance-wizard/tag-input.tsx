@@ -53,6 +53,8 @@ export default function TagInput({
             ) {
               const newTags = [...field.value, { title: inputValue.trim() }];
               field.onChange(newTags);
+              console.log(form.formState.errors);
+
               setInputValue("");
             }
           };
@@ -113,12 +115,8 @@ export default function TagInput({
                   <span className="sr-only">Add tag</span>
                 </Button>
               </div>
-
               <ScrollArea
-                className={cn(
-                  "w-full",
-                  field.value.length > 0 && "max-h-[200px]",
-                )}
+                className={cn("w-full", field.value.length > 0 && "h-[200px]")}
               >
                 <div className="flex flex-wrap gap-2">
                   {field.value.map((tag, index) => (

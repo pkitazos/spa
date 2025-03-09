@@ -45,7 +45,6 @@ import { AlgorithmRunResult } from "@/dto/result/algorithm-run-result";
 
 import { setDiff } from "@/lib/utils/general/set-difference";
 import { RandomAllocationDto } from "@/lib/validations/allocation/data-table-dto";
-import { UpdatedInstance } from "@/lib/validations/instance-form";
 import { SupervisorProjectSubmissionDetails } from "@/lib/validations/supervisor-project-submission-details";
 import { TabType } from "@/lib/validations/tabs";
 
@@ -617,6 +616,7 @@ export class AllocationSubGroup extends DataObject {
             weight: a.weight,
             studentSubmissionDeadline: a.studentSubmissionDeadline,
             markerSubmissionDeadline: a.markerSubmissionDeadline,
+            allowedMarkerTypes: a.allowedMarkerTypes,
           })),
         ),
       });
@@ -638,7 +638,6 @@ export class AllocationSubGroup extends DataObject {
               description: c.description,
               weight: c.weight,
               layoutIndex: c.layoutIndex,
-              markerType: c.markerType,
             })),
           ),
         ),
@@ -724,6 +723,24 @@ export class SubGroupAdmin extends User {
 }
 
 export class AllocationInstance extends DataObject {
+  public async getFlagsWithAssessmentDetails(): Promise<
+    (FlagDTO & { unitsOfAssessment: UnitOfAssessmentDTO[] })[]
+  > {
+    const flagData = await this.db.flag.findMany({
+      where: expand(this.params),
+      include: {
+        unitsOfAssessment: {
+          include: { flag: true, assessmentCriteria: true },
+        },
+      },
+    });
+
+    return flagData.map((f) => ({
+      ...T.toFlagDTO(f),
+      unitsOfAssessment: f.unitsOfAssessment.map(T.toUnitOfAssessmentDTO),
+    }));
+  }
+
   public params: InstanceParams;
   private _group: AllocationGroup | undefined;
   private _subgroup: AllocationSubGroup | undefined;
@@ -1462,17 +1479,27 @@ export class AllocationInstance extends DataObject {
     return projectData.map(T.toProjectDTO);
   }
 
-  public async edit({ flags, tags, ...updatedData }: UpdatedInstance) {
+  public async edit({
+    instance,
+    flags,
+    tags,
+  }: {
+    instance: Omit<
+      InstanceDTO,
+      "stage" | "supervisorAllocationAccess" | "studentAllocationAccess"
+    >;
+    flags: (New<FlagDTO> & { unitsOfAssessment: NewUnitOfAssessmentDTO[] })[];
+    tags: New<TagDTO>[];
+  }) {
     const currentInstanceFlags = await this.db.flag.findMany({
       where: expand(this.params),
     });
 
-    const newInstanceFlags = setDiff(flags, currentInstanceFlags, byTitle);
-    const staleInstanceFlagTitles = setDiff(
-      currentInstanceFlags,
+    const newInstanceFlags = setDiff(
       flags,
+      currentInstanceFlags as New<FlagDTO>[],
       byTitle,
-    ).map(byTitle);
+    );
 
     const currentInstanceTags = await this.db.tag.findMany({
       where: expand(this.params),
@@ -1485,41 +1512,80 @@ export class AllocationInstance extends DataObject {
       byTitle,
     ).map(byTitle);
 
-    await this.db.$transaction([
-      this.db.allocationInstance.update({
+    await this.db.$transaction(async (tx) => {
+      await this.db.allocationInstance.update({
         where: { instanceId: toInstanceId(this.params) },
-        data: updatedData,
-      }),
+        data: instance,
+      });
 
-      this.db.flag.deleteMany({
-        where: {
-          ...expand(this.params),
-          title: { in: staleInstanceFlagTitles },
-        },
-      }),
-
-      this.db.flag.createMany({
+      await this.db.flag.createMany({
         data: newInstanceFlags.map((f) => ({
           ...expand(this.params),
           title: f.title,
-          description: "",
+          description: f.description,
         })),
-      }),
+        skipDuplicates: true,
+      });
 
-      this.db.tag.deleteMany({
+      const flagData = await this.db.flag.findMany({
+        where: expand(this.params),
+      });
+
+      const flagTitleToId = flagData.reduce(
+        (acc, val) => ({ ...acc, [val.title]: val.id }),
+        {} as Record<string, string>,
+      );
+
+      const units = await tx.unitOfAssessment.createManyAndReturn({
+        data: flags.flatMap((f) =>
+          f.unitsOfAssessment.map((a) => ({
+            ...expand(this.params),
+            flagId: flagTitleToId[f.title],
+            title: a.title,
+            weight: a.weight,
+            studentSubmissionDeadline: a.studentSubmissionDeadline,
+            markerSubmissionDeadline: a.markerSubmissionDeadline,
+            allowedMarkerTypes: a.allowedMarkerTypes,
+          })),
+        ),
+      });
+
+      const unitTitleToId = units.reduce(
+        (acc, val) => ({ ...acc, [`${val.flagId}${val.title}`]: val.id }),
+        {} as Record<string, string>,
+      );
+
+      await tx.assessmentCriterion.createMany({
+        data: flags.flatMap((f) =>
+          f.unitsOfAssessment.flatMap((u) =>
+            u.components.map((c) => ({
+              ...expand(this.params),
+              flagId: flagTitleToId[f.title],
+              unitOfAssessmentId:
+                unitTitleToId[`${flagTitleToId[f.title]}${u.title}`],
+              title: c.title,
+              description: c.description,
+              weight: c.weight,
+              layoutIndex: c.layoutIndex,
+            })),
+          ),
+        ),
+      });
+
+      await this.db.tag.deleteMany({
         where: {
           ...expand(this.params),
           title: { in: staleInstanceTagTitles },
         },
-      }),
+      });
 
-      this.db.tag.createMany({
+      await this.db.tag.createMany({
         data: newInstanceTags.map((t) => ({
           ...expand(this.params),
           title: t.title,
         })),
-      }),
-    ]);
+      });
+    });
   }
 
   public async clearAllAlgResults(): Promise<void> {

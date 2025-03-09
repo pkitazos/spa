@@ -24,8 +24,14 @@ const baseSchema = z.object({
 
 export const createdInstanceSchema = baseSchema;
 
+/**
+ * @deprecated
+ */
 export const updatedInstanceSchema = baseSchema.omit({ displayName: true });
 
+/**
+ * @deprecated
+ */
 export type UpdatedInstance = z.infer<typeof updatedInstanceSchema>;
 
 export type ValidatedInstanceDetails = z.infer<typeof baseSchema>;

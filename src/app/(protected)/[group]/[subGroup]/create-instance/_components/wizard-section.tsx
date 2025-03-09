@@ -49,16 +49,15 @@ export function WizardSection({
         studentSubmissionDeadline: a.student_submission_deadline,
         markerSubmissionDeadline: a.marker_submission_deadline,
         isOpen: false,
-        components: a.assessment_criteria.flatMap((x, i) =>
-          a.allowed_marker_types.map((m) => ({
-            description: x.description,
-            title: x.title,
-            weight: x.weight,
-            layoutIndex: i + 1,
-            markerType:
-              m === "supervisor" ? MarkerType.SUPERVISOR : MarkerType.READER,
-          })),
+        allowedMarkerTypes: a.allowed_marker_types.map((t) =>
+          t === "supervisor" ? MarkerType.SUPERVISOR : MarkerType.READER,
         ),
+        components: a.assessment_criteria.flatMap((x, i) => ({
+          description: x.description,
+          title: x.title,
+          weight: x.weight,
+          layoutIndex: i + 1,
+        })),
       })),
     })) satisfies (New<FlagDTO> & {
       unitsOfAssessment: NewUnitOfAssessmentDTO[];

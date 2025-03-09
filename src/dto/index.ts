@@ -135,7 +135,6 @@ export const assessmentCriterionDtoSchema = z.object({
   description: z.string(),
   weight: z.number(),
   layoutIndex: z.number(),
-  markerType: z.nativeEnum(MarkerType),
 });
 
 export type AssessmentCriterionDTO = z.infer<
@@ -151,6 +150,7 @@ export const unitOfAssessmentSchema = z.object({
   isOpen: z.boolean(),
   components: z.array(assessmentCriterionDtoSchema),
   flag: flagDtoSchema,
+  allowedMarkerTypes: z.array(z.nativeEnum(MarkerType)),
 });
 
 export type UnitOfAssessmentDTO = z.infer<typeof unitOfAssessmentSchema>;
@@ -305,13 +305,15 @@ export const newUnitOfAssessmentSchema = z.object({
   markerSubmissionDeadline: z.date(),
   weight: z.number(),
   isOpen: z.boolean(),
+  allowedMarkerTypes: z
+    .union([z.literal("SUPERVISOR"), z.literal("READER")])
+    .array(),
   components: z.array(
     z.object({
       title: z.string(),
       weight: z.number(),
       description: z.string(),
       layoutIndex: z.number(),
-      markerType: z.union([z.literal("SUPERVISOR"), z.literal("READER")]),
     }),
   ),
 });

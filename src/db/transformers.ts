@@ -194,7 +194,6 @@ export class Transformers {
       description: data.description,
       weight: data.weight,
       layoutIndex: data.layoutIndex,
-      markerType: data.markerType,
     };
   }
 
@@ -215,6 +214,7 @@ export class Transformers {
       markerSubmissionDeadline: data.markerSubmissionDeadline,
       weight: data.weight,
       isOpen: data.open,
+      allowedMarkerTypes: data.allowedMarkerTypes,
     };
   }
 }

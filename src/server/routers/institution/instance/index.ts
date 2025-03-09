@@ -1,10 +1,7 @@
 import { z } from "zod";
 
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
-import {
-  forkedInstanceSchema,
-  updatedInstanceSchema,
-} from "@/lib/validations/instance-form";
+import { forkedInstanceSchema } from "@/lib/validations/instance-form";
 import { instanceParamsSchema } from "@/lib/validations/params";
 import { tabGroupSchema } from "@/lib/validations/tabs";
 
@@ -25,6 +22,7 @@ import { stageSchema } from "@/db/types";
 import {
   flagDtoSchema,
   instanceDtoSchema,
+  newUnitOfAssessmentSchema,
   projectDtoSchema,
   ReaderDTO,
   readerDtoSchema,
@@ -183,16 +181,24 @@ export const instanceRouter = createTRPCRouter({
   getEditFormDetails: procedure.instance.subGroupAdmin
     .output(
       z.object({
-        instanceData: instanceDtoSchema,
-        flags: z.array(flagDtoSchema),
+        instance: instanceDtoSchema,
+        flags: z.array(
+          flagDtoSchema.extend({
+            unitsOfAssessment: z.array(unitOfAssessmentSchema),
+          }),
+        ),
         tags: z.array(tagDtoSchema),
       }),
     )
-    .query(async ({ ctx: { instance } }) => ({
-      instanceData: await instance.get(),
-      flags: await instance.getFlags(),
-      tags: await instance.getTags(),
-    })),
+    .query(async ({ ctx: { instance } }) => {
+      const flags = await instance.getFlagsWithAssessmentDetails();
+
+      return {
+        instance: await instance.get(),
+        tags: await instance.getTags(),
+        flags,
+      };
+    }),
 
   supervisors: procedure.instance.user
     .output(z.array(supervisorDtoSchema))
@@ -420,12 +426,30 @@ export const instanceRouter = createTRPCRouter({
     }),
 
   edit: procedure.instance.subGroupAdmin
-    .input(z.object({ updatedInstance: updatedInstanceSchema }))
+    .input(
+      z.object({
+        updatedInstance: instanceDtoSchema.omit({
+          stage: true,
+          supervisorAllocationAccess: true,
+          studentAllocationAccess: true,
+        }),
+        flags: z.array(
+          flagDtoSchema
+            .omit({ id: true })
+            .extend({ unitsOfAssessment: z.array(newUnitOfAssessmentSchema) }),
+        ),
+        tags: z.array(tagDtoSchema.omit({ id: true })),
+      }),
+    )
     .output(z.void())
-    .mutation(async ({ ctx: { instance }, input: { updatedInstance } }) => {
-      // TODO: include units of assessment
-      instance.edit(updatedInstance);
-    }),
+    .mutation(
+      async ({
+        ctx: { instance },
+        input: { updatedInstance, flags, tags },
+      }) => {
+        instance.edit({ flags, tags, instance: updatedInstance });
+      },
+    ),
 
   getHeaderTabs: procedure.user
     .input(z.object({ params: instanceParamsSchema.partial() }))
