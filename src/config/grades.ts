@@ -26,10 +26,12 @@ export const GRADES = [
   { label: "H", value: 0 },
 ];
 
-// @JakeTrevor review
 export class Grade {
   public static toLetter(mark: number): string {
-    const grade = GRADES.find((g) => g.value === Math.ceil(mark));
+    if (mark !== Math.round(mark)) {
+      throw new Error(`Mark must be an integer: ${mark}`);
+    }
+    const grade = GRADES.find((g) => g.value === mark);
     if (!grade) throw new Error(`Computed mark not valid: ${mark}`);
     return grade.label;
   }
@@ -51,14 +53,16 @@ export class Grade {
     return this.getBand(grade1) === this.getBand(grade2);
   }
 
+  // leaving in for future use
   public static isOnBoundary(grade: string): boolean {
     return ["A1", "H"].includes(grade);
   }
 
+  // TODO test/confirm valid behaviour
   public static average(grade1: string, grade2: string): string {
     const grade1Value = this.toInt(grade1);
     const grade2Value = this.toInt(grade2);
-    const average = Math.ceil((grade1Value + grade2Value) / 2);
+    const average = Math.round((grade1Value + grade2Value) / 2);
     return this.toLetter(average);
   }
 
@@ -67,33 +71,25 @@ export class Grade {
       return { status: GradingResult.INSUFFICIENT };
     }
 
-    if (Grade.haveBandDifference(supervisorGrade, readerGrade)) {
-      return { status: GradingResult.MODERATE };
-    }
-
     const supervisorValue = Grade.toInt(supervisorGrade);
     const readerValue = Grade.toInt(readerGrade);
     const diff = Math.abs(supervisorValue - readerValue);
 
     if (diff <= 1) {
-      if (Grade.isOnBoundary(supervisorGrade)) {
-        return { status: GradingResult.MODERATE };
-      } else {
-        return { status: GradingResult.AUTO_RESOLVED, grade: supervisorGrade };
-      }
+      return { status: GradingResult.AUTO_RESOLVED, grade: supervisorGrade };
     }
 
-    if (diff <= 2) {
-      const average = Math.ceil((supervisorValue + readerValue) / 2);
-      const averageGrade = Grade.toLetter(average);
-
-      if (Grade.isOnBoundary(averageGrade)) {
-        return { status: GradingResult.MODERATE };
-      } else {
-        return { status: GradingResult.AUTO_RESOLVED, grade: averageGrade };
-      }
+    if (diff === 2 && !Grade.haveBandDifference(supervisorGrade, readerGrade)) {
+      return {
+        status: GradingResult.AUTO_RESOLVED,
+        grade: Grade.average(supervisorGrade, readerGrade),
+      };
     }
 
-    return { status: GradingResult.MODERATE };
+    if (diff === 2) {
+      return { status: GradingResult.NEGOTIATE1 };
+    }
+
+    return { status: GradingResult.NEGOTIATE2 };
   }
 }

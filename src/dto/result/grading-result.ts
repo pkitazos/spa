@@ -1,12 +1,16 @@
 import { z } from "zod";
 
 export const GradingResult = {
+  /** Insufficient data */
+  INSUFFICIENT: "INSUFFICIENT",
   /** Marking process could be resolved automatically */
   AUTO_RESOLVED: "AUTO_RESOLVED",
   /** Marking process requires moderator intervention */
   MODERATE: "MODERATE",
-  /** Insufficient data */
-  INSUFFICIENT: "INSUFFICIENT",
+  /** Marking delta of 2; nearly in agreement */
+  NEGOTIATE1: "NEGOTIATE1",
+  /** Large marking delta */
+  NEGOTIATE2: "NEGOTIATE2",
 } as const;
 
 export const GradingResultSchema = z.enum([

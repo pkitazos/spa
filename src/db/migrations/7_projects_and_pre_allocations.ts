@@ -39,6 +39,7 @@ export async function projects_and_pre_allocations(
   await db.$transaction([
     db.project.createMany({ data: projectData, skipDuplicates: true }),
 
+    // TODO fill these in by title @JakeTrevor
     db.tagOnProject.createMany({ data: [], skipDuplicates: true }),
 
     db.flagOnProject.createMany({ data: [], skipDuplicates: true }),
