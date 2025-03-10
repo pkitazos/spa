@@ -174,7 +174,22 @@ export type UnitOfAssessmentGradeDTO = z.infer<
   typeof unitOfAssessmentGradeDtoSchema
 >;
 
-export const unitOfAssessmentSchema = z.object({
+export const partialMarkDtoSchema = unitOfAssessmentGradeDtoSchema
+  .partial({ finalComment: true, recommendation: true, draft: true })
+  .extend({
+    marks: z
+      .record(
+        z.string(), // assessmentCriterionId
+        z
+          .object({ mark: z.number().int(), justification: z.string() })
+          .partial(),
+      )
+      .optional(),
+  });
+
+export type PartialMarkDTO = z.infer<typeof partialMarkDtoSchema>;
+
+export const unitOfAssessmentDtoSchema = z.object({
   id: z.string(),
   title: z.string(),
   studentSubmissionDeadline: z.date(),
@@ -186,7 +201,7 @@ export const unitOfAssessmentSchema = z.object({
   allowedMarkerTypes: z.array(z.nativeEnum(MarkerType)),
 });
 
-export type UnitOfAssessmentDTO = z.infer<typeof unitOfAssessmentSchema>;
+export type UnitOfAssessmentDTO = z.infer<typeof unitOfAssessmentDtoSchema>;
 
 export const submissionMarkerGradeDtoSchema = z.object({
   gradedSubmissionId: z.string(),

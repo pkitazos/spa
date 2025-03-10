@@ -19,8 +19,6 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 export default async function Page({ params }: { params: InstanceParams }) {
   const data = await api.user.marker.getProjectsToMark({ params });
 
-  console.log("---------------------\n", { data });
-
   return (
     <>
       <Heading>My Marking</Heading>
@@ -30,19 +28,3 @@ export default async function Page({ params }: { params: InstanceParams }) {
     </>
   );
 }
-
-export type Submission = {
-  id: string;
-  title: string;
-  dueDate?: string;
-  status: "mark" | "edit" | "submitted" | "not_open";
-};
-
-export type Project = {
-  id: string;
-  type: "project";
-  projectName: string;
-  studentName: string;
-  role: string;
-  submissions: Submission[];
-};

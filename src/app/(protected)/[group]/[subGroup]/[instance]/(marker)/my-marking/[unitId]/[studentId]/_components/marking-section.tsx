@@ -33,6 +33,7 @@ import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import {
   AssessmentCriterionDTO,
   AssessmentCriterionWithScoreDTO,
+  PartialMarkDTO,
   UnitOfAssessmentGradeDTO,
   unitOfAssessmentGradeDtoSchema,
 } from "@/dto";
@@ -44,6 +45,7 @@ import React from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { YesNoAction } from "@/components/yes-no-action";
+import { PAGES } from "@/config/pages";
 
 export function MarkingSection({
   markingCriteria,
@@ -58,7 +60,9 @@ export function MarkingSection({
   const router = useRouter();
   const instancePath = formatParamsAsPath(params);
 
-  const { mutateAsync: editAsync } = api.user.marker.updateMarks.useMutation();
+  const { mutateAsync: saveAsync } = api.user.marker.saveMarks.useMutation();
+  const { mutateAsync: submitAsync } =
+    api.user.marker.submitMarks.useMutation();
 
   const form = useForm<UnitOfAssessmentGradeDTO>({
     resolver: zodResolver(unitOfAssessmentGradeDtoSchema),
@@ -71,10 +75,24 @@ export function MarkingSection({
     },
   });
 
+  function handleSave(data: PartialMarkDTO) {
+    void toast.promise(
+      saveAsync({ params, ...data }).then(() => {
+        router.push(`${instancePath}/${PAGES.myMarking.href}`);
+        router.refresh();
+      }),
+      {
+        loading: `Saving marks for Student ${data.studentId}...`,
+        error: "Something went wrong",
+        success: `Successfully saved marks for Student ${data.studentId}`,
+      },
+    );
+  }
+
   const handleSubmit = form.handleSubmit((data: UnitOfAssessmentGradeDTO) => {
     void toast.promise(
-      editAsync({ params, ...data }).then(() => {
-        router.push(`${instancePath}/my-marking`);
+      submitAsync({ params, ...data }).then(() => {
+        router.push(`${instancePath}/${PAGES.myMarking.href}`);
         router.refresh();
       }),
       {
@@ -125,7 +143,20 @@ export function MarkingSection({
         />
         <div className="mt-16 flex justify-end gap-8">
           <Button
-            onClick={() => alert("Saved!")}
+            onClick={() => {
+              // const validState = Object.entries(
+              //   form.formState.touchedFields,
+              // ).every(
+              //   ([name, touched]) =>
+              //     !touched ||
+              //     !form.getFieldState(name as keyof UnitOfAssessmentGradeDTO)
+              //       .invalid,
+              // );
+
+              // if (validState) {
+              handleSave(form.getValues());
+              // }
+            }}
             type="button"
             variant="outline"
             size="lg"

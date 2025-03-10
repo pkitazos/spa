@@ -16,7 +16,7 @@ function YesNoActionTrigger({
   disabled,
   trigger,
 }: {
-  disabled: boolean;
+  disabled?: boolean;
   trigger: ReactNode;
 }) {
   return (

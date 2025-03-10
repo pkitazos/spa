@@ -9,6 +9,8 @@ import { spacesLabels } from "@/config/spaces";
 import { SubGroupParams } from "@/lib/validations/params";
 import { MarkerType, New, Stage } from "@/db/types";
 import { FlagDTO, InstanceDTO, NewUnitOfAssessmentDTO, TagDTO } from "@/dto";
+import { useRouter } from "next/navigation";
+import { slugify } from "@/lib/utils/general/slugify";
 
 export function WizardSection({
   takenNames,
@@ -17,6 +19,8 @@ export function WizardSection({
   takenNames: Set<string>;
   params: SubGroupParams;
 }) {
+  const router = useRouter();
+
   const { mutateAsync: createInstanceAsync } =
     api.institution.subGroup.createInstance.useMutation();
 
@@ -66,7 +70,9 @@ export function WizardSection({
     const tags = data.tags satisfies New<TagDTO>[];
 
     void toast.promise(
-      createInstanceAsync({ params, newInstance, flags, tags }),
+      createInstanceAsync({ params, newInstance, flags, tags }).then(() =>
+        router.push(`./${params.subGroup}/${slugify(newInstance.displayName)}`),
+      ),
       {
         loading: `Creating ${spacesLabels.instance.full}...`,
         success: `${spacesLabels.instance.full} created successfully`,

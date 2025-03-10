@@ -30,7 +30,7 @@ import {
   SupervisorDTO,
   supervisorDtoSchema,
   tagDtoSchema,
-  unitOfAssessmentSchema,
+  unitOfAssessmentDtoSchema,
 } from "@/dto";
 import {
   LinkUserResult,
@@ -184,7 +184,7 @@ export const instanceRouter = createTRPCRouter({
         instance: instanceDtoSchema,
         flags: z.array(
           flagDtoSchema.extend({
-            unitsOfAssessment: z.array(unitOfAssessmentSchema),
+            unitsOfAssessment: z.array(unitOfAssessmentDtoSchema),
           }),
         ),
         tags: z.array(tagDtoSchema),
@@ -746,7 +746,7 @@ export const instanceRouter = createTRPCRouter({
       z.array(
         z.object({
           flag: flagDtoSchema,
-          units: z.array(unitOfAssessmentSchema),
+          units: z.array(unitOfAssessmentDtoSchema),
         }),
       ),
     )
@@ -773,11 +773,11 @@ export const instanceRouter = createTRPCRouter({
     .subGroupAdmin.input(
       z.object({ unitOfAssessmentId: z.string(), open: z.boolean() }),
     )
-    .output(z.void())
-    .mutation(async ({ ctx: { db }, input: { unitOfAssessmentId, open } }) => {
-      await db.unitOfAssessment.update({
-        where: { id: unitOfAssessmentId },
-        data: { open },
-      });
-    }),
+    .output(z.string())
+    .mutation(
+      async ({ ctx: { db }, input: { unitOfAssessmentId, open } }) =>
+        await db.unitOfAssessment
+          .update({ where: { id: unitOfAssessmentId }, data: { open } })
+          .then((u) => u.title),
+    ),
 });

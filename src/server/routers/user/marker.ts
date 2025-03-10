@@ -1,10 +1,11 @@
 import { markerTypeSchema, Stage } from "@/db/types";
 import {
   assessmentCriterionWithScoreDtoSchema,
+  partialMarkDtoSchema,
   projectDtoSchema,
   studentDtoSchema,
   unitOfAssessmentGradeDtoSchema,
-  unitOfAssessmentSchema,
+  unitOfAssessmentDtoSchema,
 } from "@/dto";
 import { expand } from "@/lib/utils/general/instance-params";
 import { subsequentStages } from "@/lib/utils/permissions/stage-check";
@@ -21,7 +22,7 @@ export const markerRouter = createTRPCRouter({
           project: projectDtoSchema,
           student: studentDtoSchema,
           markerType: markerTypeSchema,
-          unitsOfAssessment: z.array(unitOfAssessmentSchema),
+          unitsOfAssessment: z.array(unitOfAssessmentDtoSchema),
         }),
       ),
     )
@@ -47,7 +48,7 @@ export const markerRouter = createTRPCRouter({
         ),
     ),
 
-  updateMarks: procedure.instance
+  submitMarks: procedure.instance
     .inStage([Stage.MARK_SUBMISSION])
     .marker.input(unitOfAssessmentGradeDtoSchema)
     .mutation(
@@ -78,7 +79,7 @@ export const markerRouter = createTRPCRouter({
               studentId,
               grade: m.mark,
               justification: m.justification,
-              draft,
+              draft: false,
               markerType,
               assessmentCriterionId,
             })),
@@ -100,6 +101,72 @@ export const markerRouter = createTRPCRouter({
               unitOfAssessmentId,
               flagId: flag.id,
               summary: finalComment,
+              recommendedForPrize: recommendation,
+            },
+            update: {
+              summary: finalComment,
+              recommendedForPrize: recommendation,
+            },
+          }),
+        ]);
+      },
+    ),
+
+  saveMarks: procedure.instance
+    .inStage([Stage.MARK_SUBMISSION])
+    .marker.input(partialMarkDtoSchema)
+    .mutation(
+      async ({
+        ctx: { instance, user, db },
+        input: {
+          unitOfAssessmentId,
+          studentId,
+          marks,
+          finalComment,
+          recommendation,
+          draft,
+        },
+      }) => {
+        const markerType = await user.getMarkerType(studentId);
+
+        const { flag } = await instance.getUnitOfAssessment(unitOfAssessmentId);
+
+        await db.$transaction([
+          db.componentScore.deleteMany({
+            where: { ...expand(instance.params), markerId: user.id, studentId },
+          }),
+
+          db.componentScore.createMany({
+            data: marks
+              ? Object.entries(marks).map(([assessmentCriterionId, m]) => ({
+                  ...expand(instance.params),
+                  markerId: user.id,
+                  studentId,
+                  grade: m.mark,
+                  justification: m.justification,
+                  draft: draft ?? true,
+                  markerType,
+                  assessmentCriterionId,
+                }))
+              : [],
+            skipDuplicates: true,
+          }),
+
+          db.markerSubmissionComments.upsert({
+            where: {
+              studentMarkerSubmission: {
+                studentId,
+                markerId: user.id,
+                unitOfAssessmentId,
+              },
+            },
+            create: {
+              ...expand(instance.params),
+              studentId,
+              markerId: user.id,
+              unitOfAssessmentId,
+              flagId: flag.id,
+              summary: finalComment ?? "",
               recommendedForPrize: recommendation,
             },
             update: {

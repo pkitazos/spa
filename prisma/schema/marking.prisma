@@ -68,8 +68,8 @@ model ComponentScore {
     id                    String              @id @default(uuid())
     markerId              String              @map("marker_id")
     studentId             String              @map("student_id")
-    grade                 Int
-    justification         String
+    grade                 Int                 @default(-1)
+    justification         String              @default("")
     draft                 Boolean
     markerType            MarkerType          @map("marker_type")
     // ---

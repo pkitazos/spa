@@ -22,13 +22,13 @@ export function UnitOpenToggle({
 
   function handleToggle(access: boolean) {
     void toast.promise(
-      setIsOpen({ params, unitOfAssessmentId, open: access }).then(() => {
+      setIsOpen({ params, unitOfAssessmentId, open: access }).then((title) => {
         setAccess(access);
-        return access;
+        return { access, title };
       }),
       {
-        success: (access) =>
-          access ? "Opened Unit of Assessment" : "Closed Unit of Assessment",
+        success: ({ access, title }) =>
+          access ? `Opened ${title}` : `Closed ${title}`,
         loading: "Updating Unit of Assessment state...",
         error: "Something went wrong",
       },
