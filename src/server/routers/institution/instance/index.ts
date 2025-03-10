@@ -443,12 +443,8 @@ export const instanceRouter = createTRPCRouter({
     )
     .output(z.void())
     .mutation(
-      async ({
-        ctx: { instance },
-        input: { updatedInstance, flags, tags },
-      }) => {
-        instance.edit({ flags, tags, instance: updatedInstance });
-      },
+      async ({ ctx: { instance }, input: { updatedInstance, flags, tags } }) =>
+        await instance.edit({ flags, tags, instance: updatedInstance }),
     ),
 
   getHeaderTabs: procedure.user

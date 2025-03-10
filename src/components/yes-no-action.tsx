@@ -12,8 +12,18 @@ import {
   DestructiveActionTrigger,
 } from "./ui/destructive-action";
 
-function YesNoActionTrigger({ trigger }: { trigger: ReactNode }) {
-  return <DestructiveActionTrigger asChild>{trigger}</DestructiveActionTrigger>;
+function YesNoActionTrigger({
+  disabled,
+  trigger,
+}: {
+  disabled: boolean;
+  trigger: ReactNode;
+}) {
+  return (
+    <DestructiveActionTrigger disabled={disabled} asChild>
+      {trigger}
+    </DestructiveActionTrigger>
+  );
 }
 
 function YesNoActionContainer({
@@ -54,16 +64,18 @@ function YesNoActionContainer({
 
 function YesNoAction({
   trigger,
+  disabled = false,
   ...rest
 }: {
   action: () => void;
   trigger: ReactNode;
   title: ReactNode;
   description: ReactNode;
+  disabled?: boolean;
 }) {
   return (
     <YesNoActionContainer {...rest}>
-      <YesNoActionTrigger trigger={trigger} />
+      <YesNoActionTrigger trigger={trigger} disabled={disabled} />
     </YesNoActionContainer>
   );
 }

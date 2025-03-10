@@ -92,15 +92,15 @@ model MarkerSubmissionComments {
     markerId             String             @map("marker_id")
     studentId            String             @map("student_id")
     flagId               String             @map("flag_id")
-    submissionId         String             @map("submission_id")
+    unitOfAssessmentId   String             @map("unit_of_assessment_id")
     allocationGroupId    String             @map("allocation_group_id")
     allocationSubGroupId String             @map("allocation_sub_group_id")
     allocationInstanceId String             @map("allocation_instance_id")
     // ---
-    unitOfAssessment     UnitOfAssessment   @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+    unitOfAssessment     UnitOfAssessment   @relation(fields: [unitOfAssessmentId], references: [id], onDelete: Cascade)
     allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
 
-    @@unique(name: "studentMarkerSubmission", [markerId, studentId, submissionId])
+    @@unique(name: "studentMarkerSubmission", [markerId, studentId, unitOfAssessmentId])
     @@map("marker_submission_comments")
 }
 

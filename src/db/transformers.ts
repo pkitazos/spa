@@ -1,6 +1,10 @@
 // MOVE these to some other file
 
-import { AssessmentCriterionDTO, UnitOfAssessmentDTO } from "@/dto";
+import {
+  AssessmentCriterionDTO,
+  CriterionScoreDTO,
+  UnitOfAssessmentDTO,
+} from "@/dto";
 import {
   DB_Algorithm,
   DB_AllocationGroup,
@@ -19,6 +23,7 @@ import {
   DB_TagOnProject,
   DB_User,
   DB_UserInInstance,
+  DB_ComponentScore,
 } from "./types";
 
 import {
@@ -36,6 +41,14 @@ import {
 } from "@/dto";
 
 export class Transformers {
+  static toScoreDTO(data: DB_ComponentScore): CriterionScoreDTO {
+    return {
+      draft: data.draft,
+      grade: data.grade,
+      justification: data.justification,
+    };
+  }
+
   public static toAllocationGroupDTO(data: DB_AllocationGroup): GroupDTO {
     return { group: data.id, displayName: data.displayName };
   }
@@ -183,7 +196,7 @@ export class Transformers {
     };
   }
 
-  public static toAssessmentComponentDTO(
+  public static toAssessmentCriterionDTO(
     data: DB_AssessmentCriterion,
   ): AssessmentCriterionDTO {
     return {
@@ -208,7 +221,7 @@ export class Transformers {
       title: data.title,
       flag: Transformers.toFlagDTO(data.flag),
       components: data.assessmentCriteria.map(
-        Transformers.toAssessmentComponentDTO,
+        Transformers.toAssessmentCriterionDTO,
       ),
       studentSubmissionDeadline: data.studentSubmissionDeadline,
       markerSubmissionDeadline: data.markerSubmissionDeadline,

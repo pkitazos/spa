@@ -30,6 +30,7 @@ import {
   builtInAlgorithms,
   NewUnitOfAssessmentDTO,
   UnitOfAssessmentDTO,
+  AssessmentCriterionWithScoreDTO,
 } from "@/dto/";
 
 import {
@@ -723,6 +724,36 @@ export class SubGroupAdmin extends User {
 }
 
 export class AllocationInstance extends DataObject {
+  async getUnitOfAssessment(
+    unitOfAssessmentId: string,
+  ): Promise<UnitOfAssessmentDTO> {
+    return await this.db.unitOfAssessment
+      .findFirstOrThrow({
+        where: { id: unitOfAssessmentId },
+        include: { flag: true, assessmentCriteria: true },
+      })
+      .then(T.toUnitOfAssessmentDTO);
+  }
+  public async getCriteriaAndScoresForStudentSubmission(
+    unitOfAssessmentId: string,
+    markerId: string,
+    studentId: string,
+  ): Promise<AssessmentCriterionWithScoreDTO[]> {
+    const data = await this.db.assessmentCriterion.findMany({
+      where: { unitOfAssessmentId },
+      include: { scores: { where: { markerId, studentId } } },
+      orderBy: { layoutIndex: "asc" },
+    });
+
+    const d = data.map((c) => ({
+      criterion: T.toAssessmentCriterionDTO(c),
+      score: c.scores[0] ? T.toScoreDTO(c.scores[0]) : undefined,
+    }));
+
+    console.log(d);
+    return d;
+  }
+
   public async getFlagsWithAssessmentDetails(): Promise<
     (FlagDTO & { unitsOfAssessment: UnitOfAssessmentDTO[] })[]
   > {
@@ -1515,7 +1546,22 @@ export class AllocationInstance extends DataObject {
     await this.db.$transaction(async (tx) => {
       await this.db.allocationInstance.update({
         where: { instanceId: toInstanceId(this.params) },
-        data: instance,
+        data: {
+          projectSubmissionDeadline: instance.projectSubmissionDeadline,
+
+          minStudentPreferences: instance.minStudentPreferences,
+          maxStudentPreferences: instance.maxStudentPreferences,
+          maxStudentPreferencesPerSupervisor:
+            instance.maxStudentPreferencesPerSupervisor,
+
+          studentPreferenceSubmissionDeadline:
+            instance.studentPreferenceSubmissionDeadline,
+
+          minReaderPreferences: instance.minReaderPreferences,
+          maxReaderPreferences: instance.maxReaderPreferences,
+          readerPreferenceSubmissionDeadline:
+            instance.readerPreferenceSubmissionDeadline,
+        },
       });
 
       await this.db.flag.createMany({

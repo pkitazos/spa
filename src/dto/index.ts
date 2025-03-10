@@ -141,6 +141,39 @@ export type AssessmentCriterionDTO = z.infer<
   typeof assessmentCriterionDtoSchema
 >;
 
+export const criterionScoreDtoSchema = z.object({
+  grade: z.number().int(),
+  justification: z.string(),
+  draft: z.boolean(),
+});
+
+export type CriterionScoreDTO = z.infer<typeof criterionScoreDtoSchema>;
+
+export const assessmentCriterionWithScoreDtoSchema = z.object({
+  criterion: assessmentCriterionDtoSchema,
+  score: criterionScoreDtoSchema.optional(),
+});
+
+export type AssessmentCriterionWithScoreDTO = z.infer<
+  typeof assessmentCriterionWithScoreDtoSchema
+>;
+
+export const unitOfAssessmentGradeDtoSchema = z.object({
+  unitOfAssessmentId: z.string(),
+  studentId: z.string(),
+  marks: z.record(
+    z.string(), // assessmentCriterionId
+    z.object({ mark: z.number().int(), justification: z.string() }),
+  ),
+  finalComment: z.string(),
+  recommendation: z.boolean(),
+  draft: z.boolean(),
+});
+
+export type UnitOfAssessmentGradeDTO = z.infer<
+  typeof unitOfAssessmentGradeDtoSchema
+>;
+
 export const unitOfAssessmentSchema = z.object({
   id: z.string(),
   title: z.string(),
