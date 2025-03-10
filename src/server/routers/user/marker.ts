@@ -31,7 +31,7 @@ export const markerRouter = createTRPCRouter({
     ),
 
   getCriteriaAndScoresForStudentSubmission: procedure.instance
-    .inStage([Stage.MARK_SUBMISSION])
+    .inStage(subsequentStages(Stage.READER_BIDDING))
     .marker.input(
       z.object({ unitOfAssessmentId: z.string(), studentId: z.string() }),
     )

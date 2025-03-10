@@ -4,6 +4,8 @@ import { expand } from "@/lib/utils/general/instance-params";
 import { InstanceParams } from "@/lib/validations/params";
 
 import projects from "./data/Project.json";
+import tagsOnProjects from "./data/TagOnProject.json";
+import flagsOnProjects from "./data/FlagOnProject.json";
 
 export async function projects_and_pre_allocations(
   db: PrismaClient,
@@ -30,7 +32,15 @@ export async function projects_and_pre_allocations(
       ...expand(params),
     }));
 
+  const tagOnProjectData = tagsOnProjects;
+
+  const flagOnProjectData = flagsOnProjects;
+
   await db.$transaction([
     db.project.createMany({ data: projectData, skipDuplicates: true }),
+
+    db.tagOnProject.createMany({ data: [], skipDuplicates: true }),
+
+    db.flagOnProject.createMany({ data: [], skipDuplicates: true }),
   ]);
 }
