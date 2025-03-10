@@ -26,4 +26,15 @@
 		],
 		"description": "Creates a page server component with instance params"
 	},
+
+	"DTO type": {
+		"prefix": "dtos",
+		"body": [
+			"export const ${1:objName}DtoSchema = z.object({",
+			"${2}",
+			"});",
+			"",
+			"export type ${1/(.*)/${1:/capitalize}/}DTO = z.infer<typeof ${1}DtoSchema>"
+		]
+	}
 }
