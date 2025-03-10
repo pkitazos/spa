@@ -17,9 +17,9 @@ export async function getShibUserFromHeaders() {
     shib_email = headers().get("DH75HDYT80");
   } else {
     // TODO: create a proper dev vs prod env distinction
-    shib_guid = "phh9g"; // supervisor + admin
-    // shib_guid = "sf190s"; // supervisor
-    // shib_guid = "000-234581p"; // student
+    // shib_guid = "phh9g"; // supervisor + admin
+    shib_guid = "sf190s"; // supervisor
+    // shib_guid = "2526547k"; // student
     // shib_guid = env.DEV_ID;
     shib_displayName = env.DEV_NAME;
     shib_email = env.DEV_EMAIL;

@@ -163,7 +163,10 @@ export const unitOfAssessmentGradeDtoSchema = z.object({
   studentId: z.string(),
   marks: z.record(
     z.string(), // assessmentCriterionId
-    z.object({ mark: z.number().int(), justification: z.string() }),
+    z.object({
+      mark: z.number().int().nonnegative(),
+      justification: z.string().min(1),
+    }),
   ),
   finalComment: z.string(),
   recommendation: z.boolean(),

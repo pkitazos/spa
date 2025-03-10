@@ -5,11 +5,14 @@ export const GradingResult = {
   AUTO_RESOLVED: "AUTO_RESOLVED",
   /** Marking process requires moderator intervention */
   MODERATE: "MODERATE",
+  /** Insufficient data */
+  INSUFFICIENT: "INSUFFICIENT",
 } as const;
 
 export const GradingResultSchema = z.enum([
   GradingResult.AUTO_RESOLVED,
   GradingResult.MODERATE,
+  GradingResult.INSUFFICIENT,
 ]);
 
 export type GradingResult = z.infer<typeof GradingResultSchema>;

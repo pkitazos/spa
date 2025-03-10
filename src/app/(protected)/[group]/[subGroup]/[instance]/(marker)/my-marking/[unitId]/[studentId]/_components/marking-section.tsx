@@ -6,7 +6,6 @@ import { useInstanceParams } from "@/components/params-context";
 import { Button } from "@/components/ui/button";
 import {
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormMessage,
@@ -41,7 +40,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Control, useForm } from "react-hook-form";
 import { GRADES } from "@/config/grades";
 import { useState } from "react";
-import React from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { YesNoAction } from "@/components/yes-no-action";
@@ -66,12 +64,23 @@ export function MarkingSection({
 
   const form = useForm<UnitOfAssessmentGradeDTO>({
     resolver: zodResolver(unitOfAssessmentGradeDtoSchema),
+    reValidateMode: "onBlur",
     defaultValues: {
       draft: true,
       finalComment: "",
       recommendation: false,
       studentId,
       unitOfAssessmentId,
+      marks: markingCriteria.reduce(
+        (acc, e) => ({
+          ...acc,
+          [e.criterion.id]: {
+            justification: e.score?.justification ?? "",
+            mark: e.score?.grade ?? -1,
+          },
+        }),
+        {},
+      ),
     },
   });
 
@@ -109,12 +118,14 @@ export function MarkingSection({
         onSubmit={handleSubmit}
         className="mt-10 flex w-full max-w-5xl flex-col gap-6"
       >
-        {markingCriteria.map(({ criterion }) => (
-          <AssessmentCriterionField
-            criterion={criterion}
-            control={form.control}
-          />
-        ))}
+        <div className="flex flex-col gap-20">
+          {markingCriteria.map(({ criterion }) => (
+            <AssessmentCriterionField
+              criterion={criterion}
+              control={form.control}
+            />
+          ))}
+        </div>
         <FormField
           control={form.control}
           name="finalComment"
@@ -167,7 +178,7 @@ export function MarkingSection({
             disabled={!form.formState.isValid}
             action={handleSubmit}
             trigger={
-              <Button type="submit" size="lg">
+              <Button type="button" size="lg">
                 Submit Marks
               </Button>
             }
@@ -188,82 +199,97 @@ function AssessmentCriterionField({
   control: Control<UnitOfAssessmentGradeDTO>;
 }) {
   const [open, setOpen] = useState(false);
+  const dropDownDefaultVal = "??";
 
   return (
-    <React.Fragment key={criterion.id}>
-      <FormField
-        control={control}
-        name={`marks.${criterion.id}.mark`}
-        render={({ field }) => (
-          <FormItem>
-            <FormControl>
-              <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={open}
-                    className="w-full justify-between"
-                  >
-                    {field.value !== null
-                      ? GRADES.find((grade) => grade.value === field.value)
-                          ?.label
-                      : "Select grade..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[200px] p-0">
-                  <Command>
-                    <CommandInput placeholder="Search grade..." />
-                    <CommandList>
-                      <CommandEmpty>No grade found.</CommandEmpty>
-                      <CommandGroup>
-                        {GRADES.map((grade) => (
-                          <CommandItem
-                            key={grade.value}
-                            onSelect={() => {
-                              field.onChange(grade.value);
-                              setOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                grade.value === field.value
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                            {grade.label}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </FormControl>
-            <FormDescription>{criterion.description}</FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-      <FormField
-        key={criterion.id}
-        control={control}
-        name={`marks.${criterion.id}.justification`}
-        render={({ field }) => (
-          <FormItem>
-            <FormControl>
-              <Textarea {...field} />
-            </FormControl>
-            <FormDescription>
-              A justification for your chosen mark
-            </FormDescription>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
-    </React.Fragment>
+    <div className="flex flex-col gap-2" key={criterion.id}>
+      <p className="text-lg font-semibold text-primary">{criterion.title}</p>
+      <p>{criterion.description}</p>
+      <div className="mt-2 flex flex-row gap-4">
+        <FormField
+          control={control}
+          name={`marks.${criterion.id}.mark`}
+          render={({ field }) => {
+            const hasGrade = field.value !== -1;
+
+            return (
+              <FormItem className="flex w-32 flex-col gap-1">
+                <FormLabel className="text-muted-foreground">Grade</FormLabel>
+                <FormControl>
+                  <Popover open={open} onOpenChange={setOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={open}
+                        className={cn(
+                          "justify-between text-muted-foreground",
+                          hasGrade && "text-foreground",
+                        )}
+                      >
+                        <span>
+                          {hasGrade
+                            ? (GRADES.find(
+                                (grade) => grade.value === field.value,
+                              )?.label ?? dropDownDefaultVal)
+                            : dropDownDefaultVal}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[200px] p-0">
+                      <Command>
+                        <CommandInput placeholder="Search grade..." />
+                        <CommandList>
+                          <CommandEmpty>No grade found.</CommandEmpty>
+                          <CommandGroup>
+                            {GRADES.map((grade) => (
+                              <CommandItem
+                                key={grade.value}
+                                onSelect={() => {
+                                  field.onChange(grade.value);
+                                  setOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    grade.value === field.value
+                                      ? "opacity-100"
+                                      : "opacity-0",
+                                  )}
+                                />
+                                {grade.label}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
+        />
+        <FormField
+          key={criterion.id}
+          control={control}
+          name={`marks.${criterion.id}.justification`}
+          render={({ field }) => (
+            <FormItem className="flex w-full flex-col gap-1">
+              <FormLabel className="text-muted-foreground">
+                Justification
+              </FormLabel>
+              <FormControl>
+                <Textarea {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
+    </div>
   );
 }

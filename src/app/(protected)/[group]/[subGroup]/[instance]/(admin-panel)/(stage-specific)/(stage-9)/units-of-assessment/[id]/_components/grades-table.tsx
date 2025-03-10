@@ -25,7 +25,10 @@ import { columns } from "./grades-columns";
 import { ProjectDTO, ReaderDTO, StudentDTO, SupervisorDTO } from "@/dto";
 import { CircleCheckIcon } from "@/components/icons/circle-check";
 import { CircleXIcon } from "@/components/icons/circle-x";
+import { GradingResult } from "@/dto/result/grading-result";
+import { ScrollArea } from "@radix-ui/react-scroll-area";
 
+// @JakeTrevor cook
 export function GradesTable({
   data,
 }: {
@@ -36,8 +39,8 @@ export function GradesTable({
     supervisorGrade: string | undefined;
     reader: ReaderDTO;
     readerGrade: string | undefined;
-    status: boolean;
-    computedOverall?: string;
+    status: GradingResult;
+    computedOverall: string | undefined;
     action?: string;
   }[];
 }) {
@@ -70,63 +73,68 @@ export function GradesTable({
           className="max-w-sm"
         />
       </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+      <ScrollArea className="w-full">
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </TableHead>
+                    );
+                  })}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </ScrollArea>
     </div>
   );
 }
 
-export function StatusIcon({ status }: { status: boolean }) {
-  if (status) {
+export function StatusIcon({ status }: { status: GradingResult }) {
+  if (status === GradingResult.AUTO_RESOLVED) {
     return <CircleCheckIcon className="h-4 w-4 text-green-500" />;
   }
-  return <CircleXIcon className="h-4 w-4 text-red-500" />;
+  if (status === GradingResult.MODERATE) {
+    return <CircleXIcon className="h-4 w-4 text-red-500" />;
+  }
+  return null;
 }
