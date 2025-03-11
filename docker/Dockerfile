@@ -4,7 +4,8 @@ FROM --platform=linux/amd64 node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-COPY prisma ./
+
+COPY prisma ./prisma
 
 COPY package.json pnpm-lock.yaml* ./
 RUN \
