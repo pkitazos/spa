@@ -9,6 +9,9 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { PAGES } from "@/config/pages";
+import { GradingResult } from "@/dto/result/grading-result";
+
+// @JakeTrevor cook
 
 export const columns: ColumnDef<{
   project: ProjectDTO;
@@ -17,8 +20,8 @@ export const columns: ColumnDef<{
   supervisorGrade: string | undefined;
   reader: ReaderDTO;
   readerGrade: string | undefined;
-  status: boolean;
-  computedOverall?: string;
+  status: GradingResult;
+  computedOverall: string | undefined;
   action?: string;
 }>[] = [
   {

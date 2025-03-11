@@ -7,6 +7,7 @@ import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
 import { InstanceParams } from "@/lib/validations/params";
+import { stageGte } from "@/lib/utils/permissions/stage-check";
 
 export async function SupervisorInstanceHome({
   params,
@@ -84,6 +85,18 @@ export async function SupervisorInstanceHome({
         <p className="text-lg">
           Check the &ldquo;My Allocations&rdquo; page to view your allocated
           projects
+        </p>
+      </div>
+    );
+  }
+
+  if (stageGte(stage, Stage.READER_BIDDING)) {
+    return (
+      <div className="mt-9 flex flex-col gap-4">
+        <SubHeading>Marking Allocations Released</SubHeading>
+        <p className="text-lg">
+          Check the &ldquo;My Marking&rdquo; page to view the projects you have
+          to mark
         </p>
       </div>
     );

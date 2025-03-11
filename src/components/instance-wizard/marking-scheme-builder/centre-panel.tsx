@@ -1,5 +1,4 @@
 "use client";
-import { MarkerType } from "@prisma/client";
 
 import { SubHeading } from "@/components/heading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +7,8 @@ import { DeadlinesSection } from "./deadlines-section";
 import { EditableFlag, EditableSubmission } from "./editable-text";
 import { SortableForm } from "./sortable";
 import { useMarkingSchemeStore } from "./state";
+import { Textarea } from "@/components/ui/textarea";
+import { MarkerType } from "@/db/types";
 
 export function CentrePanel() {
   const { flags, selectedFlagIndex, selectedSubmissionIndex } =
@@ -38,11 +39,7 @@ export function CentrePanel() {
             className="h-9 text-3xl font-medium leading-none tracking-tight underline decoration-secondary underline-offset-4"
           />
         </div>
-        <p>
-          {selectedFlag.description
-            ? selectedFlag.description
-            : "No description provided"}
-        </p>
+        <Textarea value={selectedFlag.description} />
       </div>
     );
   }

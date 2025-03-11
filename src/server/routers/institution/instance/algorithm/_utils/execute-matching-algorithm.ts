@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { AlgorithmDTO, builtInAlgSchema } from "@/dto";
+import { AlgorithmDTO, builtInAlgorithms } from "@/dto";
 import {
   MatchingDataDTO,
   MatchingDataWithArgs,
@@ -20,7 +20,10 @@ export async function executeMatchingAlgorithm(
 ) {
   let endpoint = algorithm.id;
 
-  if (!builtInAlgSchema.options.includes(algorithm.id)) {
+  if (
+    !algorithm.builtIn &&
+    !builtInAlgorithms.find((a) => a.displayName === algorithm.displayName)
+  ) {
     endpoint = "";
     matchingData = { ...matchingData, args: generateArgs(algorithm) };
   }

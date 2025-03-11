@@ -1,10 +1,7 @@
 import { z } from "zod";
 
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
-import {
-  forkedInstanceSchema,
-  updatedInstanceSchema,
-} from "@/lib/validations/instance-form";
+import { forkedInstanceSchema } from "@/lib/validations/instance-form";
 import { instanceParamsSchema } from "@/lib/validations/params";
 import { tabGroupSchema } from "@/lib/validations/tabs";
 
@@ -25,6 +22,7 @@ import { stageSchema } from "@/db/types";
 import {
   flagDtoSchema,
   instanceDtoSchema,
+  newUnitOfAssessmentSchema,
   projectDtoSchema,
   ReaderDTO,
   readerDtoSchema,
@@ -32,6 +30,7 @@ import {
   SupervisorDTO,
   supervisorDtoSchema,
   tagDtoSchema,
+  unitOfAssessmentDtoSchema,
 } from "@/dto";
 import {
   LinkUserResult,
@@ -40,7 +39,7 @@ import {
 import { newReaderAllocationSchema } from "@/lib/validations/allocate-readers/new-reader-allocation";
 import { expand } from "@/lib/utils/general/instance-params";
 import { Transformers as T } from "@/db/transformers";
-import { computeGrade } from "@/config/grades";
+import { Grade } from "@/config/grades";
 import {
   ReaderAssignmentResult,
   readerAssignmentResultSchema,
@@ -182,16 +181,24 @@ export const instanceRouter = createTRPCRouter({
   getEditFormDetails: procedure.instance.subGroupAdmin
     .output(
       z.object({
-        instanceData: instanceDtoSchema,
-        flags: z.array(flagDtoSchema),
+        instance: instanceDtoSchema,
+        flags: z.array(
+          flagDtoSchema.extend({
+            unitsOfAssessment: z.array(unitOfAssessmentDtoSchema),
+          }),
+        ),
         tags: z.array(tagDtoSchema),
       }),
     )
-    .query(async ({ ctx: { instance } }) => ({
-      instanceData: await instance.get(),
-      flags: await instance.getFlags(),
-      tags: await instance.getTags(),
-    })),
+    .query(async ({ ctx: { instance } }) => {
+      const flags = await instance.getFlagsWithAssessmentDetails();
+
+      return {
+        instance: await instance.get(),
+        tags: await instance.getTags(),
+        flags,
+      };
+    }),
 
   supervisors: procedure.instance.user
     .output(z.array(supervisorDtoSchema))
@@ -419,11 +426,26 @@ export const instanceRouter = createTRPCRouter({
     }),
 
   edit: procedure.instance.subGroupAdmin
-    .input(z.object({ updatedInstance: updatedInstanceSchema }))
+    .input(
+      z.object({
+        updatedInstance: instanceDtoSchema.omit({
+          stage: true,
+          supervisorAllocationAccess: true,
+          studentAllocationAccess: true,
+        }),
+        flags: z.array(
+          flagDtoSchema
+            .omit({ id: true })
+            .extend({ unitsOfAssessment: z.array(newUnitOfAssessmentSchema) }),
+        ),
+        tags: z.array(tagDtoSchema.omit({ id: true })),
+      }),
+    )
     .output(z.void())
-    .mutation(async ({ ctx: { instance }, input: { updatedInstance } }) => {
-      instance.edit(updatedInstance);
-    }),
+    .mutation(
+      async ({ ctx: { instance }, input: { updatedInstance, flags, tags } }) =>
+        await instance.edit({ flags, tags, instance: updatedInstance }),
+    ),
 
   getHeaderTabs: procedure.user
     .input(z.object({ params: instanceParamsSchema.partial() }))
@@ -537,7 +559,7 @@ export const instanceRouter = createTRPCRouter({
     }),
 
   getMarkerSubmissions: procedure.instance.subGroupAdmin
-    .input(z.object({ gradedSubmissionId: z.string() }))
+    .input(z.object({ unitOfAssessmentId: z.string() }))
     .output(
       z.array(
         z.object({
@@ -550,7 +572,7 @@ export const instanceRouter = createTRPCRouter({
         }),
       ),
     )
-    .query(async ({ ctx: { instance, db }, input: { gradedSubmissionId } }) => {
+    .query(async ({ ctx: { instance, db }, input: { unitOfAssessmentId } }) => {
       const supervisors = await instance.getSupervisors();
 
       const supervisorMap = supervisors.reduce(
@@ -565,9 +587,9 @@ export const instanceRouter = createTRPCRouter({
         {} as Record<string, ReaderDTO>,
       );
 
-      const submission = await db.gradedSubmission.findFirstOrThrow({
-        where: { id: gradedSubmissionId },
-        include: { assessmentComponents: { include: { scores: true } } },
+      const submission = await db.unitOfAssessment.findFirstOrThrow({
+        where: { id: unitOfAssessmentId },
+        include: { assessmentCriteria: { include: { scores: true } } },
       });
 
       const studentAllocations = await db.studentProjectAllocation.findMany({
@@ -624,15 +646,13 @@ export const instanceRouter = createTRPCRouter({
               );
             }
 
-            const supervisorScores = submission.assessmentComponents.map(
-              (c) => {
-                const supervisorScore = c.scores.find(
-                  (s) => s.markerId === supervisor.id,
-                );
-                if (!supervisorScore) return undefined;
-                return { weight: c.weight, score: supervisorScore.grade };
-              },
-            );
+            const supervisorScores = submission.assessmentCriteria.map((c) => {
+              const supervisorScore = c.scores.find(
+                (s) => s.markerId === supervisor.id,
+              );
+              if (!supervisorScore) return undefined;
+              return { weight: c.weight, score: supervisorScore.grade };
+            });
 
             let supervisorGrade: string | undefined;
             if (supervisorScores.every((s) => s !== undefined)) {
@@ -640,10 +660,10 @@ export const instanceRouter = createTRPCRouter({
                 (acc, val) => acc + val.weight * val.score,
                 0,
               );
-              supervisorGrade = computeGrade(mark);
+              supervisorGrade = Grade.toLetter(mark);
             }
 
-            const readerScores = submission.assessmentComponents.map((c) => {
+            const readerScores = submission.assessmentCriteria.map((c) => {
               const readerScore = c.scores.find(
                 (s) => s.markerId === reader.id,
               );
@@ -657,7 +677,7 @@ export const instanceRouter = createTRPCRouter({
                 (acc, val) => acc + val.weight * val.score,
                 0,
               );
-              readerGrade = computeGrade(mark);
+              readerGrade = Grade.toLetter(mark);
             }
 
             return {
@@ -718,5 +738,46 @@ export const instanceRouter = createTRPCRouter({
 
         return allocationData.map((e) => e.status);
       },
+    ),
+
+  getAllUnitsOfAssessment: procedure.instance
+    .inStage([Stage.MARK_SUBMISSION])
+    .subGroupAdmin.output(
+      z.array(
+        z.object({
+          flag: flagDtoSchema,
+          units: z.array(unitOfAssessmentDtoSchema),
+        }),
+      ),
+    )
+    .query(async ({ ctx: { instance, db } }) => {
+      const flags = await db.flag.findMany({
+        where: expand(instance.params),
+        include: {
+          unitsOfAssessment: {
+            include: { flag: true, assessmentCriteria: true },
+            orderBy: [{ markerSubmissionDeadline: "asc" }],
+          },
+        },
+        orderBy: [{ title: "asc" }],
+      });
+
+      return flags.map((f) => ({
+        flag: T.toFlagDTO(f),
+        units: f.unitsOfAssessment.map(T.toUnitOfAssessmentDTO),
+      }));
+    }),
+
+  setUnitOfAssessmentAccess: procedure.instance
+    .inStage([Stage.MARK_SUBMISSION])
+    .subGroupAdmin.input(
+      z.object({ unitOfAssessmentId: z.string(), open: z.boolean() }),
+    )
+    .output(z.string())
+    .mutation(
+      async ({ ctx: { db }, input: { unitOfAssessmentId, open } }) =>
+        await db.unitOfAssessment
+          .update({ where: { id: unitOfAssessmentId }, data: { open } })
+          .then((u) => u.title),
     ),
 });

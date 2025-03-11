@@ -5,7 +5,6 @@ import { tagTypeSchema } from "@/components/tag/tag-input";
 import { projectFlags } from "@/config/config/flags";
 import { FlagDTO, StudentDTO, TagDTO } from "@/dto";
 
-// eslint-disable-next-line no-control-regex
 const ascii_pattern = /^[\x00-\x7F]+$/;
 
 function isAscii(str: string) {

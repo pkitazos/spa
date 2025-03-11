@@ -15,5 +15,26 @@
 			"*/"
 		],
 		"description": "Log output to console"
+	},
+	"Instance Page": {
+		"prefix": "inpag",
+		"body": [
+			"import { InstanceParams } from \"@/lib/validations/params\";",
+			"export default async function Page({params}:{params:InstanceParams}) {",
+			"  return (<>${0}</>);",
+			"}"
+		],
+		"description": "Creates a page server component with instance params"
+	},
+
+	"DTO type": {
+		"prefix": "dtos",
+		"body": [
+			"export const ${1:objName}DtoSchema = z.object({",
+			"${2}",
+			"});",
+			"",
+			"export type ${1/(.*)/${1:/capitalize}/}DTO = z.infer<typeof ${1}DtoSchema>"
+		]
 	}
 }

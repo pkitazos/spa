@@ -28,6 +28,9 @@ import {
   SupervisorDTO,
   AlgorithmDTO,
   builtInAlgorithms,
+  NewUnitOfAssessmentDTO,
+  UnitOfAssessmentDTO,
+  AssessmentCriterionWithScoreDTO,
 } from "@/dto/";
 
 import {
@@ -43,7 +46,6 @@ import { AlgorithmRunResult } from "@/dto/result/algorithm-run-result";
 
 import { setDiff } from "@/lib/utils/general/set-difference";
 import { RandomAllocationDto } from "@/lib/validations/allocation/data-table-dto";
-import { UpdatedInstance } from "@/lib/validations/instance-form";
 import { SupervisorProjectSubmissionDetails } from "@/lib/validations/supervisor-project-submission-details";
 import { TabType } from "@/lib/validations/tabs";
 
@@ -64,7 +66,6 @@ import {
 import { AlgorithmInstanceParams } from "@/lib/validations/params";
 import { executeMatchingAlgorithm } from "@/server/routers/institution/instance/algorithm/_utils/execute-matching-algorithm";
 import { Transformers } from "@/db/transformers";
-import { GradedSubmissionDTO } from "@/dto";
 import { sortPreferenceType } from "@/lib/utils/sorting/by-preference-type";
 import { ProjectPreferenceCardDto } from "@/lib/validations/board";
 import { updatePreferenceTransaction } from "@/db/transactions/update-preference";
@@ -568,12 +569,12 @@ export class AllocationSubGroup extends DataObject {
   }
 
   public async createInstance({
-    newInstance,
+    newInstance: { group, subGroup, ...newInstance },
     flags,
     tags,
   }: {
     newInstance: Omit<InstanceDTO, "instance">;
-    flags: New<FlagDTO>[];
+    flags: (New<FlagDTO> & { unitsOfAssessment: NewUnitOfAssessmentDTO[] })[];
     tags: New<TagDTO>[];
   }) {
     const instanceSlug = slugify(newInstance.displayName);
@@ -585,13 +586,19 @@ export class AllocationSubGroup extends DataObject {
         data: { ...toInstanceId(params), ...newInstance },
       });
 
-      await tx.flag.createMany({
+      const flagData = await tx.flag.createManyAndReturn({
         data: flags.map((f) => ({
           ...expand(params),
           title: f.title,
           description: f.description,
         })),
+        skipDuplicates: true,
       });
+
+      const flagTitleToId = flagData.reduce(
+        (acc, val) => ({ ...acc, [val.title]: val.id }),
+        {} as Record<string, string>,
+      );
 
       await tx.tag.createMany({
         data: tags.map((t) => ({ ...expand(params), title: t.title })),
@@ -599,6 +606,42 @@ export class AllocationSubGroup extends DataObject {
 
       await tx.algorithm.createMany({
         data: builtInAlgorithms.map((alg) => ({ ...expand(params), ...alg })),
+      });
+
+      const units = await tx.unitOfAssessment.createManyAndReturn({
+        data: flags.flatMap((f) =>
+          f.unitsOfAssessment.map((a) => ({
+            ...expand(params),
+            flagId: flagTitleToId[f.title],
+            title: a.title,
+            weight: a.weight,
+            studentSubmissionDeadline: a.studentSubmissionDeadline,
+            markerSubmissionDeadline: a.markerSubmissionDeadline,
+            allowedMarkerTypes: a.allowedMarkerTypes,
+          })),
+        ),
+      });
+
+      const unitTitleToId = units.reduce(
+        (acc, val) => ({ ...acc, [`${val.flagId}${val.title}`]: val.id }),
+        {} as Record<string, string>,
+      );
+
+      await tx.assessmentCriterion.createMany({
+        data: flags.flatMap((f) =>
+          f.unitsOfAssessment.flatMap((u) =>
+            u.components.map((c) => ({
+              ...expand(params),
+              flagId: flagTitleToId[f.title],
+              unitOfAssessmentId:
+                unitTitleToId[`${flagTitleToId[f.title]}${u.title}`],
+              title: c.title,
+              description: c.description,
+              weight: c.weight,
+              layoutIndex: c.layoutIndex,
+            })),
+          ),
+        ),
       });
     });
   }
@@ -681,6 +724,54 @@ export class SubGroupAdmin extends User {
 }
 
 export class AllocationInstance extends DataObject {
+  async getUnitOfAssessment(
+    unitOfAssessmentId: string,
+  ): Promise<UnitOfAssessmentDTO> {
+    return await this.db.unitOfAssessment
+      .findFirstOrThrow({
+        where: { id: unitOfAssessmentId },
+        include: { flag: true, assessmentCriteria: true },
+      })
+      .then(T.toUnitOfAssessmentDTO);
+  }
+  public async getCriteriaAndScoresForStudentSubmission(
+    unitOfAssessmentId: string,
+    markerId: string,
+    studentId: string,
+  ): Promise<AssessmentCriterionWithScoreDTO[]> {
+    const data = await this.db.assessmentCriterion.findMany({
+      where: { unitOfAssessmentId },
+      include: { scores: { where: { markerId, studentId } } },
+      orderBy: { layoutIndex: "asc" },
+    });
+
+    const d = data.map((c) => ({
+      criterion: T.toAssessmentCriterionDTO(c),
+      score: c.scores[0] ? T.toScoreDTO(c.scores[0]) : undefined,
+    }));
+
+    console.log(d);
+    return d;
+  }
+
+  public async getFlagsWithAssessmentDetails(): Promise<
+    (FlagDTO & { unitsOfAssessment: UnitOfAssessmentDTO[] })[]
+  > {
+    const flagData = await this.db.flag.findMany({
+      where: expand(this.params),
+      include: {
+        unitsOfAssessment: {
+          include: { flag: true, assessmentCriteria: true },
+        },
+      },
+    });
+
+    return flagData.map((f) => ({
+      ...T.toFlagDTO(f),
+      unitsOfAssessment: f.unitsOfAssessment.map(T.toUnitOfAssessmentDTO),
+    }));
+  }
+
   public params: InstanceParams;
   private _group: AllocationGroup | undefined;
   private _subgroup: AllocationSubGroup | undefined;
@@ -1419,17 +1510,27 @@ export class AllocationInstance extends DataObject {
     return projectData.map(T.toProjectDTO);
   }
 
-  public async edit({ flags, tags, ...updatedData }: UpdatedInstance) {
+  public async edit({
+    instance,
+    flags,
+    tags,
+  }: {
+    instance: Omit<
+      InstanceDTO,
+      "stage" | "supervisorAllocationAccess" | "studentAllocationAccess"
+    >;
+    flags: (New<FlagDTO> & { unitsOfAssessment: NewUnitOfAssessmentDTO[] })[];
+    tags: New<TagDTO>[];
+  }) {
     const currentInstanceFlags = await this.db.flag.findMany({
       where: expand(this.params),
     });
 
-    const newInstanceFlags = setDiff(flags, currentInstanceFlags, byTitle);
-    const staleInstanceFlagTitles = setDiff(
-      currentInstanceFlags,
+    const newInstanceFlags = setDiff(
       flags,
+      currentInstanceFlags as New<FlagDTO>[],
       byTitle,
-    ).map(byTitle);
+    );
 
     const currentInstanceTags = await this.db.tag.findMany({
       where: expand(this.params),
@@ -1442,41 +1543,95 @@ export class AllocationInstance extends DataObject {
       byTitle,
     ).map(byTitle);
 
-    await this.db.$transaction([
-      this.db.allocationInstance.update({
+    await this.db.$transaction(async (tx) => {
+      await this.db.allocationInstance.update({
         where: { instanceId: toInstanceId(this.params) },
-        data: updatedData,
-      }),
+        data: {
+          projectSubmissionDeadline: instance.projectSubmissionDeadline,
 
-      this.db.flag.deleteMany({
-        where: {
-          ...expand(this.params),
-          title: { in: staleInstanceFlagTitles },
+          minStudentPreferences: instance.minStudentPreferences,
+          maxStudentPreferences: instance.maxStudentPreferences,
+          maxStudentPreferencesPerSupervisor:
+            instance.maxStudentPreferencesPerSupervisor,
+
+          studentPreferenceSubmissionDeadline:
+            instance.studentPreferenceSubmissionDeadline,
+
+          minReaderPreferences: instance.minReaderPreferences,
+          maxReaderPreferences: instance.maxReaderPreferences,
+          readerPreferenceSubmissionDeadline:
+            instance.readerPreferenceSubmissionDeadline,
         },
-      }),
+      });
 
-      this.db.flag.createMany({
+      await this.db.flag.createMany({
         data: newInstanceFlags.map((f) => ({
           ...expand(this.params),
           title: f.title,
-          description: "",
+          description: f.description,
         })),
-      }),
+        skipDuplicates: true,
+      });
 
-      this.db.tag.deleteMany({
+      const flagData = await this.db.flag.findMany({
+        where: expand(this.params),
+      });
+
+      const flagTitleToId = flagData.reduce(
+        (acc, val) => ({ ...acc, [val.title]: val.id }),
+        {} as Record<string, string>,
+      );
+
+      const units = await tx.unitOfAssessment.createManyAndReturn({
+        data: flags.flatMap((f) =>
+          f.unitsOfAssessment.map((a) => ({
+            ...expand(this.params),
+            flagId: flagTitleToId[f.title],
+            title: a.title,
+            weight: a.weight,
+            studentSubmissionDeadline: a.studentSubmissionDeadline,
+            markerSubmissionDeadline: a.markerSubmissionDeadline,
+            allowedMarkerTypes: a.allowedMarkerTypes,
+          })),
+        ),
+      });
+
+      const unitTitleToId = units.reduce(
+        (acc, val) => ({ ...acc, [`${val.flagId}${val.title}`]: val.id }),
+        {} as Record<string, string>,
+      );
+
+      await tx.assessmentCriterion.createMany({
+        data: flags.flatMap((f) =>
+          f.unitsOfAssessment.flatMap((u) =>
+            u.components.map((c) => ({
+              ...expand(this.params),
+              flagId: flagTitleToId[f.title],
+              unitOfAssessmentId:
+                unitTitleToId[`${flagTitleToId[f.title]}${u.title}`],
+              title: c.title,
+              description: c.description,
+              weight: c.weight,
+              layoutIndex: c.layoutIndex,
+            })),
+          ),
+        ),
+      });
+
+      await this.db.tag.deleteMany({
         where: {
           ...expand(this.params),
           title: { in: staleInstanceTagTitles },
         },
-      }),
+      });
 
-      this.db.tag.createMany({
+      await this.db.tag.createMany({
         data: newInstanceTags.map((t) => ({
           ...expand(this.params),
           title: t.title,
         })),
-      }),
-    ]);
+      });
+    });
   }
 
   public async clearAllAlgResults(): Promise<void> {
@@ -1697,21 +1852,21 @@ export class Marker extends User {
       project: ProjectDTO;
       student: StudentDTO;
       markerType: MarkerType;
-      gradedSubmissions: GradedSubmissionDTO[];
+      unitsOfAssessment: UnitOfAssessmentDTO[];
     }[]
   > {
     type Ret = {
       project: ProjectDTO;
       student: StudentDTO;
       markerType: MarkerType;
-      gradedSubmissions: GradedSubmissionDTO[];
+      unitsOfAssessment: UnitOfAssessmentDTO[];
     };
 
     let assignedProjects: {
       project: ProjectDTO;
       student: StudentDTO;
       markerType: MarkerType;
-      gradedSubmissions: GradedSubmissionDTO[];
+      unitsOfAssessment: UnitOfAssessmentDTO[];
     }[] = [];
 
     if (await this.isSupervisor(this.instance.params)) {
@@ -1722,7 +1877,15 @@ export class Marker extends User {
             include: {
               userInInstance: { include: { user: true } },
               studentFlags: {
-                include: { flag: { include: { gradedSubmissions: true } } },
+                include: {
+                  flag: {
+                    include: {
+                      unitsOfAssessment: {
+                        include: { assessmentCriteria: true, flag: true },
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -1741,8 +1904,8 @@ export class Marker extends User {
             project: T.toProjectDTO(a.project),
             student: T.toStudentDTO(a.student),
             markerType: MarkerType.SUPERVISOR,
-            gradedSubmissions: f.flag.gradedSubmissions.map((x) =>
-              T.toGradedSubmissionDTO(x),
+            unitsOfAssessment: f.flag.unitsOfAssessment.map((x) =>
+              T.toUnitOfAssessmentDTO(x),
             ),
           })),
         ),
@@ -1757,7 +1920,15 @@ export class Marker extends User {
             include: {
               userInInstance: { include: { user: true } },
               studentFlags: {
-                include: { flag: { include: { gradedSubmissions: true } } },
+                include: {
+                  flag: {
+                    include: {
+                      unitsOfAssessment: {
+                        include: { assessmentCriteria: true, flag: true },
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -1777,8 +1948,8 @@ export class Marker extends User {
               project: T.toProjectDTO(a.project),
               student: T.toStudentDTO(a.student),
               markerType: MarkerType.READER,
-              gradedSubmissions: f.flag.gradedSubmissions.map((x) =>
-                T.toGradedSubmissionDTO(x),
+              unitsOfAssessment: f.flag.unitsOfAssessment.map((x) =>
+                T.toUnitOfAssessmentDTO(x),
               ),
             }) satisfies Ret,
         ),
@@ -2001,7 +2172,15 @@ export class Reader extends Marker {
           include: {
             userInInstance: { include: { user: true } },
             studentFlags: {
-              include: { flag: { include: { gradedSubmissions: true } } },
+              include: {
+                flag: {
+                  include: {
+                    unitsOfAssessment: {
+                      include: { assessmentCriteria: true, flag: true },
+                    },
+                  },
+                },
+              },
             },
           },
         },

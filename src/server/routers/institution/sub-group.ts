@@ -6,6 +6,7 @@ import { createTRPCRouter } from "@/server/trpc";
 import {
   flagDtoSchema,
   instanceDtoSchema,
+  newUnitOfAssessmentSchema,
   subGroupDtoSchema,
   tagDtoSchema,
   userDtoSchema,
@@ -58,7 +59,11 @@ export const subGroupRouter = createTRPCRouter({
     .input(
       z.object({
         newInstance: instanceDtoSchema.omit({ instance: true }),
-        flags: z.array(flagDtoSchema.omit({ id: true })),
+        flags: z.array(
+          flagDtoSchema
+            .omit({ id: true })
+            .extend({ unitsOfAssessment: z.array(newUnitOfAssessmentSchema) }),
+        ),
         tags: z.array(tagDtoSchema.omit({ id: true })),
       }),
     )

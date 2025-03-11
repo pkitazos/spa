@@ -64,16 +64,15 @@ export async function reader_details(db: PrismaClient, params: InstanceParams) {
           const hello = nameToUser[x.reader_name] !== undefined;
           if (!hello) {
             console.log(
-              "User",
-              x.reader_name,
-              "has no id:",
-              nameToUser[x.reader_name],
+              `User ${x.reader_name} has no id: ${nameToUser[x.reader_name]}`,
             );
           }
 
           const hello2 = studentIdToProjectId[x.student_guid] !== undefined;
           if (!hello2) {
-            console.log("student no student", x.student_guid);
+            console.log(
+              `student ${x.student_guid} no longer allocated project in instance`,
+            );
           }
 
           return hello && hello2;
@@ -86,25 +85,5 @@ export async function reader_details(db: PrismaClient, params: InstanceParams) {
         })),
       skipDuplicates: true,
     });
-    // const supervisors = await tx.supervisorDetails.findMany({
-    //   where: expand(params),
-    //   include: { userInInstance: { include: { user: true } } },
-    // });
-
-    // const allUnique = supervisors
-    //   .map((s) => {
-    //     const hello = nameToIds[s.userInInstance.user.name].length === 1;
-    //     if (!hello)
-    //       console.log(
-    //         "User",
-    //         s.userInInstance.user.name,
-    //         "has multiple ids:",
-    //         nameToIds[s.userInInstance.user.name],
-    //       );
-    //     return hello;
-    //   })
-    //   .every((x) => x);
-
-    // console.log("Do any two users have the same exact name:", !allUnique);
   });
 }

@@ -106,7 +106,7 @@ function NewAlgorithmForm({
   });
 
   function onSubmit(data: z.infer<typeof formSchema>) {
-    const newAlgorithmData = { ...data, createdAt: new Date() };
+    const newAlgorithmData = { ...data, createdAt: new Date(), builtIn: false };
 
     void toast.promise(
       createAlgorithmAsync({ params, data: newAlgorithmData }).then(() => {

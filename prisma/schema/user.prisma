@@ -28,22 +28,23 @@ model FlagOnStudent {
 }
 
 model StudentDetails {
-    studentLevel             Int                          @map("student_level")
-    latestSubmissionDateTime DateTime?                    @map("latest_submission_date_time")
-    projectAllocation        StudentProjectAllocation?    @relation(name: "project_allocation")
+    studentLevel                Int                          @map("student_level")
+    latestSubmissionDateTime    DateTime?                    @map("latest_submission_date_time")
+    projectAllocation           StudentProjectAllocation?    @relation(name: "project_allocation")
     // ---
-    userId                   String                       @map("user_id")
-    allocationGroupId        String                       @map("allocation_group_id")
-    allocationSubGroupId     String                       @map("allocation_sub_group_id")
-    allocationInstanceId     String                       @map("allocation_instance_id")
+    userId                      String                       @map("user_id")
+    allocationGroupId           String                       @map("allocation_group_id")
+    allocationSubGroupId        String                       @map("allocation_sub_group_id")
+    allocationInstanceId        String                       @map("allocation_instance_id")
     // ---
-    userInInstance           UserInInstance               @relation(name: "student_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, onUpdate: Cascade)
-    studentFlags             FlagOnStudent[]
-    draftPreferences         StudentDraftPreference[]
-    submittedPreferences     StudentSubmittedPreference[]
-    matchingPairs            MatchingPair[]
-    preAllocatedProjects     Project[]
-    readers                  ReaderProjectAllocation[]    @relation(name: "student_reader")
+    userInInstance              UserInInstance               @relation(name: "student_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, onUpdate: Cascade)
+    studentFlags                FlagOnStudent[]
+    draftPreferences            StudentDraftPreference[]
+    submittedPreferences        StudentSubmittedPreference[]
+    matchingPairs               MatchingPair[]
+    preAllocatedProjects        Project[]
+    readers                     ReaderProjectAllocation[]    @relation(name: "student_reader")
+    finalUnitOfAssessmentGrades FinalUnitOfAssessmentGrade[]
 
     @@id(name: "studentDetailsId", map: "student_details_id", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
     @@map("student_details")

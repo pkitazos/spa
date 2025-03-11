@@ -38,7 +38,8 @@ export const createTRPCContext = async (opts: {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
   const time = now();
 
-  console.log(`>>> tRPC Request from ${source} by`, session.user, `at ${time}`);
+  // TODO: replace with proper logging library
+  // console.log(`>>> tRPC Request from ${source} by`, session.user, `at ${time}`);
 
   return { session, db };
 };

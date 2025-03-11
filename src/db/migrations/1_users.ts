@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 import { PrismaClient } from "@prisma/client";
 
 import userData from "./data/User.json";

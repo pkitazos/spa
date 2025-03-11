@@ -27,14 +27,14 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from "./ui/command";
-import layoutData from "./layout.json";
+} from "@/components/ui/command";
+import layoutData from "@/components/layout.json";
 
 import { GRADES } from "@/config/grades";
 
 type TEMPMarkingFormData2 = {
   marks: {
-    assessmentComponentId: string;
+    assessmentCriterionId: string;
     mark: number;
     justification: string;
   }[];

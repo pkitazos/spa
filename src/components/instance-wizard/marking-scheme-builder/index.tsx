@@ -1,11 +1,9 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 
-import { CentrePanel } from "./_components/centre-panel";
-import { SidePanel } from "./_components/side-panel";
-import { MarkingSchemeStoreProvider } from "./_components/state";
-import { Classification, State } from "./_components/state/store";
-
-// TODO: this is gonna break stuff when we add the second sidebar for sure
+import { CentrePanel } from "./centre-panel";
+import { SidePanel } from "./side-panel";
+import { MarkingSchemeStoreProvider } from "./state";
+import { Classification, State } from "./state/store";
 
 type SearchParams = { [key: string]: string | undefined };
 
