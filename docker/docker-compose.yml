@@ -1,4 +1,4 @@
-name: "allocation-app"
+name: "amps"
 
 services:
   db:
@@ -6,11 +6,11 @@ services:
     ports:
       - "127.0.0.1:6565:5432"
     volumes:
-      - allocation-app-db-data:/var/lib/postgres/data/
+      - amps-db-data:/var/lib/postgres/data/
     environment:
       POSTGRES_USER: "root"
       POSTGRES_PASSWORD: "1234"
-      POSTGRES_DB: "allocation-db"
+      POSTGRES_DB: "amps-db"
       POSTGRES_HOST_AUTH_METHOD: "trust"
 
     restart: always
@@ -21,11 +21,11 @@ services:
       retries: 5
 
     networks:
-      - allocation-app-network
+      - amps-network
 
 
 networks:
-  allocation-app-network:
+  amps-network:
 
 volumes:
-  allocation-app-db-data:
+  amps-db-data:

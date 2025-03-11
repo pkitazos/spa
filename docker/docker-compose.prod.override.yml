@@ -1,6 +1,6 @@
 services:
   app:
-    image: spa:latest
+    image: amps:latest
     depends_on:
       - db
     build:
@@ -9,10 +9,10 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - spa-network
+      - amps-network
   
   matching-service:
     image: pkitazos/matching-service:amd64
 
     networks:
-      - spa-network
+      - amps-network
