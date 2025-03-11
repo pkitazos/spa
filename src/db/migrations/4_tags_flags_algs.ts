@@ -37,7 +37,6 @@ export async function tags_flags_algs(
         )
         .map((x) => ({
           id: x.id,
-          // TODO: make sure this title is the same @JakeTrevor
           title: x.title,
           ...expand(params),
           description: "",
