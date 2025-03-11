@@ -8,6 +8,8 @@
     "icons": "",
     "dto": "json",
     "data-objects": "class",
+    "migrations/data": "dump",
+    "transactions": "error",
     "_components": "components",
     "_utils": "utils",
     "(admin)": "admin",
