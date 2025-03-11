@@ -8,9 +8,9 @@ export const env = createEnv({
 
     DEV_ENV: z.string().optional(),
 
-    DEV_ID: z.string(),
-    DEV_NAME: z.string(),
-    DEV_EMAIL: z.string(),
+    DEV_ID: z.string().optional(),
+    DEV_NAME: z.string().optional(),
+    DEV_EMAIL: z.string().optional(),
   },
   runtimeEnv: process.env,
 });
