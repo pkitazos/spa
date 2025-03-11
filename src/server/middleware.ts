@@ -420,7 +420,6 @@ export const procedure = {
 // A procedure in an instance with group-admin permissions would be:
 procedure.instance.groupAdmin
   .input(z.object({ q: z.string() }))
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   .query(({ ctx: _c, input: _ }) => {});
 // NB the types - no `| undefined` freakiness
 

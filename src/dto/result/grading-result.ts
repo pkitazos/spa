@@ -17,6 +17,8 @@ export const GradingResultSchema = z.enum([
   GradingResult.AUTO_RESOLVED,
   GradingResult.MODERATE,
   GradingResult.INSUFFICIENT,
+  GradingResult.NEGOTIATE1,
+  GradingResult.NEGOTIATE2,
 ]);
 
 export type GradingResult = z.infer<typeof GradingResultSchema>;

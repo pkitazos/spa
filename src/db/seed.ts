@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { PrismaClient } from "@prisma/client";
 import { student_project_allocations } from "./migrations/10_student_project_allocations";
 import { algorithm_matching_results } from "./migrations/9_algorithm_matching_results";

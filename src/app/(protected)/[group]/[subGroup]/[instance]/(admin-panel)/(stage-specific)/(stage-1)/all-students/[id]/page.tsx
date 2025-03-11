@@ -48,7 +48,7 @@ export default async function Page({ params }: { params: PageParams }) {
           <StudentAllocation className="w-1/2" allocation={allocation} />
         )}
       </section>
-      {!!selfDefinedProjectId ? (
+      {selfDefinedProjectId ? (
         <StudentPreferencesSection params={params} />
       ) : (
         <StudentProjectSection params={params} />

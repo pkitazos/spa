@@ -121,6 +121,7 @@ export function MarkingSection({
         <div className="flex flex-col gap-20">
           {markingCriteria.map(({ criterion }) => (
             <AssessmentCriterionField
+              key={criterion.id}
               criterion={criterion}
               control={form.control}
             />

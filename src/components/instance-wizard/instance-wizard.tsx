@@ -308,14 +308,14 @@ function ProjectTagsPage() {
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
             <li>
-              Add common technology keywords (e.g., "Machine Learning", "Web
-              Development")
+              Add common technology keywords (e.g., &quot;Machine
+              Learning&quot;, &quot;Web Development&quot;)
             </li>
             <li>Include research areas relevant to your department</li>
             <li>Include subjects students may have taken</li>
             <li>
               Consider including programming languages relevant to the project
-              (e.g., "Rust", "Python", "Haskell")
+              (e.g., &quot;Rust&quot;, &quot;Python&quot;, &quot;Haskell&quot;)
             </li>
           </ul>
         </div>
