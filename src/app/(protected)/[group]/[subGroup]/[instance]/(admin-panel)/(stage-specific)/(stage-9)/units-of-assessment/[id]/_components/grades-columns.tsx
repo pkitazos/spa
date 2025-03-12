@@ -117,6 +117,7 @@ export const columns: ColumnDef<{
     header: "Status",
     cell: ({ row }) => <StatusIcon status={row.getValue("status")} />,
   },
+  // TODO: make this sortable @lewismb27
   { accessorKey: "computedOverall", header: "Computed Overall" },
   {
     accessorKey: "action",
@@ -124,6 +125,9 @@ export const columns: ColumnDef<{
     cell: ({ row }) => {
       const action = row.getValue("action") as string;
       if (!action) return null;
+      // Take to page to override grade
+
+      // hide in more actions menu
       return (
         <Button variant="secondary" size="sm" className="w-32">
           {action}

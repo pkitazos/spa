@@ -28,6 +28,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
     );
   }
 
+  // TODO@lewsimb27
+
   const supervisor = await api.user.get();
   const formDetails = await api.project.getFormDetails({ params });
   const instanceFlags = await api.institution.instance.getFlags({ params });

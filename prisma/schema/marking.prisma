@@ -86,7 +86,7 @@ model ComponentScore {
 
 model MarkerSubmissionComments {
     id                   String             @id @default(uuid())
-    summary              String
+    summary              String?
     recommendedForPrize  Boolean            @default(false) @map("recommended_for_prize")
     // ---
     markerId             String             @map("marker_id")

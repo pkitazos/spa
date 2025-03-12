@@ -8,6 +8,7 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   const user = await auth();
+  // add whitelist of users
   if (!user) redirect("/");
 
   return <>{children}</>;

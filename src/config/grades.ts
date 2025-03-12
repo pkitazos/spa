@@ -88,6 +88,7 @@ export class Grade {
 
     if (diff === 2) {
       return { status: GradingResult.NEGOTIATE1 };
+      // send emails using internal smtp server
     }
 
     return { status: GradingResult.NEGOTIATE2 };

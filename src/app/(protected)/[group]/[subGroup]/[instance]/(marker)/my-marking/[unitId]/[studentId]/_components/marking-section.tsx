@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Form, FormLabel } from "@/components/ui/form";
+import { Form, FormDescription, FormLabel } from "@/components/ui/form";
 import { useInstanceParams } from "@/components/params-context";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,6 +67,8 @@ export function MarkingSection({
     reValidateMode: "onBlur",
     defaultValues: {
       draft: true,
+      // TODO @lewismb27
+      // optional
       finalComment: "",
       recommendation: false,
       studentId,
@@ -132,9 +134,12 @@ export function MarkingSection({
           name="finalComment"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Comments</FormLabel>
+              <FormLabel>Summary</FormLabel>
+              <FormDescription>
+                A short summary of your evaluation or additional comments
+              </FormDescription>
               <FormControl>
-                <Textarea placeholder="Final Comments" {...field} />
+                <Textarea {...field} />
               </FormControl>
             </FormItem>
           )}
@@ -145,10 +150,14 @@ export function MarkingSection({
           render={({ field: { value, ...field } }) => (
             <FormItem className="flex flex-row items-start space-x-3 space-y-0">
               <FormControl>
+                {/* should only be visible on dissertation unit of assessment */}
                 <Checkbox defaultChecked={value} {...field} />
               </FormControl>
               <div className="space-y-1 leading-none">
-                <FormLabel>Up For A Prize?</FormLabel>
+                {/* TODO: should be flagged to admins */}
+                <FormLabel>
+                  Would you recommend this project for a prize?
+                </FormLabel>
               </div>
             </FormItem>
           )}

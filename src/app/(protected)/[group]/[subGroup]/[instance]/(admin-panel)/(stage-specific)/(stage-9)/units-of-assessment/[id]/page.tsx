@@ -12,6 +12,7 @@ export default async function Page({ params }: { params: PageParams }) {
   return (
     <main className="container mx-auto py-10">
       <h1 className="mb-6 text-3xl font-bold">{params.id}</h1>
+      {/* copy emails section based on filter */}
       <GradesTable
         data={data.map((x) => {
           const { status, grade } = Grade.autoResolve(
