@@ -6,7 +6,7 @@ services:
     ports:
       - "127.0.0.1:6565:5432"
     volumes:
-      - amps-db-data:/var/lib/postgres/data/
+      - amps-db-data:/var/lib/postgresql/data/
     environment:
       POSTGRES_USER: "root"
       POSTGRES_PASSWORD: "1234"

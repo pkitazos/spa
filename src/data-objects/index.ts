@@ -2708,7 +2708,7 @@ export class MatchingAlgorithm extends DataObject {
       }),
 
       this.db.matchingResult.upsert({
-        where: { algorithm: toAlgID(this.params) },
+        where: toAlgID(this.params),
         update: matchingResult,
         create: {
           ...toAlgID(this.params),

@@ -4,6 +4,7 @@ FROM --platform=linux/amd64 node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
+COPY .env .env
 
 COPY prisma ./prisma
 
@@ -15,9 +16,12 @@ RUN \
   else echo "Lockfile not found." && exit 1; \
   fi
 
+RUN pnpm db:generate
+
 ##### BUILDER
 
 FROM --platform=linux/amd64 node:22-alpine AS builder
+RUN apk add --no-cache libc6-compat openssl
 
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -35,6 +39,7 @@ RUN \
 ##### RUNNER
 
 FROM --platform=linux/amd64 node:22-alpine AS runner
+RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 ENV NODE_ENV production
@@ -52,4 +57,5 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 USER nextjs
 
 CMD ["node", "server.js"]
+
 
