@@ -40,6 +40,7 @@ import { SupervisorProjectDto } from "@/lib/validations/dto/project";
 
 import { Stage } from "@/db/types";
 import { PAGES } from "@/config/pages";
+import { setIntersection } from "@/lib/utils/general/set-intersection";
 
 export function useSupervisorProjectsColumns({
   deleteProject,
@@ -263,7 +264,13 @@ export function useSupervisorProjectsColumns({
           }
         }
 
-        return selectedFilters.intersection(allocationStatus).size > 0;
+        return (
+          setIntersection(
+            Array.from(selectedFilters),
+            Array.from(allocationStatus),
+            (x) => x,
+          ).length > 0
+        );
       },
     },
   ];
