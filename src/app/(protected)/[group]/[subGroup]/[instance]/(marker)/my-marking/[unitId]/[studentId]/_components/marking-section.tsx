@@ -156,7 +156,8 @@ export function MarkingSection({
               <div className="space-y-1 leading-none">
                 {/* TODO: should be flagged to admins */}
                 <FormLabel>
-                  Would you recommend this project for a prize?
+                  Check the box to recommend this student's work as outstanding
+                  and prizeworthy
                 </FormLabel>
               </div>
             </FormItem>
