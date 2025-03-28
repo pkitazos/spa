@@ -68,10 +68,10 @@ export function MarkingSection({
     studentId,
   });
 
-  while (data === undefined) {
-    console.log(data, isLoading, error);
-    return <div>Loading...</div>;
-  }
+  //while (data === undefined) {
+  //  console.log(data, isLoading, error);
+  //  return <div>Loading...</div>;
+  //}
 
   const [summary, recommendedForPrize] = data ?? ["", false];
 
