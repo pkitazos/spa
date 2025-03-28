@@ -62,6 +62,21 @@ export function MarkingSection({
   const { mutateAsync: submitAsync } =
     api.user.marker.submitMarks.useMutation();
 
+  const { data, isLoading, error } = api.user.marker.getSummary.useQuery({
+    params,
+    unitOfAssessmentId,
+    studentId,
+  });
+
+  //while (data === undefined) {
+  //  console.log(data, isLoading, error);
+  //  return <div>Loading...</div>;
+  //}
+
+  const [summary, recommendedForPrize] = data ?? ["", false];
+
+  console.log("!!!", summary, recommendedForPrize, "-");
+
   const form = useForm<UnitOfAssessmentGradeDTO>({
     resolver: zodResolver(unitOfAssessmentGradeDtoSchema),
     reValidateMode: "onBlur",
@@ -69,8 +84,8 @@ export function MarkingSection({
       draft: true,
       // TODO @lewismb27
       // optional
-      finalComment: "",
-      recommendation: false,
+      finalComment: summary,
+      recommendation: recommendedForPrize,
       studentId,
       unitOfAssessmentId,
       marks: markingCriteria.reduce(
@@ -89,6 +104,7 @@ export function MarkingSection({
   function handleSave(data: PartialMarkDTO) {
     void toast.promise(
       saveAsync({ params, ...data }).then(() => {
+        console.log(data.recommendation, "-", data.finalComment);
         router.push(`${instancePath}/${PAGES.myMarking.href}`);
         router.refresh();
       }),
@@ -151,12 +167,17 @@ export function MarkingSection({
             <FormItem className="flex flex-row items-start space-x-3 space-y-0">
               <FormControl>
                 {/* should only be visible on dissertation unit of assessment */}
-                <Checkbox defaultChecked={value} {...field} />
+                <Checkbox
+                  defaultChecked={recommendedForPrize}
+                  //checked={recommendedForPrize}
+                  onCheckedChange={field.onChange}
+                />
               </FormControl>
               <div className="space-y-1 leading-none">
                 {/* TODO: should be flagged to admins */}
                 <FormLabel>
-                  A short summary of your evaluation or additional comments.
+                  Check the box to recommend this student's work as outstanding
+                  and prizeworthy
                 </FormLabel>
               </div>
             </FormItem>
