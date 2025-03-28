@@ -6,6 +6,7 @@ import { api } from "@/lib/trpc/client";
 import { useInstanceParams } from "../params-context";
 
 import { Role } from "@/db/types";
+import { setIntersection } from "@/lib/utils/general/set-intersection";
 
 export function RBAC({
   children,
@@ -19,13 +20,11 @@ export function RBAC({
   OR?: boolean;
 }) {
   const params = useInstanceParams();
-  const allowedRolesSet = new Set(allowedRoles);
 
   const { data: userRoles, isSuccess } = api.user.roles.useQuery({ params });
   if (!isSuccess) return <></>;
 
-  const userAllowed = allowedRolesSet.intersection(userRoles).size > 0;
+  const userAllowed =
+    setIntersection(allowedRoles, Array.from(userRoles), (x) => x).length > 0;
   if (OR || (AND && userAllowed)) return <>{children}</>;
-
-  return <></>;
 }

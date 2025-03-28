@@ -8,7 +8,6 @@ import {
   type VisibilityState,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
@@ -43,7 +42,6 @@ export function SubmissionsTable({ data }: { data: SubmissionTableRow[] }) {
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
@@ -114,7 +112,6 @@ function ProjectRow({
   onExpandedChange: (expanded: Record<string, boolean>) => void;
 }) {
   const isExpanded = expanded[row.original.student.id];
-
   return (
     <>
       <TableRow className="cursor-pointer hover:bg-muted/50">
@@ -150,21 +147,25 @@ function ProjectRow({
         </TableCell>
       </TableRow>
       {isExpanded &&
-        row.original.unitsOfAssessment.map((unit) => (
-          <TableRow key={unit.id} className="bg-muted/30">
-            <TableCell></TableCell>
-            <TableCell>{unit.title}</TableCell>
-            <TableCell>{format(unit.markerSubmissionDeadline)}</TableCell>
-            <TableCell></TableCell>
-            <TableCell>
-              <SubmissionStatus
-                status={computeStatus(unit)}
-                unitId={unit.id}
-                studentId={row.original.student.id}
-              />
-            </TableCell>
-          </TableRow>
-        ))}
+        row.original.unitsOfAssessment
+          .filter((unit) =>
+            unit.allowedMarkerTypes.includes(row.original.markerType),
+          )
+          .map((unit) => (
+            <TableRow key={unit.id} className="bg-muted/30">
+              <TableCell></TableCell>
+              <TableCell>{unit.title}</TableCell>
+              <TableCell>{format(unit.markerSubmissionDeadline)}</TableCell>
+              <TableCell></TableCell>
+              <TableCell>
+                <SubmissionStatus
+                  status={computeStatus(unit)}
+                  unitId={unit.id}
+                  studentId={row.original.student.id}
+                />
+              </TableCell>
+            </TableRow>
+          ))}
     </>
   );
 }

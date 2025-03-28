@@ -372,7 +372,8 @@ export class User extends DataObject {
           break;
 
         default:
-          throw new Error(
+          res.push({ segment: id, access: true });
+          console.error(
             `User.AuthoriseBreadcrumbs: Unknown static segment ${staticSegment}`,
           );
       }
