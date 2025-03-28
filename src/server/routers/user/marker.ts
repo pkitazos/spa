@@ -131,6 +131,8 @@ export const markerRouter = createTRPCRouter({
 
         const { flag } = await instance.getUnitOfAssessment(unitOfAssessmentId);
 
+        console.log(recommendation);
+
         await db.$transaction([
           db.componentScore.deleteMany({
             where: { ...expand(instance.params), markerId: user.id, studentId },
@@ -175,6 +177,41 @@ export const markerRouter = createTRPCRouter({
             },
           }),
         ]);
+      },
+    ),
+
+  getSummary: procedure.instance
+    .inStage(subsequentStages(Stage.READER_BIDDING))
+    .marker.input(
+      z.object({
+        params: z.object({
+          group: z.string(),
+          subGroup: z.string(),
+          instance: z.string(),
+        }),
+        unitOfAssessmentId: z.string(),
+        studentId: z.string(),
+      }),
+    )
+    .output(z.tuple([z.string(), z.boolean()]))
+    .query(
+      async ({
+        ctx: { user, db },
+        input: { unitOfAssessmentId, studentId },
+      }) => {
+        const result = await db.markerSubmissionComments.findFirst({
+          where: { studentId, markerId: user.id, unitOfAssessmentId },
+        });
+
+        console.log(
+          result
+            ? [result.summary ?? "", result.recommendedForPrize]
+            : ["", false],
+        );
+
+        return result
+          ? [result.summary ?? "", result.recommendedForPrize]
+          : ["", false];
       },
     ),
 });
