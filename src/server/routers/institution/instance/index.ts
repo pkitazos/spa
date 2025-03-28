@@ -656,11 +656,7 @@ export const instanceRouter = createTRPCRouter({
 
             let supervisorGrade: string | undefined;
             if (supervisorScores.every((s) => s !== undefined)) {
-              const mark = supervisorScores.reduce(
-                (acc, val) => acc + val.weight * val.score,
-                0,
-              );
-              supervisorGrade = Grade.toLetter(mark);
+              supervisorGrade = Grade.computeFromScores(supervisorScores);
             }
 
             const readerScores = submission.assessmentCriteria.map((c) => {
@@ -673,11 +669,7 @@ export const instanceRouter = createTRPCRouter({
 
             let readerGrade: string | undefined;
             if (readerScores.every((s) => s !== undefined)) {
-              const mark = readerScores.reduce(
-                (acc, val) => acc + val.weight * val.score,
-                0,
-              );
-              readerGrade = Grade.toLetter(mark);
+              readerGrade = Grade.computeFromScores(readerScores);
             }
 
             return {
@@ -751,6 +743,7 @@ export const instanceRouter = createTRPCRouter({
       ),
     )
     .query(async ({ ctx: { instance, db } }) => {
+      console.log("hello world!");
       const flags = await db.flag.findMany({
         where: expand(instance.params),
         include: {

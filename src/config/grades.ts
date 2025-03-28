@@ -27,18 +27,41 @@ export const GRADES = [
 ];
 
 export class Grade {
+  public static computeFromScores(scores: { score: number; weight: number }[]) {
+    const totalWeight = scores.reduce((acc, val) => acc + val.weight, 0);
+    const totalWeightedScore = scores.reduce(
+      (acc, val) => acc + val.weight * val.score,
+      0,
+    );
+    const mark = this.round(totalWeightedScore / totalWeight);
+    return Grade.toLetter(mark);
+  }
+
+  // POLICY how should we round non-integer grades?
+  public static round(mark: number): number {
+    return Math.round(mark);
+  }
+
   public static toLetter(mark: number): string {
     if (mark !== Math.round(mark)) {
       throw new Error(`Mark must be an integer: ${mark}`);
     }
     const grade = GRADES.find((g) => g.value === mark);
-    if (!grade) throw new Error(`Computed mark not valid: ${mark}`);
+    if (!grade) {
+      console.error(`!!Invalid Grade! ${mark}`);
+      return `invalid ${mark}`;
+    }
+    // throw new Error(`Computed mark not valid: ${mark}`);
     return grade.label;
   }
 
   public static toInt(grade: string): number {
     const gradeObj = GRADES.find((g) => g.label === grade);
-    if (!gradeObj) throw new Error(`Grade not valid: ${grade}`);
+    if (!gradeObj) {
+      console.error(`!!Invalid Grade! ${grade}`);
+      return -1;
+    }
+    // throw new Error(`Grade not valid: ${grade}`);
     return gradeObj.value;
   }
 
@@ -58,12 +81,21 @@ export class Grade {
     return ["A1", "H"].includes(grade);
   }
 
-  // TODO test/confirm valid behaviour
+  // POLICY how should we round non-integer grades for between-marker averaging?
   public static average(grade1: string, grade2: string): string {
     const grade1Value = this.toInt(grade1);
     const grade2Value = this.toInt(grade2);
     const average = Math.round((grade1Value + grade2Value) / 2);
     return this.toLetter(average);
+  }
+
+  // if grade is A1 or Fail (E1 or below) then go to negotiate2
+  public static boundaryCheck(grade: string) {
+    if (this.isOnBoundary(grade)) {
+      return { status: GradingResult.NEGOTIATE2 };
+    } else {
+      return { status: GradingResult.AUTO_RESOLVED, grade };
+    }
   }
 
   public static autoResolve(supervisorGrade?: string, readerGrade?: string) {
