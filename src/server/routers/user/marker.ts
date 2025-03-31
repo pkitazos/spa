@@ -6,6 +6,7 @@ import {
   studentDtoSchema,
   unitOfAssessmentGradeDtoSchema,
   unitOfAssessmentDtoSchema,
+  assessmentCriterionDtoSchema,
 } from "@/dto";
 import { expand } from "@/lib/utils/general/instance-params";
 import { subsequentStages } from "@/lib/utils/permissions/stage-check";
@@ -28,6 +29,29 @@ export const markerRouter = createTRPCRouter({
     )
     .query(
       async ({ ctx: { user } }) => await user.getProjectsWithSubmissions(),
+    ),
+
+  getCriteria: procedure.instance
+    .inStage(subsequentStages(Stage.READER_BIDDING))
+    .marker.input(z.object({ unitOfAssessmentId: z.string() }))
+    .output(z.array(assessmentCriterionDtoSchema))
+    .query(async ({ ctx: { instance }, input: { unitOfAssessmentId } }) => {
+      return await instance.getCriteria(unitOfAssessmentId);
+    }),
+
+  getMarks: procedure.instance
+    .inStage(subsequentStages(Stage.READER_BIDDING))
+    .marker.input(
+      z.object({ unitOfAssessmentId: z.string(), studentId: z.string() }),
+    )
+    .output(unitOfAssessmentGradeDtoSchema)
+    .query(
+      async ({ ctx: { user }, input: { unitOfAssessmentId, studentId } }) => {
+        return await user.getMarksForStudentSubmission(
+          unitOfAssessmentId,
+          studentId,
+        );
+      },
     ),
 
   getCriteriaAndScoresForStudentSubmission: procedure.instance
@@ -135,7 +159,12 @@ export const markerRouter = createTRPCRouter({
 
         await db.$transaction([
           db.componentScore.deleteMany({
-            where: { ...expand(instance.params), markerId: user.id, studentId },
+            where: {
+              ...expand(instance.params),
+              markerId: user.id,
+              studentId,
+              criterion: { unitOfAssessmentId },
+            },
           }),
 
           db.componentScore.createMany({

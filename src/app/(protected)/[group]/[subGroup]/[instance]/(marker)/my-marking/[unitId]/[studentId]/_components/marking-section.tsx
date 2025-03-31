@@ -31,7 +31,6 @@ import { api } from "@/lib/trpc/client";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import {
   AssessmentCriterionDTO,
-  AssessmentCriterionWithScoreDTO,
   PartialMarkDTO,
   UnitOfAssessmentGradeDTO,
   unitOfAssessmentGradeDtoSchema,
@@ -47,12 +46,10 @@ import { PAGES } from "@/config/pages";
 
 export function MarkingSection({
   markingCriteria,
-  studentId,
-  unitOfAssessmentId,
+  initialState,
 }: {
-  markingCriteria: AssessmentCriterionWithScoreDTO[];
-  studentId: string;
-  unitOfAssessmentId: string;
+  markingCriteria: AssessmentCriterionDTO[];
+  initialState: UnitOfAssessmentGradeDTO;
 }) {
   const params = useInstanceParams();
   const router = useRouter();
@@ -62,41 +59,24 @@ export function MarkingSection({
   const { mutateAsync: submitAsync } =
     api.user.marker.submitMarks.useMutation();
 
-  const { data, isLoading, error } = api.user.marker.getSummary.useQuery({
-    params,
-    unitOfAssessmentId,
-    studentId,
-  });
-
-  //while (data === undefined) {
-  //  console.log(data, isLoading, error);
-  //  return <div>Loading...</div>;
-  //}
-
-  const [summary, recommendedForPrize] = data ?? ["", false];
-
-  console.log("!!!", summary, recommendedForPrize, "-");
-
   const form = useForm<UnitOfAssessmentGradeDTO>({
     resolver: zodResolver(unitOfAssessmentGradeDtoSchema),
     reValidateMode: "onBlur",
     defaultValues: {
-      draft: true,
-      // TODO @lewismb27
-      // optional
-      finalComment: summary,
-      recommendation: recommendedForPrize,
-      studentId,
-      unitOfAssessmentId,
+      ...initialState,
       marks: markingCriteria.reduce(
-        (acc, e) => ({
-          ...acc,
-          [e.criterion.id]: {
-            justification: e.score?.justification ?? "",
-            mark: e.score?.grade ?? -1,
-          },
-        }),
-        {},
+        (acc, val) => {
+          console.log(val.id);
+          console.log(initialState.marks[val.id]);
+          return {
+            ...acc,
+            [val.id]: initialState.marks[val.id] ?? {
+              mark: -1,
+              justification: "",
+            },
+          };
+        },
+        {} as Record<string, { mark: number; justification: string }>,
       ),
     },
   });
@@ -137,7 +117,7 @@ export function MarkingSection({
         className="mt-10 flex w-full max-w-5xl flex-col gap-6"
       >
         <div className="flex flex-col gap-20">
-          {markingCriteria.map(({ criterion }) => (
+          {markingCriteria.map((criterion) => (
             <AssessmentCriterionField
               key={criterion.id}
               criterion={criterion}
@@ -167,11 +147,7 @@ export function MarkingSection({
             <FormItem className="flex flex-row items-start space-x-3 space-y-0">
               <FormControl>
                 {/* should only be visible on dissertation unit of assessment */}
-                <Checkbox
-                  defaultChecked={recommendedForPrize}
-                  //checked={recommendedForPrize}
-                  onCheckedChange={field.onChange}
-                />
+                <Checkbox defaultChecked={value} {...field} />
               </FormControl>
               <div className="space-y-1 leading-none">
                 {/* TODO: should be flagged to admins */}

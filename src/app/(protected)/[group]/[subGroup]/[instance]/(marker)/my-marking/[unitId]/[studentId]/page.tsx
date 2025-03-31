@@ -35,7 +35,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function Marks({
+export default async function MarksPage({
   params: { unitId: unitOfAssessmentId, studentId, ...params },
 }: {
   params: PageParams;
@@ -45,12 +45,18 @@ export default async function Marks({
     studentId,
   });
 
-  const submissionMarkingData =
-    await api.user.marker.getCriteriaAndScoresForStudentSubmission({
-      params,
-      unitOfAssessmentId,
-      studentId,
-    });
+  const markingCriteria = await api.user.marker.getCriteria({
+    params,
+    unitOfAssessmentId,
+  });
+
+  const markingData = await api.user.marker.getMarks({
+    params,
+    unitOfAssessmentId,
+    studentId,
+  });
+
+  console.log(markingData);
 
   if (!project) throw new Error("no project defined"); // error goes here
 
@@ -68,9 +74,8 @@ export default async function Marks({
 
       <div className="mt-6 flex flex-col gap-6">
         <MarkingSection
-          markingCriteria={submissionMarkingData}
-          studentId={studentId}
-          unitOfAssessmentId={unitOfAssessmentId}
+          markingCriteria={markingCriteria}
+          initialState={markingData}
         />
       </div>
     </PageWrapper>

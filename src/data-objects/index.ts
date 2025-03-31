@@ -31,6 +31,8 @@ import {
   NewUnitOfAssessmentDTO,
   UnitOfAssessmentDTO,
   AssessmentCriterionWithScoreDTO,
+  AssessmentCriterionDTO,
+  UnitOfAssessmentGradeDTO,
 } from "@/dto/";
 
 import {
@@ -735,6 +737,18 @@ export class AllocationInstance extends DataObject {
       })
       .then(T.toUnitOfAssessmentDTO);
   }
+
+  public async getCriteria(
+    unitOfAssessmentId: string,
+  ): Promise<AssessmentCriterionDTO[]> {
+    const data = await this.db.assessmentCriterion.findMany({
+      where: { unitOfAssessmentId },
+      orderBy: { layoutIndex: "asc" },
+    });
+
+    return data.map(T.toAssessmentCriterionDTO);
+  }
+
   public async getCriteriaAndScoresForStudentSubmission(
     unitOfAssessmentId: string,
     markerId: string,
@@ -1846,6 +1860,47 @@ export class Marker extends User {
   constructor(db: DB, id: string, params: InstanceParams) {
     super(db, id);
     this.instance = new AllocationInstance(db, params);
+  }
+
+  async getMarksForStudentSubmission(
+    unitOfAssessmentId: string,
+    studentId: string,
+  ): Promise<UnitOfAssessmentGradeDTO> {
+    const result = await this.db.markerSubmissionComments.findFirst({
+      where: {
+        ...expand(this.instance.params),
+        unitOfAssessmentId,
+        studentId,
+        markerId: this.id,
+      },
+    });
+
+    const marksRaw = await this.db.componentScore.findMany({
+      where: {
+        ...expand(this.instance.params),
+        studentId,
+        markerId: this.id,
+        criterion: { unitOfAssessmentId },
+      },
+    });
+
+    return {
+      unitOfAssessmentId,
+      studentId,
+      draft: false,
+      marks: marksRaw.reduce(
+        (acc, val) => ({
+          ...acc,
+          [val.assessmentCriterionId]: {
+            mark: val.grade,
+            justification: val.justification,
+          },
+        }),
+        {} as Record<string, { mark: number; justification: string }>,
+      ),
+      finalComment: result?.summary ?? "",
+      recommendation: result?.recommendedForPrize ?? false,
+    };
   }
 
   public async getProjectsWithSubmissions(): Promise<
