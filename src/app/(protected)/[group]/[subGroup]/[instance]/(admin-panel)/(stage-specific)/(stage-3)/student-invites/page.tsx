@@ -1,6 +1,6 @@
 import { ChevronDownIcon, DatabaseIcon, ZapIcon } from "lucide-react";
 
-import { CopyEmailsButton } from "@/components/copy-emails-button.tsx";
+import { CopyEmailsButton } from "@/components/copy-emails-button";
 import { SectionHeading, SubHeading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { Button } from "@/components/ui/button";
@@ -31,9 +31,7 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 }
 
 export default async function Page({ params }: { params: InstanceParams }) {
-  const students = await api.institution.instance.invitedStudents({
-    params,
-  });
+  const students = await api.institution.instance.invitedStudents({ params });
 
   return (
     <PanelWrapper className="mt-10 flex flex-col items-start gap-16 px-12">

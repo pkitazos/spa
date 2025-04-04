@@ -5,7 +5,7 @@ import {
   ZapIcon,
 } from "lucide-react";
 
-import { CopyEmailsButton } from "@/components/copy-emails-button.tsx";
+import { CopyEmailsButton } from "@/components/copy-emails-button";
 import { SectionHeading, SubHeading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { Button } from "@/components/ui/button";
