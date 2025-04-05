@@ -37,7 +37,7 @@ import {
 } from "@/dto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Control, useForm } from "react-hook-form";
-import { GRADES } from "@/config/grades";
+import { Grade, GRADES } from "@/config/grades";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -109,6 +109,20 @@ export function MarkingSection({
     );
   });
 
+  function computeOverall() {
+    const data = form.getValues("marks");
+
+    if (!markingCriteria.every((c) => data[c.id].mark !== -1)) return "-";
+
+    const scores: { score: number; weight: number }[] = markingCriteria.map(
+      (c) => ({ weight: c.weight, score: data[c.id].mark }),
+    );
+
+    return Grade.toLetter(Grade.computeFromScores(scores));
+  }
+
+  const overallMark = computeOverall();
+
   return (
     <Form {...form}>
       <form
@@ -123,6 +137,10 @@ export function MarkingSection({
               control={form.control}
             />
           ))}
+        </div>
+        <div>
+          <h3>overall mark:</h3>
+          <h4>{overallMark}</h4>
         </div>
         <FormField
           control={form.control}
@@ -161,22 +179,10 @@ export function MarkingSection({
             </FormItem>
           )}
         />
+
         <div className="mt-16 flex justify-end gap-8">
           <Button
-            onClick={() => {
-              // const validState = Object.entries(
-              //   form.formState.touchedFields,
-              // ).every(
-              //   ([name, touched]) =>
-              //     !touched ||
-              //     !form.getFieldState(name as keyof UnitOfAssessmentGradeDTO)
-              //       .invalid,
-              // );
-
-              // if (validState) {
-              handleSave(form.getValues());
-              // }
-            }}
+            onClick={() => handleSave(form.getValues())}
             type="button"
             variant="outline"
             size="lg"
