@@ -162,9 +162,8 @@ export const unitOfAssessmentGradeDtoSchema = z.object({
   marks: z.record(
     z.string(), // assessmentCriterionId
     z.object({
-      mark: z.number().int(), //.nonnegative(),
-      justification: z.string(), //.min(1),
-      // stricter validations would be nice but they are making things difficult
+      mark: z.number().int().nonnegative(),
+      justification: z.string().min(1),
     }),
   ),
   finalComment: z.string(),

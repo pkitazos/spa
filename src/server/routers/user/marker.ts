@@ -50,7 +50,7 @@ export const markerRouter = createTRPCRouter({
     .marker.input(
       z.object({ unitOfAssessmentId: z.string(), studentId: z.string() }),
     )
-    .output(unitOfAssessmentGradeDtoSchema)
+    .output(partialMarkDtoSchema)
     .query(
       async ({ ctx: { user }, input: { unitOfAssessmentId, studentId } }) =>
         await user.getMarksForStudentSubmission(unitOfAssessmentId, studentId),

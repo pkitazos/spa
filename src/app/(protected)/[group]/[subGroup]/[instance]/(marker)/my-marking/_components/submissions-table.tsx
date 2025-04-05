@@ -202,7 +202,7 @@ function SubmissionStatus({
       );
     case submissionStatus.DRAFT:
       return (
-        <Button size="sm" variant="secondary" className="w-24">
+        <Button size="sm" variant="secondary" className="w-24" asChild>
           <Link href={`./${PAGES.myMarking.href}/${unitId}/${studentId}`}>
             Edit
           </Link>

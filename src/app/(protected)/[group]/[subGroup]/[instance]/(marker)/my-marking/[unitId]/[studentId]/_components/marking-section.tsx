@@ -49,7 +49,7 @@ export function MarkingSection({
   initialState,
 }: {
   markingCriteria: AssessmentCriterionDTO[];
-  initialState: UnitOfAssessmentGradeDTO;
+  initialState: PartialMarkDTO;
 }) {
   const params = useInstanceParams();
   const router = useRouter();
@@ -66,13 +66,12 @@ export function MarkingSection({
       ...initialState,
       marks: markingCriteria.reduce(
         (acc, val) => {
-          console.log(val.id);
-          console.log(initialState.marks[val.id]);
+          const data = initialState.marks?.[val.id];
           return {
             ...acc,
-            [val.id]: initialState.marks[val.id] ?? {
-              mark: -1,
-              justification: "",
+            [val.id]: {
+              mark: data?.mark ?? -1,
+              justification: data?.justification ?? "",
             },
           };
         },
@@ -143,11 +142,14 @@ export function MarkingSection({
         <FormField
           control={form.control}
           name="recommendation"
-          render={({ field: { value, ...field } }) => (
+          render={({ field }) => (
             <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              {/* should only be visible on dissertation unit of assessment */}
               <FormControl>
-                {/* should only be visible on dissertation unit of assessment */}
-                <Checkbox defaultChecked={value} {...field} />
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
               </FormControl>
               <div className="space-y-1 leading-none">
                 {/* TODO: should be flagged to admins */}
