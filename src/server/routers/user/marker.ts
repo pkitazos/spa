@@ -1,6 +1,5 @@
 import { markerTypeSchema, Stage } from "@/db/types";
 import {
-  assessmentCriterionWithScoreDtoSchema,
   partialMarkDtoSchema,
   projectDtoSchema,
   studentDtoSchema,
@@ -8,10 +7,10 @@ import {
   unitOfAssessmentDtoSchema,
   assessmentCriterionDtoSchema,
 } from "@/dto";
-import { expand } from "@/lib/utils/general/instance-params";
 import { subsequentStages } from "@/lib/utils/permissions/stage-check";
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 export const markerRouter = createTRPCRouter({
@@ -23,7 +22,13 @@ export const markerRouter = createTRPCRouter({
           project: projectDtoSchema,
           student: studentDtoSchema,
           markerType: markerTypeSchema,
-          unitsOfAssessment: z.array(unitOfAssessmentDtoSchema),
+          unitsOfAssessment: z.array(
+            z.object({
+              unit: unitOfAssessmentDtoSchema,
+              isSaved: z.boolean(),
+              isSubmitted: z.boolean(),
+            }),
+          ),
         }),
       ),
     )
@@ -35,9 +40,10 @@ export const markerRouter = createTRPCRouter({
     .inStage(subsequentStages(Stage.READER_BIDDING))
     .marker.input(z.object({ unitOfAssessmentId: z.string() }))
     .output(z.array(assessmentCriterionDtoSchema))
-    .query(async ({ ctx: { instance }, input: { unitOfAssessmentId } }) => {
-      return await instance.getCriteria(unitOfAssessmentId);
-    }),
+    .query(
+      async ({ ctx: { instance }, input: { unitOfAssessmentId } }) =>
+        await instance.getCriteria(unitOfAssessmentId),
+    ),
 
   getMarks: procedure.instance
     .inStage(subsequentStages(Stage.READER_BIDDING))
@@ -46,30 +52,8 @@ export const markerRouter = createTRPCRouter({
     )
     .output(unitOfAssessmentGradeDtoSchema)
     .query(
-      async ({ ctx: { user }, input: { unitOfAssessmentId, studentId } }) => {
-        return await user.getMarksForStudentSubmission(
-          unitOfAssessmentId,
-          studentId,
-        );
-      },
-    ),
-
-  getCriteriaAndScoresForStudentSubmission: procedure.instance
-    .inStage(subsequentStages(Stage.READER_BIDDING))
-    .marker.input(
-      z.object({ unitOfAssessmentId: z.string(), studentId: z.string() }),
-    )
-    .output(z.array(assessmentCriterionWithScoreDtoSchema))
-    .query(
-      async ({
-        ctx: { instance, user },
-        input: { unitOfAssessmentId, studentId },
-      }) =>
-        await instance.getCriteriaAndScoresForStudentSubmission(
-          unitOfAssessmentId,
-          user.id,
-          studentId,
-        ),
+      async ({ ctx: { user }, input: { unitOfAssessmentId, studentId } }) =>
+        await user.getMarksForStudentSubmission(unitOfAssessmentId, studentId),
     ),
 
   submitMarks: procedure.instance
@@ -84,55 +68,29 @@ export const markerRouter = createTRPCRouter({
           marks,
           finalComment,
           recommendation,
-          draft,
         },
       }) => {
         const markerType = await user.getMarkerType(studentId);
+        const { allowedMarkerTypes } =
+          await instance.getUnitOfAssessment(unitOfAssessmentId);
 
-        const { flag } = await instance.getUnitOfAssessment(unitOfAssessmentId);
+        if (!allowedMarkerTypes.includes(markerType)) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "User is not correct marker type",
+          });
+        }
 
-        await db.$transaction([
-          db.componentScore.deleteMany({
-            where: { ...expand(instance.params), markerId: user.id, studentId },
-          }),
+        await user.writeMarks({
+          unitOfAssessmentId,
+          studentId,
+          marks,
+          finalComment,
+          recommendation,
+          draft: false,
+        });
 
-          db.componentScore.createMany({
-            data: Object.entries(marks).map(([assessmentCriterionId, m]) => ({
-              ...expand(instance.params),
-              markerId: user.id,
-              studentId,
-              grade: m.mark,
-              justification: m.justification,
-              draft: false,
-              markerType,
-              assessmentCriterionId,
-            })),
-            skipDuplicates: true,
-          }),
-
-          db.markerSubmissionComments.upsert({
-            where: {
-              studentMarkerSubmission: {
-                studentId,
-                markerId: user.id,
-                unitOfAssessmentId,
-              },
-            },
-            create: {
-              ...expand(instance.params),
-              studentId,
-              markerId: user.id,
-              unitOfAssessmentId,
-              flagId: flag.id,
-              summary: finalComment,
-              recommendedForPrize: recommendation,
-            },
-            update: {
-              summary: finalComment,
-              recommendedForPrize: recommendation,
-            },
-          }),
-        ]);
+        //TODO after submission logic
       },
     ),
 
@@ -145,102 +103,30 @@ export const markerRouter = createTRPCRouter({
         input: {
           unitOfAssessmentId,
           studentId,
-          marks,
-          finalComment,
-          recommendation,
-          draft,
+          marks = {},
+          finalComment = "",
+          recommendation = false,
         },
       }) => {
         const markerType = await user.getMarkerType(studentId);
+        const { allowedMarkerTypes } =
+          await instance.getUnitOfAssessment(unitOfAssessmentId);
 
-        const { flag } = await instance.getUnitOfAssessment(unitOfAssessmentId);
+        if (!allowedMarkerTypes.includes(markerType)) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "User is not correct marker type",
+          });
+        }
 
-        console.log(recommendation);
-
-        await db.$transaction([
-          db.componentScore.deleteMany({
-            where: {
-              ...expand(instance.params),
-              markerId: user.id,
-              studentId,
-              criterion: { unitOfAssessmentId },
-            },
-          }),
-
-          db.componentScore.createMany({
-            data: marks
-              ? Object.entries(marks).map(([assessmentCriterionId, m]) => ({
-                  ...expand(instance.params),
-                  markerId: user.id,
-                  studentId,
-                  grade: m.mark,
-                  justification: m.justification,
-                  draft: draft ?? true,
-                  markerType,
-                  assessmentCriterionId,
-                }))
-              : [],
-            skipDuplicates: true,
-          }),
-
-          db.markerSubmissionComments.upsert({
-            where: {
-              studentMarkerSubmission: {
-                studentId,
-                markerId: user.id,
-                unitOfAssessmentId,
-              },
-            },
-            create: {
-              ...expand(instance.params),
-              studentId,
-              markerId: user.id,
-              unitOfAssessmentId,
-              flagId: flag.id,
-              summary: finalComment ?? "",
-              recommendedForPrize: recommendation,
-            },
-            update: {
-              summary: finalComment,
-              recommendedForPrize: recommendation,
-            },
-          }),
-        ]);
-      },
-    ),
-
-  getSummary: procedure.instance
-    .inStage(subsequentStages(Stage.READER_BIDDING))
-    .marker.input(
-      z.object({
-        params: z.object({
-          group: z.string(),
-          subGroup: z.string(),
-          instance: z.string(),
-        }),
-        unitOfAssessmentId: z.string(),
-        studentId: z.string(),
-      }),
-    )
-    .output(z.tuple([z.string(), z.boolean()]))
-    .query(
-      async ({
-        ctx: { user, db },
-        input: { unitOfAssessmentId, studentId },
-      }) => {
-        const result = await db.markerSubmissionComments.findFirst({
-          where: { studentId, markerId: user.id, unitOfAssessmentId },
+        await user.writeMarks({
+          unitOfAssessmentId,
+          studentId,
+          marks,
+          finalComment,
+          recommendation,
+          draft: true,
         });
-
-        console.log(
-          result
-            ? [result.summary ?? "", result.recommendedForPrize]
-            : ["", false],
-        );
-
-        return result
-          ? [result.summary ?? "", result.recommendedForPrize]
-          : ["", false];
       },
     ),
 });

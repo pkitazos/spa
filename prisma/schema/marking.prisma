@@ -20,87 +20,66 @@ model UnitOfAssessment {
   flag                        Flag                         @relation(fields: [flagId], references: [id], onDelete: Cascade)
   allocationInstance          AllocationInstance           @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "allocation_instance")
   assessmentCriteria          AssessmentCriterion[]
-  markerComments              MarkerSubmissionComments[]
+  markerSubmissions           MarkingSubmission[]
   finalUnitOfAssessmentGrades FinalUnitOfAssessmentGrade[]
 
   @@map("unit_of_assessment")
 }
 
 model AssessmentCriterion {
-  id                   String             @id @default(uuid())
-  flagId               String             @map("flag_id")
-  unitOfAssessmentId   String             @map("unit_of_assessment_id")
-  title                String
-  description          String
-  weight               Int
-  layoutIndex          Int                @map("layout_index")
+  id                 String           @id @default(uuid())
+  unitOfAssessmentId String           @map("unit_of_assessment_id")
+  title              String
+  description        String
+  weight             Int
+  layoutIndex        Int              @map("layout_index")
   // ---
-  allocationGroupId    String             @map("allocation_group_id")
-  allocationSubGroupId String             @map("allocation_sub_group_id")
-  allocationInstanceId String             @map("allocation_instance_id")
-  // ---
-  allocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "allocation_instance")
-  unitOfAssessment     UnitOfAssessment   @relation(fields: [unitOfAssessmentId], references: [id], onDelete: Cascade)
-  scores               ComponentScore[]
-  flag                 Flag               @relation(fields: [flagId], references: [id], onDelete: Cascade)
+  unitOfAssessment   UnitOfAssessment @relation(fields: [unitOfAssessmentId], references: [id], onDelete: Cascade)
+  scores             CriterionScore[]
 
+  // @@unique([title, unitOfAssessmentId]) // probably right?
   @@map("assessment_criterion")
 }
 
-model FinalUnitOfAssessmentGrade {
-  id                   String             @id @default(uuid())
-  unitOfAssessmentId   String             @map("unit_of_assessment_id")
-  unitOfAssessment     UnitOfAssessment   @relation(fields: [unitOfAssessmentId], references: [id], onDelete: Cascade)
-  studentId            String             @map("student_id")
-  student              StudentDetails     @relation(fields: [studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+model MarkingSubmission {
+  summary             String
+  recommendedForPrize Boolean          @default(false) @map("recommended_for_prize")
+  draft               Boolean
+  markerId            String           @map("marker_id")
+  studentId           String           @map("student_id")
+  unitOfAssessmentId  String           @map("unit_of_assessment_id")
   // ---
-  allocationGroupId    String             @map("allocation_group_id")
-  allocationSubGroupId String             @map("allocation_sub_group_id")
-  allocationInstanceId String             @map("allocation_instance_id")
-  // ---
-  allocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "allocation_instance")
+  unitOfAssessment    UnitOfAssessment @relation(fields: [unitOfAssessmentId], references: [id], onDelete: Cascade)
+  criterionScores     CriterionScore[]
 
-  @@unique([studentId, unitOfAssessmentId])
-  @@map("final_unit_of_assessment_grade")
+  @@id([markerId, studentId, unitOfAssessmentId], name: "studentMarkerSubmission")
+  @@map("assessment_marking_submission")
 }
 
-model ComponentScore {
-  id                    String              @id @default(uuid())
+model CriterionScore {
   markerId              String              @map("marker_id")
   studentId             String              @map("student_id")
-  grade                 Int                 @default(-1)
-  justification         String              @default("")
-  draft                 Boolean
-  markerType            MarkerType          @map("marker_type")
+  unitOfAssessmentId    String              @map("unit_of_assessment_id")
+  grade                 Int
+  justification         String
   // ---
   assessmentCriterionId String              @map("assessment_component_id")
-  allocationGroupId     String              @map("allocation_group_id")
-  allocationSubGroupId  String              @map("allocation_sub_group_id")
-  allocationInstanceId  String              @map("allocation_instance_id")
   // ---
-  allocationInstance    AllocationInstance  @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "allocation_instance")
   criterion             AssessmentCriterion @relation(fields: [assessmentCriterionId], references: [id], onDelete: Cascade)
+  submission            MarkingSubmission   @relation(fields: [markerId, studentId, unitOfAssessmentId], references: [markerId, studentId, unitOfAssessmentId], onDelete: Cascade)
 
-  @@map("component_score")
+  @@id([markerId, studentId, assessmentCriterionId], name: "markingCriterionSubmission")
+  @@map("criterion_score")
 }
 
-model MarkerSubmissionComments {
-  id                   String             @id @default(uuid())
-  summary              String
-  recommendedForPrize  Boolean            @default(false) @map("recommended_for_prize")
-  markerId             String             @map("marker_id")
-  studentId            String             @map("student_id")
-  flagId               String             @map("flag_id")
-  unitOfAssessmentId   String             @map("unit_of_assessment_id")
-  allocationGroupId    String             @map("allocation_group_id")
-  allocationSubGroupId String             @map("allocation_sub_group_id")
-  allocationInstanceId String             @map("allocation_instance_id")
-  // ---
-  unitOfAssessment     UnitOfAssessment   @relation(fields: [unitOfAssessmentId], references: [id], onDelete: Cascade)
-  allocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "allocation_instance")
+model FinalUnitOfAssessmentGrade {
+  id                 String           @id @default(uuid())
+  unitOfAssessmentId String           @map("unit_of_assessment_id")
+  unitOfAssessment   UnitOfAssessment @relation(fields: [unitOfAssessmentId], references: [id], onDelete: Cascade)
+  studentId          String           @map("student_id")
 
-  @@unique([markerId, studentId, unitOfAssessmentId], name: "studentMarkerSubmission")
-  @@map("marker_submission_comments")
+  @@unique([studentId, unitOfAssessmentId], name: "studentAssessmentGrade")
+  @@map("final_unit_of_assessment_grade")
 }
 
 model FinalGrade {

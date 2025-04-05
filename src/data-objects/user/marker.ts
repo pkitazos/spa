@@ -5,13 +5,14 @@ import {
   ProjectDTO,
   StudentDTO,
   UnitOfAssessmentDTO,
+  PartialMarkDTO,
 } from "@/dto";
-import { expand } from "@/lib/utils/general/instance-params";
 import { InstanceParams } from "@/lib/validations/params";
 import { MarkerType } from "@prisma/client";
 
 import { AllocationInstance } from "../space/instance";
 import { User } from ".";
+import { expand } from "@/lib/utils/general/instance-params";
 
 export class Marker extends User {
   instance: AllocationInstance;
@@ -26,22 +27,11 @@ export class Marker extends User {
     studentId: string,
   ): Promise<UnitOfAssessmentGradeDTO> {
     const result = await this.db.markingSubmission.findFirst({
-      where: {
-        ...expand(this.instance.params),
-        unitOfAssessmentId,
-        studentId,
-        markerId: this.id,
-      },
+      where: { markerId: this.id, studentId, unitOfAssessmentId },
+      include: { criterionScores: true },
     });
 
-    const marksRaw = await this.db.criterionScore.findMany({
-      where: {
-        ...expand(this.instance.params),
-        studentId,
-        markerId: this.id,
-        criterion: { unitOfAssessmentId },
-      },
-    });
+    const marksRaw = result?.criterionScores || [];
 
     return {
       unitOfAssessmentId,
@@ -75,11 +65,16 @@ export class Marker extends User {
     }[]
   > {
     type Ret = Awaited<ReturnType<typeof this.getProjectsWithSubmissions>>;
-    let assignedProjects: Ret[] = [];
+    let assignedProjects: Ret = [];
+
+    const markerId = this.id;
 
     if (await this.isSupervisor(this.instance.params)) {
       const data = await this.db.studentProjectAllocation.findMany({
-        where: { project: { supervisorId: this.id } },
+        where: {
+          ...expand(this.instance.params),
+          project: { supervisorId: this.id },
+        },
         include: {
           student: {
             include: {
@@ -90,7 +85,11 @@ export class Marker extends User {
                     include: {
                       unitsOfAssessment: {
                         where: { allowedMarkerTypes: { has: "SUPERVISOR" } },
-                        include: { assessmentCriteria: true, flag: true },
+                        include: {
+                          assessmentCriteria: true,
+                          flag: true,
+                          markerSubmissions: { where: { markerId } },
+                        },
                       },
                     },
                   },
@@ -113,11 +112,17 @@ export class Marker extends User {
             project: T.toProjectDTO(a.project),
             student: T.toStudentDTO(a.student),
             markerType: MarkerType.SUPERVISOR,
-            unitsOfAssessment: f.flag.unitsOfAssessment.map((x) => ({
-              unit: T.toUnitOfAssessmentDTO(x),
-              isSaved: true,
-              isSubmitted: false,
-            })),
+            unitsOfAssessment: f.flag.unitsOfAssessment.map((x) => {
+              const submission = x.markerSubmissions.find(
+                (s) => s.studentId === a.student.userId,
+              );
+
+              return {
+                unit: T.toUnitOfAssessmentDTO(x),
+                isSaved: !!submission,
+                isSubmitted: !(submission?.draft ?? true),
+              };
+            }),
           })),
         ),
       );
@@ -125,7 +130,7 @@ export class Marker extends User {
 
     if (await this.isReader(this.instance.params)) {
       const readerAllocations = await this.db.readerProjectAllocation.findMany({
-        where: { readerId: this.id },
+        where: { ...expand(this.instance.params), readerId: this.id },
         include: {
           student: {
             include: {
@@ -136,7 +141,11 @@ export class Marker extends User {
                     include: {
                       unitsOfAssessment: {
                         where: { allowedMarkerTypes: { has: "READER" } },
-                        include: { assessmentCriteria: true, flag: true },
+                        include: {
+                          assessmentCriteria: true,
+                          flag: true,
+                          markerSubmissions: { where: { markerId: this.id } },
+                        },
                       },
                     },
                   },
@@ -153,20 +162,26 @@ export class Marker extends User {
         },
       });
 
-      const hello = readerAllocations.flatMap((a) =>
-        a.student.studentFlags.map(
-          (f) =>
-            ({
-              project: T.toProjectDTO(a.project),
-              student: T.toStudentDTO(a.student),
-              markerType: MarkerType.READER,
-              unitsOfAssessment: f.flag.unitsOfAssessment.map((x) =>
-                T.toUnitOfAssessmentDTO(x),
-              ),
-            }) satisfies Ret,
+      assignedProjects = assignedProjects.concat(
+        readerAllocations.flatMap((a) =>
+          a.student.studentFlags.map((f) => ({
+            project: T.toProjectDTO(a.project),
+            student: T.toStudentDTO(a.student),
+            markerType: MarkerType.READER,
+            unitsOfAssessment: f.flag.unitsOfAssessment.map((x) => {
+              const submission = x.markerSubmissions.find(
+                (s) => s.studentId === a.student.userId,
+              );
+
+              return {
+                unit: T.toUnitOfAssessmentDTO(x),
+                isSaved: !!submission,
+                isSubmitted: !(submission?.draft ?? true),
+              };
+            }),
+          })),
         ),
       );
-      assignedProjects = [...assignedProjects, ...hello];
     }
 
     return assignedProjects.sort((a, b) =>
@@ -192,5 +207,57 @@ export class Marker extends User {
     }
 
     throw new Error("User is not a marker for this student");
+  }
+
+  async writeMarks({
+    unitOfAssessmentId,
+    studentId,
+    marks = {},
+    finalComment = "",
+    recommendation,
+    draft,
+  }: PartialMarkDTO) {
+    const markerId = this.id;
+    await this.db.$transaction([
+      this.db.markingSubmission.upsert({
+        where: {
+          studentMarkerSubmission: { markerId, studentId, unitOfAssessmentId },
+        },
+        create: {
+          markerId,
+          studentId,
+          unitOfAssessmentId,
+          draft,
+          summary: finalComment,
+          recommendedForPrize: recommendation,
+        },
+        update: {
+          draft,
+          summary: finalComment,
+          recommendedForPrize: recommendation,
+        },
+      }),
+
+      ...Object.entries(marks).map(([assessmentCriterionId, m]) =>
+        this.db.criterionScore.upsert({
+          where: {
+            markingCriterionSubmission: {
+              markerId,
+              studentId,
+              assessmentCriterionId,
+            },
+          },
+          create: {
+            markerId,
+            studentId,
+            assessmentCriterionId,
+            unitOfAssessmentId,
+            grade: m.mark || -1,
+            justification: m.justification || "",
+          },
+          update: { grade: m.mark, justification: m.justification },
+        }),
+      ),
+    ]);
   }
 }

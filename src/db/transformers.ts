@@ -23,7 +23,7 @@ import {
   DB_TagOnProject,
   DB_User,
   DB_UserInInstance,
-  DB_ComponentScore,
+  DB_CriterionScore,
 } from "./types";
 
 import {
@@ -41,12 +41,8 @@ import {
 } from "@/dto";
 
 export class Transformers {
-  static toScoreDTO(data: DB_ComponentScore): CriterionScoreDTO {
-    return {
-      draft: data.draft,
-      grade: data.grade,
-      justification: data.justification,
-    };
+  static toScoreDTO(data: DB_CriterionScore): CriterionScoreDTO {
+    return { grade: data.grade, justification: data.justification };
   }
 
   public static toAllocationGroupDTO(data: DB_AllocationGroup): GroupDTO {
@@ -201,7 +197,6 @@ export class Transformers {
   ): AssessmentCriterionDTO {
     return {
       id: data.id,
-      flagId: data.flagId,
       unitOfAssessmentId: data.unitOfAssessmentId,
       title: data.title,
       description: data.description,

@@ -15,7 +15,11 @@ export type SubmissionTableRow = {
   project: ProjectDTO;
   student: StudentDTO;
   markerType: MarkerType;
-  unitsOfAssessment: UnitOfAssessmentDTO[];
+  unitsOfAssessment: {
+    unit: UnitOfAssessmentDTO;
+    isSaved: boolean;
+    isSubmitted: boolean;
+  }[];
 };
 
 export const columns: ColumnDef<SubmissionTableRow>[] = [

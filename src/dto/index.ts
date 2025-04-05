@@ -129,7 +129,6 @@ export type AlgorithmDTO = z.infer<typeof algorithmDtoSchema>;
 
 export const assessmentCriterionDtoSchema = z.object({
   id: z.string(),
-  flagId: z.string(),
   unitOfAssessmentId: z.string(),
   title: z.string(),
   description: z.string(),
@@ -144,7 +143,6 @@ export type AssessmentCriterionDTO = z.infer<
 export const criterionScoreDtoSchema = z.object({
   grade: z.number().int(),
   justification: z.string(),
-  draft: z.boolean(),
 });
 
 export type CriterionScoreDTO = z.infer<typeof criterionScoreDtoSchema>;
@@ -179,7 +177,7 @@ export type UnitOfAssessmentGradeDTO = z.infer<
 >;
 
 export const partialMarkDtoSchema = unitOfAssessmentGradeDtoSchema
-  .partial({ finalComment: true, recommendation: true, draft: true })
+  .partial({ finalComment: true, recommendation: true })
   .extend({
     marks: z
       .record(
