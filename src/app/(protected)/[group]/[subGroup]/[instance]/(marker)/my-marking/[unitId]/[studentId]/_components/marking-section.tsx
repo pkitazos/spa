@@ -31,9 +31,9 @@ import { api } from "@/lib/trpc/client";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import {
   AssessmentCriterionDTO,
-  PartialMarkDTO,
-  UnitOfAssessmentGradeDTO,
-  unitOfAssessmentGradeDtoSchema,
+  PartialMarkingSubmissionDTO,
+  MarkingSubmissionDTO,
+  markingSubmissionDtoSchema,
 } from "@/dto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Control, useForm } from "react-hook-form";
@@ -49,7 +49,7 @@ export function MarkingSection({
   initialState,
 }: {
   markingCriteria: AssessmentCriterionDTO[];
-  initialState: PartialMarkDTO;
+  initialState: PartialMarkingSubmissionDTO;
 }) {
   const params = useInstanceParams();
   const router = useRouter();
@@ -59,8 +59,8 @@ export function MarkingSection({
   const { mutateAsync: submitAsync } =
     api.user.marker.submitMarks.useMutation();
 
-  const form = useForm<UnitOfAssessmentGradeDTO>({
-    resolver: zodResolver(unitOfAssessmentGradeDtoSchema),
+  const form = useForm<MarkingSubmissionDTO>({
+    resolver: zodResolver(markingSubmissionDtoSchema),
     reValidateMode: "onBlur",
     defaultValues: {
       ...initialState,
@@ -80,7 +80,7 @@ export function MarkingSection({
     },
   });
 
-  function handleSave(data: PartialMarkDTO) {
+  function handleSave(data: PartialMarkingSubmissionDTO) {
     void toast.promise(
       saveAsync({ params, ...data }).then(() => {
         console.log(data.recommendation, "-", data.finalComment);
@@ -95,7 +95,7 @@ export function MarkingSection({
     );
   }
 
-  const handleSubmit = form.handleSubmit((data: UnitOfAssessmentGradeDTO) => {
+  const handleSubmit = form.handleSubmit((data: MarkingSubmissionDTO) => {
     void toast.promise(
       submitAsync({ params, ...data }).then(() => {
         router.push(`${instancePath}/${PAGES.myMarking.href}`);
@@ -211,7 +211,7 @@ function AssessmentCriterionField({
   control,
 }: {
   criterion: AssessmentCriterionDTO;
-  control: Control<UnitOfAssessmentGradeDTO>;
+  control: Control<MarkingSubmissionDTO>;
 }) {
   const [open, setOpen] = useState(false);
   const dropDownDefaultVal = "??";

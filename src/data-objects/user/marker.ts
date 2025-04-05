@@ -1,11 +1,11 @@
 import { Transformers as T } from "@/db/transformers";
 import { DB } from "@/db/types";
 import {
-  UnitOfAssessmentGradeDTO,
+  MarkingSubmissionDTO,
   ProjectDTO,
   StudentDTO,
   UnitOfAssessmentDTO,
-  PartialMarkDTO,
+  PartialMarkingSubmissionDTO,
 } from "@/dto";
 import { InstanceParams } from "@/lib/validations/params";
 import { MarkerType } from "@prisma/client";
@@ -13,8 +13,24 @@ import { MarkerType } from "@prisma/client";
 import { AllocationInstance } from "../space/instance";
 import { User } from ".";
 import { expand } from "@/lib/utils/general/instance-params";
+import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
 
 export class Marker extends User {
+  public static computeStatus(
+    u: UnitOfAssessmentDTO,
+    submission: MarkingSubmissionDTO | undefined,
+  ): MarkingSubmissionStatus {
+    if (!u.isOpen) {
+      return MarkingSubmissionStatus.CLOSED;
+    } else if (!submission) {
+      return MarkingSubmissionStatus.OPEN;
+    } else if (submission.draft) {
+      return MarkingSubmissionStatus.DRAFT;
+    } else {
+      return MarkingSubmissionStatus.SUBMITTED;
+    }
+  }
+
   instance: AllocationInstance;
 
   constructor(db: DB, id: string, params: InstanceParams) {
@@ -22,33 +38,27 @@ export class Marker extends User {
     this.instance = new AllocationInstance(db, params);
   }
 
-  async getMarksForStudentSubmission(
+  async getMarkingSubmission(
     unitOfAssessmentId: string,
     studentId: string,
-  ): Promise<UnitOfAssessmentGradeDTO> {
+  ): Promise<MarkingSubmissionDTO> {
     const result = await this.db.markingSubmission.findFirst({
       where: { markerId: this.id, studentId, unitOfAssessmentId },
       include: { criterionScores: true },
     });
 
-    const marksRaw = result?.criterionScores || [];
+    console.log(result);
+
+    if (result) return T.toMarkingSubmissionDTO(result);
 
     return {
       unitOfAssessmentId,
       studentId,
-      draft: false,
-      marks: marksRaw.reduce(
-        (acc, val) => ({
-          ...acc,
-          [val.assessmentCriterionId]: {
-            mark: val.grade,
-            justification: val.justification,
-          },
-        }),
-        {} as Record<string, { mark: number; justification: string }>,
-      ),
-      finalComment: result?.summary ?? "",
-      recommendation: result?.recommendedForPrize ?? false,
+      markerId: this.id,
+      draft: true,
+      marks: {},
+      finalComment: "",
+      recommendation: false,
     };
   }
 
@@ -59,8 +69,7 @@ export class Marker extends User {
       markerType: MarkerType;
       unitsOfAssessment: {
         unit: UnitOfAssessmentDTO;
-        isSaved: boolean;
-        isSubmitted: boolean;
+        status: MarkingSubmissionStatus;
       }[];
     }[]
   > {
@@ -112,15 +121,19 @@ export class Marker extends User {
             project: T.toProjectDTO(a.project),
             student: T.toStudentDTO(a.student),
             markerType: MarkerType.SUPERVISOR,
-            unitsOfAssessment: f.flag.unitsOfAssessment.map((x) => {
-              const submission = x.markerSubmissions.find(
+            unitsOfAssessment: f.flag.unitsOfAssessment.map((u) => {
+              const submission = u.markerSubmissions.find(
                 (s) => s.studentId === a.student.userId,
               );
 
+              const unit = T.toUnitOfAssessmentDTO(u);
+
               return {
-                unit: T.toUnitOfAssessmentDTO(x),
-                isSaved: !!submission,
-                isSubmitted: !(submission?.draft ?? true),
+                unit,
+                status: Marker.computeStatus(
+                  unit,
+                  submission && T.toMarkingSubmissionDTO(submission),
+                ),
               };
             }),
           })),
@@ -168,15 +181,19 @@ export class Marker extends User {
             project: T.toProjectDTO(a.project),
             student: T.toStudentDTO(a.student),
             markerType: MarkerType.READER,
-            unitsOfAssessment: f.flag.unitsOfAssessment.map((x) => {
-              const submission = x.markerSubmissions.find(
+            unitsOfAssessment: f.flag.unitsOfAssessment.map((u) => {
+              const submission = u.markerSubmissions.find(
                 (s) => s.studentId === a.student.userId,
               );
 
+              const unit = T.toUnitOfAssessmentDTO(u);
+
               return {
-                unit: T.toUnitOfAssessmentDTO(x),
-                isSaved: !!submission,
-                isSubmitted: !(submission?.draft ?? true),
+                unit,
+                status: Marker.computeStatus(
+                  unit,
+                  submission && T.toMarkingSubmissionDTO(submission),
+                ),
               };
             }),
           })),
@@ -216,7 +233,7 @@ export class Marker extends User {
     finalComment = "",
     recommendation,
     draft,
-  }: PartialMarkDTO) {
+  }: Omit<PartialMarkingSubmissionDTO, "markerId">) {
     const markerId = this.id;
     await this.db.$transaction([
       this.db.markingSubmission.upsert({

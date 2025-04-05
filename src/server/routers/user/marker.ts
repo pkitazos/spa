@@ -1,13 +1,15 @@
+import { Marker } from "@/data-objects";
 import { Transformers as T } from "@/db/transformers";
 import { markerTypeSchema, Stage } from "@/db/types";
 import {
-  partialMarkDtoSchema,
+  partialMarkingSubmissionDtoSchema,
   projectDtoSchema,
   studentDtoSchema,
-  unitOfAssessmentGradeDtoSchema,
+  markingSubmissionDtoSchema,
   unitOfAssessmentDtoSchema,
   assessmentCriterionDtoSchema,
 } from "@/dto";
+import { markingSubmissionStatusSchema } from "@/dto/result/marking-submission-status";
 import { subsequentStages } from "@/lib/utils/permissions/stage-check";
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
@@ -39,8 +41,7 @@ export const markerRouter = createTRPCRouter({
           unitsOfAssessment: z.array(
             z.object({
               unit: unitOfAssessmentDtoSchema,
-              isSaved: z.boolean(),
-              isSubmitted: z.boolean(),
+              status: markingSubmissionStatusSchema,
             }),
           ),
         }),
@@ -59,20 +60,38 @@ export const markerRouter = createTRPCRouter({
         await instance.getCriteria(unitOfAssessmentId),
     ),
 
-  getMarks: procedure.instance
+  getSubmission: procedure.instance
     .inStage(subsequentStages(Stage.READER_BIDDING))
     .marker.input(
       z.object({ unitOfAssessmentId: z.string(), studentId: z.string() }),
     )
-    .output(partialMarkDtoSchema)
+    .output(
+      z.object({
+        submission: markingSubmissionDtoSchema,
+        status: markingSubmissionStatusSchema,
+      }),
+    )
     .query(
-      async ({ ctx: { user }, input: { unitOfAssessmentId, studentId } }) =>
-        await user.getMarksForStudentSubmission(unitOfAssessmentId, studentId),
+      async ({
+        ctx: { user, instance },
+        input: { unitOfAssessmentId, studentId },
+      }) => {
+        const unit = await instance.getUnitOfAssessment(unitOfAssessmentId);
+
+        const submission = await user.getMarkingSubmission(
+          unitOfAssessmentId,
+          studentId,
+        );
+
+        const status = Marker.computeStatus(unit, submission);
+
+        return { submission, status };
+      },
     ),
 
   submitMarks: procedure.instance
     .inStage([Stage.MARK_SUBMISSION])
-    .marker.input(unitOfAssessmentGradeDtoSchema)
+    .marker.input(markingSubmissionDtoSchema)
     .mutation(
       async ({
         ctx: { instance, user, db },
@@ -110,7 +129,7 @@ export const markerRouter = createTRPCRouter({
 
   saveMarks: procedure.instance
     .inStage([Stage.MARK_SUBMISSION])
-    .marker.input(partialMarkDtoSchema)
+    .marker.input(partialMarkingSubmissionDtoSchema)
     .mutation(
       async ({
         ctx: { instance, user, db },

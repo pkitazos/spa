@@ -7,7 +7,6 @@ import { DB, New } from "@/db/types";
 import {
   UnitOfAssessmentDTO,
   AssessmentCriterionDTO,
-  AssessmentCriterionWithScoreDTO,
   FlagDTO,
   InstanceDTO,
   InstanceDisplayData,
@@ -59,26 +58,6 @@ export class AllocationInstance extends DataObject {
     });
 
     return data.map(T.toAssessmentCriterionDTO);
-  }
-
-  public async getCriteriaAndScoresForStudentSubmission(
-    unitOfAssessmentId: string,
-    markerId: string,
-    studentId: string,
-  ): Promise<AssessmentCriterionWithScoreDTO[]> {
-    const data = await this.db.assessmentCriterion.findMany({
-      where: { unitOfAssessmentId },
-      include: { scores: { where: { markerId, studentId } } },
-      orderBy: { layoutIndex: "asc" },
-    });
-
-    const d = data.map((c) => ({
-      criterion: T.toAssessmentCriterionDTO(c),
-      score: c.scores[0] ? T.toScoreDTO(c.scores[0]) : undefined,
-    }));
-
-    console.log(d);
-    return d;
   }
 
   public async getFlagsWithAssessmentDetails(): Promise<

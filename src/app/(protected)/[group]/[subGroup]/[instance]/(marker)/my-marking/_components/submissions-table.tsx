@@ -6,7 +6,6 @@ import {
   ExpandedState,
   Row,
   type SortingState,
-  type VisibilityState,
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
@@ -31,11 +30,12 @@ import { MarkerType } from "@prisma/client";
 import { UnitOfAssessmentDTO } from "@/dto";
 import { format } from "@/lib/utils/date/format";
 import { CopyButton } from "@/components/copy-button";
+import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
 
 export function SubmissionsTable({ data }: { data: SubmissionTableRow[] }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+
   const [expanded, setExpanded] = useState<ExpandedState>({});
 
   const table = useReactTable({
@@ -46,10 +46,10 @@ export function SubmissionsTable({ data }: { data: SubmissionTableRow[] }) {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
+
     getRowCanExpand: () => true,
     onExpandedChange: setExpanded,
-    state: { sorting, columnFilters, columnVisibility, expanded },
+    state: { sorting, columnFilters, expanded },
   });
 
   return (
@@ -58,10 +58,10 @@ export function SubmissionsTable({ data }: { data: SubmissionTableRow[] }) {
         <Input
           placeholder="Filter projects..."
           value={
-            (table.getColumn("projectName")?.getFilterValue() as string) ?? ""
+            (table.getColumn("projectTitle")?.getFilterValue() as string) ?? ""
           }
           onChange={(event) =>
-            table.getColumn("projectName")?.setFilterValue(event.target.value)
+            table.getColumn("projectTitle")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -140,7 +140,7 @@ function AssessmentUnitRow({
   data,
   studentId,
 }: {
-  data: { unit: UnitOfAssessmentDTO; isSaved: boolean; isSubmitted: boolean };
+  data: { unit: UnitOfAssessmentDTO; status: MarkingSubmissionStatus };
   studentId: string;
 }) {
   return (
@@ -151,7 +151,7 @@ function AssessmentUnitRow({
       <TableCell />
       <TableCell>
         <SubmissionStatus
-          status={computeStatus(data)}
+          status={data.status}
           unitId={data.unit.id}
           studentId={studentId}
         />
@@ -160,39 +160,17 @@ function AssessmentUnitRow({
   );
 }
 
-function computeStatus({
-  unit,
-  isSaved,
-  isSubmitted,
-}: {
-  unit: UnitOfAssessmentDTO;
-  isSaved: boolean;
-  isSubmitted: boolean;
-}): submissionStatus {
-  if (isSubmitted) return submissionStatus.SUBMITTED;
-  if (isSaved) return submissionStatus.DRAFT;
-  if (!unit.isOpen) return submissionStatus.CLOSED;
-  return submissionStatus.OPEN;
-}
-
-enum submissionStatus {
-  CLOSED,
-  OPEN,
-  DRAFT,
-  SUBMITTED,
-}
-
 function SubmissionStatus({
   status,
   unitId,
   studentId,
 }: {
-  status: submissionStatus;
+  status: MarkingSubmissionStatus;
   unitId: string;
   studentId: string;
 }) {
   switch (status) {
-    case submissionStatus.OPEN:
+    case MarkingSubmissionStatus.OPEN:
       return (
         <Button size="sm" variant="secondary" className="w-24" asChild>
           <Link href={`./${PAGES.myMarking.href}/${unitId}/${studentId}`}>
@@ -200,7 +178,7 @@ function SubmissionStatus({
           </Link>
         </Button>
       );
-    case submissionStatus.DRAFT:
+    case MarkingSubmissionStatus.DRAFT:
       return (
         <Button size="sm" variant="secondary" className="w-24" asChild>
           <Link href={`./${PAGES.myMarking.href}/${unitId}/${studentId}`}>
@@ -208,7 +186,7 @@ function SubmissionStatus({
           </Link>
         </Button>
       );
-    case submissionStatus.SUBMITTED:
+    case MarkingSubmissionStatus.SUBMITTED:
       return (
         <Button
           size="sm"
@@ -218,7 +196,7 @@ function SubmissionStatus({
           Submitted
         </Button>
       );
-    case submissionStatus.CLOSED:
+    case MarkingSubmissionStatus.CLOSED:
       return (
         <Button
           size="sm"
