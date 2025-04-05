@@ -1,3 +1,4 @@
+import { Transformers as T } from "@/db/transformers";
 import { markerTypeSchema, Stage } from "@/db/types";
 import {
   partialMarkDtoSchema,
@@ -14,6 +15,19 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 export const markerRouter = createTRPCRouter({
+  getUnitById: procedure.instance
+    .inStage(subsequentStages(Stage.READER_BIDDING))
+    .marker.input(z.object({ unitOfAssessmentId: z.string() }))
+    .output(unitOfAssessmentDtoSchema)
+    .query(async ({ ctx: { db }, input: { unitOfAssessmentId } }) => {
+      const res = await db.unitOfAssessment.findFirstOrThrow({
+        where: { id: unitOfAssessmentId },
+        include: { flag: true, assessmentCriteria: true },
+      });
+
+      return T.toUnitOfAssessmentDTO(res);
+    }),
+
   getProjectsToMark: procedure.instance
     .inStage(subsequentStages(Stage.READER_BIDDING))
     .marker.output(

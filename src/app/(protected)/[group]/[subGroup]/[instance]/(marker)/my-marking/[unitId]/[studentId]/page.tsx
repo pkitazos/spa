@@ -1,4 +1,4 @@
-import { Heading } from "@/components/heading";
+import { Heading, SubHeading } from "@/components/heading";
 import { PageWrapper } from "@/components/page-wrapper";
 
 import { api } from "@/lib/trpc/server";
@@ -45,6 +45,11 @@ export default async function MarksPage({
     studentId,
   });
 
+  const unitOfAssessment = await api.user.marker.getUnitById({
+    params,
+    unitOfAssessmentId,
+  });
+
   const markingCriteria = await api.user.marker.getCriteria({
     params,
     unitOfAssessmentId,
@@ -55,8 +60,6 @@ export default async function MarksPage({
     unitOfAssessmentId,
     studentId,
   });
-
-  console.log(markingData);
 
   if (!project) throw new Error("no project defined"); // error goes here
 
@@ -71,6 +74,8 @@ export default async function MarksPage({
         <strong>Marking:</strong>
         {project.title}
       </Heading>
+
+      <SubHeading>{unitOfAssessment.title}</SubHeading>
 
       <div className="mt-6 flex flex-col gap-6">
         <MarkingSection
