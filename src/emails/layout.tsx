@@ -1,6 +1,8 @@
+import { env } from "@/env";
 import {
   Heading,
   Img,
+  Text,
   Tailwind,
   Row,
   Section,
@@ -35,7 +37,7 @@ export function Layout({
                   <Img
                     width={150}
                     height={50}
-                    src={`http://localhost:3000/_next/image?url=%2Fuofg.png&w=640&q=75`}
+                    src={`${env.SERVER_URL}/uofg.png`}
                     alt="u-of-g logo"
                   />
                 </Column>
@@ -48,7 +50,9 @@ export function Layout({
             </Section>
             <Hr />
             <Section>
-              <Row>This email was generated automatically</Row>
+              <Text className="text-center italic text-gray-400">
+                This email was generated automatically
+              </Text>
             </Section>
           </Container>
         </Body>

@@ -1,5 +1,5 @@
-import { Row, Text } from "@react-email/components";
-import { Layout } from "./layout";
+import { Text } from "@react-email/components";
+import { Layout } from "../layout";
 import { StudentDTO } from "@/dto";
 
 interface Props {
@@ -10,13 +10,10 @@ interface Props {
 export function AutoResolveSuccess({ student, grade }: Props) {
   return (
     <Layout previewText="Auto-resolve successful">
-      <Row>
-        <Text>Auto-resolve was successful for {student.name}.</Text>
-        <Text>
-          Final grade:{""}
-          <strong>{grade}</strong>
-        </Text>
-      </Row>
+      <Text>Auto-resolve was successful for {student.name}.</Text>
+      <Text>
+        Final grade: <strong>{grade}</strong>
+      </Text>
     </Layout>
   );
 }
@@ -24,7 +21,7 @@ export function AutoResolveSuccess({ student, grade }: Props) {
 AutoResolveSuccess.PreviewProps = {
   student: {
     id: "xxxxx",
-    email: "xxx@student.gla.ac.ul",
+    email: "john.doe@student.gla.ac.ul",
     name: "John Doe",
     joined: true,
     level: 4,

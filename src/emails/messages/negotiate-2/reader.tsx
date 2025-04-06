@@ -8,9 +8,9 @@ interface Props {
   student: StudentDTO;
 }
 
-export function ReaderNegotiate1({ project, supervisor, student }: Props) {
+export function ReaderNegotiate2({ project, supervisor, student }: Props) {
   return (
-    <Layout previewText="Negotiation1 required">
+    <Layout previewText="Negotiation2 required">
       <Text>
         The grades submitted by you and the supervisor for the project "
         <i>{project.title}</i>" (student {student.name}, {student.id}){" "}
@@ -28,7 +28,7 @@ export function ReaderNegotiate1({ project, supervisor, student }: Props) {
   );
 }
 
-ReaderNegotiate1.PreviewProps = {
+ReaderNegotiate2.PreviewProps = {
   project: {
     id: "",
     title: "Testing Programmatic Emails",
@@ -59,4 +59,4 @@ ReaderNegotiate1.PreviewProps = {
   },
 } satisfies Props;
 
-export default ReaderNegotiate1;
+export default ReaderNegotiate2;

@@ -16,6 +16,8 @@ import { now } from "@/lib/utils/date/now";
 import { Session } from "@/lib/validations/auth";
 
 import { db } from "@/db";
+import { sendMail } from "@/emails";
+import { Mailer } from "@/emails/mailer";
 
 /**
  * 1. CONTEXT
@@ -41,7 +43,7 @@ export const createTRPCContext = async (opts: {
   // TODO: replace with proper logging library
   // console.log(`>>> tRPC Request from ${source} by`, session.user, `at ${time}`);
 
-  return { session, db };
+  return { session, db, mailer: new Mailer(sendMail) };
 };
 
 /**

@@ -9,9 +9,9 @@ interface Props {
   student: StudentDTO;
 }
 
-export function SupervisorNegotiate1({ project, reader, student }: Props) {
+export function SupervisorNegotiate2({ project, reader, student }: Props) {
   return (
-    <Layout previewText="Negotiation1 required">
+    <Layout previewText="Negotiation2 required">
       <Text>
         The grades submitted by you and the reader for the project "
         <i>{project.title}</i>" (student {student.name}, {student.id}){" "}
@@ -43,7 +43,7 @@ export function SupervisorNegotiate1({ project, reader, student }: Props) {
   );
 }
 
-SupervisorNegotiate1.PreviewProps = {
+SupervisorNegotiate2.PreviewProps = {
   project: {
     id: "",
     title: "Testing Programmatic Emails",
@@ -74,4 +74,4 @@ SupervisorNegotiate1.PreviewProps = {
   },
 } satisfies Props;
 
-export default SupervisorNegotiate1;
+export default SupervisorNegotiate2;

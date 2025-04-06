@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "dev:email": "email dev --dir ./src/emails/messages -p 3001",
+    "dev:email": "dotenvx run -- email dev --dir ./src/emails/messages -p 3001",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -91,6 +91,7 @@
     "zustand": "^4.5.4"
   },
   "devDependencies": {
+    "@dotenvx/dotenvx": "^1.39.1",
     "@eslint/js": "^9.22.0",
     "@total-typescript/ts-reset": "^0.6.1",
     "@types/adm-zip": "^0.5.5",
