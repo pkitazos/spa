@@ -1,4 +1,5 @@
-import { Marker } from "@/data-objects";
+import { Grade } from "@/config/grades";
+import { Marker, Student } from "@/data-objects";
 import { Transformers as T } from "@/db/transformers";
 import { markerTypeSchema, Stage } from "@/db/types";
 import {
@@ -8,6 +9,7 @@ import {
   markingSubmissionDtoSchema,
   unitOfAssessmentDtoSchema,
   assessmentCriterionDtoSchema,
+  ReaderDTO,
 } from "@/dto";
 import { markingSubmissionStatusSchema } from "@/dto/result/marking-submission-status";
 import { subsequentStages } from "@/lib/utils/permissions/stage-check";
@@ -94,8 +96,9 @@ export const markerRouter = createTRPCRouter({
     .marker.input(markingSubmissionDtoSchema)
     .mutation(
       async ({
-        ctx: { instance, user, db },
+        ctx: { instance, user, db, mailer },
         input: {
+          params,
           unitOfAssessmentId,
           studentId,
           marks,
@@ -104,7 +107,7 @@ export const markerRouter = createTRPCRouter({
         },
       }) => {
         const markerType = await user.getMarkerType(studentId);
-        const { allowedMarkerTypes } =
+        const { allowedMarkerTypes, components } =
           await instance.getUnitOfAssessment(unitOfAssessmentId);
 
         if (!allowedMarkerTypes.includes(markerType)) {
@@ -123,7 +126,110 @@ export const markerRouter = createTRPCRouter({
           draft: false,
         });
 
-        //TODO after submission logic
+        if (allowedMarkerTypes.length === 1) {
+          const grade = Grade.computeFromScores(
+            components.map((c) => ({
+              weight: c.weight,
+              score: marks[c.id].mark,
+            })),
+          );
+
+          await user.writeFinalMark({
+            studentId,
+            grade,
+            unitOfAssessmentId,
+            comment: "Auto-resolved",
+          });
+
+          return;
+        }
+
+        const numSubmissions = await db.markingSubmission.count({
+          where: { studentId, unitOfAssessmentId },
+        });
+
+        // if this is a doubly-marked submission, but only 1 has been submitted, do nothing.
+        if (numSubmissions < allowedMarkerTypes.length) {
+          return;
+        } else if (numSubmissions > allowedMarkerTypes.length) {
+          console.error("more submissions than marker types!!?!?!");
+          return;
+        }
+
+        // otherwise, if this is a doubly-marked submission, and now both are submitted then:
+        const data = await db.markingSubmission.findMany({
+          where: { studentId, unitOfAssessmentId },
+          include: { criterionScores: true },
+        });
+
+        const gradesByMarker = data.reduce(
+          (acc, val) => {
+            const scoreMap = val.criterionScores.reduce(
+              (acc, val) => ({
+                ...acc,
+                [val.assessmentCriterionId]: val.grade,
+              }),
+              {} as Record<string, number>,
+            );
+
+            return {
+              ...acc,
+              [val.markerId]: Grade.computeFromScores(
+                components.map((c) => ({
+                  weight: c.weight,
+                  score: scoreMap[c.id],
+                })),
+              ),
+            };
+          },
+          {} as Record<string, number>,
+        );
+
+        const studentDO = new Student(db, studentId, params);
+
+        const student = await studentDO.get();
+        const { supervisor, project } = await studentDO.getAllocation();
+
+        const reader: ReaderDTO = await studentDO.getReader();
+
+        // run the auto-resolve function on the grades.
+        const resolution = Grade.autoResolve(
+          Grade.toLetter(gradesByMarker[supervisor.id]),
+          Grade.toLetter(gradesByMarker[reader.id]),
+        );
+
+        if (resolution.status === "INSUFFICIENT") {
+          console.error("unreachable: auto-resolve insufficient");
+          return;
+        }
+
+        if (resolution.status === "AUTO_RESOLVED") {
+          const grade = Grade.toInt(resolution.grade);
+
+          await user.writeFinalMark({
+            studentId,
+            grade,
+            unitOfAssessmentId,
+            comment: "Auto-resolved",
+          });
+
+          await mailer.notifyAutoResolve(
+            student,
+            resolution.grade,
+            supervisor,
+            reader,
+          );
+
+          return;
+        }
+
+        // goes to negotiation - write nothing to db but do email markers
+        if (resolution.status === "NEGOTIATE1") {
+          await mailer.notifyNegotiate1(supervisor, reader, project, student);
+        }
+        if (resolution.status === "NEGOTIATE2") {
+          await mailer.notifyNegotiate2(supervisor, reader, project, student);
+        }
       },
     ),
 

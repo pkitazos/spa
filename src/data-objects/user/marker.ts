@@ -226,7 +226,7 @@ export class Marker extends User {
     throw new Error("User is not a marker for this student");
   }
 
-  async writeMarks({
+  public async writeMarks({
     unitOfAssessmentId,
     studentId,
     marks = {},
@@ -276,5 +276,23 @@ export class Marker extends User {
         }),
       ),
     ]);
+  }
+
+  public async writeFinalMark({
+    studentId,
+    unitOfAssessmentId,
+    grade,
+    comment,
+  }: {
+    studentId: string;
+    unitOfAssessmentId: string;
+    grade: number;
+    comment: string;
+  }) {
+    await this.db.finalUnitOfAssessmentGrade.upsert({
+      where: { studentAssessmentGrade: { studentId, unitOfAssessmentId } },
+      create: { studentId, unitOfAssessmentId, comment, grade },
+      update: { studentId, unitOfAssessmentId, comment, grade },
+    });
   }
 }

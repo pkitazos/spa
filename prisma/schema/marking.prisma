@@ -73,12 +73,13 @@ model CriterionScore {
 }
 
 model FinalUnitOfAssessmentGrade {
-  id                 String           @id @default(uuid())
   unitOfAssessmentId String           @map("unit_of_assessment_id")
   unitOfAssessment   UnitOfAssessment @relation(fields: [unitOfAssessmentId], references: [id], onDelete: Cascade)
   studentId          String           @map("student_id")
+  grade              Int
+  comment            String
 
-  @@unique([studentId, unitOfAssessmentId], name: "studentAssessmentGrade")
+  @@id([studentId, unitOfAssessmentId], name: "studentAssessmentGrade")
   @@map("final_unit_of_assessment_grade")
 }
 
