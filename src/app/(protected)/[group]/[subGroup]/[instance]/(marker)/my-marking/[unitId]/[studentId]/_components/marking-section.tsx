@@ -31,13 +31,13 @@ import { api } from "@/lib/trpc/client";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import {
   AssessmentCriterionDTO,
-  PartialMarkDTO,
-  UnitOfAssessmentGradeDTO,
-  unitOfAssessmentGradeDtoSchema,
+  PartialMarkingSubmissionDTO,
+  MarkingSubmissionDTO,
+  markingSubmissionDtoSchema,
 } from "@/dto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Control, useForm } from "react-hook-form";
-import { GRADES } from "@/config/grades";
+import { Grade, GRADES } from "@/config/grades";
 import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -49,7 +49,7 @@ export function MarkingSection({
   initialState,
 }: {
   markingCriteria: AssessmentCriterionDTO[];
-  initialState: UnitOfAssessmentGradeDTO;
+  initialState: PartialMarkingSubmissionDTO;
 }) {
   const params = useInstanceParams();
   const router = useRouter();
@@ -59,20 +59,19 @@ export function MarkingSection({
   const { mutateAsync: submitAsync } =
     api.user.marker.submitMarks.useMutation();
 
-  const form = useForm<UnitOfAssessmentGradeDTO>({
-    resolver: zodResolver(unitOfAssessmentGradeDtoSchema),
+  const form = useForm<MarkingSubmissionDTO>({
+    resolver: zodResolver(markingSubmissionDtoSchema),
     reValidateMode: "onBlur",
     defaultValues: {
       ...initialState,
       marks: markingCriteria.reduce(
         (acc, val) => {
-          console.log(val.id);
-          console.log(initialState.marks[val.id]);
+          const data = initialState.marks?.[val.id];
           return {
             ...acc,
-            [val.id]: initialState.marks[val.id] ?? {
-              mark: -1,
-              justification: "",
+            [val.id]: {
+              mark: data?.mark ?? -1,
+              justification: data?.justification ?? "",
             },
           };
         },
@@ -81,7 +80,7 @@ export function MarkingSection({
     },
   });
 
-  function handleSave(data: PartialMarkDTO) {
+  function handleSave(data: PartialMarkingSubmissionDTO) {
     void toast.promise(
       saveAsync({ params, ...data }).then(() => {
         console.log(data.recommendation, "-", data.finalComment);
@@ -96,7 +95,7 @@ export function MarkingSection({
     );
   }
 
-  const handleSubmit = form.handleSubmit((data: UnitOfAssessmentGradeDTO) => {
+  const handleSubmit = form.handleSubmit((data: MarkingSubmissionDTO) => {
     void toast.promise(
       submitAsync({ params, ...data }).then(() => {
         router.push(`${instancePath}/${PAGES.myMarking.href}`);
@@ -109,6 +108,20 @@ export function MarkingSection({
       },
     );
   });
+
+  function computeOverall() {
+    const data = form.getValues("marks");
+
+    if (!markingCriteria.every((c) => data[c.id].mark !== -1)) return "-";
+
+    const scores: { score: number; weight: number }[] = markingCriteria.map(
+      (c) => ({ weight: c.weight, score: data[c.id].mark }),
+    );
+
+    return Grade.toLetter(Grade.computeFromScores(scores));
+  }
+
+  const overallMark = computeOverall();
 
   return (
     <Form {...form}>
@@ -124,6 +137,10 @@ export function MarkingSection({
               control={form.control}
             />
           ))}
+        </div>
+        <div>
+          <h3>overall mark:</h3>
+          <h4>{overallMark}</h4>
         </div>
         <FormField
           control={form.control}
@@ -143,11 +160,14 @@ export function MarkingSection({
         <FormField
           control={form.control}
           name="recommendation"
-          render={({ field: { value, ...field } }) => (
+          render={({ field }) => (
             <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              {/* should only be visible on dissertation unit of assessment */}
               <FormControl>
-                {/* should only be visible on dissertation unit of assessment */}
-                <Checkbox defaultChecked={value} {...field} />
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
               </FormControl>
               <div className="space-y-1 leading-none">
                 {/* TODO: should be flagged to admins */}
@@ -159,22 +179,10 @@ export function MarkingSection({
             </FormItem>
           )}
         />
+
         <div className="mt-16 flex justify-end gap-8">
           <Button
-            onClick={() => {
-              // const validState = Object.entries(
-              //   form.formState.touchedFields,
-              // ).every(
-              //   ([name, touched]) =>
-              //     !touched ||
-              //     !form.getFieldState(name as keyof UnitOfAssessmentGradeDTO)
-              //       .invalid,
-              // );
-
-              // if (validState) {
-              handleSave(form.getValues());
-              // }
-            }}
+            onClick={() => handleSave(form.getValues())}
             type="button"
             variant="outline"
             size="lg"
@@ -203,7 +211,7 @@ function AssessmentCriterionField({
   control,
 }: {
   criterion: AssessmentCriterionDTO;
-  control: Control<UnitOfAssessmentGradeDTO>;
+  control: Control<MarkingSubmissionDTO>;
 }) {
   const [open, setOpen] = useState(false);
   const dropDownDefaultVal = "??";

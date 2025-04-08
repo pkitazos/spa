@@ -1,4 +1,4 @@
-import { Heading } from "@/components/heading";
+import { Heading, SubHeading } from "@/components/heading";
 import { PageWrapper } from "@/components/page-wrapper";
 
 import { api } from "@/lib/trpc/server";
@@ -9,6 +9,7 @@ import { InstanceParams } from "@/lib/validations/params";
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 import { MarkingSection } from "./_components/marking-section";
+import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
 
 type PageParams = InstanceParams & { unitId: string; studentId: string };
 
@@ -45,20 +46,45 @@ export default async function MarksPage({
     studentId,
   });
 
+  const unitOfAssessment = await api.user.marker.getUnitById({
+    params,
+    unitOfAssessmentId,
+  });
+
   const markingCriteria = await api.user.marker.getCriteria({
     params,
     unitOfAssessmentId,
   });
 
-  const markingData = await api.user.marker.getMarks({
+  const { status, submission } = await api.user.marker.getSubmission({
     params,
     unitOfAssessmentId,
     studentId,
   });
 
-  console.log(markingData);
-
   if (!project) throw new Error("no project defined"); // error goes here
+
+  if (status === MarkingSubmissionStatus.CLOSED) {
+    return (
+      <PageWrapper>
+        <div className="grid place-items-center py-20">
+          <h1 className="text-3xl italic">
+            This unit is not yet open for marking
+          </h1>
+        </div>
+      </PageWrapper>
+    );
+  }
+
+  if (status === MarkingSubmissionStatus.SUBMITTED) {
+    return (
+      <PageWrapper>
+        <div className="grid place-items-center py-20">
+          <h1 className="text-3xl italic">This unit has been submitted</h1>
+        </div>
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper>
@@ -72,10 +98,12 @@ export default async function MarksPage({
         {project.title}
       </Heading>
 
+      <SubHeading>{unitOfAssessment.title}</SubHeading>
+
       <div className="mt-6 flex flex-col gap-6">
         <MarkingSection
           markingCriteria={markingCriteria}
-          initialState={markingData}
+          initialState={submission}
         />
       </div>
     </PageWrapper>

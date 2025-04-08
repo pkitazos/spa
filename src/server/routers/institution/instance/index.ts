@@ -656,7 +656,9 @@ export const instanceRouter = createTRPCRouter({
 
             let supervisorGrade: string | undefined;
             if (supervisorScores.every((s) => s !== undefined)) {
-              supervisorGrade = Grade.computeFromScores(supervisorScores);
+              supervisorGrade = Grade.toLetter(
+                Grade.computeFromScores(supervisorScores),
+              );
             }
 
             const readerScores = submission.assessmentCriteria.map((c) => {
@@ -669,7 +671,9 @@ export const instanceRouter = createTRPCRouter({
 
             let readerGrade: string | undefined;
             if (readerScores.every((s) => s !== undefined)) {
-              readerGrade = Grade.computeFromScores(readerScores);
+              readerGrade = Grade.toLetter(
+                Grade.computeFromScores(readerScores),
+              );
             }
 
             return {

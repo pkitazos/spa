@@ -80,7 +80,7 @@ export const columns: ColumnDef<{
     }) => (
       <Link
         className={cn(buttonVariants({ variant: "link" }), "pl-2 text-left")}
-        href={`../${PAGES.allSupervisors.href}/${id}`}
+        href={`../../${PAGES.allSupervisors.href}/${id}`}
         scroll={true}
       >
         {name}

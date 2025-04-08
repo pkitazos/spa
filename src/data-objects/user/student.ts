@@ -2,7 +2,7 @@ import { updateManyPreferenceTransaction } from "@/db/transactions/update-many-p
 import { updatePreferenceTransaction } from "@/db/transactions/update-preference";
 import { Transformers as T } from "@/db/transformers";
 import { DB } from "@/db/types";
-import { StudentDTO, ProjectDTO, SupervisorDTO } from "@/dto";
+import { StudentDTO, ProjectDTO, SupervisorDTO, ReaderDTO } from "@/dto";
 import { expand } from "@/lib/utils/general/instance-params";
 import { sortPreferenceType } from "@/lib/utils/sorting/by-preference-type";
 import { ProjectPreferenceCardDto } from "@/lib/validations/board";
@@ -301,5 +301,14 @@ export class Student extends User {
     });
 
     return newSubmissionDateTime;
+  }
+
+  public async getReader(): Promise<ReaderDTO> {
+    const data = await this.db.readerDetails.findFirstOrThrow({
+      where: { projectAllocations: { some: { studentId: this.id } } },
+      include: { userInInstance: { include: { user: true } } },
+    });
+
+    return T.toReaderDTO(data);
   }
 }
