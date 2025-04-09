@@ -4,16 +4,19 @@ import {
   ProjectDTO,
   ReaderDTO,
   StudentDTO,
+  UnitOfAssessmentDTO,
 } from "@/dto";
 import { Button, Hr, Section, Text, Heading } from "@react-email/components";
 import { Layout } from "../../components/layout";
 import { env } from "@/env";
 import { Marksheet } from "@/emails/components/marksheet";
+import { InstanceParams } from "@/lib/validations/params";
 
 interface Props {
   project: ProjectDTO;
   reader: ReaderDTO;
   student: StudentDTO;
+  unit: UnitOfAssessmentDTO;
   supervisorMarking: {
     submission: MarkingSubmissionDTO;
     criteria: AssessmentCriterionDTO[];
@@ -24,14 +27,17 @@ interface Props {
     criteria: AssessmentCriterionDTO[];
     overallGrade: number;
   };
+  params: InstanceParams;
 }
 
 export function SupervisorNegotiate1({
   project,
   reader,
   student,
+  unit,
   supervisorMarking,
   readerMarking,
+  params,
 }: Props) {
   return (
     <Layout previewText="Negotiation1 required">
@@ -57,7 +63,7 @@ export function SupervisorNegotiate1({
       <Section className="mb-[32px] mt-[32px] text-center">
         <Button
           className="rounded bg-[#000000] px-5 py-3 text-center text-[12px] font-semibold text-white no-underline"
-          href={`${env.SERVER_URL}/path/to/resolve/page`}
+          href={`${env.SERVER_URL}/${params.group}/${params.subGroup}/${params.instance}/my-marking/${unit.id}/${student.id}/resolve`}
         >
           Submit Resolution
         </Button>
@@ -241,6 +247,22 @@ SupervisorNegotiate1.PreviewProps = {
         layoutIndex: 3,
       },
     ],
+  },
+  unit: {
+    id: "9ee86629-4e6c-4572-bea5-2c2dc695e6d4",
+    title: "Dissertation",
+    studentSubmissionDeadline: new Date(),
+    markerSubmissionDeadline: new Date(),
+    weight: 0,
+    isOpen: false,
+    components: [],
+    flag: { id: "", title: "", description: "" },
+    allowedMarkerTypes: [],
+  },
+  params: {
+    group: "socs",
+    subGroup: "lvl-4-and-lvl-5-honours",
+    instance: "2024-2025",
   },
 } satisfies Props;
 

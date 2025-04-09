@@ -10,6 +10,7 @@ import {
   unitOfAssessmentDtoSchema,
   assessmentCriterionDtoSchema,
   ReaderDTO,
+  MarkingSubmissionDTO,
 } from "@/dto";
 import { markingSubmissionStatusSchema } from "@/dto/result/marking-submission-status";
 import { subsequentStages } from "@/lib/utils/permissions/stage-check";
@@ -91,6 +92,30 @@ export const markerRouter = createTRPCRouter({
       },
     ),
 
+  resolveMarks: procedure.instance
+    .inStage([Stage.MARK_SUBMISSION])
+    .supervisor.input(
+      z.object({
+        grade: z.number(),
+        comment: z.string().min(1),
+        studentId: z.string(),
+        unitOfAssessmentId: z.string(),
+      }),
+    )
+    .output(z.void())
+    .mutation(
+      async ({
+        ctx: { user },
+        input: { studentId, unitOfAssessmentId, grade, comment },
+      }) =>
+        await user.writeFinalMark({
+          studentId,
+          unitOfAssessmentId,
+          grade,
+          comment,
+        }),
+    ),
+
   submitMarks: procedure.instance
     .inStage([Stage.MARK_SUBMISSION])
     .marker.input(markingSubmissionDtoSchema)
@@ -107,8 +132,8 @@ export const markerRouter = createTRPCRouter({
         },
       }) => {
         const markerType = await user.getMarkerType(studentId);
-        const { allowedMarkerTypes, components } =
-          await instance.getUnitOfAssessment(unitOfAssessmentId);
+        const unit = await instance.getUnitOfAssessment(unitOfAssessmentId);
+        const { allowedMarkerTypes, components } = unit;
 
         if (!allowedMarkerTypes.includes(markerType)) {
           throw new TRPCError({
@@ -162,7 +187,7 @@ export const markerRouter = createTRPCRouter({
           include: { criterionScores: true },
         });
 
-        const gradesByMarker = data.reduce(
+        const submissionByMarker = data.reduce(
           (acc, val) => {
             const scoreMap = val.criterionScores.reduce(
               (acc, val) => ({
@@ -174,15 +199,21 @@ export const markerRouter = createTRPCRouter({
 
             return {
               ...acc,
-              [val.markerId]: Grade.computeFromScores(
-                components.map((c) => ({
-                  weight: c.weight,
-                  score: scoreMap[c.id],
-                })),
-              ),
+              [val.markerId]: {
+                submission: T.toMarkingSubmissionDTO(val),
+                grade: Grade.computeFromScores(
+                  components.map((c) => ({
+                    weight: c.weight,
+                    score: scoreMap[c.id],
+                  })),
+                ),
+              },
             };
           },
-          {} as Record<string, number>,
+          {} as Record<
+            string,
+            { submission: MarkingSubmissionDTO; grade: number }
+          >,
         );
 
         const studentDO = new Student(db, studentId, params);
@@ -194,8 +225,8 @@ export const markerRouter = createTRPCRouter({
 
         // run the auto-resolve function on the grades.
         const resolution = Grade.autoResolve(
-          Grade.toLetter(gradesByMarker[supervisor.id]),
-          Grade.toLetter(gradesByMarker[reader.id]),
+          Grade.toLetter(submissionByMarker[supervisor.id].grade),
+          Grade.toLetter(submissionByMarker[reader.id].grade),
         );
 
         if (resolution.status === "INSUFFICIENT") {
@@ -225,7 +256,27 @@ export const markerRouter = createTRPCRouter({
 
         // goes to negotiation - write nothing to db but do email markers
         if (resolution.status === "NEGOTIATE1") {
-          await mailer.notifyNegotiate1(supervisor, reader, project, student);
+          const readerMarking = {
+            submission: submissionByMarker[reader.id].submission,
+            criteria: components,
+            overallGrade: submissionByMarker[reader.id].grade,
+          };
+          const supervisorMarking = {
+            submission: submissionByMarker[supervisor.id].submission,
+            criteria: components,
+            overallGrade: submissionByMarker[supervisor.id].grade,
+          };
+
+          await mailer.notifyNegotiate1(
+            supervisor,
+            reader,
+            project,
+            student,
+            readerMarking,
+            supervisorMarking,
+            unit,
+            params,
+          );
         }
         if (resolution.status === "NEGOTIATE2") {
           await mailer.notifyNegotiate2(supervisor, reader, project, student);
