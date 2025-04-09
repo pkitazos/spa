@@ -1,5 +1,5 @@
 import { Text } from "@react-email/components";
-import { Layout } from "../layout";
+import { Layout } from "../../components/layout";
 import { StudentDTO } from "@/dto";
 
 interface Props {

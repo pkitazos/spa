@@ -46,8 +46,8 @@ export function Layout({
                 </Column>
                 <Column />
               </Row>
-              {children}
             </Section>
+            {children}
             <Hr />
             <Section>
               <Text className="text-center italic text-gray-400">

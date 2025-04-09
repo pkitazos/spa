@@ -1,5 +1,5 @@
 import { ReactElement } from "react";
-import AutoResolveSuccess from "./messages/auto-resolve-success";
+import AutoResolveSuccess from "./messages/auto-resolve-success/v1";
 import { ProjectDTO, ReaderDTO, StudentDTO, SupervisorDTO } from "@/dto";
 import SupervisorNegotiate1 from "./messages/negotiate-1/supervisor";
 import ReaderNegotiate1 from "./messages/negotiate-1/reader";

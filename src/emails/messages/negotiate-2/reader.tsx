@@ -1,6 +1,6 @@
 import { ProjectDTO, StudentDTO, SupervisorDTO } from "@/dto";
 import { Text } from "@react-email/components";
-import { Layout } from "../../layout";
+import { Layout } from "../../components/layout";
 
 interface Props {
   project: ProjectDTO;
