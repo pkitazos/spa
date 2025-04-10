@@ -42,7 +42,7 @@ export function Layout({
                   />
                 </Column>
                 <Column>
-                  <Heading as="h1">Glasgow AMPS</Heading>
+                  <Heading as="h1">Glasgow SPA</Heading>
                 </Column>
                 <Column />
               </Row>
@@ -51,7 +51,10 @@ export function Layout({
             <Hr />
             <Section>
               <Text className="text-center italic text-gray-400">
-                This email was generated automatically
+                This email was generated automatically. For technical issue/bug
+                email XXXX. For all other project-related enquiries, email the
+                coordinators, Level 4: Paul.Harvey@glasgow.ac.uk Level 5:
+                Yiannis.Giannakopoulos@glasgow.ac.uk
               </Text>
             </Section>
           </Container>
