@@ -1,4 +1,4 @@
-export const whitelist = [
+export const testWhitelist = [
   "lmb25w",
   "ig73b",
   "phh9g",
@@ -7,3 +7,5 @@ export const whitelist = [
   "mjb24v",
   "tws3r",
 ];
+
+export const liveWhitelist = ["lmb25w", "ig73b", "phh9g", "2579354t"];
