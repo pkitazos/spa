@@ -94,6 +94,7 @@ export class Mailer {
             student={student}
             supervisorMarking={supervisorMarking}
             readerMarking={readerMarking}
+            unit={unit}
           />
         ),
         subject,

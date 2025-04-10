@@ -41,23 +41,24 @@ export function SupervisorNegotiate1({
 }: Props) {
   return (
     <Layout previewText="Negotiation1 required">
+      <Heading as="h2">{unit.title} Negotiation Required</Heading>
       <Text>
-        The grades submitted by you and the reader for the project "
+        The grades submitted by the supervisor and reader for the project "
         <i>{project.title}</i>" (student {student.name}, {student.id}){" "}
-        <strong>cannot be resolved automatically</strong>.
+        <strong>require negotiation</strong> between supervisor and reader.
       </Text>
       <Text>
         Please contact the reader <strong>{reader.name}</strong> ({reader.email}
-        ) and resolve the difference manually. Once you have done this:
+        ) and resolve the difference manually offline. Once you have done this:
       </Text>
       <Text>
-        1. If you are able to negotiate a new grade, please submit it at the
-        link below
+        1. If you are able to negotiate a new grade, the supervisor should
+        submit this using the link below
       </Text>
       <Text>
-        2. In the case where you cannot agree on a grade, please register that
-        also on the same page; the project coordinators will be contacted
-        automatically.
+        2. In the case where you cannot agree on a grade, please contact the
+        Level {student.level} project coordinator, who will arrange for
+        moderation.
       </Text>
 
       <Section className="mb-[32px] mt-[32px] text-center">
@@ -69,9 +70,7 @@ export function SupervisorNegotiate1({
         </Button>
       </Section>
 
-      <Text>
-        A Breakdown of the marks provided by each of you is provided below:
-      </Text>
+      <Text>A breakdown of the supervisor/reader marks is provided below:</Text>
 
       <Hr />
       <Heading as="h3">Supervisor Marks:</Heading>

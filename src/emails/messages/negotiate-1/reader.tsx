@@ -4,6 +4,7 @@ import {
   ProjectDTO,
   StudentDTO,
   SupervisorDTO,
+  UnitOfAssessmentDTO,
 } from "@/dto";
 import { Heading, Hr, Text } from "@react-email/components";
 import { Layout } from "../../components/layout";
@@ -23,6 +24,7 @@ interface Props {
     criteria: AssessmentCriterionDTO[];
     overallGrade: number;
   };
+  unit: UnitOfAssessmentDTO;
 }
 
 export function ReaderNegotiate1({
@@ -31,21 +33,24 @@ export function ReaderNegotiate1({
   student,
   supervisorMarking,
   readerMarking,
+  unit,
 }: Props) {
   return (
     <Layout previewText="Negotiation1 required">
+      <Heading as="h2">{unit.title} Negotiation Required</Heading>
       <Text>
-        The grades submitted by you and the supervisor for the project "
+        The grades submitted by the supervisor and reader for the project "
         <i>{project.title}</i>" (student {student.name}, {student.id}){" "}
-        <strong>cannot be resolved automatically</strong>.
+        <strong>require negotiation</strong> between supervisor and reader.
       </Text>
       <Text>
-        Please contact <strong>{supervisor.name}</strong> ({supervisor.email})
-        and resolve the difference manually.
+        Please contact the supervisor <strong>{supervisor.name}</strong> (
+        {supervisor.email}) and resolve the difference manually offline.
       </Text>
       <Text>
-        Once a resolution is decided on, the supervisor should submit it through
-        the resolution portal.
+        Once a resolution reached, the supervisor must use the link they
+        received in their email to upload the resolution on the [online
+        platform].
       </Text>
 
       <Text>
@@ -226,6 +231,17 @@ ReaderNegotiate1.PreviewProps = {
         layoutIndex: 3,
       },
     ],
+  },
+  unit: {
+    id: "",
+    title: "Dissertation",
+    studentSubmissionDeadline: new Date(),
+    markerSubmissionDeadline: new Date(),
+    weight: 0,
+    isOpen: false,
+    components: [],
+    flag: { id: "", title: "", description: "" },
+    allowedMarkerTypes: [],
   },
 } satisfies Props;
 

@@ -1,4 +1,4 @@
-import { Column, Row, Heading, Section } from "@react-email/components";
+import { Column, Row, Heading, Section, Text } from "@react-email/components";
 import { Layout } from "../../components/layout";
 import { ProjectDTO, StudentDTO, UnitOfAssessmentDTO } from "@/dto";
 
@@ -14,7 +14,7 @@ export function AutoResolveSuccess({ unit, student, project, grade }: Props) {
     <Layout previewText="Auto-resolve successful">
       <Section>
         <Heading as="h2" className="mx-auto text-center">
-          Grade auto-resolve successful:
+          {unit.title} Marking Complete:
         </Heading>
 
         <Row>
@@ -38,6 +38,9 @@ export function AutoResolveSuccess({ unit, student, project, grade }: Props) {
           <Column>Grade: </Column>
           <Column className="text-right">{grade}</Column>
         </Row>
+        <Text className="mx-auto text-center italic">
+          No further action required
+        </Text>
       </Section>
     </Layout>
   );
