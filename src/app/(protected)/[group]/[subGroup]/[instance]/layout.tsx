@@ -9,6 +9,8 @@ import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
 import { InstanceParams } from "@/lib/validations/params";
+import { auth } from "@/lib/auth";
+import { whitelist } from "@/config/testing-whitelist";
 
 export default async function Layout({
   children,
@@ -20,6 +22,21 @@ export default async function Layout({
   // check if this instance exists
   const allocationInstance = await api.institution.instance.exists({ params });
   if (!allocationInstance) notFound();
+
+  // whitelist of users
+  const user = await auth();
+  if (user) {
+    if (params.instance == "2024-2025") {
+      if (!whitelist.includes(user.id.toLowerCase())) {
+        return (
+          <Unauthorised
+            title="Unauthorised"
+            message="You don't have permission to access this instance"
+          />
+        );
+      }
+    }
+  }
 
   // check if this user has access to this instance
   // user might could be a student, supervisor, or admin
