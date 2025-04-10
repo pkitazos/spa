@@ -51,9 +51,10 @@ export function Layout({
             <Hr />
             <Section>
               <Text className="text-center italic text-gray-400">
-                This email was generated automatically. For technical issue/bug
-                email XXXX. For all other project-related enquiries, email the
-                coordinators, Level 4: Paul.Harvey@glasgow.ac.uk Level 5:
+                This email was generated automatically - please do not reply to
+                this directly. For technical issue/bug email XXXX. For all other
+                project-related enquiries, email the coordinators, Level 4:
+                Paul.Harvey@glasgow.ac.uk Level 5:
                 Yiannis.Giannakopoulos@glasgow.ac.uk
               </Text>
             </Section>

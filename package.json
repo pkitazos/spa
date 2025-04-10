@@ -6,6 +6,7 @@
     "dev": "next dev",
     "dev:email": "dotenvx run -- email dev --dir ./src/emails/messages -p 3001",
     "build:email": "dotenvx run -- email build --dir ./src/emails/messages",
+    "start:email": "dotenvx run -- email start",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

@@ -2,18 +2,21 @@ import {
   AssessmentCriterionDTO,
   MarkingSubmissionDTO,
   ProjectDTO,
+  ReaderDTO,
   StudentDTO,
-  SupervisorDTO,
   UnitOfAssessmentDTO,
 } from "@/dto";
-import { Heading, Hr, Text } from "@react-email/components";
+import { Button, Hr, Section, Text, Heading } from "@react-email/components";
 import { Layout } from "../../components/layout";
+import { env } from "@/env";
 import { Marksheet } from "@/emails/components/marksheet";
+import { InstanceParams } from "@/lib/validations/params";
 
 interface Props {
   project: ProjectDTO;
-  supervisor: SupervisorDTO;
+  reader: ReaderDTO;
   student: StudentDTO;
+  unit: UnitOfAssessmentDTO;
   supervisorMarking: {
     submission: MarkingSubmissionDTO;
     criteria: AssessmentCriterionDTO[];
@@ -24,16 +27,17 @@ interface Props {
     criteria: AssessmentCriterionDTO[];
     overallGrade: number;
   };
-  unit: UnitOfAssessmentDTO;
+  params: InstanceParams;
 }
 
-export function ReaderNegotiate1({
+export function SupervisorNegotiate1({
   project,
-  supervisor,
+  reader,
   student,
+  unit,
   supervisorMarking,
   readerMarking,
-  unit,
+  params,
 }: Props) {
   return (
     <Layout previewText="Negotiation1 required">
@@ -44,18 +48,30 @@ export function ReaderNegotiate1({
         <strong>require negotiation</strong> between supervisor and reader.
       </Text>
       <Text>
-        Please contact the supervisor <strong>{supervisor.name}</strong> (
-        {supervisor.email}) and resolve the difference manually offline.
+        Please contact the reader <strong>{reader.name}</strong> ({reader.email}
+        ) and resolve the difference manually offline. Once you have done this:
       </Text>
       <Text>
-        Once a resolution reached, the supervisor must use the link they
-        received in their email to upload the resolution on the [online
-        platform].
+        1. If you are able to negotiate a new grade,{" "}
+        <strong>the supervisor</strong> should submit this using the link below.
+      </Text>
+      <Text>
+        2. In the case where you cannot agree on a grade, please contact the
+        project coordinator via email (Level 4: Paul.Harvey@glasgow.ac.uk Level
+        5: Yiannis.Giannakopoulos@glasgow.ac.uk), who will arrange for
+        moderation.
       </Text>
 
-      <Text>
-        A Breakdown of the marks provided by each of you is provided below:
-      </Text>
+      <Section className="mb-[32px] mt-[32px] text-center">
+        <Button
+          className="rounded bg-[#000000] px-5 py-3 text-center text-[12px] font-semibold text-white no-underline"
+          href={`${env.SERVER_URL}/${params.group}/${params.subGroup}/${params.instance}/my-marking/${unit.id}/${student.id}/resolve`}
+        >
+          Submit Resolution
+        </Button>
+      </Section>
+
+      <Text>A breakdown of the supervisor/reader marks is provided below:</Text>
 
       <Hr />
       <Heading as="h3">Supervisor Marks:</Heading>
@@ -67,7 +83,7 @@ export function ReaderNegotiate1({
   );
 }
 
-ReaderNegotiate1.PreviewProps = {
+SupervisorNegotiate1.PreviewProps = {
   project: {
     id: "",
     title: "Testing Programmatic Emails",
@@ -79,10 +95,10 @@ ReaderNegotiate1.PreviewProps = {
     flags: [],
     tags: [],
   },
-  supervisor: {
+  reader: {
     id: "",
-    email: "emily.smith@uni.ac.uk",
-    name: "Emily Smith",
+    email: "sam.blankman@uni.ac.uk",
+    name: "Sam Blankman",
     joined: false,
     allocationTarget: 0,
     allocationLowerBound: 0,
@@ -94,7 +110,7 @@ ReaderNegotiate1.PreviewProps = {
     name: "John Doe",
     joined: false,
     flags: [],
-    level: 0,
+    level: 4,
   },
   supervisorMarking: {
     overallGrade: 22,
@@ -233,7 +249,7 @@ ReaderNegotiate1.PreviewProps = {
     ],
   },
   unit: {
-    id: "",
+    id: "9ee86629-4e6c-4572-bea5-2c2dc695e6d4",
     title: "Dissertation",
     studentSubmissionDeadline: new Date(),
     markerSubmissionDeadline: new Date(),
@@ -243,6 +259,11 @@ ReaderNegotiate1.PreviewProps = {
     flag: { id: "", title: "", description: "" },
     allowedMarkerTypes: [],
   },
+  params: {
+    group: "socs",
+    subGroup: "lvl-4-and-lvl-5-honours",
+    instance: "2024-2025",
+  },
 } satisfies Props;
 
-export default ReaderNegotiate1;
+export default SupervisorNegotiate1;

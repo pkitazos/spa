@@ -1,5 +1,5 @@
 import { ReactElement } from "react";
-import AutoResolveSuccess from "./messages/auto-resolve-success/v1";
+
 import {
   AssessmentCriterionDTO,
   MarkingSubmissionDTO,
@@ -9,11 +9,12 @@ import {
   SupervisorDTO,
   UnitOfAssessmentDTO,
 } from "@/dto";
-import SupervisorNegotiate1 from "./messages/negotiate-1/supervisor";
-import ReaderNegotiate1 from "./messages/negotiate-1/reader";
-import SupervisorNegotiate2 from "./messages/negotiate-2/supervisor";
-import ReaderNegotiate2 from "./messages/negotiate-2/reader";
+import SupervisorNegotiate1 from "./messages/negotiation/supervisor";
+import ReaderNegotiate1 from "./messages/negotiation/reader";
+import SupervisorNegotiate2 from "./messages/moderation/supervisor";
+import ReaderNegotiate2 from "./messages/moderation/reader";
 import { InstanceParams } from "@/lib/validations/params";
+import MarkingComplete from "./messages/marking-complete";
 
 export type SendMail = ({
   message,
@@ -34,13 +35,22 @@ export class Mailer {
     this.sendMail = sendMail;
   }
 
-  public async notifyAutoResolve(
+  public async notifyMarkingComplete(
     student: StudentDTO,
-    grade: string,
     supervisor: SupervisorDTO,
     reader: ReaderDTO,
+    project: ProjectDTO,
+    unit: UnitOfAssessmentDTO,
+    grade: string,
   ) {
-    const message = <AutoResolveSuccess student={student} grade={grade} />;
+    const message = (
+      <MarkingComplete
+        student={student}
+        grade={grade}
+        project={project}
+        unit={unit}
+      />
+    );
     const subject = "Grading Auto-resolve succeeded";
 
     await Promise.all([

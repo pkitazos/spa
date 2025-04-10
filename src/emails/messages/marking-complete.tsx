@@ -1,5 +1,5 @@
 import { Column, Row, Heading, Section, Text } from "@react-email/components";
-import { Layout } from "../../components/layout";
+import { Layout } from "../components/layout";
 import { ProjectDTO, StudentDTO, UnitOfAssessmentDTO } from "@/dto";
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
   unit: UnitOfAssessmentDTO;
 }
 
-export function AutoResolveSuccess({ unit, student, project, grade }: Props) {
+export function MarkingComplete({ unit, student, project, grade }: Props) {
   return (
     <Layout previewText="Auto-resolve successful">
       <Section>
@@ -46,7 +46,7 @@ export function AutoResolveSuccess({ unit, student, project, grade }: Props) {
   );
 }
 
-AutoResolveSuccess.PreviewProps = {
+MarkingComplete.PreviewProps = {
   student: {
     id: "3985764D",
     email: "john.doe@student.gla.ac.ul",
@@ -80,4 +80,4 @@ AutoResolveSuccess.PreviewProps = {
   grade: "H1",
 } satisfies Props;
 
-export default AutoResolveSuccess;
+export default MarkingComplete;

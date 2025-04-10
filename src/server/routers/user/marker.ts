@@ -244,11 +244,13 @@ export const markerRouter = createTRPCRouter({
             comment: "Auto-resolved",
           });
 
-          await mailer.notifyAutoResolve(
+          await mailer.notifyMarkingComplete(
             student,
-            resolution.grade,
             supervisor,
             reader,
+            project,
+            unit,
+            resolution.grade,
           );
 
           return;
