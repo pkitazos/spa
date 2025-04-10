@@ -1,19 +1,38 @@
+import { Grade } from "@/config/grades";
+import { Marker, Student } from "@/data-objects";
+import { Transformers as T } from "@/db/transformers";
 import { markerTypeSchema, Stage } from "@/db/types";
 import {
-  assessmentCriterionWithScoreDtoSchema,
-  partialMarkDtoSchema,
+  partialMarkingSubmissionDtoSchema,
   projectDtoSchema,
   studentDtoSchema,
-  unitOfAssessmentGradeDtoSchema,
+  markingSubmissionDtoSchema,
   unitOfAssessmentDtoSchema,
+  assessmentCriterionDtoSchema,
+  ReaderDTO,
+  MarkingSubmissionDTO,
 } from "@/dto";
-import { expand } from "@/lib/utils/general/instance-params";
+import { markingSubmissionStatusSchema } from "@/dto/result/marking-submission-status";
 import { subsequentStages } from "@/lib/utils/permissions/stage-check";
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 export const markerRouter = createTRPCRouter({
+  getUnitById: procedure.instance
+    .inStage(subsequentStages(Stage.READER_BIDDING))
+    .marker.input(z.object({ unitOfAssessmentId: z.string() }))
+    .output(unitOfAssessmentDtoSchema)
+    .query(async ({ ctx: { db }, input: { unitOfAssessmentId } }) => {
+      const res = await db.unitOfAssessment.findFirstOrThrow({
+        where: { id: unitOfAssessmentId },
+        include: { flag: true, assessmentCriteria: true },
+      });
+
+      return T.toUnitOfAssessmentDTO(res);
+    }),
+
   getProjectsToMark: procedure.instance
     .inStage(subsequentStages(Stage.READER_BIDDING))
     .marker.output(
@@ -22,7 +41,12 @@ export const markerRouter = createTRPCRouter({
           project: projectDtoSchema,
           student: studentDtoSchema,
           markerType: markerTypeSchema,
-          unitsOfAssessment: z.array(unitOfAssessmentDtoSchema),
+          unitsOfAssessment: z.array(
+            z.object({
+              unit: unitOfAssessmentDtoSchema,
+              status: markingSubmissionStatusSchema,
+            }),
+          ),
         }),
       ),
     )
@@ -30,188 +54,271 @@ export const markerRouter = createTRPCRouter({
       async ({ ctx: { user } }) => await user.getProjectsWithSubmissions(),
     ),
 
-  getCriteriaAndScoresForStudentSubmission: procedure.instance
+  getCriteria: procedure.instance
+    .inStage(subsequentStages(Stage.READER_BIDDING))
+    .marker.input(z.object({ unitOfAssessmentId: z.string() }))
+    .output(z.array(assessmentCriterionDtoSchema))
+    .query(
+      async ({ ctx: { instance }, input: { unitOfAssessmentId } }) =>
+        await instance.getCriteria(unitOfAssessmentId),
+    ),
+
+  getSubmission: procedure.instance
     .inStage(subsequentStages(Stage.READER_BIDDING))
     .marker.input(
       z.object({ unitOfAssessmentId: z.string(), studentId: z.string() }),
     )
-    .output(z.array(assessmentCriterionWithScoreDtoSchema))
+    .output(
+      z.object({
+        submission: markingSubmissionDtoSchema,
+        status: markingSubmissionStatusSchema,
+      }),
+    )
     .query(
       async ({
-        ctx: { instance, user },
+        ctx: { user, instance },
         input: { unitOfAssessmentId, studentId },
-      }) =>
-        await instance.getCriteriaAndScoresForStudentSubmission(
+      }) => {
+        const unit = await instance.getUnitOfAssessment(unitOfAssessmentId);
+
+        const submission = await user.getMarkingSubmission(
           unitOfAssessmentId,
-          user.id,
           studentId,
-        ),
+        );
+
+        const status = Marker.computeStatus(unit, submission);
+
+        return { submission, status };
+      },
+    ),
+
+  resolveMarks: procedure.instance
+    .inStage([Stage.MARK_SUBMISSION])
+    .supervisor.input(
+      z.object({
+        grade: z.number(),
+        comment: z.string().min(1),
+        studentId: z.string(),
+        unitOfAssessmentId: z.string(),
+      }),
+    )
+    .output(z.void())
+    .mutation(
+      async ({
+        ctx: { user },
+        input: { studentId, unitOfAssessmentId, grade, comment },
+      }) =>
+        await user.writeFinalMark({
+          studentId,
+          unitOfAssessmentId,
+          grade,
+          comment,
+        }),
     ),
 
   submitMarks: procedure.instance
     .inStage([Stage.MARK_SUBMISSION])
-    .marker.input(unitOfAssessmentGradeDtoSchema)
+    .marker.input(markingSubmissionDtoSchema)
     .mutation(
       async ({
-        ctx: { instance, user, db },
+        ctx: { instance, user, db, mailer },
         input: {
+          params,
           unitOfAssessmentId,
           studentId,
           marks,
           finalComment,
           recommendation,
-          draft,
         },
       }) => {
         const markerType = await user.getMarkerType(studentId);
+        const unit = await instance.getUnitOfAssessment(unitOfAssessmentId);
+        const { allowedMarkerTypes, components } = unit;
 
-        const { flag } = await instance.getUnitOfAssessment(unitOfAssessmentId);
+        if (!allowedMarkerTypes.includes(markerType)) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "User is not correct marker type",
+          });
+        }
 
-        await db.$transaction([
-          db.componentScore.deleteMany({
-            where: { ...expand(instance.params), markerId: user.id, studentId },
-          }),
+        await user.writeMarks({
+          unitOfAssessmentId,
+          studentId,
+          marks,
+          finalComment,
+          recommendation,
+          draft: false,
+        });
 
-          db.componentScore.createMany({
-            data: Object.entries(marks).map(([assessmentCriterionId, m]) => ({
-              ...expand(instance.params),
-              markerId: user.id,
-              studentId,
-              grade: m.mark,
-              justification: m.justification,
-              draft: false,
-              markerType,
-              assessmentCriterionId,
+        if (allowedMarkerTypes.length === 1) {
+          const grade = Grade.computeFromScores(
+            components.map((c) => ({
+              weight: c.weight,
+              score: marks[c.id].mark,
             })),
-            skipDuplicates: true,
-          }),
+          );
 
-          db.markerSubmissionComments.upsert({
-            where: {
-              studentMarkerSubmission: {
-                studentId,
-                markerId: user.id,
-                unitOfAssessmentId,
+          await user.writeFinalMark({
+            studentId,
+            grade,
+            unitOfAssessmentId,
+            comment: "Auto-resolved",
+          });
+
+          return;
+        }
+
+        const numSubmissions = await db.markingSubmission.count({
+          where: { studentId, unitOfAssessmentId },
+        });
+
+        // if this is a doubly-marked submission, but only 1 has been submitted, do nothing.
+        if (numSubmissions < allowedMarkerTypes.length) {
+          return;
+        } else if (numSubmissions > allowedMarkerTypes.length) {
+          console.error("more submissions than marker types!!?!?!");
+          return;
+        }
+
+        // otherwise, if this is a doubly-marked submission, and now both are submitted then:
+        const data = await db.markingSubmission.findMany({
+          where: { studentId, unitOfAssessmentId },
+          include: { criterionScores: true },
+        });
+
+        const submissionByMarker = data.reduce(
+          (acc, val) => {
+            const scoreMap = val.criterionScores.reduce(
+              (acc, val) => ({
+                ...acc,
+                [val.assessmentCriterionId]: val.grade,
+              }),
+              {} as Record<string, number>,
+            );
+
+            return {
+              ...acc,
+              [val.markerId]: {
+                submission: T.toMarkingSubmissionDTO(val),
+                grade: Grade.computeFromScores(
+                  components.map((c) => ({
+                    weight: c.weight,
+                    score: scoreMap[c.id],
+                  })),
+                ),
               },
-            },
-            create: {
-              ...expand(instance.params),
-              studentId,
-              markerId: user.id,
-              unitOfAssessmentId,
-              flagId: flag.id,
-              summary: finalComment,
-              recommendedForPrize: recommendation,
-            },
-            update: {
-              summary: finalComment,
-              recommendedForPrize: recommendation,
-            },
-          }),
-        ]);
+            };
+          },
+          {} as Record<
+            string,
+            { submission: MarkingSubmissionDTO; grade: number }
+          >,
+        );
+
+        const studentDO = new Student(db, studentId, params);
+
+        const student = await studentDO.get();
+        const { supervisor, project } = await studentDO.getAllocation();
+
+        const reader: ReaderDTO = await studentDO.getReader();
+
+        // run the auto-resolve function on the grades.
+        const resolution = Grade.autoResolve(
+          Grade.toLetter(submissionByMarker[supervisor.id].grade),
+          Grade.toLetter(submissionByMarker[reader.id].grade),
+        );
+
+        if (resolution.status === "INSUFFICIENT") {
+          console.error("unreachable: auto-resolve insufficient");
+          return;
+        }
+
+        if (resolution.status === "AUTO_RESOLVED") {
+          const grade = Grade.toInt(resolution.grade);
+
+          await user.writeFinalMark({
+            studentId,
+            grade,
+            unitOfAssessmentId,
+            comment: "Auto-resolved",
+          });
+
+          await mailer.notifyMarkingComplete(
+            student,
+            supervisor,
+            reader,
+            project,
+            unit,
+            resolution.grade,
+          );
+
+          return;
+        }
+
+        // goes to negotiation - write nothing to db but do email markers
+        if (resolution.status === "NEGOTIATE1") {
+          const readerMarking = {
+            submission: submissionByMarker[reader.id].submission,
+            criteria: components,
+            overallGrade: submissionByMarker[reader.id].grade,
+          };
+          const supervisorMarking = {
+            submission: submissionByMarker[supervisor.id].submission,
+            criteria: components,
+            overallGrade: submissionByMarker[supervisor.id].grade,
+          };
+
+          await mailer.notifyNegotiate1(
+            supervisor,
+            reader,
+            project,
+            student,
+            readerMarking,
+            supervisorMarking,
+            unit,
+            params,
+          );
+        }
+        if (resolution.status === "NEGOTIATE2") {
+          await mailer.notifyNegotiate2(supervisor, reader, project, student);
+        }
       },
     ),
 
   saveMarks: procedure.instance
     .inStage([Stage.MARK_SUBMISSION])
-    .marker.input(partialMarkDtoSchema)
+    .marker.input(partialMarkingSubmissionDtoSchema)
     .mutation(
       async ({
         ctx: { instance, user, db },
         input: {
           unitOfAssessmentId,
           studentId,
-          marks,
-          finalComment,
-          recommendation,
-          draft,
+          marks = {},
+          finalComment = "",
+          recommendation = false,
         },
       }) => {
         const markerType = await user.getMarkerType(studentId);
+        const { allowedMarkerTypes } =
+          await instance.getUnitOfAssessment(unitOfAssessmentId);
 
-        const { flag } = await instance.getUnitOfAssessment(unitOfAssessmentId);
+        if (!allowedMarkerTypes.includes(markerType)) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "User is not correct marker type",
+          });
+        }
 
-        console.log(recommendation);
-
-        await db.$transaction([
-          db.componentScore.deleteMany({
-            where: { ...expand(instance.params), markerId: user.id, studentId },
-          }),
-
-          db.componentScore.createMany({
-            data: marks
-              ? Object.entries(marks).map(([assessmentCriterionId, m]) => ({
-                  ...expand(instance.params),
-                  markerId: user.id,
-                  studentId,
-                  grade: m.mark,
-                  justification: m.justification,
-                  draft: draft ?? true,
-                  markerType,
-                  assessmentCriterionId,
-                }))
-              : [],
-            skipDuplicates: true,
-          }),
-
-          db.markerSubmissionComments.upsert({
-            where: {
-              studentMarkerSubmission: {
-                studentId,
-                markerId: user.id,
-                unitOfAssessmentId,
-              },
-            },
-            create: {
-              ...expand(instance.params),
-              studentId,
-              markerId: user.id,
-              unitOfAssessmentId,
-              flagId: flag.id,
-              summary: finalComment ?? "",
-              recommendedForPrize: recommendation,
-            },
-            update: {
-              summary: finalComment,
-              recommendedForPrize: recommendation,
-            },
-          }),
-        ]);
-      },
-    ),
-
-  getSummary: procedure.instance
-    .inStage(subsequentStages(Stage.READER_BIDDING))
-    .marker.input(
-      z.object({
-        params: z.object({
-          group: z.string(),
-          subGroup: z.string(),
-          instance: z.string(),
-        }),
-        unitOfAssessmentId: z.string(),
-        studentId: z.string(),
-      }),
-    )
-    .output(z.tuple([z.string(), z.boolean()]))
-    .query(
-      async ({
-        ctx: { user, db },
-        input: { unitOfAssessmentId, studentId },
-      }) => {
-        const result = await db.markerSubmissionComments.findFirst({
-          where: { studentId, markerId: user.id, unitOfAssessmentId },
+        await user.writeMarks({
+          unitOfAssessmentId,
+          studentId,
+          marks,
+          finalComment,
+          recommendation,
+          draft: true,
         });
-
-        console.log(
-          result
-            ? [result.summary ?? "", result.recommendedForPrize]
-            : ["", false],
-        );
-
-        return result
-          ? [result.summary ?? "", result.recommendedForPrize]
-          : ["", false];
       },
     ),
 });

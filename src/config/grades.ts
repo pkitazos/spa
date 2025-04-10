@@ -34,7 +34,7 @@ export class Grade {
       0,
     );
     const mark = this.round(totalWeightedScore / totalWeight);
-    return Grade.toLetter(mark);
+    return mark;
   }
 
   // POLICY how should we round non-integer grades?
@@ -120,7 +120,6 @@ export class Grade {
 
     if (diff === 2) {
       return { status: GradingResult.NEGOTIATE1 };
-      // send emails using internal smtp server
     }
 
     return { status: GradingResult.NEGOTIATE2 };

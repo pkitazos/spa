@@ -44,3 +44,7 @@ next-env.d.ts
 # project specific
 *.t.txt
 *.t.*
+
+junk/
+
+.react-email/

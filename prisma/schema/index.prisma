@@ -49,28 +49,28 @@ model AllocationSubGroup {
 
 model AllocationInstance {
   id                                  String
-  displayName                         String                       @map("display_name")
-  stage                               Stage                        @default(SETUP)
+  displayName                         String             @map("display_name")
+  stage                               Stage              @default(SETUP)
   // ---
-  selectedAlgId                       String?                      @map("selected_alg_id")
-  parentInstanceId                    String?                      @map("parent_instance_id")
+  selectedAlgId                       String?            @map("selected_alg_id")
+  parentInstanceId                    String?            @map("parent_instance_id")
   // supervisor details
-  projectSubmissionDeadline           DateTime                     @map("project_submission_deadline")
-  supervisorAllocationAccess          Boolean                      @default(false) @map("supervisor_allocation_access")
+  projectSubmissionDeadline           DateTime           @map("project_submission_deadline")
+  supervisorAllocationAccess          Boolean            @default(false) @map("supervisor_allocation_access")
   // student details
-  minStudentPreferences               Int                          @map("min_student_preferences")
-  maxStudentPreferences               Int                          @map("max_student_preferences")
-  maxStudentPreferencesPerSupervisor  Int                          @map("max_student_preferences_per_supervisor")
-  studentPreferenceSubmissionDeadline DateTime                     @map("student_preference_submission_deadline")
-  studentAllocationAccess             Boolean                      @default(false) @map("student_allocation_access")
+  minStudentPreferences               Int                @map("min_student_preferences")
+  maxStudentPreferences               Int                @map("max_student_preferences")
+  maxStudentPreferencesPerSupervisor  Int                @map("max_student_preferences_per_supervisor")
+  studentPreferenceSubmissionDeadline DateTime           @map("student_preference_submission_deadline")
+  studentAllocationAccess             Boolean            @default(false) @map("student_allocation_access")
   // reader details
-  minReaderPreferences                Int                          @map("min_reader_preferences")
-  maxReaderPreferences                Int                          @map("max_reader_preferences")
-  readerPreferenceSubmissionDeadline  DateTime                     @map("reader_preference_submission_deadline")
+  minReaderPreferences                Int                @map("min_reader_preferences")
+  maxReaderPreferences                Int                @map("max_reader_preferences")
+  readerPreferenceSubmissionDeadline  DateTime           @map("reader_preference_submission_deadline")
   // ---
-  allocationGroupId                   String                       @map("allocation_group_id")
-  allocationSubGroupId                String                       @map("allocation_sub_group_id")
-  allocationSubGroup                  AllocationSubGroup           @relation(fields: [allocationGroupId, allocationSubGroupId], references: [allocationGroupId, id], onDelete: Cascade)
+  allocationGroupId                   String             @map("allocation_group_id")
+  allocationSubGroupId                String             @map("allocation_sub_group_id")
+  allocationSubGroup                  AllocationSubGroup @relation(fields: [allocationGroupId, allocationSubGroupId], references: [allocationGroupId, id], onDelete: Cascade)
   // ---
   users                               UserInInstance[]
   projects                            Project[]
@@ -79,13 +79,9 @@ model AllocationInstance {
   flags                               Flag[]
   tags                                Tag[]
   matchingResults                     MatchingResult[]
-  assessmentCriteria                  AssessmentCriterion[]
-  componentScores                     ComponentScore[]
   finalGrades                         FinalGrade[]
   matchingPairs                       MatchingPair[]
   unitsOfAssessment                   UnitOfAssessment[]
-  markerSubmissionComments            MarkerSubmissionComments[]
-  FinalUnitOfAssessmentGrade          FinalUnitOfAssessmentGrade[]
 
   @@id([allocationGroupId, allocationSubGroupId, id], name: "instanceId", map: "instance_id")
   @@unique([displayName, allocationGroupId, allocationSubGroupId])
@@ -93,18 +89,17 @@ model AllocationInstance {
 }
 
 model Flag {
-  id                   String                @id @default(uuid())
+  id                   String             @id @default(uuid())
   title                String
   description          String
   // ---
-  allocationGroupId    String                @map("allocation_group_id")
-  allocationSubGroupId String                @map("allocation_sub_group_id")
-  allocationInstanceId String                @map("allocation_instance_id")
+  allocationGroupId    String             @map("allocation_group_id")
+  allocationSubGroupId String             @map("allocation_sub_group_id")
+  allocationInstanceId String             @map("allocation_instance_id")
   // ---
-  allocationInstance   AllocationInstance    @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "allocation_instance")
+  allocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "allocation_instance")
   flagOnProjects       FlagOnProject[]
   flagOnStudents       FlagOnStudent[]
-  assessmentCriteria   AssessmentCriterion[]
   unitsOfAssessment    UnitOfAssessment[]
 
   @@unique([title, allocationGroupId, allocationSubGroupId, allocationInstanceId])

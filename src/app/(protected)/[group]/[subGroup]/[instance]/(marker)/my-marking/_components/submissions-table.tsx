@@ -3,9 +3,9 @@
 import { useState } from "react";
 import {
   type ColumnFiltersState,
+  ExpandedState,
   Row,
   type SortingState,
-  type VisibilityState,
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
@@ -29,12 +29,14 @@ import { PAGES } from "@/config/pages";
 import { MarkerType } from "@prisma/client";
 import { UnitOfAssessmentDTO } from "@/dto";
 import { format } from "@/lib/utils/date/format";
+import { CopyButton } from "@/components/copy-button";
+import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
 
 export function SubmissionsTable({ data }: { data: SubmissionTableRow[] }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+
+  const [expanded, setExpanded] = useState<ExpandedState>({});
 
   const table = useReactTable({
     data,
@@ -44,11 +46,10 @@ export function SubmissionsTable({ data }: { data: SubmissionTableRow[] }) {
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
+
     getRowCanExpand: () => true,
-    state: { sorting, columnFilters, columnVisibility, expanded },
-    // @ts-ignore
     onExpandedChange: setExpanded,
+    state: { sorting, columnFilters, expanded },
   });
 
   return (
@@ -57,10 +58,10 @@ export function SubmissionsTable({ data }: { data: SubmissionTableRow[] }) {
         <Input
           placeholder="Filter projects..."
           value={
-            (table.getColumn("projectName")?.getFilterValue() as string) ?? ""
+            (table.getColumn("projectTitle")?.getFilterValue() as string) ?? ""
           }
           onChange={(event) =>
-            table.getColumn("projectName")?.setFilterValue(event.target.value)
+            table.getColumn("projectTitle")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
@@ -72,22 +73,15 @@ export function SubmissionsTable({ data }: { data: SubmissionTableRow[] }) {
               <TableHead className="w-[30px]"></TableHead>
               <TableHead>Submission Title</TableHead>
               <TableHead>Due Date</TableHead>
+              <TableHead>Level</TableHead>
               <TableHead>Role</TableHead>
-              <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table
                 .getRowModel()
-                .rows.map((row) => (
-                  <ProjectRow
-                    key={row.id}
-                    row={row}
-                    expanded={expanded}
-                    onExpandedChange={setExpanded}
-                  />
-                ))
+                .rows.map((row) => <ProjectRow key={row.id} row={row} />)
             ) : (
               <TableRow>
                 <TableCell colSpan={5} className="h-24 text-center">
@@ -102,16 +96,8 @@ export function SubmissionsTable({ data }: { data: SubmissionTableRow[] }) {
   );
 }
 
-function ProjectRow({
-  row,
-  expanded,
-  onExpandedChange,
-}: {
-  row: Row<SubmissionTableRow>;
-  expanded: Record<string, boolean>;
-  onExpandedChange: (expanded: Record<string, boolean>) => void;
-}) {
-  const isExpanded = expanded[row.original.student.id];
+function ProjectRow({ row }: { row: Row<SubmissionTableRow> }) {
+  const isExpanded = row.getIsExpanded();
   return (
     <>
       <TableRow className="cursor-pointer hover:bg-muted/50">
@@ -120,12 +106,7 @@ function ProjectRow({
             variant="ghost"
             size="icon"
             className="h-8 w-8 p-0"
-            onClick={() => {
-              onExpandedChange({
-                ...expanded,
-                [row.original.student.id]: !isExpanded,
-              });
-            }}
+            onClick={() => row.toggleExpanded()}
           >
             {isExpanded ? (
               <ChevronDown className="h-4 w-4" />
@@ -137,9 +118,11 @@ function ProjectRow({
         <TableCell colSpan={2}>
           <div className="font-medium">{row.original.project.title}</div>
           <div className="text-sm text-muted-foreground">
-            Student: {row.original.student.name}
+            Student: {row.original.student.name} ({row.original.student.id}{" "}
+            <CopyButton data={row.original.student.id} message="student ID" />)
           </div>
         </TableCell>
+        <TableCell colSpan={1}>{row.original.student.level}</TableCell>
         <TableCell colSpan={2}>
           {row.original.markerType === MarkerType.SUPERVISOR
             ? "Supervisor"
@@ -147,39 +130,34 @@ function ProjectRow({
         </TableCell>
       </TableRow>
       {isExpanded &&
-        row.original.unitsOfAssessment
-          .filter((unit) =>
-            unit.allowedMarkerTypes.includes(row.original.markerType),
-          )
-          .map((unit) => (
-            <TableRow key={unit.id} className="bg-muted/30">
-              <TableCell></TableCell>
-              <TableCell>{unit.title}</TableCell>
-              <TableCell>{format(unit.markerSubmissionDeadline)}</TableCell>
-              <TableCell></TableCell>
-              <TableCell>
-                <SubmissionStatus
-                  status={computeStatus(unit)}
-                  unitId={unit.id}
-                  studentId={row.original.student.id}
-                />
-              </TableCell>
-            </TableRow>
-          ))}
+        row.original.unitsOfAssessment.map((data) => (
+          <AssessmentUnitRow data={data} studentId={row.original.student.id} />
+        ))}
     </>
   );
 }
-
-function computeStatus(unit: UnitOfAssessmentDTO): submissionStatus {
-  if (!unit.isOpen) return submissionStatus.CLOSED;
-  return submissionStatus.OPEN;
-}
-
-enum submissionStatus {
-  CLOSED,
-  OPEN,
-  DRAFT,
-  SUBMITTED,
+function AssessmentUnitRow({
+  data,
+  studentId,
+}: {
+  data: { unit: UnitOfAssessmentDTO; status: MarkingSubmissionStatus };
+  studentId: string;
+}) {
+  return (
+    <TableRow key={data.unit.id} className="bg-muted/30">
+      <TableCell></TableCell>
+      <TableCell>{data.unit.title}</TableCell>
+      <TableCell>{format(data.unit.markerSubmissionDeadline)}</TableCell>
+      <TableCell />
+      <TableCell>
+        <SubmissionStatus
+          status={data.status}
+          unitId={data.unit.id}
+          studentId={studentId}
+        />
+      </TableCell>
+    </TableRow>
+  );
 }
 
 function SubmissionStatus({
@@ -187,12 +165,12 @@ function SubmissionStatus({
   unitId,
   studentId,
 }: {
-  status: submissionStatus;
+  status: MarkingSubmissionStatus;
   unitId: string;
   studentId: string;
 }) {
   switch (status) {
-    case submissionStatus.OPEN:
+    case MarkingSubmissionStatus.OPEN:
       return (
         <Button size="sm" variant="secondary" className="w-24" asChild>
           <Link href={`./${PAGES.myMarking.href}/${unitId}/${studentId}`}>
@@ -200,13 +178,15 @@ function SubmissionStatus({
           </Link>
         </Button>
       );
-    case submissionStatus.DRAFT:
+    case MarkingSubmissionStatus.DRAFT:
       return (
-        <Button size="sm" variant="secondary" className="w-24">
-          Edit
+        <Button size="sm" variant="secondary" className="w-24" asChild>
+          <Link href={`./${PAGES.myMarking.href}/${unitId}/${studentId}`}>
+            Edit
+          </Link>
         </Button>
       );
-    case submissionStatus.SUBMITTED:
+    case MarkingSubmissionStatus.SUBMITTED:
       return (
         <Button
           size="sm"
@@ -216,7 +196,7 @@ function SubmissionStatus({
           Submitted
         </Button>
       );
-    case submissionStatus.CLOSED:
+    case MarkingSubmissionStatus.CLOSED:
       return (
         <Button
           size="sm"

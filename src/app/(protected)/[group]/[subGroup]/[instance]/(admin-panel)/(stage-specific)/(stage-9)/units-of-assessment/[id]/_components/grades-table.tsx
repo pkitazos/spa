@@ -27,6 +27,7 @@ import { CircleCheckIcon } from "@/components/icons/circle-check";
 import { CircleXIcon } from "@/components/icons/circle-x";
 import { GradingResult } from "@/dto/result/grading-result";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
 
 // @JakeTrevor cook
 export function GradesTable({
@@ -73,6 +74,7 @@ export function GradesTable({
           className="max-w-sm"
         />
       </div>
+      <DataTablePagination table={table} />
       <ScrollArea className="w-full">
         <div className="rounded-md border">
           <Table>

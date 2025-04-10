@@ -16,6 +16,8 @@ import { now } from "@/lib/utils/date/now";
 import { Session } from "@/lib/validations/auth";
 
 import { db } from "@/db";
+import { sendMail } from "@/emails";
+import { Mailer } from "@/emails/mailer";
 
 /**
  * 1. CONTEXT
@@ -33,7 +35,10 @@ export const createTRPCContext = async (opts: {
   headers: Headers;
   session: Session | null;
 }) => {
-  const session = opts.session ?? { user: await auth() };
+  const user = await auth();
+  if (!user) console.error("Failed to get user from auth()");
+
+  const session = opts.session ?? { user };
 
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
   const time = now();
@@ -41,7 +46,7 @@ export const createTRPCContext = async (opts: {
   // TODO: replace with proper logging library
   // console.log(`>>> tRPC Request from ${source} by`, session.user, `at ${time}`);
 
-  return { session, db };
+  return { session, db, mailer: new Mailer(sendMail) };
 };
 
 /**
