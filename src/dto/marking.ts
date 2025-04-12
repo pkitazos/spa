@@ -63,6 +63,7 @@ export type CriterionScoreDTO = z.infer<typeof criterionScoreDtoSchema>;
 
 export const markingSubmissionDtoSchema = z.object({
   unitOfAssessmentId: z.string(),
+  grade: z.number().int().nonnegative(),
   studentId: z.string(),
   markerId: z.string(),
   marks: z.record(
@@ -79,6 +80,7 @@ export type MarkingSubmissionDTO = z.infer<typeof markingSubmissionDtoSchema>;
 export const partialMarkingSubmissionDtoSchema = markingSubmissionDtoSchema
   .partial({ finalComment: true, recommendation: true })
   .extend({
+    grade: z.number().int(),
     marks: z
       .record(
         z.string(), // assessmentCriterionId

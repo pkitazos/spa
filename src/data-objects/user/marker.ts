@@ -54,6 +54,7 @@ export class Marker extends User {
     return {
       unitOfAssessmentId,
       studentId,
+      grade: -1,
       markerId: this.id,
       draft: true,
       marks: {},
@@ -233,6 +234,7 @@ export class Marker extends User {
     finalComment = "",
     recommendation,
     draft,
+    grade,
   }: Omit<PartialMarkingSubmissionDTO, "markerId">) {
     const markerId = this.id;
     await this.db.$transaction([
@@ -247,6 +249,7 @@ export class Marker extends User {
           draft,
           summary: finalComment,
           recommendedForPrize: recommendation,
+          grade,
         },
         update: {
           draft,

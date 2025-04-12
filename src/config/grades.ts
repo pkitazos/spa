@@ -104,9 +104,9 @@ export class Grade {
 
   public static checkExtremes(grade: string) {
     if (grade === "A1" || this.isFailing(grade)) {
-      return { status: GradingResult.NEGOTIATE2 };
+      return { status: GradingResult.NEGOTIATE2 } as const;
     } else {
-      return { status: GradingResult.AUTO_RESOLVED, grade };
+      return { status: GradingResult.AUTO_RESOLVED, grade } as const;
     }
   }
 
