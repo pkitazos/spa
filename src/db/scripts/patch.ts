@@ -1,8 +1,9 @@
 // create-test-instance.ts
-import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { PrismaClient } from "@prisma/client";
 import { faker } from "@faker-js/faker";
+import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { v4 as uuid } from "uuid";
+import { testers } from "@/config/testing-whitelist";
 
 faker.seed(123);
 const group = "socs";
@@ -17,47 +18,9 @@ const newParams = { group, subGroup, instance: newInstance };
 
 const db = new PrismaClient();
 
-const testers = [
-  {
-    guid: "2579354t",
-    email: "j.trevor.1@research.gla.ac.uk",
-    name: "Jake Trevor",
-  },
-
-  { guid: "phh9g", name: "Paul Harvey", email: "paul.harvey@glasgow.ac.uk" },
-  {
-    guid: "ig73b",
-    name: "Yiannis Giannakopoulos",
-    email: "yiannis.giannakopoulos@glasgow.ac.uk",
-  },
-  {
-    guid: "ds267f",
-    name: "Derek Somerville",
-    email: "Derek.Somerville@glasgow.ac.uk",
-  },
-  {
-    guid: "lmb25w",
-    name: "Lewis Brennan",
-    email: "Lewis.Brennan@glasgow.ac.uk",
-  },
-  {
-    guid: "bk79c",
-    name: "Brishketu Kislay",
-    email: "Brishketu.Kislay@glasgow.ac.uk",
-  },
-
-  { guid: "mjb24v", name: "Matthew Barr", email: "Matthew.Barr@glasgow.ac.uk" },
-  {
-    guid: "sd323v",
-    name: "Sayonee Dassani",
-    email: "Sayonee.Dassani@glasgow.ac.uk",
-  },
-];
-
 async function main() {
   const flagid = await createTestInstance();
   if (!flagid) throw new Error("flagundeinfed");
-  console.log(flagid);
   await setupUsers();
   await createFakeProjects(flagid);
 }
