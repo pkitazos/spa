@@ -98,6 +98,18 @@ export class Grade {
     }
   }
 
+  public static isFailing(grade: string) {
+    return Grade.toInt(grade) < Grade.toInt("D3");
+  }
+
+  public static checkExtremes(grade: string) {
+    if (grade === "A1" || this.isFailing(grade)) {
+      return { status: GradingResult.NEGOTIATE2 };
+    } else {
+      return { status: GradingResult.AUTO_RESOLVED, grade };
+    }
+  }
+
   public static autoResolve(supervisorGrade?: string, readerGrade?: string) {
     if (!supervisorGrade || !readerGrade) {
       return { status: GradingResult.INSUFFICIENT };
@@ -108,14 +120,11 @@ export class Grade {
     const diff = Math.abs(supervisorValue - readerValue);
 
     if (diff <= 1) {
-      return { status: GradingResult.AUTO_RESOLVED, grade: supervisorGrade };
+      return this.checkExtremes(supervisorGrade);
     }
 
     if (diff === 2 && !Grade.haveBandDifference(supervisorGrade, readerGrade)) {
-      return {
-        status: GradingResult.AUTO_RESOLVED,
-        grade: Grade.average(supervisorGrade, readerGrade),
-      };
+      return this.checkExtremes(Grade.average(supervisorGrade, readerGrade));
     }
 
     if (diff === 2) {
