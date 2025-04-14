@@ -38,7 +38,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Control, useForm } from "react-hook-form";
 import { Grade, GRADES } from "@/config/grades";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { YesNoAction } from "@/components/yes-no-action";
@@ -109,19 +109,26 @@ export function MarkingSection({
     );
   });
 
-  function computeOverall() {
-    const data = form.getValues("marks");
+  const [marks, grade] = form.watch(["marks", "grade"]);
 
-    if (!markingCriteria.every((c) => data[c.id].mark !== -1)) return "-";
+  useEffect(() => {
+    if (!markingCriteria.every((c) => marks[c.id].mark !== -1)) return;
+
+    console.log("hello!");
 
     const scores: { score: number; weight: number }[] = markingCriteria.map(
-      (c) => ({ weight: c.weight, score: data[c.id].mark }),
+      (c) => ({ weight: c.weight, score: marks[c.id].mark }),
     );
 
-    return Grade.toLetter(Grade.computeFromScores(scores));
-  }
+    const grade = Grade.computeFromScores(scores);
 
-  const overallMark = computeOverall();
+    form.setValue("grade", grade, { shouldValidate: true });
+  }, [marks, form]);
+
+  function formatGrade(grade: number) {
+    if (grade !== -1) return Grade.toLetter(grade);
+    else return "-";
+  }
 
   return (
     <Form {...form}>
@@ -140,7 +147,7 @@ export function MarkingSection({
         </div>
         <div>
           <h3>overall mark:</h3>
-          <h4>{overallMark}</h4>
+          <h4>{formatGrade(grade)}</h4>
         </div>
         <FormField
           control={form.control}
