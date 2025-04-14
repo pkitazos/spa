@@ -70,7 +70,9 @@ export const markerRouter = createTRPCRouter({
     )
     .output(
       z.object({
-        submission: markingSubmissionDtoSchema,
+        submission: markingSubmissionDtoSchema.extend({
+          grade: z.number().int(),
+        }),
         status: markingSubmissionStatusSchema,
       }),
     )

@@ -54,7 +54,7 @@ export class Marker extends User {
     return {
       unitOfAssessmentId,
       studentId,
-      grade: 0,
+      grade: -1,
       markerId: this.id,
       draft: true,
       marks: {},
