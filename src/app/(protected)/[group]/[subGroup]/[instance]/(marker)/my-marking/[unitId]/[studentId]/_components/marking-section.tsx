@@ -38,7 +38,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Control, useForm } from "react-hook-form";
 import { Grade, GRADES } from "@/config/grades";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { YesNoAction } from "@/components/yes-no-action";
@@ -130,6 +130,8 @@ export function MarkingSection({
 
     form.setValue("grade", grade, { shouldValidate: true });
   }, [form, markingCriteria]);
+
+  useEffect(computeOverallGrade, [computeOverallGrade]);
 
   return (
     <Form {...form}>
