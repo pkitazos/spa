@@ -38,7 +38,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Control, useForm } from "react-hook-form";
 import { Grade, GRADES } from "@/config/grades";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { YesNoAction } from "@/components/yes-no-action";
@@ -109,9 +109,15 @@ export function MarkingSection({
     );
   });
 
-  const [marks, grade] = form.watch(["marks", "grade"]);
+  const grade = form.watch("grade");
 
-  useEffect(() => {
+  function formatGrade(grade: number) {
+    if (grade !== -1) return Grade.toLetter(grade);
+    else return "-";
+  }
+
+  const computeOverallGrade = useCallback(() => {
+    const marks = form.getValues("marks");
     if (!markingCriteria.every((c) => marks[c.id].mark !== -1)) return;
 
     console.log("hello!");
@@ -123,12 +129,7 @@ export function MarkingSection({
     const grade = Grade.computeFromScores(scores);
 
     form.setValue("grade", grade, { shouldValidate: true });
-  }, [marks, form]);
-
-  function formatGrade(grade: number) {
-    if (grade !== -1) return Grade.toLetter(grade);
-    else return "-";
-  }
+  }, [form, markingCriteria]);
 
   return (
     <Form {...form}>
@@ -142,6 +143,7 @@ export function MarkingSection({
               key={criterion.id}
               criterion={criterion}
               control={form.control}
+              computeOverallGrade={computeOverallGrade}
             />
           ))}
         </div>
@@ -216,9 +218,11 @@ export function MarkingSection({
 function AssessmentCriterionField({
   criterion,
   control,
+  computeOverallGrade,
 }: {
   criterion: AssessmentCriterionDTO;
   control: Control<MarkingSubmissionDTO>;
+  computeOverallGrade: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const dropDownDefaultVal = "??";
@@ -271,6 +275,7 @@ function AssessmentCriterionField({
                                 onSelect={() => {
                                   field.onChange(grade.value);
                                   setOpen(false);
+                                  computeOverallGrade();
                                 }}
                               >
                                 <Check
