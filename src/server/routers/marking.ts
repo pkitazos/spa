@@ -7,8 +7,8 @@ import { Transformers as T } from "@/db/transformers";
 import { z } from "zod";
 import {
   MarkerStatusSummary,
-  MarkingOverviewRow,
-  markingOverviewRowSchema,
+  ProjectMarkingOverview,
+  projectMarkingOverviewSchema,
   type UnitMarkingSummary,
 } from "@/app/(protected)/[group]/[subGroup]/[instance]/(admin-panel)/(stage-specific)/(stage-9)/marking-overview/row";
 import { MarkingSubmissionDTO, UserDTO } from "@/dto";
@@ -16,7 +16,7 @@ import { MarkingSubmissionDTO, UserDTO } from "@/dto";
 export const markingRouter = createTRPCRouter({
   byProjectMarkingSummary: procedure.instance
     .inStage(subsequentStages(Stage.MARK_SUBMISSION))
-    .subGroupAdmin.output(z.array(markingOverviewRowSchema))
+    .subGroupAdmin.output(z.array(projectMarkingOverviewSchema))
     .query(async ({ ctx: { db, instance } }) => {
       const projectStudentDataRaw = await db.studentProjectAllocation
         .findMany({
@@ -133,7 +133,7 @@ export const markingRouter = createTRPCRouter({
         {} as Record<string, number>,
       );
 
-      const breakdowns: MarkingOverviewRow[] = projectStudentDataRaw.map(
+      const breakdowns: ProjectMarkingOverview[] = projectStudentDataRaw.map(
         ({ student, project, supervisor, reader }) => {
           const unitFinalMarksByUnit =
             unitFinalMarksByUnitByStudent[student.id] ?? {};
