@@ -38,9 +38,8 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Control, useForm } from "react-hook-form";
 import { Grade, GRADES } from "@/config/grades";
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { YesNoAction } from "@/components/yes-no-action";
 import { PAGES } from "@/config/pages";
 
@@ -153,43 +152,25 @@ export function MarkingSection({
           <h3>overall mark:</h3>
           <h4>{formatGrade(grade)}</h4>
         </div>
-        <FormField
-          control={form.control}
-          name="finalComment"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Summary</FormLabel>
-              <FormDescription>
-                A short summary of your evaluation or additional comments
-              </FormDescription>
-              <FormControl>
-                <Textarea {...field} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="recommendation"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-              {/* should only be visible on dissertation unit of assessment */}
-              <FormControl>
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                {/* TODO: should be flagged to admins */}
-                <FormLabel>
-                  Check the box to recommend this student's work as outstanding
-                  and prizeworthy
-                </FormLabel>
-              </div>
-            </FormItem>
-          )}
-        />
+        {markingCriteria.length > 1 ? (
+          <FormField
+            control={form.control}
+            name="finalComment"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Summary</FormLabel>
+                <FormDescription>
+                  A short summary of your evaluation or additional comments
+                </FormDescription>
+                <FormControl>
+                  <Textarea {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        ) : (
+          <Fragment />
+        )}
 
         <div className="mt-16 flex justify-end gap-8">
           <Button
