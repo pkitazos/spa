@@ -70,7 +70,7 @@ export const markerRouter = createTRPCRouter({
     )
     .output(
       z.object({
-        submission: markingSubmissionDtoSchema,
+        submission: partialMarkingSubmissionDtoSchema,
         status: markingSubmissionStatusSchema,
       }),
     )
@@ -142,7 +142,15 @@ export const markerRouter = createTRPCRouter({
           });
         }
 
+        const grade = Grade.computeFromScores(
+          components.map((c) => ({
+            weight: c.weight,
+            score: marks[c.id].mark,
+          })),
+        );
+
         await user.writeMarks({
+          grade,
           unitOfAssessmentId,
           studentId,
           marks,
@@ -152,13 +160,6 @@ export const markerRouter = createTRPCRouter({
         });
 
         if (allowedMarkerTypes.length === 1) {
-          const grade = Grade.computeFromScores(
-            components.map((c) => ({
-              weight: c.weight,
-              score: marks[c.id].mark,
-            })),
-          );
-
           await user.writeFinalMark({
             studentId,
             grade,
@@ -312,6 +313,7 @@ export const markerRouter = createTRPCRouter({
         }
 
         await user.writeMarks({
+          grade: -1,
           unitOfAssessmentId,
           studentId,
           marks,

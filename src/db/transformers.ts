@@ -5,6 +5,7 @@ import {
   CriterionScoreDTO,
   MarkingSubmissionDTO,
   UnitOfAssessmentDTO,
+  UserDTO,
 } from "@/dto";
 import {
   DB_Algorithm,
@@ -43,12 +44,25 @@ import {
 } from "@/dto";
 
 export class Transformers {
+  static toUserDTO({
+    id,
+    name,
+    email,
+  }: {
+    id: string;
+    name: string;
+    email: string;
+  }): UserDTO {
+    return { id, name, email };
+  }
+
   public static toMarkingSubmissionDTO(
     data: DB_MarkingSubmission & { criterionScores?: DB_CriterionScore[] },
   ): MarkingSubmissionDTO {
     return {
       markerId: data.markerId,
       studentId: data.studentId,
+      grade: data.grade,
       unitOfAssessmentId: data.unitOfAssessmentId,
       marks: (data.criterionScores ?? []).reduce(
         (acc, val) => ({

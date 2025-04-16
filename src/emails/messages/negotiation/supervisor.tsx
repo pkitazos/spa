@@ -115,6 +115,7 @@ SupervisorNegotiate1.PreviewProps = {
   supervisorMarking: {
     overallGrade: 22,
     submission: {
+      grade: 12,
       unitOfAssessmentId: "6615b424-1e9d-41a1-892a-97369210c7fe",
       studentId: "2558994P",
       markerId: "ba34n",
@@ -183,6 +184,7 @@ SupervisorNegotiate1.PreviewProps = {
   readerMarking: {
     overallGrade: 19,
     submission: {
+      grade: 12,
       unitOfAssessmentId: "6615b424-1e9d-41a1-892a-97369210c7fe",
       studentId: "2558994P",
       markerId: "ba34n",

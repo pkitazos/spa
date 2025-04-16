@@ -43,6 +43,7 @@ model AssessmentCriterion {
 
 model MarkingSubmission {
   summary             String
+  grade               Int
   recommendedForPrize Boolean          @default(false) @map("recommended_for_prize")
   draft               Boolean
   markerId            String           @map("marker_id")

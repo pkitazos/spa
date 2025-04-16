@@ -18,7 +18,7 @@ export default async function Page({ params }: { params: PageParams }) {
       {/* copy emails section based on filter */}
       <GradesTable
         data={data.map((x) => {
-          const { status, grade } = Grade.autoResolve(
+          const autoResolveResult = Grade.autoResolve(
             x.supervisorGrade,
             x.readerGrade,
           );
@@ -30,8 +30,11 @@ export default async function Page({ params }: { params: PageParams }) {
             supervisorGrade: x.supervisorGrade,
             reader: x.reader,
             readerGrade: x.readerGrade,
-            computedOverall: grade,
-            status,
+            computedOverall:
+              autoResolveResult.status === "AUTO_RESOLVED"
+                ? autoResolveResult.grade
+                : "",
+            status: autoResolveResult.status,
             action: "action",
           };
         })}
