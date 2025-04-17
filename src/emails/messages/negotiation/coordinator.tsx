@@ -8,22 +8,22 @@ interface Props {
   student: StudentDTO;
 }
 
-export function CoordinatorModeration({ project, reader, student }: Props) {
+export function CoordinatorNegotiation({ project, reader, student }: Props) {
   return (
-    <Layout previewText="Moderation required">
+    <Layout previewText="Negotiation required">
       <Text>
         The grades submitted by you and the reader for the project "
         <i>{project.title}</i>" (student {student.name}, {student.id}){" "}
         <strong>cannot be resolved automatically</strong> and require
-        moderation.
+        <strong>negotiation</strong>.
       </Text>
-
+      <Text>No action required at this time.</Text>
       <Text>You are being contacted about this as the coordinator.</Text>
     </Layout>
   );
 }
 
-CoordinatorModeration.PreviewProps = {
+CoordinatorNegotiation.PreviewProps = {
   project: {
     id: "",
     title: "Testing Programmatic Emails",
@@ -54,4 +54,4 @@ CoordinatorModeration.PreviewProps = {
   },
 } satisfies Props;
 
-export default CoordinatorModeration;
+export default CoordinatorNegotiation;

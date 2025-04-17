@@ -72,7 +72,10 @@ export class Grade {
     return grade[0];
   }
 
-  public static haveBandDifference(grade1: string, grade2: string): boolean {
+  public static haveMajorBandDifference(
+    grade1: string,
+    grade2: string,
+  ): boolean {
     return this.getBand(grade1) === this.getBand(grade2);
   }
 
@@ -104,7 +107,7 @@ export class Grade {
 
   public static checkExtremes(grade: string) {
     if (grade === "A1" || this.isFailing(grade)) {
-      return { status: GradingResult.NEGOTIATE2 } as const;
+      return { status: GradingResult.MODERATE } as const;
     } else {
       return { status: GradingResult.AUTO_RESOLVED, grade } as const;
     }
@@ -123,7 +126,10 @@ export class Grade {
       return this.checkExtremes(supervisorGrade);
     }
 
-    if (diff === 2 && !Grade.haveBandDifference(supervisorGrade, readerGrade)) {
+    if (
+      diff === 2 &&
+      !Grade.haveMajorBandDifference(supervisorGrade, readerGrade)
+    ) {
       return this.checkExtremes(Grade.average(supervisorGrade, readerGrade));
     }
 

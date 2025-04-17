@@ -14,6 +14,7 @@ import ReaderNegotiate1 from "./messages/negotiation/reader";
 import CoordinatorModeration from "./messages/moderation/coordinator";
 import { InstanceParams } from "@/lib/validations/params";
 import MarkingComplete from "./messages/marking-complete";
+import CoordinatorNegotiation from "./messages/negotiation/coordinator";
 
 export type SendMail = ({
   message,
@@ -58,7 +59,7 @@ export class Mailer {
     ]);
   }
 
-  public async notifyNegotiate1(
+  public async notifyNegotiate(
     supervisor: SupervisorDTO,
     reader: ReaderDTO,
     project: ProjectDTO,
@@ -93,8 +94,6 @@ export class Mailer {
         subject,
         to: [supervisor.email],
       }),
-    ]);
-    await Promise.all([
       this.sendMail({
         message: (
           <ReaderNegotiate1
@@ -109,10 +108,21 @@ export class Mailer {
         subject,
         to: [reader.email],
       }),
+      this.sendMail({
+        message: (
+          <CoordinatorNegotiation
+            project={project}
+            reader={reader}
+            student={student}
+          />
+        ),
+        subject,
+        to: ["Paul.Harvey@glasgow.ac.uk"],
+      }),
     ]);
   }
 
-  public async notifyNegotiate2(
+  public async notifyModeration(
     supervisor: SupervisorDTO,
     reader: ReaderDTO,
     project: ProjectDTO,

@@ -236,7 +236,10 @@ export const markerRouter = createTRPCRouter({
           return;
         }
 
-        if (resolution.status === "NEGOTIATE1") {
+        if (
+          resolution.status === "NEGOTIATE1" ||
+          resolution.status === "NEGOTIATE2"
+        ) {
           // goes to negotiation - write nothing to db but do email markers
           const readerMarking = {
             submission: submissionByMarker[reader.id],
@@ -249,7 +252,7 @@ export const markerRouter = createTRPCRouter({
             overallGrade: submissionByMarker[supervisor.id].grade,
           };
 
-          await mailer.notifyNegotiate1(
+          await mailer.notifyNegotiate(
             supervisor,
             reader,
             project,
@@ -261,8 +264,8 @@ export const markerRouter = createTRPCRouter({
           );
           return;
         }
-        if (resolution.status === "NEGOTIATE2") {
-          await mailer.notifyNegotiate2(supervisor, reader, project, student);
+        if (resolution.status === "MODERATE") {
+          await mailer.notifyModeration(supervisor, reader, project, student);
           return;
         }
       },

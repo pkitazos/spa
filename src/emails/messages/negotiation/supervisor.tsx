@@ -40,7 +40,7 @@ export function SupervisorNegotiate1({
   params,
 }: Props) {
   return (
-    <Layout previewText="Negotiation1 required">
+    <Layout previewText="Negotiation required">
       <Heading as="h2">{unit.title} Negotiation Required</Heading>
       <Text>
         The grades submitted by the supervisor and reader for the project "
