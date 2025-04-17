@@ -5,7 +5,10 @@ import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { v4 as uuid } from "uuid";
 import { testers } from "@/config/testing-whitelist";
 
-faker.seed(123);
+faker.seed(321);
+
+const NUM_FAKES = 50;
+
 const group = "socs";
 const subGroup = "lvl-4-and-lvl-5-honours";
 const oldInstance = "2024-2025";
@@ -19,10 +22,20 @@ const newParams = { group, subGroup, instance: newInstance };
 const db = new PrismaClient();
 
 async function main() {
-  const flagid = await createTestInstance();
-  if (!flagid) throw new Error("flagundeinfed");
-  await setupUsers();
-  await createFakeProjects(flagid);
+  // const flagid = await createTestInstance();
+  // if (!flagid) throw new Error("flagundeinfed");
+  // await setupUsers();
+  // await createFakeProjects(flagid);
+  const flag = await db.flag.findUniqueOrThrow({
+    where: {
+      title_allocationGroupId_allocationSubGroupId_allocationInstanceId: {
+        ...expand(newParams),
+        title: "Level 4",
+      },
+    },
+    select: { id: true },
+  });
+  await additionalFakeProjects(flag.id);
 }
 
 async function createTestInstance() {
@@ -147,71 +160,164 @@ async function setupUsers() {
 }
 
 async function createFakeProjects(l4FlagId: string) {
-  const fakeStudents = testers.map((t) => {
-    const firstName = faker.person.firstName();
-    const lastName = faker.person.lastName();
-    const guid = `${faker.string.numeric({ length: 7 })}${lastName[0]}`;
-    return {
-      name: `${firstName} ${lastName}`,
-      email: `${guid}@student.gla.ac.uk`,
-      id: guid,
-    };
-  });
+  await db.$transaction(async (db) => {
+    const fakeStudents = testers.map((t) => {
+      const firstName = faker.person.firstName();
+      const lastName = faker.person.lastName();
+      const guid = `${faker.string.numeric({ length: 7 })}${lastName[0]}`;
+      return {
+        name: `${firstName} ${lastName}`,
+        email: `${guid}@student.gla.ac.uk`,
+        id: guid,
+      };
+    });
 
-  const fakeProjects = testers.map((t) => ({
-    ...expand(newParams),
-    capacityLowerBound: 1,
-    capacityUpperBound: 1,
-    supervisorId: t.guid,
-    title: faker.git.commitMessage(),
-    description: faker.lorem.sentences(2),
-    id: uuid(),
-  }));
-
-  await db.user.createMany({ data: fakeStudents });
-  await db.userInInstance.createMany({
-    data: fakeStudents.map((e) => ({
+    const fakeProjects = testers.map((t) => ({
       ...expand(newParams),
-      joined: true,
-      userId: e.id,
-    })),
+      capacityLowerBound: 1,
+      capacityUpperBound: 1,
+      supervisorId: t.guid,
+      title: faker.git.commitMessage(),
+      description: faker.lorem.sentences(2),
+      id: uuid(),
+    }));
+
+    await db.user.createMany({ data: fakeStudents });
+    await db.userInInstance.createMany({
+      data: fakeStudents.map((e) => ({
+        ...expand(newParams),
+        joined: true,
+        userId: e.id,
+      })),
+    });
+
+    await db.studentDetails.createMany({
+      data: fakeStudents.map((t) => ({
+        ...expand(newParams),
+        studentLevel: 4,
+        latestSubmissionDateTime: new Date(),
+        userId: t.id,
+      })),
+    });
+
+    await db.flagOnStudent.createMany({
+      data: fakeStudents.map((t) => ({
+        ...expand(newParams),
+        studentId: t.id,
+        flagId: l4FlagId,
+      })),
+    });
+
+    await db.project.createMany({ data: fakeProjects });
+
+    await db.studentProjectAllocation.createMany({
+      data: fakeStudents.map((t, i) => ({
+        ...expand(newParams),
+        studentRanking: 1,
+        projectId: fakeProjects[i].id,
+        userId: t.id,
+      })),
+    });
+
+    await db.readerProjectAllocation.createMany({
+      data: testers.map((t, i) => ({
+        ...expand(newParams),
+        projectId: fakeProjects[(i + 1) % fakeProjects.length].id,
+        readerId: t.guid,
+        studentId: fakeStudents[(i + 1) % fakeProjects.length].id,
+      })),
+    });
   });
+}
 
-  await db.studentDetails.createMany({
-    data: fakeStudents.map((t) => ({
-      ...expand(newParams),
-      studentLevel: 4,
-      latestSubmissionDateTime: new Date(),
-      userId: t.id,
-    })),
-  });
+async function additionalFakeProjects(l4FlagId: string) {
+  await db.$transaction(async (db) => {
+    const fakeStudents = testers.map((t) => {
+      return Array(NUM_FAKES)
+        .fill(0)
+        .map(() => {
+          const firstName = faker.person.firstName();
+          const lastName = faker.person.lastName();
+          const guid = `test-${lastName}-${faker.string.alphanumeric(10)}`;
+          return {
+            name: `${firstName} ${lastName}`,
+            email: `${guid}@student.gla.ac.uk`,
+            id: guid,
+          };
+        });
+    });
 
-  await db.flagOnStudent.createMany({
-    data: fakeStudents.map((t) => ({
-      ...expand(newParams),
-      studentId: t.id,
-      flagId: l4FlagId,
-    })),
-  });
+    const fakeProjects = testers.map((t) => {
+      return Array(NUM_FAKES)
+        .fill(0)
+        .map(() => ({
+          ...expand(newParams),
+          capacityLowerBound: 1,
+          capacityUpperBound: 1,
+          supervisorId: t.guid,
+          title: faker.git.commitMessage(),
+          description: faker.lorem.sentences(2),
+          id: uuid(),
+        }));
+    });
 
-  await db.project.createMany({ data: fakeProjects });
+    await db.user.createMany({ data: fakeStudents.flat() });
+    await db.userInInstance.createMany({
+      data: fakeStudents
+        .flat()
+        .map((e) => ({ ...expand(newParams), joined: true, userId: e.id })),
+    });
 
-  await db.studentProjectAllocation.createMany({
-    data: fakeStudents.map((t, i) => ({
-      ...expand(newParams),
-      studentRanking: 1,
-      projectId: fakeProjects[i].id,
-      userId: t.id,
-    })),
-  });
+    await db.studentDetails.createMany({
+      data: fakeStudents
+        .flat()
+        .map((t) => ({
+          ...expand(newParams),
+          studentLevel: 4,
+          latestSubmissionDateTime: new Date(),
+          userId: t.id,
+        })),
+    });
 
-  await db.readerProjectAllocation.createMany({
-    data: testers.map((t, i) => ({
-      ...expand(newParams),
-      projectId: fakeProjects[(i + 1) % fakeProjects.length].id,
-      readerId: t.guid,
-      studentId: fakeStudents[(i + 1) % fakeProjects.length].id,
-    })),
+    await db.flagOnStudent.createMany({
+      data: fakeStudents
+        .flat()
+        .map((t) => ({
+          ...expand(newParams),
+          studentId: t.id,
+          flagId: l4FlagId,
+        })),
+    });
+
+    await db.project.createMany({ data: fakeProjects.flat() });
+
+    await db.studentProjectAllocation.createMany({
+      data: fakeStudents
+        .flat()
+        .map((t, i) => ({
+          ...expand(newParams),
+          studentRanking: 1,
+          projectId: fakeProjects.flat()[i].id,
+          userId: t.id,
+        })),
+    });
+
+    await db.readerProjectAllocation.createMany({
+      data: testers
+        .map((t, i) => {
+          const proj = fakeProjects[(i + 1) % fakeProjects.length];
+          const studs = fakeStudents[(i + 1) % fakeProjects.length];
+          return proj.map((e, i) => {
+            return {
+              ...expand(newParams),
+              projectId: e.id,
+              readerId: t.guid,
+              studentId: studs[i].id,
+            };
+          });
+        })
+        .flat(),
+    });
   });
 }
 
