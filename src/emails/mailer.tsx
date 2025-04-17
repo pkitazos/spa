@@ -132,8 +132,6 @@ export class Mailer {
         subject,
         to: [supervisor.email],
       }),
-    ]);
-    await Promise.all([
       this.sendMail({
         message: (
           <ReaderNegotiate2
@@ -144,6 +142,17 @@ export class Mailer {
         ),
         subject,
         to: [reader.email],
+      }),
+      this.sendMail({
+        message: (
+          <ReaderNegotiate2
+            project={project}
+            supervisor={supervisor}
+            student={student}
+          />
+        ),
+        subject,
+        to: ["Paul.Harvey@glasgow.ac.uk"],
       }),
     ]);
   }

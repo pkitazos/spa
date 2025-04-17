@@ -189,32 +189,11 @@ export const markerRouter = createTRPCRouter({
         });
 
         const submissionByMarker = data.reduce(
-          (acc, val) => {
-            const scoreMap = val.criterionScores.reduce(
-              (acc, val) => ({
-                ...acc,
-                [val.assessmentCriterionId]: val.grade,
-              }),
-              {} as Record<string, number>,
-            );
-
-            return {
-              ...acc,
-              [val.markerId]: {
-                submission: T.toMarkingSubmissionDTO(val),
-                grade: Grade.computeFromScores(
-                  components.map((c) => ({
-                    weight: c.weight,
-                    score: scoreMap[c.id],
-                  })),
-                ),
-              },
-            };
-          },
-          {} as Record<
-            string,
-            { submission: MarkingSubmissionDTO; grade: number }
-          >,
+          (acc, val) => ({
+            ...acc,
+            [val.markerId]: T.toMarkingSubmissionDTO(val),
+          }),
+          {} as Record<string, MarkingSubmissionDTO>,
         );
 
         const studentDO = new Student(db, studentId, params);
@@ -257,15 +236,15 @@ export const markerRouter = createTRPCRouter({
           return;
         }
 
-        // goes to negotiation - write nothing to db but do email markers
         if (resolution.status === "NEGOTIATE1") {
+          // goes to negotiation - write nothing to db but do email markers
           const readerMarking = {
-            submission: submissionByMarker[reader.id].submission,
+            submission: submissionByMarker[reader.id],
             criteria: components,
             overallGrade: submissionByMarker[reader.id].grade,
           };
           const supervisorMarking = {
-            submission: submissionByMarker[supervisor.id].submission,
+            submission: submissionByMarker[supervisor.id],
             criteria: components,
             overallGrade: submissionByMarker[supervisor.id].grade,
           };
@@ -280,9 +259,11 @@ export const markerRouter = createTRPCRouter({
             unit,
             params,
           );
+          return;
         }
         if (resolution.status === "NEGOTIATE2") {
           await mailer.notifyNegotiate2(supervisor, reader, project, student);
+          return;
         }
       },
     ),
