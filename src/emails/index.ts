@@ -7,9 +7,11 @@ const transporter = nodemailer.createTransport(
   {
     host: env.MAIL_HOST,
     port: env.MAIL_PORT,
-    auth: { user: env.MAIL_USER, pass: env.MAIL_PASSWORD },
+    auth: env.MAIL_PASSWORD
+      ? { user: env.MAIL_USER, pass: env.MAIL_PASSWORD }
+      : undefined,
   },
-  { from: env.MAIL_USER },
+  { from: { address: env.MAIL_USER, name: "SPA Support" } },
 );
 
 export async function sendMail({

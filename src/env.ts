@@ -15,7 +15,7 @@ export const env = createEnv({
     MAIL_HOST: z.string(),
     MAIL_PORT: z.coerce.number(),
     MAIL_USER: z.string(),
-    MAIL_PASSWORD: z.string(),
+    MAIL_PASSWORD: z.string().optional(),
   },
   runtimeEnv: process.env,
 });
