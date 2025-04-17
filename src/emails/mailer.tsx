@@ -11,8 +11,7 @@ import {
 } from "@/dto";
 import SupervisorNegotiate1 from "./messages/negotiation/supervisor";
 import ReaderNegotiate1 from "./messages/negotiation/reader";
-import SupervisorNegotiate2 from "./messages/moderation/supervisor";
-import ReaderNegotiate2 from "./messages/moderation/reader";
+import CoordinatorModeration from "./messages/moderation/coordinator";
 import { InstanceParams } from "@/lib/validations/params";
 import MarkingComplete from "./messages/marking-complete";
 
@@ -123,31 +122,9 @@ export class Mailer {
     await Promise.all([
       this.sendMail({
         message: (
-          <SupervisorNegotiate2
+          <CoordinatorModeration
             project={project}
             reader={reader}
-            student={student}
-          />
-        ),
-        subject,
-        to: [supervisor.email],
-      }),
-      this.sendMail({
-        message: (
-          <ReaderNegotiate2
-            project={project}
-            supervisor={supervisor}
-            student={student}
-          />
-        ),
-        subject,
-        to: [reader.email],
-      }),
-      this.sendMail({
-        message: (
-          <ReaderNegotiate2
-            project={project}
-            supervisor={supervisor}
             student={student}
           />
         ),

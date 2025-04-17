@@ -1,34 +1,29 @@
-import { ProjectDTO, StudentDTO, SupervisorDTO } from "@/dto";
+import { ProjectDTO, ReaderDTO, StudentDTO } from "@/dto";
 import { Text } from "@react-email/components";
 import { Layout } from "../../components/layout";
 
 interface Props {
   project: ProjectDTO;
-  supervisor: SupervisorDTO;
+  reader: ReaderDTO;
   student: StudentDTO;
 }
 
-export function ReaderNegotiate2({ project, supervisor, student }: Props) {
+export function CoordinatorModeration({ project, reader, student }: Props) {
   return (
     <Layout previewText="Negotiation2 required">
       <Text>
-        The grades submitted by you and the supervisor for the project "
+        The grades submitted by you and the reader for the project "
         <i>{project.title}</i>" (student {student.name}, {student.id}){" "}
-        <strong>cannot be resolved automatically</strong>.
+        <strong>cannot be resolved automatically</strong> and require
+        moderation.
       </Text>
-      <Text>
-        Please contact <strong>{supervisor.name}</strong> ({supervisor.email})
-        and resolve the difference manually.
-      </Text>
-      <Text>
-        Once a resolution is decided on, the supervisor should submit it through
-        the resolution portal.
-      </Text>
+
+      <Text>You are being contacted about this as the coordinator.</Text>
     </Layout>
   );
 }
 
-ReaderNegotiate2.PreviewProps = {
+CoordinatorModeration.PreviewProps = {
   project: {
     id: "",
     title: "Testing Programmatic Emails",
@@ -40,10 +35,10 @@ ReaderNegotiate2.PreviewProps = {
     flags: [],
     tags: [],
   },
-  supervisor: {
+  reader: {
     id: "",
-    email: "emily.smith@uni.ac.uk",
-    name: "Emily Smith",
+    email: "sam.blankman@uni.ac.uk",
+    name: "Sam Blankman",
     joined: false,
     allocationTarget: 0,
     allocationLowerBound: 0,
@@ -59,4 +54,4 @@ ReaderNegotiate2.PreviewProps = {
   },
 } satisfies Props;
 
-export default ReaderNegotiate2;
+export default CoordinatorModeration;
