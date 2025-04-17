@@ -29,7 +29,7 @@ export async function executeMatchingAlgorithm(
   }
 
   const result = await axios
-    .post(`${env.SERVER_URL}/${endpoint}`, matchingData)
+    .post(`${env.MATCHING_SERVER_URL}/${endpoint}`, matchingData)
     .then((res) => matchingServiceResponseSchema.safeParse(res.data));
 
   if (!result.success) {

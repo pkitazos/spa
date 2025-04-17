@@ -37,7 +37,7 @@ export function Layout({
                   <Img
                     width={150}
                     height={50}
-                    src={`${env.SERVER_URL}/uofg.png`}
+                    src={`${env.FRONTEND_SERVER_URL}/uofg.png`}
                     alt="u-of-g logo"
                   />
                 </Column>

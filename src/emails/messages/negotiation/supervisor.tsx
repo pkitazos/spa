@@ -65,7 +65,7 @@ export function SupervisorNegotiate1({
       <Section className="mb-[32px] mt-[32px] text-center">
         <Button
           className="rounded bg-[#000000] px-5 py-3 text-center text-[12px] font-semibold text-white no-underline"
-          href={`${env.SERVER_URL}/${params.group}/${params.subGroup}/${params.instance}/my-marking/${unit.id}/${student.id}/resolve`}
+          href={`${env.FRONTEND_SERVER_URL}/${params.group}/${params.subGroup}/${params.instance}/my-marking/${unit.id}/${student.id}/resolve`}
         >
           Submit Resolution
         </Button>
