@@ -9,6 +9,8 @@ import {
 import { Heading, Hr, Text } from "@react-email/components";
 import { Layout } from "../../components/layout";
 import { Marksheet } from "@/emails/components/marksheet";
+import { addWeeks } from "date-fns";
+import { format } from "@/lib/utils/date/format";
 
 interface Props {
   project: ProjectDTO;
@@ -25,6 +27,7 @@ interface Props {
     overallGrade: number;
   };
   unit: UnitOfAssessmentDTO;
+  deadline: Date;
 }
 
 export function ReaderNegotiate1({
@@ -34,6 +37,7 @@ export function ReaderNegotiate1({
   supervisorMarking,
   readerMarking,
   unit,
+  deadline,
 }: Props) {
   return (
     <Layout previewText="Negotiation required">
@@ -44,22 +48,24 @@ export function ReaderNegotiate1({
         <strong>require negotiation</strong> between supervisor and reader.
       </Text>
       <Text>
+        <strong>Deadline:</strong> {format(deadline)}
+      </Text>
+      <Text>
         Please contact the supervisor <strong>{supervisor.name}</strong> (
         {supervisor.email}) and resolve the difference manually offline.
       </Text>
       <Text>
-        Once a resolution reached, <strong>the supervisor</strong> must use the
-        link they received in their email to upload the resolution to SPA.
+        Once a resolution is reached, <strong>the supervisor</strong> must use
+        the link they received in their email regarding this project to upload
+        the resolution to SPA.
       </Text>
       <Text>
-        If a resolution can not be found, please contact the project coordinator
-        via email (Level 4: Paul.Harvey@glasgow.ac.uk Level 5:
+        If a resolution cannot be found, please contact the project coordinator
+        via email (Level 4: Paul.Harvey@glasgow.ac.uk; Level 5:
         Yiannis.Giannakopoulos@glasgow.ac.uk).
       </Text>
 
-      <Text>
-        A Breakdown of the marks provided by each of you is provided below:
-      </Text>
+      <Text>A breakdown of the supervisor/reader marks is provided below:</Text>
 
       <Hr />
       <Heading as="h3">Supervisor Marks:</Heading>
@@ -249,6 +255,7 @@ ReaderNegotiate1.PreviewProps = {
     flag: { id: "", title: "", description: "" },
     allowedMarkerTypes: [],
   },
+  deadline: addWeeks(new Date(), 1),
 } satisfies Props;
 
 export default ReaderNegotiate1;

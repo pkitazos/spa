@@ -1,24 +1,86 @@
-import { ProjectDTO, ReaderDTO, StudentDTO } from "@/dto";
-import { Text } from "@react-email/components";
+import {
+  ProjectDTO,
+  ReaderDTO,
+  StudentDTO,
+  SupervisorDTO,
+  UnitOfAssessmentDTO,
+} from "@/dto";
+import { Column, Heading, Row, Section } from "@react-email/components";
 import { Layout } from "../../components/layout";
+import { format } from "@/lib/utils/date/format";
+import { addWeeks } from "date-fns";
 
 interface Props {
   project: ProjectDTO;
   reader: ReaderDTO;
   student: StudentDTO;
+  unit: UnitOfAssessmentDTO;
+  supervisor: SupervisorDTO;
+  supervisorGrade: string;
+  readerGrade: string;
+  deadline: Date;
 }
 
-export function CoordinatorModeration({ project, reader, student }: Props) {
+export function CoordinatorModeration({
+  project,
+  reader,
+  student,
+  unit,
+  supervisor,
+  supervisorGrade,
+  readerGrade,
+  deadline,
+}: Props) {
   return (
     <Layout previewText="Moderation required">
-      <Text>
-        The grades submitted by you and the reader for the project "
-        <i>{project.title}</i>" (student {student.name}, {student.id}){" "}
-        <strong>cannot be resolved automatically</strong> and require
-        moderation.
-      </Text>
+      <Section>
+        <Heading as="h2">Moderation Required</Heading>
+        <Row>
+          <Column>Student: </Column>
+          <Column className="text-right">
+            {student.name} ({student.id})
+          </Column>
+        </Row>
 
-      <Text>You are being contacted about this as the coordinator.</Text>
+        <Row>
+          <Column>Project: </Column>
+          <Column className="text-right">{project.title}</Column>
+        </Row>
+
+        <Row>
+          <Column>Assessment Unit: </Column>
+          <Column className="text-right">{unit.title}</Column>
+        </Row>
+
+        <Row>
+          <Column>Supervisor: </Column>
+          <Column className="text-right">
+            {supervisor.name} ({supervisor.email})
+          </Column>
+        </Row>
+
+        <Row>
+          <Column>Reader: </Column>
+          <Column className="text-right">
+            {reader.name} ({reader.email})
+          </Column>
+        </Row>
+
+        <Row>
+          <Column>Supervisor Grade: </Column>
+          <Column className="text-right">{supervisorGrade}</Column>
+        </Row>
+
+        <Row>
+          <Column>Reader Grade: </Column>
+          <Column className="text-right">{readerGrade}</Column>
+        </Row>
+
+        <Row>
+          <Column>Deadline for Moderation: </Column>
+          <Column className="text-right">{format(deadline)}</Column>
+        </Row>
+      </Section>
     </Layout>
   );
 }
@@ -52,6 +114,29 @@ CoordinatorModeration.PreviewProps = {
     flags: [],
     level: 0,
   },
+  unit: {
+    id: "9ee86629-4e6c-4572-bea5-2c2dc695e6d4",
+    title: "Dissertation",
+    studentSubmissionDeadline: new Date(),
+    markerSubmissionDeadline: new Date(),
+    weight: 0,
+    isOpen: false,
+    components: [],
+    flag: { id: "", title: "", description: "" },
+    allowedMarkerTypes: [],
+  },
+  supervisor: {
+    id: "",
+    email: "emily.smith@uni.ac.uk",
+    name: "Emily Smith",
+    joined: false,
+    allocationTarget: 0,
+    allocationLowerBound: 0,
+    allocationUpperBound: 0,
+  },
+  supervisorGrade: "A1",
+  readerGrade: "H",
+  deadline: addWeeks(new Date(), 1),
 } satisfies Props;
 
 export default CoordinatorModeration;

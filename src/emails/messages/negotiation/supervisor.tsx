@@ -11,6 +11,8 @@ import { Layout } from "../../components/layout";
 import { env } from "@/env";
 import { Marksheet } from "@/emails/components/marksheet";
 import { InstanceParams } from "@/lib/validations/params";
+import { format } from "@/lib/utils/date/format";
+import { addWeeks } from "date-fns";
 
 interface Props {
   project: ProjectDTO;
@@ -28,6 +30,7 @@ interface Props {
     overallGrade: number;
   };
   params: InstanceParams;
+  deadline: Date;
 }
 
 export function SupervisorNegotiate1({
@@ -38,7 +41,10 @@ export function SupervisorNegotiate1({
   supervisorMarking,
   readerMarking,
   params,
+  deadline,
 }: Props) {
+  const resolutionURL = `${env.FRONTEND_SERVER_URL}/${params.group}/${params.subGroup}/${params.instance}/my-marking/${unit.id}/${student.id}/resolve`;
+
   return (
     <Layout previewText="Negotiation required">
       <Heading as="h2">{unit.title} Negotiation Required</Heading>
@@ -48,6 +54,9 @@ export function SupervisorNegotiate1({
         <strong>require negotiation</strong> between supervisor and reader.
       </Text>
       <Text>
+        <strong>Deadline:</strong> {format(deadline)}
+      </Text>
+      <Text>
         Please contact the reader <strong>{reader.name}</strong> ({reader.email}
         ) and resolve the difference manually offline. Once you have done this:
       </Text>
@@ -55,24 +64,22 @@ export function SupervisorNegotiate1({
         1. If you are able to negotiate a new grade,{" "}
         <strong>the supervisor</strong> should submit this using the link below.
       </Text>
-      <Text>
-        2. In the case where you cannot agree on a grade, please contact the
-        project coordinator via email (Level 4: Paul.Harvey@glasgow.ac.uk Level
-        5: Yiannis.Giannakopoulos@glasgow.ac.uk), who will arrange for
-        moderation.
-      </Text>
-
+      2. In the case where you cannot agree on a grade, please contact the
+      project coordinator via email (Level 4: Paul.Harvey@glasgow.ac.uk Level 5:
+      Yiannis.Giannakopoulos@glasgow.ac.uk), who will arrange for moderation.
       <Section className="mb-[32px] mt-[32px] text-center">
         <Button
           className="rounded bg-[#000000] px-5 py-3 text-center text-[12px] font-semibold text-white no-underline"
-          href={`${env.FRONTEND_SERVER_URL}/${params.group}/${params.subGroup}/${params.instance}/my-marking/${unit.id}/${student.id}/resolve`}
+          href={resolutionURL}
         >
           Submit Resolution
         </Button>
       </Section>
-
+      <Text>
+        If the link above does not work, paste this link into your browser:
+      </Text>
+      <Text>{resolutionURL}</Text>
       <Text>A breakdown of the supervisor/reader marks is provided below:</Text>
-
       <Hr />
       <Heading as="h3">Supervisor Marks:</Heading>
       <Marksheet markingData={supervisorMarking} />
@@ -266,6 +273,7 @@ SupervisorNegotiate1.PreviewProps = {
     subGroup: "lvl-4-and-lvl-5-honours",
     instance: "2024-2025",
   },
+  deadline: addWeeks(new Date(), 1),
 } satisfies Props;
 
 export default SupervisorNegotiate1;
