@@ -9,6 +9,7 @@ import { Column, Heading, Row, Section } from "@react-email/components";
 import { Layout } from "../../components/layout";
 import { format } from "@/lib/utils/date/format";
 import { addWeeks } from "date-fns";
+import { Grade } from "@/config/grades";
 
 interface Props {
   project: ProjectDTO;
@@ -16,8 +17,8 @@ interface Props {
   student: StudentDTO;
   unit: UnitOfAssessmentDTO;
   supervisor: SupervisorDTO;
-  supervisorGrade: string;
-  readerGrade: string;
+  supervisorGrade: number;
+  readerGrade: number;
   deadline: Date;
 }
 
@@ -68,12 +69,14 @@ export function CoordinatorModeration({
 
         <Row>
           <Column>Supervisor Grade: </Column>
-          <Column className="text-right">{supervisorGrade}</Column>
+          <Column className="text-right">
+            {Grade.toLetter(supervisorGrade)}
+          </Column>
         </Row>
 
         <Row>
           <Column>Reader Grade: </Column>
-          <Column className="text-right">{readerGrade}</Column>
+          <Column className="text-right">{Grade.toLetter(readerGrade)}</Column>
         </Row>
 
         <Row>
@@ -134,8 +137,8 @@ CoordinatorModeration.PreviewProps = {
     allocationLowerBound: 0,
     allocationUpperBound: 0,
   },
-  supervisorGrade: "A1",
-  readerGrade: "H",
+  supervisorGrade: 22,
+  readerGrade: 0,
   deadline: addWeeks(new Date(), 1),
 } satisfies Props;
 

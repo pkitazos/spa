@@ -105,15 +105,22 @@ export const markerRouter = createTRPCRouter({
     .output(z.void())
     .mutation(
       async ({
-        ctx: { user },
+        ctx: { user, mailer },
         input: { studentId, unitOfAssessmentId, grade, comment },
-      }) =>
-        await user.writeFinalMark({
-          studentId,
-          unitOfAssessmentId,
-          grade,
-          comment,
-        }),
+      }) => {
+        const res = Grade.checkExtremes(Grade.toLetter(grade));
+        if (res.status === "AUTO_RESOLVED") {
+          await user.writeFinalMark({
+            studentId,
+            unitOfAssessmentId,
+            grade,
+            comment,
+          });
+        } else {
+          // should notify coordinator e.g.:
+          // mailer.notifyModeration();
+        }
+      },
     ),
 
   submitMarks: procedure.instance
@@ -265,7 +272,15 @@ export const markerRouter = createTRPCRouter({
           return;
         }
         if (resolution.status === "MODERATE") {
-          await mailer.notifyModeration(supervisor, reader, project, student);
+          await mailer.notifyModeration(
+            supervisor,
+            reader,
+            project,
+            student,
+            unit,
+            submissionByMarker[supervisor.id].grade,
+            submissionByMarker[reader.id].grade,
+          );
           return;
         }
       },

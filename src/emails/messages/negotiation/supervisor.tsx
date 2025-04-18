@@ -64,9 +64,12 @@ export function SupervisorNegotiate1({
         1. If you are able to negotiate a new grade,{" "}
         <strong>the supervisor</strong> should submit this using the link below.
       </Text>
-      2. In the case where you cannot agree on a grade, please contact the
-      project coordinator via email (Level 4: Paul.Harvey@glasgow.ac.uk Level 5:
-      Yiannis.Giannakopoulos@glasgow.ac.uk), who will arrange for moderation.
+      <Text>
+        2. In the case where you cannot agree on a grade, please contact the
+        project coordinator via email (Level 4: Paul.Harvey@glasgow.ac.uk Level
+        5: Yiannis.Giannakopoulos@glasgow.ac.uk), who will arrange for
+        moderation.
+      </Text>
       <Section className="mb-[32px] mt-[32px] text-center">
         <Button
           className="rounded bg-[#000000] px-5 py-3 text-center text-[12px] font-semibold text-white no-underline"
@@ -76,7 +79,7 @@ export function SupervisorNegotiate1({
         </Button>
       </Section>
       <Text>
-        If the link above does not work, paste this link into your browser:
+        If the link above does not work, paste this into your browser:
       </Text>
       <Text>{resolutionURL}</Text>
       <Text>A breakdown of the supervisor/reader marks is provided below:</Text>

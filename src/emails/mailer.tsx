@@ -15,6 +15,7 @@ import CoordinatorModeration from "./messages/moderation/coordinator";
 import { InstanceParams } from "@/lib/validations/params";
 import MarkingComplete from "./messages/marking-complete";
 import CoordinatorNegotiation from "./messages/negotiation/coordinator";
+import { addWeeks } from "date-fns";
 
 export type SendMail = ({
   message,
@@ -33,6 +34,15 @@ export class Mailer {
 
   public constructor(sendMail: SendMail) {
     this.sendMail = sendMail;
+  }
+
+  public async test() {
+    const message = <MarkingComplete {...MarkingComplete.PreviewProps} />;
+    await this.sendMail({
+      message,
+      subject: "Testing...",
+      to: ["j.trevor.1@research.gla.ac.uk"],
+    });
   }
 
   public async notifyMarkingComplete(
@@ -78,6 +88,8 @@ export class Mailer {
     params: InstanceParams,
   ) {
     const subject = "Grading Negotiation Required";
+    const deadline = addWeeks(new Date(), 1);
+
     await Promise.all([
       this.sendMail({
         message: (
@@ -89,6 +101,7 @@ export class Mailer {
             readerMarking={readerMarking}
             unit={unit}
             params={params}
+            deadline={deadline}
           />
         ),
         subject,
@@ -103,6 +116,7 @@ export class Mailer {
             supervisorMarking={supervisorMarking}
             readerMarking={readerMarking}
             unit={unit}
+            deadline={deadline}
           />
         ),
         subject,
@@ -114,6 +128,11 @@ export class Mailer {
             project={project}
             reader={reader}
             student={student}
+            supervisor={supervisor}
+            unit={unit}
+            supervisorGrade={supervisorMarking.overallGrade}
+            readerGrade={readerMarking.overallGrade}
+            deadline={deadline}
           />
         ),
         subject,
@@ -127,15 +146,23 @@ export class Mailer {
     reader: ReaderDTO,
     project: ProjectDTO,
     student: StudentDTO,
+    unit: UnitOfAssessmentDTO,
+    supervisorGrade: number,
+    readerGrade: number,
   ) {
     const subject = "Grading Negotiation Required";
     await Promise.all([
       this.sendMail({
         message: (
           <CoordinatorModeration
-            project={project}
+            supervisor={supervisor}
             reader={reader}
+            project={project}
             student={student}
+            unit={unit}
+            supervisorGrade={supervisorGrade}
+            readerGrade={readerGrade}
+            deadline={addWeeks(new Date(), 1)}
           />
         ),
         subject,
