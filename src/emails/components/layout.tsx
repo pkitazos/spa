@@ -1,4 +1,3 @@
-import { env } from "@/env";
 import {
   Heading,
   Img,
@@ -37,7 +36,7 @@ export function Layout({
                   <Img
                     width={150}
                     height={50}
-                    src={`${env.FRONTEND_SERVER_URL}/uofg.png`}
+                    src="uofg-logo@spa.dcs.gla.ac.uk"
                     alt="u-of-g logo"
                   />
                 </Column>

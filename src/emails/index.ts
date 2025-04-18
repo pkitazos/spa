@@ -31,5 +31,12 @@ export async function sendMail({
     subject,
     html: await render(message),
     text: await render(message, { plainText: true }),
+    attachments: [
+      {
+        filename: "uofg.png",
+        path: "public/uofg.png",
+        cid: "uofg-logo@spa.dcs.gla.ac.uk", //same cid value as in the html img src
+      },
+    ],
   });
 }
