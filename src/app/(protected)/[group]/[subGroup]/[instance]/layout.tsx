@@ -10,7 +10,7 @@ import { Unauthorised } from "@/components/unauthorised";
 import { api } from "@/lib/trpc/server";
 import { InstanceParams } from "@/lib/validations/params";
 import { auth } from "@/lib/auth";
-import { testWhitelist, liveWhitelist } from "@/config/testing-whitelist";
+import { testWhitelist } from "@/config/testing-whitelist";
 
 export default async function Layout({
   children,
@@ -28,16 +28,6 @@ export default async function Layout({
   if (user) {
     if (params.instance == "testinstance") {
       if (!testWhitelist.includes(user.id.toLowerCase())) {
-        return (
-          <Unauthorised
-            title="Unauthorised"
-            message="You don't have permission to access this instance"
-          />
-        );
-      }
-    }
-    if (params.instance == "2024-2025") {
-      if (!liveWhitelist.includes(user.id.toLowerCase())) {
         return (
           <Unauthorised
             title="Unauthorised"
