@@ -4,13 +4,11 @@ import { FormatPercent } from "@/lib/utils/format-percent";
 import { Text, Section, Row } from "@react-email/components";
 
 export function Marksheet({
-  markingData: { submission, criteria, overallGrade },
+  submission,
+  criteria,
 }: {
-  markingData: {
-    submission: MarkingSubmissionDTO;
-    criteria: AssessmentCriterionDTO[];
-    overallGrade: number;
-  };
+  submission: MarkingSubmissionDTO;
+  criteria: AssessmentCriterionDTO[];
 }) {
   const totalWeight = criteria.reduce((acc, val) => acc + val.weight, 0);
 
@@ -38,7 +36,7 @@ export function Marksheet({
         <Row className="flex flex-row">
           <span>
             <h4 className="mb-0 inline-block">Overall: </h4>
-            <i>{Grade.toLetter(overallGrade)}</i>
+            <i>{Grade.toLetter(submission.grade)}</i>
           </span>
         </Row>
 

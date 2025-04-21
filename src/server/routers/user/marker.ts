@@ -17,6 +17,7 @@ import { subsequentStages } from "@/lib/utils/permissions/stage-check";
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 import { TRPCError } from "@trpc/server";
+import { addWeeks } from "date-fns";
 import { z } from "zod";
 
 export const markerRouter = createTRPCRouter({
@@ -105,7 +106,7 @@ export const markerRouter = createTRPCRouter({
     .output(z.void())
     .mutation(
       async ({
-        ctx: { user, mailer },
+        ctx: { db, user, mailer, instance },
         input: { studentId, unitOfAssessmentId, grade, comment },
       }) => {
         const res = Grade.checkExtremes(Grade.toLetter(grade));
@@ -117,8 +118,42 @@ export const markerRouter = createTRPCRouter({
             comment,
           });
         } else {
+          const deadline = addWeeks(new Date(), 1);
+          const studentObj = await instance.getStudent(studentId);
+
+          const reader = await studentObj.getReader();
+          const { project, supervisor } = await studentObj.getAllocation();
+
+          const student = await studentObj.get();
+          const unit = await instance.getUnitOfAssessment(unitOfAssessmentId);
+
+          // otherwise, if this is a doubly-marked submission, and now both are submitted then:
+          const data = await db.markingSubmission.findMany({
+            where: { studentId, unitOfAssessmentId },
+            include: { criterionScores: true },
+          });
+
+          const submissionByMarker = data.reduce(
+            (acc, val) => ({
+              ...acc,
+              [val.markerId]: T.toMarkingSubmissionDTO(val),
+            }),
+            {} as Record<string, MarkingSubmissionDTO>,
+          );
+
           // should notify coordinator e.g.:
-          // mailer.notifyModeration();
+          mailer.notifyModeration({
+            criteria: unit.components,
+            deadline,
+            project,
+            student,
+            reader,
+            supervisor,
+            supervisorSubmission: submissionByMarker[supervisor.id],
+            readerSubmission: submissionByMarker[reader.id],
+            unit,
+            negotiationResult: { mark: grade, justification: comment },
+          });
         }
       },
     ),
@@ -243,44 +278,42 @@ export const markerRouter = createTRPCRouter({
           return;
         }
 
+        const readerSubmission = submissionByMarker[reader.id];
+        const supervisorSubmission = submissionByMarker[supervisor.id];
+        const deadline = addWeeks(new Date(), 1);
+
         if (
           resolution.status === "NEGOTIATE1" ||
           resolution.status === "NEGOTIATE2"
         ) {
           // goes to negotiation - write nothing to db but do email markers
-          const readerMarking = {
-            submission: submissionByMarker[reader.id],
-            criteria: components,
-            overallGrade: submissionByMarker[reader.id].grade,
-          };
-          const supervisorMarking = {
-            submission: submissionByMarker[supervisor.id],
-            criteria: components,
-            overallGrade: submissionByMarker[supervisor.id].grade,
-          };
 
-          await mailer.notifyNegotiate(
+          await mailer.notifyNegotiate({
             supervisor,
             reader,
             project,
             student,
-            readerMarking,
-            supervisorMarking,
+            readerSubmission,
+            supervisorSubmission,
             unit,
+            criteria: components,
             params,
-          );
+            deadline,
+          });
           return;
         }
         if (resolution.status === "MODERATE") {
-          await mailer.notifyModeration(
+          await mailer.notifyModeration({
             supervisor,
             reader,
             project,
             student,
             unit,
-            submissionByMarker[supervisor.id].grade,
-            submissionByMarker[reader.id].grade,
-          );
+            criteria: components,
+            deadline,
+            readerSubmission,
+            supervisorSubmission,
+          });
           return;
         }
       },

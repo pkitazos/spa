@@ -2,6 +2,7 @@ import { ReactElement } from "react";
 
 import {
   AssessmentCriterionDTO,
+  CriterionScoreDTO,
   MarkingSubmissionDTO,
   ProjectDTO,
   ReaderDTO,
@@ -15,7 +16,6 @@ import CoordinatorModeration from "./messages/moderation/coordinator";
 import { InstanceParams } from "@/lib/validations/params";
 import MarkingComplete from "./messages/marking-complete";
 import CoordinatorNegotiation from "./messages/negotiation/coordinator";
-import { addWeeks } from "date-fns";
 
 export type SendMail = ({
   message,
@@ -69,27 +69,30 @@ export class Mailer {
     ]);
   }
 
-  public async notifyNegotiate(
-    supervisor: SupervisorDTO,
-    reader: ReaderDTO,
-    project: ProjectDTO,
-    student: StudentDTO,
-    readerMarking: {
-      submission: MarkingSubmissionDTO;
-      criteria: AssessmentCriterionDTO[];
-      overallGrade: number;
-    },
-    supervisorMarking: {
-      submission: MarkingSubmissionDTO;
-      criteria: AssessmentCriterionDTO[];
-      overallGrade: number;
-    },
-    unit: UnitOfAssessmentDTO,
-    params: InstanceParams,
-  ) {
+  public async notifyNegotiate({
+    supervisor,
+    reader,
+    project,
+    student,
+    criteria,
+    supervisorSubmission,
+    readerSubmission,
+    unit,
+    params,
+    deadline,
+  }: {
+    supervisor: SupervisorDTO;
+    reader: ReaderDTO;
+    project: ProjectDTO;
+    student: StudentDTO;
+    criteria: AssessmentCriterionDTO[];
+    supervisorSubmission: MarkingSubmissionDTO;
+    readerSubmission: MarkingSubmissionDTO;
+    unit: UnitOfAssessmentDTO;
+    params: InstanceParams;
+    deadline: Date;
+  }) {
     const subject = "Grading Negotiation Required";
-    const deadline = addWeeks(new Date(), 1);
-
     await Promise.all([
       this.sendMail({
         message: (
@@ -97,8 +100,9 @@ export class Mailer {
             project={project}
             reader={reader}
             student={student}
-            supervisorMarking={supervisorMarking}
-            readerMarking={readerMarking}
+            supervisorSubmission={supervisorSubmission}
+            readerSubmission={readerSubmission}
+            criteria={criteria}
             unit={unit}
             params={params}
             deadline={deadline}
@@ -113,8 +117,9 @@ export class Mailer {
             project={project}
             supervisor={supervisor}
             student={student}
-            supervisorMarking={supervisorMarking}
-            readerMarking={readerMarking}
+            supervisorSubmission={supervisorSubmission}
+            readerSubmission={readerSubmission}
+            criteria={criteria}
             unit={unit}
             deadline={deadline}
           />
@@ -130,8 +135,8 @@ export class Mailer {
             student={student}
             supervisor={supervisor}
             unit={unit}
-            supervisorGrade={supervisorMarking.overallGrade}
-            readerGrade={readerMarking.overallGrade}
+            supervisorGrade={supervisorSubmission.grade}
+            readerGrade={readerSubmission.grade}
             deadline={deadline}
           />
         ),
@@ -141,28 +146,44 @@ export class Mailer {
     ]);
   }
 
-  public async notifyModeration(
-    supervisor: SupervisorDTO,
-    reader: ReaderDTO,
-    project: ProjectDTO,
-    student: StudentDTO,
-    unit: UnitOfAssessmentDTO,
-    supervisorGrade: number,
-    readerGrade: number,
-  ) {
+  public async notifyModeration({
+    project,
+    reader,
+    student,
+    unit,
+    supervisor,
+    deadline,
+    criteria,
+    supervisorSubmission,
+    readerSubmission,
+    negotiationResult,
+  }: {
+    project: ProjectDTO;
+    reader: ReaderDTO;
+    student: StudentDTO;
+    unit: UnitOfAssessmentDTO;
+    supervisor: SupervisorDTO;
+    deadline: Date;
+    criteria: AssessmentCriterionDTO[];
+    supervisorSubmission: MarkingSubmissionDTO;
+    readerSubmission: MarkingSubmissionDTO;
+    negotiationResult?: CriterionScoreDTO;
+  }) {
     const subject = "Grading Negotiation Required";
     await Promise.all([
       this.sendMail({
         message: (
           <CoordinatorModeration
-            supervisor={supervisor}
-            reader={reader}
             project={project}
+            reader={reader}
             student={student}
             unit={unit}
-            supervisorGrade={supervisorGrade}
-            readerGrade={readerGrade}
-            deadline={addWeeks(new Date(), 1)}
+            supervisor={supervisor}
+            deadline={deadline}
+            criteria={criteria}
+            supervisorSubmission={supervisorSubmission}
+            readerSubmission={readerSubmission}
+            negotiationResult={negotiationResult}
           />
         ),
         subject,

@@ -1,15 +1,36 @@
 import {
+  AssessmentCriterionDTO,
+  CriterionScoreDTO,
+  MarkingSubmissionDTO,
   ProjectDTO,
   ReaderDTO,
   StudentDTO,
   SupervisorDTO,
   UnitOfAssessmentDTO,
 } from "@/dto";
-import { Column, Heading, Row, Section } from "@react-email/components";
+import {
+  Column,
+  Heading,
+  Row,
+  Section,
+  Text,
+  Hr,
+} from "@react-email/components";
 import { Layout } from "../../components/layout";
 import { format } from "@/lib/utils/date/format";
-import { addWeeks } from "date-fns";
 import { Grade } from "@/config/grades";
+import { Marksheet } from "@/emails/components/marksheet";
+import {
+  fakeCriteria,
+  fakeDeadline,
+  fakeProject,
+  fakeReader,
+  fakeReaderSubmission,
+  fakeStudent,
+  fakeSupervisor,
+  fakeSupervisorSubmission,
+  fakeUnit,
+} from "@/emails/fake-data";
 
 interface Props {
   project: ProjectDTO;
@@ -17,9 +38,11 @@ interface Props {
   student: StudentDTO;
   unit: UnitOfAssessmentDTO;
   supervisor: SupervisorDTO;
-  supervisorGrade: number;
-  readerGrade: number;
   deadline: Date;
+  criteria: AssessmentCriterionDTO[];
+  supervisorSubmission: MarkingSubmissionDTO;
+  readerSubmission: MarkingSubmissionDTO;
+  negotiationResult?: CriterionScoreDTO;
 }
 
 export function CoordinatorModeration({
@@ -28,9 +51,11 @@ export function CoordinatorModeration({
   student,
   unit,
   supervisor,
-  supervisorGrade,
-  readerGrade,
   deadline,
+  criteria,
+  supervisorSubmission,
+  readerSubmission,
+  negotiationResult,
 }: Props) {
   return (
     <Layout previewText="Moderation required">
@@ -70,13 +95,15 @@ export function CoordinatorModeration({
         <Row>
           <Column>Supervisor Grade: </Column>
           <Column className="text-right">
-            {Grade.toLetter(supervisorGrade)}
+            {Grade.toLetter(supervisorSubmission.grade)}
           </Column>
         </Row>
 
         <Row>
           <Column>Reader Grade: </Column>
-          <Column className="text-right">{Grade.toLetter(readerGrade)}</Column>
+          <Column className="text-right">
+            {Grade.toLetter(readerSubmission.grade)}
+          </Column>
         </Row>
 
         <Row>
@@ -84,62 +111,48 @@ export function CoordinatorModeration({
           <Column className="text-right">{format(deadline)}</Column>
         </Row>
       </Section>
+      <Section>
+        <Text>
+          A breakdown of the supervisor/reader marks is provided below:
+        </Text>
+
+        <Hr />
+        <Heading as="h3">Supervisor Marks:</Heading>
+        <Marksheet criteria={criteria} submission={supervisorSubmission} />
+        <Hr />
+        <Heading as="h3">Reader Marks:</Heading>
+        <Marksheet criteria={criteria} submission={readerSubmission} />
+
+        {negotiationResult && (
+          <>
+            <Hr />
+            <Heading as="h2">Negotiation Result</Heading>
+            <Section>
+              <Row className="flex flex-row">
+                <span>
+                  <i>{Grade.toLetter(negotiationResult.mark)}</i>
+                </span>
+              </Row>
+
+              <Text>{negotiationResult.justification}</Text>
+            </Section>
+          </>
+        )}
+      </Section>
     </Layout>
   );
 }
 
 CoordinatorModeration.PreviewProps = {
-  project: {
-    id: "",
-    title: "Testing Programmatic Emails",
-    description: "",
-    latestEditDateTime: new Date(),
-    capacityLowerBound: 0,
-    capacityUpperBound: 0,
-    supervisorId: "",
-    flags: [],
-    tags: [],
-  },
-  reader: {
-    id: "",
-    email: "sam.blankman@uni.ac.uk",
-    name: "Sam Blankman",
-    joined: false,
-    allocationTarget: 0,
-    allocationLowerBound: 0,
-    allocationUpperBound: 0,
-  },
-  student: {
-    id: "3858475d",
-    email: "",
-    name: "John Doe",
-    joined: false,
-    flags: [],
-    level: 0,
-  },
-  unit: {
-    id: "9ee86629-4e6c-4572-bea5-2c2dc695e6d4",
-    title: "Dissertation",
-    studentSubmissionDeadline: new Date(),
-    markerSubmissionDeadline: new Date(),
-    weight: 0,
-    isOpen: false,
-    components: [],
-    flag: { id: "", title: "", description: "" },
-    allowedMarkerTypes: [],
-  },
-  supervisor: {
-    id: "",
-    email: "emily.smith@uni.ac.uk",
-    name: "Emily Smith",
-    joined: false,
-    allocationTarget: 0,
-    allocationLowerBound: 0,
-    allocationUpperBound: 0,
-  },
-  supervisorGrade: 22,
-  readerGrade: 0,
-  deadline: addWeeks(new Date(), 1),
+  project: fakeProject,
+  reader: fakeReader,
+  readerSubmission: fakeReaderSubmission,
+  student: fakeStudent,
+  supervisor: fakeSupervisor,
+  supervisorSubmission: fakeSupervisorSubmission,
+  unit: fakeUnit,
+  criteria: fakeCriteria,
+  deadline: fakeDeadline,
 } satisfies Props;
 
 export default CoordinatorModeration;

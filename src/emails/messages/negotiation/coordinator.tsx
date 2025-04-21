@@ -8,8 +8,15 @@ import {
 import { Column, Heading, Row, Section } from "@react-email/components";
 import { Layout } from "../../components/layout";
 import { format } from "@/lib/utils/date/format";
-import { addWeeks } from "date-fns";
 import { Grade } from "@/config/grades";
+import {
+  fakeDeadline,
+  fakeProject,
+  fakeReader,
+  fakeStudent,
+  fakeSupervisor,
+  fakeUnit,
+} from "@/emails/fake-data";
 
 interface Props {
   project: ProjectDTO;
@@ -89,57 +96,14 @@ export function CoordinatorNegotiation({
 }
 
 CoordinatorNegotiation.PreviewProps = {
-  project: {
-    id: "",
-    title: "Testing Programmatic Emails",
-    description: "",
-    latestEditDateTime: new Date(),
-    capacityLowerBound: 0,
-    capacityUpperBound: 0,
-    supervisorId: "",
-    flags: [],
-    tags: [],
-  },
-  reader: {
-    id: "",
-    email: "sam.blankman@uni.ac.uk",
-    name: "Sam Blankman",
-    joined: false,
-    allocationTarget: 0,
-    allocationLowerBound: 0,
-    allocationUpperBound: 0,
-  },
-  student: {
-    id: "3858475d",
-    email: "",
-    name: "John Doe",
-    joined: false,
-    flags: [],
-    level: 0,
-  },
-  unit: {
-    id: "9ee86629-4e6c-4572-bea5-2c2dc695e6d4",
-    title: "Dissertation",
-    studentSubmissionDeadline: new Date(),
-    markerSubmissionDeadline: new Date(),
-    weight: 0,
-    isOpen: false,
-    components: [],
-    flag: { id: "", title: "", description: "" },
-    allowedMarkerTypes: [],
-  },
-  supervisor: {
-    id: "",
-    email: "emily.smith@uni.ac.uk",
-    name: "Emily Smith",
-    joined: false,
-    allocationTarget: 0,
-    allocationLowerBound: 0,
-    allocationUpperBound: 0,
-  },
+  project: fakeProject,
+  student: fakeStudent,
+  reader: fakeReader,
+  unit: fakeUnit,
+  supervisor: fakeSupervisor,
   supervisorGrade: 22,
   readerGrade: 1,
-  deadline: addWeeks(new Date(), 1),
+  deadline: fakeDeadline,
 } satisfies Props;
 
 export default CoordinatorNegotiation;
