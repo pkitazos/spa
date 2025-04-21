@@ -255,6 +255,7 @@ export class Marker extends User {
           draft,
           summary: finalComment,
           recommendedForPrize: recommendation,
+          grade: grade,
         },
       }),
 

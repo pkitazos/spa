@@ -171,6 +171,7 @@ export const markerRouter = createTRPCRouter({
           marks,
           finalComment,
           recommendation,
+          grade,
         },
       }) => {
         const markerType = await user.getMarkerType(studentId);
@@ -183,13 +184,6 @@ export const markerRouter = createTRPCRouter({
             message: "User is not correct marker type",
           });
         }
-
-        const grade = Grade.computeFromScores(
-          components.map((c) => ({
-            weight: c.weight,
-            score: marks[c.id].mark,
-          })),
-        );
 
         await user.writeMarks({
           grade,
@@ -213,7 +207,7 @@ export const markerRouter = createTRPCRouter({
         }
 
         const numSubmissions = await db.markingSubmission.count({
-          where: { studentId, unitOfAssessmentId },
+          where: { studentId, unitOfAssessmentId, draft: false },
         });
 
         // if this is a doubly-marked submission, but only 1 has been submitted, do nothing.
@@ -226,7 +220,7 @@ export const markerRouter = createTRPCRouter({
 
         // otherwise, if this is a doubly-marked submission, and now both are submitted then:
         const data = await db.markingSubmission.findMany({
-          where: { studentId, unitOfAssessmentId },
+          where: { studentId, unitOfAssessmentId, draft: false },
           include: { criterionScores: true },
         });
 
