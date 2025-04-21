@@ -1,5 +1,7 @@
 import { ReactElement } from "react";
 
+const PAUL_EMAIL = "Paul.Harvey@glasgow.ac.uk";
+
 import {
   AssessmentCriterionDTO,
   CriterionScoreDTO,
@@ -66,6 +68,7 @@ export class Mailer {
     await Promise.all([
       this.sendMail({ message, subject, to: [supervisor.email] }),
       this.sendMail({ message, subject, to: [reader.email] }),
+      this.sendMail({ message, subject, to: [PAUL_EMAIL] }),
     ]);
   }
 
@@ -141,7 +144,7 @@ export class Mailer {
           />
         ),
         subject,
-        to: ["Paul.Harvey@glasgow.ac.uk"],
+        to: [PAUL_EMAIL],
       }),
     ]);
   }
@@ -187,7 +190,7 @@ export class Mailer {
           />
         ),
         subject,
-        to: ["Paul.Harvey@glasgow.ac.uk"],
+        to: [PAUL_EMAIL],
       }),
     ]);
   }
