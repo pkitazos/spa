@@ -2,6 +2,10 @@ import { ReactElement } from "react";
 
 const PAUL_EMAIL = "Paul.Harvey@glasgow.ac.uk";
 
+function tag_coordinator(subject: string) {
+  return `[Coordinator] ${subject}`;
+}
+
 import {
   AssessmentCriterionDTO,
   CriterionScoreDTO,
@@ -68,7 +72,11 @@ export class Mailer {
     await Promise.all([
       this.sendMail({ message, subject, to: [supervisor.email] }),
       this.sendMail({ message, subject, to: [reader.email] }),
-      this.sendMail({ message, subject, to: [PAUL_EMAIL] }),
+      this.sendMail({
+        message,
+        subject: tag_coordinator(subject),
+        to: [PAUL_EMAIL],
+      }),
     ]);
   }
 
@@ -143,7 +151,7 @@ export class Mailer {
             deadline={deadline}
           />
         ),
-        subject,
+        subject: tag_coordinator(subject),
         to: [PAUL_EMAIL],
       }),
     ]);
@@ -189,7 +197,7 @@ export class Mailer {
             negotiationResult={negotiationResult}
           />
         ),
-        subject,
+        subject: tag_coordinator(subject),
         to: [PAUL_EMAIL],
       }),
     ]);
