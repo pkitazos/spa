@@ -7,18 +7,27 @@ import {
 } from "@/dto";
 import { z } from "zod";
 
+export const GradingStatus = { MARKED: "MARKED", PENDING: "PENDING" } as const;
+
+export const UnitGradingStatus = {
+  MARKED: "MARKED",
+  PENDING: "PENDING",
+  NEGOTIATION: "NEGOTIATION",
+  MODERATION: "MODERATION",
+} as const;
+
 const gradingStatusSchema = z.union([
-  z.object({ status: z.literal("MARKED"), grade: z.number() }),
-  z.object({ status: z.literal("PENDING") }),
+  z.object({ status: z.literal(GradingStatus.MARKED), grade: z.number() }),
+  z.object({ status: z.literal(GradingStatus.PENDING) }),
 ]);
 
 export type GradingStatus = z.infer<typeof gradingStatusSchema>;
 
 const unitGradingStatusSchema = z.union([
-  z.object({ status: z.literal("MARKED"), grade: z.number() }),
-  z.object({ status: z.literal("PENDING") }),
-  z.object({ status: z.literal("NEGOTIATION") }),
-  z.object({ status: z.literal("MODERATION") }),
+  z.object({ status: z.literal(UnitGradingStatus.MARKED), grade: z.number() }),
+  z.object({ status: z.literal(UnitGradingStatus.PENDING) }),
+  z.object({ status: z.literal(UnitGradingStatus.NEGOTIATION) }),
+  z.object({ status: z.literal(UnitGradingStatus.MODERATION) }),
 ]);
 
 export type UnitGradingStatus = z.infer<typeof unitGradingStatusSchema>;

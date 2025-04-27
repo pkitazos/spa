@@ -1,4 +1,4 @@
-import { Stage } from "@/db/types";
+import { MarkerType, Stage } from "@/db/types";
 import { procedure } from "../middleware";
 import { createTRPCRouter } from "../trpc";
 import { subsequentStages } from "@/lib/utils/permissions/stage-check";
@@ -6,11 +6,12 @@ import { expand } from "@/lib/utils/general/instance-params";
 import { Transformers as T } from "@/db/transformers";
 import { z } from "zod";
 import {
+  GradingStatus,
   MarkerStatusSummary,
   ProjectMarkingOverview,
   projectMarkingOverviewSchema,
-  type UnitMarkingSummary,
 } from "@/app/(protected)/[group]/[subGroup]/[instance]/(admin-panel)/(stage-specific)/(stage-9)/marking-overview/row";
+// TODO: fix
 import { MarkingSubmissionDTO, UserDTO } from "@/dto";
 
 export const markingRouter = createTRPCRouter({
@@ -69,7 +70,6 @@ export const markingRouter = createTRPCRouter({
           unitOfAssessmentId: { in: units.map((e) => e.id) },
           draft: false,
         },
-        include: { criterionScores: true },
       });
 
       // below is:
@@ -105,6 +105,9 @@ export const markingRouter = createTRPCRouter({
       const unitFinalMarksByUnitByStudent = unitFinalMarks.reduce(
         (acc, val) => {
           const prev = acc[val.studentId] ?? {};
+          // console.log(
+          //   `student ${val.studentId}\t unit ${val.unitOfAssessmentId}`,
+          // );
           return {
             ...acc,
             [val.studentId]: { ...prev, [val.unitOfAssessmentId]: val },
@@ -133,46 +136,58 @@ export const markingRouter = createTRPCRouter({
         {} as Record<string, number>,
       );
 
-      const breakdowns: ProjectMarkingOverview[] = projectStudentDataRaw.map(
+      const breakdowns = projectStudentDataRaw.map(
         ({ student, project, supervisor, reader }) => {
           const unitFinalMarksByUnit =
             unitFinalMarksByUnitByStudent[student.id] ?? {};
+
+          console.log(units);
+          console.log({ s: student.flags, uf: units.map((u) => u.flag) });
 
           const applicableUnits = units.filter((u) =>
             student.flags.map((f) => f.id).includes(u.flag.id),
           );
 
-          const unitData: UnitMarkingSummary[] = applicableUnits.map((u) => {
-            const markers: MarkerStatusSummary[] = u.allowedMarkerTypes.map(
-              (markerType) => {
-                let marker: UserDTO;
-                if (markerType === "SUPERVISOR") {
-                  marker = T.toUserDTO(supervisor);
-                } else {
-                  marker = T.toUserDTO(reader);
-                }
+          console.log("=====>", applicableUnits);
 
-                const submission =
-                  submissions_ByMarker_ByUnit_ByStudentId[student.id][u.id][
-                    marker.id
-                  ];
+          const unitData = applicableUnits.map((u) => {
+            const markers = u.allowedMarkerTypes.map((markerType) => {
+              let marker: UserDTO;
 
-                return {
-                  markerType,
-                  marker,
-                  status: submission
-                    ? { status: "MARKED", grade: submission.grade }
-                    : { status: "PENDING" },
-                };
-              },
-            );
+              console.log("***=====> ", project.id, supervisor, reader);
+
+              if (markerType === MarkerType.SUPERVISOR) {
+                marker = T.toUserDTO(supervisor);
+              } else {
+                marker = reader
+                  ? T.toUserDTO(reader)
+                  : {
+                      name: "Paul Harvey",
+                      id: "phh9g",
+                      email: "paul.harvey@glasgow.ac.uk",
+                    };
+              }
+
+              const submission =
+                submissions_ByMarker_ByUnit_ByStudentId[student.id]?.[u.id]?.[
+                  marker.id
+                ];
+
+              return {
+                markerType,
+                marker,
+                status: submission
+                  ? { status: GradingStatus.MARKED, grade: submission.grade }
+                  : { status: GradingStatus.PENDING },
+              } satisfies MarkerStatusSummary;
+            });
 
             const unitFinalGrade = unitFinalMarksByUnit[u.id];
 
             return {
               status: unitFinalGrade
-                ? { status: "MARKED", grade: unitFinalGrade.grade }
-                : { status: "PENDING" },
+                ? { status: GradingStatus.MARKED, grade: unitFinalGrade.grade }
+                : { status: GradingStatus.PENDING },
               unit: u,
               markers,
             };
@@ -185,10 +200,10 @@ export const markingRouter = createTRPCRouter({
             project,
             status:
               finalMark === undefined
-                ? { status: "PENDING" }
-                : { status: "MARKED", grade: finalMark },
+                ? { status: GradingStatus.PENDING }
+                : { status: GradingStatus.MARKED, grade: finalMark },
             units: unitData,
-          };
+          } satisfies ProjectMarkingOverview;
         },
       );
 

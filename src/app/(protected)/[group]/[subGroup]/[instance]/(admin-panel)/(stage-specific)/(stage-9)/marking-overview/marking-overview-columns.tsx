@@ -1,19 +1,22 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { GradingStatus, MarkingOverviewRow, UnitGradingStatus } from "./row";
+import { ProjectMarkingOverview, UnitGradingStatus } from "./row";
 
-export const columns: ColumnDef<MarkingOverviewRow>[] = [
-  { id: "project-title", accessorFn: (x) => x.project.project.title },
-  { id: "student-name", accessorFn: (x) => x.project.student.name },
-  { id: "student-matric", accessorFn: (x) => x.project.student.id },
-  { id: "student-level", accessorFn: (x) => x.project.student.level },
-  { id: "unit-id", accessorFn: (x) => x.unit.unit.id },
+export const columns: ColumnDef<ProjectMarkingOverview>[] = [
+  { id: "chevron" },
   {
-    id: "status",
-    accessorFn: (x) => x.marker.status,
-    cell: (cell) => <StatusBox status={cell.getValue<GradingStatus>()} />,
+    id: "project-title",
+    header: "Project Title",
+    accessorFn: (x) => x.project.title,
   },
+  { id: "student-level", header: "Level", accessorFn: (x) => x.student.level },
+  {
+    id: "student-name",
+    header: "Student Name",
+    accessorFn: (x) => x.student.name,
+  },
+  { id: "status", header: "Status", accessorFn: (x) => x.status.status },
 ];
 
 export function StatusBox({ status }: { status: UnitGradingStatus }) {
