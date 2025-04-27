@@ -105,9 +105,6 @@ export const markingRouter = createTRPCRouter({
       const unitFinalMarksByUnitByStudent = unitFinalMarks.reduce(
         (acc, val) => {
           const prev = acc[val.studentId] ?? {};
-          // console.log(
-          //   `student ${val.studentId}\t unit ${val.unitOfAssessmentId}`,
-          // );
           return {
             ...acc,
             [val.studentId]: { ...prev, [val.unitOfAssessmentId]: val },
@@ -141,20 +138,13 @@ export const markingRouter = createTRPCRouter({
           const unitFinalMarksByUnit =
             unitFinalMarksByUnitByStudent[student.id] ?? {};
 
-          console.log(units);
-          console.log({ s: student.flags, uf: units.map((u) => u.flag) });
-
           const applicableUnits = units.filter((u) =>
             student.flags.map((f) => f.id).includes(u.flag.id),
           );
 
-          console.log("=====>", applicableUnits);
-
           const unitData = applicableUnits.map((u) => {
             const markers = u.allowedMarkerTypes.map((markerType) => {
               let marker: UserDTO;
-
-              console.log("***=====> ", project.id, supervisor, reader);
 
               if (markerType === MarkerType.SUPERVISOR) {
                 marker = T.toUserDTO(supervisor);

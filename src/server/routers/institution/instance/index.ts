@@ -747,7 +747,6 @@ export const instanceRouter = createTRPCRouter({
       ),
     )
     .query(async ({ ctx: { instance, db } }) => {
-      console.log("hello world!");
       const flags = await db.flag.findMany({
         where: expand(instance.params),
         include: {
