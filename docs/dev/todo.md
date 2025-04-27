@@ -73,6 +73,7 @@
 
 - [x] email submission receipts
 - [x] Marking overview page
+  - [ ] make top level status reactive
 - [ ] data faceting & export
 - [ ] Marking overwrite page for unit of assessment (needed for moderation)
       negotiation 3 resolution
