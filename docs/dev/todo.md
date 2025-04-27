@@ -72,7 +72,7 @@
 ---
 
 - [x] email submission receipts
-- [ ] Marking overview page
+- [x] Marking overview page
 - [ ] data faceting & export
 - [ ] Marking overwrite page for unit of assessment (needed for moderation)
       negotiation 3 resolution
