@@ -15,6 +15,7 @@ import { format } from "@/lib/utils/date/format";
 import {
   fakeCriteria,
   fakeDeadline,
+  fakeParams,
   fakeProject,
   fakeReader,
   fakeReaderSubmission,
@@ -104,11 +105,7 @@ SupervisorNegotiate1.PreviewProps = {
   criteria: fakeCriteria,
   readerSubmission: fakeReaderSubmission,
   unit: fakeUnit,
-  params: {
-    group: "socs",
-    subGroup: "lvl-4-and-lvl-5-honours",
-    instance: "2024-2025",
-  },
+  params: fakeParams,
   deadline: fakeDeadline,
 } satisfies Props;
 

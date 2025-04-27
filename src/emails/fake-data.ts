@@ -156,3 +156,9 @@ export const fakeSupervisorSubmission: MarkingSubmissionDTO = {
 };
 
 export const fakeDeadline = addWeeks(new Date(), 1);
+
+export const fakeParams = {
+  group: "socs",
+  subGroup: "lvl-4-and-lvl-5-honours",
+  instance: "2024-2025",
+};

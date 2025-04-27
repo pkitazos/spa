@@ -1,6 +1,7 @@
 import { Column, Row, Heading, Section, Text } from "@react-email/components";
 import { Layout } from "../components/layout";
 import { ProjectDTO, StudentDTO, UnitOfAssessmentDTO } from "@/dto";
+import { fakeProject, fakeStudent, fakeUnit } from "../fake-data";
 
 interface Props {
   student: StudentDTO;
@@ -47,36 +48,9 @@ export function MarkingComplete({ unit, student, project, grade }: Props) {
 }
 
 MarkingComplete.PreviewProps = {
-  student: {
-    id: "3985764D",
-    email: "john.doe@student.gla.ac.ul",
-    name: "John Doe",
-    joined: true,
-    level: 4,
-    flags: [],
-  },
-  project: {
-    id: "",
-    title: "Testing Programmatic Emails",
-    description: "",
-    latestEditDateTime: new Date(),
-    capacityLowerBound: 0,
-    capacityUpperBound: 0,
-    supervisorId: "",
-    flags: [],
-    tags: [],
-  },
-  unit: {
-    id: "",
-    title: "Dissertation",
-    studentSubmissionDeadline: new Date(),
-    markerSubmissionDeadline: new Date(),
-    weight: 0,
-    isOpen: false,
-    components: [],
-    flag: { id: "", title: "", description: "" },
-    allowedMarkerTypes: [],
-  },
+  student: fakeStudent,
+  project: fakeProject,
+  unit: fakeUnit,
   grade: "H1",
 } satisfies Props;
 
