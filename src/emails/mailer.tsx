@@ -1,11 +1,5 @@
 import { ReactElement } from "react";
 
-const PAUL_EMAIL = "Paul.Harvey@glasgow.ac.uk";
-
-function tag_coordinator(subject: string) {
-  return `[Coordinator] ${subject}`;
-}
-
 import {
   AssessmentCriterionDTO,
   CriterionScoreDTO,
@@ -15,6 +9,7 @@ import {
   StudentDTO,
   SupervisorDTO,
   UnitOfAssessmentDTO,
+  UserDTO,
 } from "@/dto";
 import SupervisorNegotiate1 from "./messages/negotiation/supervisor";
 import ReaderNegotiate1 from "./messages/negotiation/reader";
@@ -22,6 +17,11 @@ import CoordinatorModeration from "./messages/moderation/coordinator";
 import { InstanceParams } from "@/lib/validations/params";
 import MarkingComplete from "./messages/marking-complete";
 import CoordinatorNegotiation from "./messages/negotiation/coordinator";
+import MarkingSubmitted from "./messages/marking-submitted";
+import NegotiationResolved from "./messages/negotiation-resolved";
+import { PAUL_EMAIL, tag_coordinator } from "@/config/emails";
+import SupervisorNegotiationOverdue from "./messages/negotation-overdue/supervisor";
+import ReaderNegotiationOverdue from "./messages/negotation-overdue/reader";
 
 export type SendMail = ({
   message,
@@ -42,13 +42,124 @@ export class Mailer {
     this.sendMail = sendMail;
   }
 
-  public async test() {
-    const message = <MarkingComplete {...MarkingComplete.PreviewProps} />;
-    await this.sendMail({
-      message,
-      subject: "Testing...",
-      to: ["j.trevor.1@research.gla.ac.uk"],
-    });
+  public async notifyMarkingSubmitted({
+    project,
+    student,
+    unit,
+    criteria,
+    submission,
+    marker,
+  }: {
+    project: ProjectDTO;
+    student: StudentDTO;
+    unit: UnitOfAssessmentDTO;
+    criteria: AssessmentCriterionDTO[];
+    submission: MarkingSubmissionDTO;
+    marker: UserDTO;
+  }) {
+    const message = (
+      <MarkingSubmitted
+        project={project}
+        student={student}
+        unit={unit}
+        criteria={criteria}
+        submission={submission}
+        marker={marker}
+      />
+    );
+
+    const subject = "Marking Submitted";
+
+    await Promise.all([
+      this.sendMail({ message, subject, to: [marker.email] }),
+      this.sendMail({
+        message,
+        subject: tag_coordinator(subject),
+        to: [PAUL_EMAIL],
+      }),
+    ]);
+  }
+
+  public async notifyNegotiationOverdue({
+    student,
+    project,
+    unit,
+    supervisor,
+    params,
+    reader,
+  }: {
+    project: ProjectDTO;
+    student: StudentDTO;
+    unit: UnitOfAssessmentDTO;
+    reader: ReaderDTO;
+    supervisor: SupervisorDTO;
+    params: InstanceParams;
+  }) {
+    const subject = "Negotiation Overdue";
+
+    await Promise.all([
+      this.sendMail({
+        message: (
+          <SupervisorNegotiationOverdue
+            student={student}
+            project={project}
+            unit={unit}
+            supervisor={supervisor}
+            params={params}
+          />
+        ),
+        to: [supervisor.email],
+        subject,
+      }),
+      this.sendMail({
+        message: (
+          <ReaderNegotiationOverdue
+            student={student}
+            project={project}
+            reader={reader}
+          />
+        ),
+        to: [reader.email],
+        subject,
+      }),
+    ]);
+  }
+
+  public async notifyNegotiationResolved({
+    student,
+    supervisor,
+    reader,
+    project,
+    unit,
+    grade,
+  }: {
+    student: StudentDTO;
+    supervisor: SupervisorDTO;
+    reader: ReaderDTO;
+    project: ProjectDTO;
+    unit: UnitOfAssessmentDTO;
+    grade: string;
+  }) {
+    const message = (
+      <NegotiationResolved
+        student={student}
+        grade={grade}
+        project={project}
+        unit={unit}
+      />
+    );
+    const subject = "Grading Auto-resolve succeeded";
+
+    await Promise.all([
+      this.sendMail({ message, subject, to: [supervisor.email] }),
+      this.sendMail({ message, subject, to: [supervisor.email] }),
+      this.sendMail({ message, subject, to: [reader.email] }),
+      this.sendMail({
+        message,
+        subject: tag_coordinator(subject),
+        to: [PAUL_EMAIL],
+      }),
+    ]);
   }
 
   public async notifyMarkingComplete(

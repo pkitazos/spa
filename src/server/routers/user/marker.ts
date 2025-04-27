@@ -1,5 +1,5 @@
 import { Grade } from "@/config/grades";
-import { Marker, Student } from "@/data-objects";
+import { Marker } from "@/data-objects";
 import { Transformers as T } from "@/db/transformers";
 import { markerTypeSchema, Stage } from "@/db/types";
 import {
@@ -12,6 +12,7 @@ import {
   ReaderDTO,
   MarkingSubmissionDTO,
 } from "@/dto";
+import { GradingResult } from "@/dto/result/grading-result";
 import { markingSubmissionStatusSchema } from "@/dto/result/marking-submission-status";
 import { subsequentStages } from "@/lib/utils/permissions/stage-check";
 import { procedure } from "@/server/middleware";
@@ -109,23 +110,33 @@ export const markerRouter = createTRPCRouter({
         ctx: { db, user, mailer, instance },
         input: { studentId, unitOfAssessmentId, grade, comment },
       }) => {
+        const studentDO = await instance.getStudent(studentId);
+
+        const reader = await studentDO.getReader();
+        const { project, supervisor } = await studentDO.getAllocation();
+
+        const student = await studentDO.get();
+        const unit = await instance.getUnitOfAssessment(unitOfAssessmentId);
+
         const res = Grade.checkExtremes(Grade.toLetter(grade));
-        if (res.status === "AUTO_RESOLVED") {
+        if (res.status === GradingResult.AUTO_RESOLVED) {
           await user.writeFinalMark({
             studentId,
             unitOfAssessmentId,
             grade,
             comment,
           });
+
+          await mailer.notifyNegotiationResolved({
+            grade: Grade.toLetter(grade),
+            project,
+            reader,
+            student,
+            supervisor,
+            unit,
+          });
         } else {
           const deadline = addWeeks(new Date(), 1);
-          const studentObj = await instance.getStudent(studentId);
-
-          const reader = await studentObj.getReader();
-          const { project, supervisor } = await studentObj.getAllocation();
-
-          const student = await studentObj.get();
-          const unit = await instance.getUnitOfAssessment(unitOfAssessmentId);
 
           // otherwise, if this is a doubly-marked submission, and now both are submitted then:
           const data = await db.markingSubmission.findMany({
@@ -185,7 +196,7 @@ export const markerRouter = createTRPCRouter({
           });
         }
 
-        await user.writeMarks({
+        const submission = {
           grade,
           unitOfAssessmentId,
           studentId,
@@ -193,6 +204,21 @@ export const markerRouter = createTRPCRouter({
           finalComment,
           recommendation,
           draft: false,
+        };
+
+        await user.writeMarks(submission);
+
+        const studentDO = await instance.getStudent(studentId);
+        const student = await studentDO.get();
+        const { supervisor, project } = await studentDO.getAllocation();
+
+        mailer.notifyMarkingSubmitted({
+          project,
+          student,
+          unit,
+          criteria: components,
+          submission: { ...submission, markerId: user.id },
+          marker: await user.toDTO(),
         });
 
         if (allowedMarkerTypes.length === 1) {
@@ -232,25 +258,23 @@ export const markerRouter = createTRPCRouter({
           {} as Record<string, MarkingSubmissionDTO>,
         );
 
-        const studentDO = new Student(db, studentId, params);
-
-        const student = await studentDO.get();
-        const { supervisor, project } = await studentDO.getAllocation();
-
         const reader: ReaderDTO = await studentDO.getReader();
+
+        const readerSubmission = submissionByMarker[reader.id];
+        const supervisorSubmission = submissionByMarker[supervisor.id];
 
         // run the auto-resolve function on the grades.
         const resolution = Grade.autoResolve(
-          Grade.toLetter(submissionByMarker[supervisor.id].grade),
-          Grade.toLetter(submissionByMarker[reader.id].grade),
+          Grade.toLetter(supervisorSubmission.grade),
+          Grade.toLetter(readerSubmission.grade),
         );
 
-        if (resolution.status === "INSUFFICIENT") {
+        if (resolution.status === GradingResult.INSUFFICIENT) {
           console.error("unreachable: auto-resolve insufficient");
           return;
         }
 
-        if (resolution.status === "AUTO_RESOLVED") {
+        if (resolution.status === GradingResult.AUTO_RESOLVED) {
           const grade = Grade.toInt(resolution.grade);
 
           await user.writeFinalMark({
@@ -271,14 +295,11 @@ export const markerRouter = createTRPCRouter({
 
           return;
         }
-
-        const readerSubmission = submissionByMarker[reader.id];
-        const supervisorSubmission = submissionByMarker[supervisor.id];
         const deadline = addWeeks(new Date(), 1);
 
         if (
-          resolution.status === "NEGOTIATE1" ||
-          resolution.status === "NEGOTIATE2"
+          resolution.status === GradingResult.NEGOTIATE1 ||
+          resolution.status === GradingResult.NEGOTIATE2
         ) {
           // goes to negotiation - write nothing to db but do email markers
 
@@ -296,7 +317,7 @@ export const markerRouter = createTRPCRouter({
           });
           return;
         }
-        if (resolution.status === "MODERATE") {
+        if (resolution.status === GradingResult.MODERATE) {
           await mailer.notifyModeration({
             supervisor,
             reader,

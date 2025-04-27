@@ -57,7 +57,7 @@
 
 # Other Tasks
 
-- [ ] upload readings page
+- [x] upload readings page
 - [ ] add data table
 - [ ] add single input form
 - [ ] confirm if projects can have multiple allocations
@@ -69,14 +69,20 @@
 - [ ] my marking - split by submission
 - [ ] dropdown to filter by role for admins only
 
-- [ ] email submission receipts
+---
+
+- [x] email submission receipts
 - [ ] Marking overview page
 - [ ] data faceting & export
 - [ ] Marking overwrite page for unit of assessment (needed for moderation)
       negotiation 3 resolution
-- [ ] change project title.
 - [ ] marking review page
 - [ ] resolve button on my marking page.
-- [ ] save should say on same page.
+- [x] save should say on same page.
+
+# next release
+
+- [ ] change user info (name, email, id)
+- [ ] change project title.
 - [ ] custom deadlines
 - [ ] custom weights
