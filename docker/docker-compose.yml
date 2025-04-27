@@ -2,6 +2,7 @@ name: "amps"
 
 services:
   db:
+  # TODO migrate to latest
     image: postgres:16
     ports:
       - "127.0.0.1:6565:5432"

@@ -11,6 +11,17 @@ services:
     networks:
       - amps-network
   
+  # backups:
+  #   build:
+  #     context: ../
+  #     dockerfile: ./backups-dockerfile
+  #   volumes:
+  #     - ./backups/:/backups
+
+  #   restart: always
+  #   networks:
+  #     - amps-network
+
   matching-service:
     image: pkitazos/matching-service:amd64
 
