@@ -80,18 +80,11 @@ export function MarkingSection({
   });
 
   function handleSave(data: PartialMarkingSubmissionDTO) {
-    void toast.promise(
-      saveAsync({ params, ...data }).then(() => {
-        console.log(data.recommendation, "-", data.finalComment);
-        router.push(`${instancePath}/${PAGES.myMarking.href}`);
-        router.refresh();
-      }),
-      {
-        loading: `Saving marks for Student ${data.studentId}...`,
-        error: "Something went wrong",
-        success: `Successfully saved marks for Student ${data.studentId}`,
-      },
-    );
+    void toast.promise(saveAsync({ params, ...data }), {
+      loading: `Saving marks for Student ${data.studentId}...`,
+      error: "Something went wrong",
+      success: `Successfully saved marks for Student ${data.studentId}`,
+    });
   }
 
   const handleSubmit = form.handleSubmit((data: MarkingSubmissionDTO) => {
