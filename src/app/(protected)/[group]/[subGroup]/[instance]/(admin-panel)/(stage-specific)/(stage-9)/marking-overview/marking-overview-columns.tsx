@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { ProjectMarkingOverview, UnitGradingStatus } from "./row";
 import { cn } from "@/lib/utils";
+import { Grade } from "@/config/grades";
 
 export const columns: ColumnDef<ProjectMarkingOverview>[] = [
   { id: "chevron" },
@@ -50,7 +51,10 @@ export function StatusBox({ status }: { status: UnitGradingStatus }) {
   //   status.status === "MARKED"
   return (
     <div className={cn(universalStyles, "bg-primary text-primary-foreground")}>
-      Marked <span>{status.grade}</span>
+      Marked{" "}
+      <span className="ml-2 rounded-md bg-accent px-1 text-accent-foreground">
+        {Grade.toLetter(status.grade)}
+      </span>
     </div>
   );
 }
