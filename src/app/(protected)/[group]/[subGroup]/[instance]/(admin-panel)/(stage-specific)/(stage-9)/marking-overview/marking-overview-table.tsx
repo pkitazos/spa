@@ -152,9 +152,7 @@ export function MarkingOverviewTable({
                                 </div>
                               </TableCell>
                               <TableCell>
-                                <StatusBox
-                                  status={{ grade: 12, status: "MARKED" }}
-                                />
+                                <StatusBox status={e.status} />
                               </TableCell>
                             </TableRow>
                           ))}
