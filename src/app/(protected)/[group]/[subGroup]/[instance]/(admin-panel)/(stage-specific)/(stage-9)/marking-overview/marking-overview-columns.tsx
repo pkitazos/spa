@@ -2,6 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { ProjectMarkingOverview, UnitGradingStatus } from "./row";
+import { cn } from "@/lib/utils";
 
 export const columns: ColumnDef<ProjectMarkingOverview>[] = [
   { id: "chevron" },
@@ -20,14 +21,36 @@ export const columns: ColumnDef<ProjectMarkingOverview>[] = [
 ];
 
 export function StatusBox({ status }: { status: UnitGradingStatus }) {
-  if (status.status === "PENDING") return <div>Pending</div>;
-  if (status.status === "NEGOTIATION") return <div>In Negotiation</div>;
-  if (status.status === "MODERATION") return <div>In Moderation</div>;
+  const universalStyles =
+    "py-2text-sm inline-flex h-10 items-center justify-center rounded-md px-4 font-medium";
+  if (status.status === "PENDING")
+    return (
+      <div className={cn(universalStyles, "bg-accent text-accent-foreground")}>
+        Pending
+      </div>
+    );
+  if (status.status === "NEGOTIATION")
+    return (
+      <div className={cn(universalStyles, "bg-accent text-accent-foreground")}>
+        In Negotiation
+      </div>
+    );
+  if (status.status === "MODERATION")
+    return (
+      <div
+        className={cn(
+          universalStyles,
+          "bg-destructive text-destructive-foreground",
+        )}
+      >
+        In Moderation
+      </div>
+    );
 
   //   status.status === "MARKED"
   return (
-    <div>
-      z Marked <span>{status.grade}</span>
+    <div className={cn(universalStyles, "bg-primary text-primary-foreground")}>
+      Marked <span>{status.grade}</span>
     </div>
   );
 }

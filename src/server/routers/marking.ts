@@ -21,7 +21,10 @@ export const markingRouter = createTRPCRouter({
     .query(async ({ ctx: { db, instance } }) => {
       const projectStudentDataRaw = await db.studentProjectAllocation
         .findMany({
-          where: expand(instance.params),
+          where: {
+            ...expand(instance.params),
+            student: { studentLevel: { equals: 4 } },
+          },
           include: {
             project: {
               include: {
