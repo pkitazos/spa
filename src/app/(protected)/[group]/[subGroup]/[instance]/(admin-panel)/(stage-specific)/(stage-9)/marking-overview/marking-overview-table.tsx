@@ -9,7 +9,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ProjectMarkingOverview } from "./row";
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { columns, StatusBox } from "./marking-overview-columns";
 import {
   Table,
@@ -24,6 +24,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { CopyButton } from "@/components/copy-button";
 import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
 import { Input } from "@/components/ui/input";
+import { CopyEmailsButton } from "@/components/copy-emails-button";
 
 export function MarkingOverviewTable({
   data,
@@ -44,8 +45,28 @@ export function MarkingOverviewTable({
     state: { columnFilters },
   });
 
+  const overdueMarkerEmails = useMemo(
+    () => getOverdueMarkerEmails(data),
+    [data],
+  );
+
+  const requiresNegotiationEmails = useMemo(
+    () => getRequiresNegotiationEmails(data),
+    [data],
+  );
+
   return (
     <Fragment>
+      <div>
+        <CopyEmailsButton
+          label="Copy Outstanding Markers"
+          data={overdueMarkerEmails}
+        />
+        <CopyEmailsButton
+          label="Copy Markers in ongoing negotiation"
+          data={requiresNegotiationEmails}
+        />
+      </div>
       <div className="flex items-center py-4">
         <Input
           placeholder="Filter projects..."
@@ -170,4 +191,38 @@ export function MarkingOverviewTable({
       </Table>
     </Fragment>
   );
+}
+
+function getOverdueMarkerEmails(data: ProjectMarkingOverview[]) {
+  const emailSet = new Set(
+    data.flatMap(({ units }) =>
+      units.flatMap(({ markers }) =>
+        markers
+          .filter((m) => m.status.status === "PENDING")
+          .map((m) => m.marker.email),
+      ),
+    ),
+  );
+
+  return Array.from(emailSet).map((email) => ({ email }));
+}
+
+function getRequiresNegotiationEmails(data: ProjectMarkingOverview[]) {
+  const emailSet = new Set(
+    data.flatMap(({ units, project }) =>
+      units
+        .filter(
+          (unit) =>
+            unit.markers.every((m) => m.status.status === "MARKED") &&
+            unit.status.status === "PENDING" &&
+            unit.markers.length === 2,
+        )
+        .flatMap((unit) => {
+          console.log(project.title, unit.markers);
+          return unit.markers.map((m) => m.marker.email);
+        }),
+    ),
+  );
+
+  return Array.from(emailSet).map((email) => ({ email }));
 }
