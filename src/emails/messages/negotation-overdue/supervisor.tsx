@@ -34,7 +34,7 @@ export function SupervisorNegotiationOverdue({
   const resolutionURL = `${env.FRONTEND_SERVER_URL}/${params.group}/${params.subGroup}/${params.instance}/my-marking/${unit.id}/${student.id}/resolve`;
 
   return (
-    <Layout previewText="Auto-resolve successful">
+    <Layout previewText="Marking Negotiation Overdue">
       <Section>
         <Heading as="h2" className="mx-auto text-center">
           Negotiation Overdue:

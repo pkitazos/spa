@@ -36,7 +36,7 @@ export function MarkingSubmitted({
   marker,
 }: Props) {
   return (
-    <Layout previewText="Negotiation required">
+    <Layout previewText="Marking Submitted">
       <Heading as="h2">{unit.title} Marking Submitted</Heading>
       <Text>
         {marker.name}, the marks for {project.title} ({student.name},{" "}

@@ -29,7 +29,7 @@ export function MarkingOverdue({
   const markingURL = `${env.FRONTEND_SERVER_URL}/${params.group}/${params.subGroup}/${params.instance}/my-marking/`;
 
   return (
-    <Layout previewText="Auto-resolve successful">
+    <Layout previewText="Marking Overdue">
       <Section>
         <Heading as="h2" className="mx-auto text-center">
           {unit.title} Marking Overview:

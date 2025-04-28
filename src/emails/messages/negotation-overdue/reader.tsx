@@ -11,7 +11,7 @@ interface Props {
 
 export function ReaderNegotiationOverdue({ student, project, reader }: Props) {
   return (
-    <Layout previewText="Auto-resolve successful">
+    <Layout previewText="Marking Negotiation Overdue">
       <Section>
         <Heading as="h2" className="mx-auto text-center">
           Negotiation Overdue:

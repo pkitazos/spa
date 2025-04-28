@@ -12,7 +12,7 @@ interface Props {
 
 export function NegotiationResolved({ project, student, unit, grade }: Props) {
   return (
-    <Layout previewText="Negotiation required">
+    <Layout previewText="Negotiation Resolved">
       <Heading as="h2">{unit.title} Negotiation Resolved</Heading>
       <Text>
         The marks for {project.title} ({student.name}, {student.id}) have been
