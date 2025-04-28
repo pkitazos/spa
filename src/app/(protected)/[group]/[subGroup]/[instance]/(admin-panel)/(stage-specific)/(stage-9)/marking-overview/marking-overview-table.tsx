@@ -194,24 +194,31 @@ export function MarkingOverviewTable({
 }
 
 function getOverdueMarkerEmails(data: ProjectMarkingOverview[]) {
+  let log: any = [];
   const emailSet = new Set(
     data.flatMap(({ units, project }) =>
       units.flatMap(({ markers }) =>
         markers
           .filter((m) => m.status.status === "PENDING")
           .map((m) => {
-            if (m.marker.name === "Paul Harvey")
-              console.log(project.title, m.marker.name, m.markerType);
+            log.push({
+              projectTitle: project.title,
+              markerName: m.marker.name,
+              type: m.markerType,
+            });
             return m.marker.email;
           }),
       ),
     ),
   );
 
+  console.log("overdue submissions:", log);
+
   return Array.from(emailSet).map((email) => ({ email }));
 }
 
 function getRequiresNegotiationEmails(data: ProjectMarkingOverview[]) {
+  let log: any[] = [];
   const emailSet = new Set(
     data.flatMap(({ units, project }) =>
       units
@@ -222,11 +229,16 @@ function getRequiresNegotiationEmails(data: ProjectMarkingOverview[]) {
             unit.markers.length === 2,
         )
         .flatMap((unit) => {
-          console.log(project.title, unit.markers);
+          log.push({
+            title: project.title,
+            markers: unit.markers.map((m) => m.marker.name),
+          });
           return unit.markers.map((m) => m.marker.email);
         }),
     ),
   );
+
+  console.log("pending negotiation:", log);
 
   return Array.from(emailSet).map((email) => ({ email }));
 }
