@@ -9,7 +9,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ProjectMarkingOverview } from "./row";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useCallback, useMemo, useState } from "react";
 import { columns, StatusBox } from "./marking-overview-columns";
 import {
   Table,
@@ -20,18 +20,30 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, Send } from "lucide-react";
 import { CopyButton } from "@/components/copy-button";
 import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
 import { Input } from "@/components/ui/input";
 import { CopyEmailsButton } from "@/components/copy-emails-button";
+import { YesNoAction } from "@/components/yes-no-action";
+import { api } from "@/lib/trpc/client";
+import { useInstanceParams } from "@/components/params-context";
+import { toast } from "sonner";
 
 export function MarkingOverviewTable({
   data,
 }: {
   data: ProjectMarkingOverview[];
 }) {
+  const params = useInstanceParams();
+
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+
+  const { mutateAsync: sendOverdueReminder } =
+    api.marking.sendOverdueMarkingReminder.useMutation();
+
+  const { mutateAsync: sendNegotiationReminder } =
+    api.marking.sendOverdueNegotiationReminder.useMutation();
 
   const table = useReactTable<ProjectMarkingOverview>({
     data,
@@ -55,6 +67,28 @@ export function MarkingOverviewTable({
     [data],
   );
 
+  const overdueReminderAction = useCallback(() => {
+    toast.promise(
+      sendOverdueReminder({ params, markers: overdueMarkerEmails }),
+      {
+        loading: "Sending...",
+        success: `Successfully sent ${overdueMarkerEmails.length} reminder emails`,
+        error: `Failed to send emails`,
+      },
+    );
+  }, [overdueMarkerEmails, params, sendOverdueReminder]);
+
+  const overdueNegotiationAction = useCallback(() => {
+    toast.promise(
+      sendNegotiationReminder({ params, markers: requiresNegotiationEmails }),
+      {
+        loading: "Sending...",
+        success: `Successfully sent ${requiresNegotiationEmails.length} reminder emails`,
+        error: `Failed to send emails`,
+      },
+    );
+  }, [overdueMarkerEmails, params, sendOverdueReminder]);
+
   return (
     <Fragment>
       <div>
@@ -65,6 +99,30 @@ export function MarkingOverviewTable({
         <CopyEmailsButton
           label="Copy Markers in ongoing negotiation"
           data={requiresNegotiationEmails}
+        />
+      </div>
+      <div className="flex flex-row gap-1 py-1">
+        <YesNoAction
+          action={overdueReminderAction}
+          title={`Send marking reminders`}
+          description={`You are about to send a late reminder to ${overdueMarkerEmails.length} markers. Do you wish to proceed?`}
+          trigger={
+            <Button className="flex items-center gap-2">
+              <Send className="h-4 w-4" />
+              <p>send marking overdue reminder</p>
+            </Button>
+          }
+        />
+        <YesNoAction
+          action={overdueNegotiationAction}
+          title={`Send negotiation reminders`}
+          description={`You are about to send a late reminder to ${requiresNegotiationEmails.length} markers. Do you wish to proceed?`}
+          trigger={
+            <Button className="flex items-center gap-2">
+              <Send className="h-4 w-4" />
+              <p>send negotiation overdue reminder</p>
+            </Button>
+          }
         />
       </div>
       <div className="flex items-center py-4">

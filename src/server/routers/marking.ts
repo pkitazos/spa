@@ -202,4 +202,20 @@ export const markingRouter = createTRPCRouter({
 
       return breakdowns;
     }),
+
+  sendOverdueMarkingReminder: procedure.instance
+    .inStage(subsequentStages(Stage.MARK_SUBMISSION))
+    .subGroupAdmin.output(z.void())
+    .input(z.object({ markers: z.array(z.object({ email: z.string() })) }))
+    .mutation(async ({ ctx: { mailer }, input: { markers, params } }) => {
+      await mailer.notifyGenericMarkingOverdue({ params, markers });
+    }),
+
+  sendOverdueNegotiationReminder: procedure.instance
+    .inStage(subsequentStages(Stage.MARK_SUBMISSION))
+    .subGroupAdmin.output(z.void())
+    .input(z.object({ markers: z.array(z.object({ email: z.string() })) }))
+    .mutation(async ({ ctx: { mailer }, input: { markers } }) => {
+      await mailer.notifyGenericNegotiationOverdue({ markers });
+    }),
 });

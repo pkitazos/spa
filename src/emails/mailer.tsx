@@ -22,6 +22,8 @@ import NegotiationResolved from "./messages/negotiation-resolved";
 import { PAUL_EMAIL, tag_coordinator } from "@/config/emails";
 import SupervisorNegotiationOverdue from "./messages/negotation-overdue/supervisor";
 import ReaderNegotiationOverdue from "./messages/negotation-overdue/reader";
+import MarkingOverdueGeneric from "./messages/marking-overdue-generic";
+import NegotiationOverdueGeneric from "./messages/negotiation-overdue-generic";
 
 export type SendMail = ({
   message,
@@ -40,6 +42,48 @@ export class Mailer {
 
   public constructor(sendMail: SendMail) {
     this.sendMail = sendMail;
+  }
+
+  public async notifyGenericMarkingOverdue({
+    params,
+    markers,
+  }: {
+    params: InstanceParams;
+    markers: { email: string }[];
+  }) {
+    const message = <MarkingOverdueGeneric params={params} />;
+    const subject = "Marking Overdue";
+
+    await Promise.all(
+      markers.flatMap((m) => [
+        this.sendMail({ message, subject, to: [m.email] }),
+        this.sendMail({
+          message,
+          subject: tag_coordinator(m.email + " " + subject),
+          to: [PAUL_EMAIL],
+        }),
+      ]),
+    );
+  }
+
+  public async notifyGenericNegotiationOverdue({
+    markers,
+  }: {
+    markers: { email: string }[];
+  }) {
+    const message = <NegotiationOverdueGeneric />;
+    const subject = "Negotiation Overdue";
+
+    await Promise.all(
+      markers.flatMap((m) => [
+        this.sendMail({ message, subject, to: [m.email] }),
+        this.sendMail({
+          message,
+          subject: tag_coordinator(m.email + " " + subject),
+          to: [PAUL_EMAIL],
+        }),
+      ]),
+    );
   }
 
   public async notifyMarkingSubmitted({
