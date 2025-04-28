@@ -12,8 +12,8 @@ export function MarkingOverdueGeneric({}: Props) {
           Negotiation Overdue:
         </Heading>
         <Text>
-          This is a gentle reminder that you have an outstanding project
-          negotiation to resolve.
+          This is a reminder that you have an outstanding project negotiation to
+          resolve.
         </Text>
         <Text>
           Once resolved, the supervisor should upload the resolution via the
