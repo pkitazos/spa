@@ -195,11 +195,15 @@ export function MarkingOverviewTable({
 
 function getOverdueMarkerEmails(data: ProjectMarkingOverview[]) {
   const emailSet = new Set(
-    data.flatMap(({ units }) =>
+    data.flatMap(({ units, project }) =>
       units.flatMap(({ markers }) =>
         markers
           .filter((m) => m.status.status === "PENDING")
-          .map((m) => m.marker.email),
+          .map((m) => {
+            if (m.marker.name === "Paul Harvey")
+              console.log(project.title, m.marker.name, m.markerType);
+            return m.marker.email;
+          }),
       ),
     ),
   );
