@@ -16,7 +16,7 @@ export function MarkingOverdueGeneric({ params }: Props) {
     <Layout previewText="Marking Overdue">
       <Section>
         <Heading as="h2" className="mx-auto text-center">
-          Marking Overview:
+          Marking Overdue:
         </Heading>
 
         <Text>

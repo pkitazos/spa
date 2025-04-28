@@ -9,7 +9,7 @@ export function MarkingOverdueGeneric({}: Props) {
     <Layout previewText="Marking Overdue">
       <Section>
         <Heading as="h2" className="mx-auto text-center">
-          Negotiation Overview:
+          Negotiation Overdue:
         </Heading>
         <Text>
           This is a gentle reminder that you have an outstanding project
