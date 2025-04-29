@@ -71,19 +71,31 @@
 
 ---
 
+- [ ] delete Eilidh McAlonan
+- [ ] include SEYP on overview page
 - [x] email submission receipts
 - [x] Marking overview page
   - [ ] make top level status reactive
+  - [ ] add button to re-compute top level status
 - [ ] data faceting & export
 - [ ] Marking overwrite page for unit of assessment (needed for moderation)
       negotiation 3 resolution
+  - [ ] link to this too
+- [ ] summary counters on marking overview page
+
+---
+
 - [ ] marking review page
 - [ ] resolve button on my marking page.
+- [ ] TLC to resolve page
 - [x] save should say on same page.
+- [ ] add date when negotiation triggered
+- [ ] index marking overview by academic
 
 # next release
 
 - [ ] change user info (name, email, id)
 - [ ] change project title.
-- [ ] custom deadlines
+- [ ] custom deadlines -> 100% a thing
 - [ ] custom weights
+- [ ] allow users to delete users
