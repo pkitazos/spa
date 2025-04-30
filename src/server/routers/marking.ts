@@ -13,6 +13,7 @@ import {
 } from "@/app/(protected)/[group]/[subGroup]/[instance]/(admin-panel)/(stage-specific)/(stage-9)/marking-overview/row";
 // TODO: fix
 import { MarkingSubmissionDTO, UserDTO } from "@/dto";
+import { Grade } from "@/config/grades";
 
 export const markingRouter = createTRPCRouter({
   byProjectMarkingSummary: procedure.instance
@@ -154,7 +155,7 @@ export const markingRouter = createTRPCRouter({
       );
 
       const breakdowns = projectStudentDataRaw.map(
-        ({ student, project, supervisor, reader }) => {
+        async ({ student, project, supervisor, reader }) => {
           const unitFinalMarksByUnit =
             unitFinalMarksByUnitByStudent[student.id] ?? {};
 
@@ -203,7 +204,27 @@ export const markingRouter = createTRPCRouter({
             };
           });
 
-          const finalMark = overallFinalMarksByStudent[student.id];
+          let finalMark = overallFinalMarksByStudent[student.id];
+
+          if (
+            finalMark === undefined &&
+            unitData.every((u) => u.status.status === "MARKED")
+          ) {
+            finalMark = Grade.computeFromScores(
+              unitData.map((e) => ({
+                score: e.status.grade!,
+                weight: e.unit.weight,
+              })),
+            );
+
+            await db.finalGrade.create({
+              data: {
+                grade: finalMark,
+                ...expand(instance.params),
+                studentId: student.id,
+              },
+            });
+          }
 
           return {
             student,
@@ -217,7 +238,7 @@ export const markingRouter = createTRPCRouter({
         },
       );
 
-      return breakdowns;
+      return await Promise.all(breakdowns);
     }),
 
   sendOverdueMarkingReminder: procedure.instance
