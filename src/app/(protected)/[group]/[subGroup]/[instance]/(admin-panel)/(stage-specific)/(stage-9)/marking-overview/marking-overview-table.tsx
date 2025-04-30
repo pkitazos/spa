@@ -29,6 +29,8 @@ import { YesNoAction } from "@/components/yes-no-action";
 import { api } from "@/lib/trpc/client";
 import { useInstanceParams } from "@/components/params-context";
 import { toast } from "sonner";
+import { ExportCSVButton } from "@/components/export-csv";
+import { prepCSV } from "./prep-csv";
 
 export function MarkingOverviewTable({
   data,
@@ -123,6 +125,36 @@ export function MarkingOverviewTable({
               <p>send negotiation overdue reminder</p>
             </Button>
           }
+        />
+      </div>
+      <div>
+        <ExportCSVButton
+          header={[
+            "studentGUID",
+            "studentName",
+            "studentLevel",
+            "studentEmail",
+            "projectTitle",
+            "supervsorName",
+            "supervisorEmail",
+            "readerName",
+            "readerEmail",
+            "moderatorName",
+            "moderatorEmail",
+            "presentationGrade",
+            "conductGrade",
+            "supervisorDissertationGrade",
+            "readerDissertationGrade",
+            "requiredNegotiation",
+            "negotiatedGrade",
+            "requiredModeration",
+            "moderatedGrade",
+            "finalDissertationGrade",
+            "overallGrade",
+          ]}
+          data={prepCSV(data)}
+          filename={"marking"}
+          text="Download as CSV"
         />
       </div>
       <div className="flex items-center py-4">

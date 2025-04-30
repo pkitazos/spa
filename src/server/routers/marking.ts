@@ -246,6 +246,7 @@ export const markingRouter = createTRPCRouter({
     .subGroupAdmin.output(z.void())
     .input(z.object({ markers: z.array(z.object({ email: z.string() })) }))
     .mutation(async ({ ctx: { mailer }, input: { markers, params } }) => {
+      console.log(markers.map((e) => e.email));
       await mailer.notifyGenericMarkingOverdue({ params, markers });
     }),
 
