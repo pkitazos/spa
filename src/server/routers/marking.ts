@@ -232,7 +232,11 @@ export const markingRouter = createTRPCRouter({
 
             return {
               status: unitFinalGrade
-                ? { status: GradingStatus.MARKED, grade: unitFinalGrade.grade }
+                ? {
+                    status: GradingStatus.MARKED,
+                    grade: unitFinalGrade.grade,
+                    comment: unitFinalGrade.comment,
+                  }
                 : { status: GradingStatus.PENDING },
               unit: u,
               markers,

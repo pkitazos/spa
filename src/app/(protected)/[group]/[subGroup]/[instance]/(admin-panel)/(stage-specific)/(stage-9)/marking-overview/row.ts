@@ -28,7 +28,11 @@ const gradingStatusSchema = z.union([
 export type GradingStatus = z.infer<typeof gradingStatusSchema>;
 
 const unitGradingStatusSchema = z.union([
-  z.object({ status: z.literal(UnitGradingStatus.MARKED), grade: z.number() }),
+  z.object({
+    status: z.literal(UnitGradingStatus.MARKED),
+    grade: z.number(),
+    comment: z.string(),
+  }),
   z.object({ status: z.literal(UnitGradingStatus.PENDING) }),
   z.object({ status: z.literal(UnitGradingStatus.NEGOTIATION) }),
   z.object({ status: z.literal(UnitGradingStatus.MODERATION) }),

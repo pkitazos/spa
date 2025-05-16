@@ -21,7 +21,6 @@ interface CSVRow {
 
   moderatorName?: string;
   moderatorEmail?: string;
-  moderationComments?: string;
 
   presentationGrade: string;
   presentationComments: string;
@@ -35,9 +34,11 @@ interface CSVRow {
 
   requiredNegotiation: boolean;
   negotiatedGrade?: string;
+  negotiatedComment?: string;
 
   requiredModeration: boolean;
   moderatedGrade?: string;
+  moderationComments?: string;
 
   finalDissertationGrade: string;
   overallGrade: string;
@@ -132,6 +133,11 @@ export function prepCSV(data: ProjectMarkingOverview[]): CSVRow[] {
       negotiatedGrade: requiredNegotiation
         ? statusToString(dissertation.status)
         : undefined,
+      negotiatedComment:
+        requiredNegotiation && dissertation.status.status == "MARKED"
+          ? dissertation.status.comment
+          : undefined,
+
       requiredModeration,
       moderatedGrade: undefined,
       finalDissertationGrade: statusToString(dissertation.status) ?? "",

@@ -143,7 +143,6 @@ export function MarkingOverviewTable({
 
             "moderatorName",
             "moderatorEmail",
-            "moderationComments",
 
             "presentationGrade",
             "presentationComments",
@@ -157,9 +156,11 @@ export function MarkingOverviewTable({
 
             "requiredNegotiation",
             "negotiatedGrade",
+            "negotiatedComment",
 
             "requiredModeration",
             "moderatedGrade",
+            "moderationComments",
 
             "finalDissertationGrade",
             "overallGrade",
