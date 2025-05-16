@@ -135,22 +135,35 @@ export function MarkingOverviewTable({
             "studentLevel",
             "studentEmail",
             "projectTitle",
+
             "supervsorName",
             "supervisorEmail",
             "readerName",
             "readerEmail",
+
             "moderatorName",
             "moderatorEmail",
+            "moderationComments",
+
             "presentationGrade",
+            "presentationComments",
             "conductGrade",
+            "conductComments",
+
             "supervisorDissertationGrade",
+            "supervisorDissertationComments",
             "readerDissertationGrade",
+            "readerDissertationComments",
+
             "requiredNegotiation",
             "negotiatedGrade",
+
             "requiredModeration",
             "moderatedGrade",
+
             "finalDissertationGrade",
             "overallGrade",
+            "penalty",
           ]}
           data={prepCSV(data)}
           filename={"marking"}

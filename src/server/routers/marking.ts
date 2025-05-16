@@ -91,30 +91,56 @@ export const markingRouter = createTRPCRouter({
           unitOfAssessmentId: { in: units.map((e) => e.id) },
           draft: false,
         },
+        include: {
+          criterionScores: {
+            include: { criterion: true },
+            orderBy: { criterion: { layoutIndex: "asc" } },
+          },
+        },
       });
 
       // below is:
       // data[studentId][unitId][markerId]
       const submissions_ByMarker_ByUnit_ByStudentId = submissions
-        .map(T.toMarkingSubmissionDTO)
+        .map((x) => ({
+          submission: T.toMarkingSubmissionDTO(x),
+          comments: x.criterionScores,
+        }))
         .reduce(
-          (acc, val) => {
-            const prev_by_unit = acc[val.studentId] ?? {};
-            const prev_by_marker = prev_by_unit[val.unitOfAssessmentId];
+          (acc, { submission, comments }) => {
+            const prev_by_unit = acc[submission.studentId] ?? {};
+            const prev_by_marker = prev_by_unit[submission.unitOfAssessmentId];
+
+            const comment =
+              comments.reduce((acc, val) => {
+                const rest = val.criterion.title + "\t" + val.justification;
+                return acc + "\t\t" + rest;
+              }, "") +
+              "\t\tFinal Comment:\t" +
+              submission.finalComment;
+
+            // console.log(comment);
+
             return {
               ...acc,
-              [val.studentId]: {
+              [submission.studentId]: {
                 ...prev_by_unit,
-                [val.unitOfAssessmentId]: {
+                [submission.unitOfAssessmentId]: {
                   ...prev_by_marker,
-                  [val.markerId]: val,
+                  [submission.markerId]: { submission, comment },
                 },
               },
             };
           },
           {} as Record<
             string,
-            Record<string, Record<string, MarkingSubmissionDTO>>
+            Record<
+              string,
+              Record<
+                string,
+                { submission: MarkingSubmissionDTO; comment: string }
+              >
+            >
           >,
         );
 
@@ -184,11 +210,20 @@ export const markingRouter = createTRPCRouter({
                   marker.id
                 ];
 
+              console.log(
+                submission?.submission.studentId,
+                submission?.comment,
+              );
+
               return {
                 markerType,
                 marker,
                 status: submission
-                  ? { status: GradingStatus.MARKED, grade: submission.grade }
+                  ? {
+                      status: GradingStatus.MARKED,
+                      grade: submission.submission.grade,
+                      comment: submission.comment,
+                    }
                   : { status: GradingStatus.PENDING },
               } satisfies MarkerStatusSummary;
             });
@@ -232,7 +267,11 @@ export const markingRouter = createTRPCRouter({
             status:
               finalMark === undefined
                 ? { status: GradingStatus.PENDING }
-                : { status: GradingStatus.MARKED, grade: finalMark },
+                : {
+                    status: GradingStatus.MARKED,
+                    grade: finalMark,
+                    comment: "",
+                  },
             units: unitData,
           } satisfies ProjectMarkingOverview;
         },

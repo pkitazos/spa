@@ -21,12 +21,17 @@ interface CSVRow {
 
   moderatorName?: string;
   moderatorEmail?: string;
+  moderationComments?: string;
 
   presentationGrade: string;
+  presentationComments: string;
   conductGrade: string;
+  conductComments: string;
 
   supervisorDissertationGrade: string;
+  supervisorDissertationComments: string;
   readerDissertationGrade: string;
+  readerDissertationComments: string;
 
   requiredNegotiation: boolean;
   negotiatedGrade?: string;
@@ -36,6 +41,7 @@ interface CSVRow {
 
   finalDissertationGrade: string;
   overallGrade: string;
+  penalty?: string;
 }
 
 export function prepCSV(data: ProjectMarkingOverview[]): CSVRow[] {
@@ -56,9 +62,15 @@ export function prepCSV(data: ProjectMarkingOverview[]): CSVRow[] {
 
     const supervisor = markerMap[MarkerType.SUPERVISOR];
     const reader = markerMap[MarkerType.READER];
-
     const supervisorDissertationGrade = statusToString(supervisor.status);
     const readerDissertationGrade = statusToString(reader.status);
+
+    // console.log(supervisor.status);
+
+    const supervisorDissertationComments =
+      supervisor.status.status === "MARKED" ? supervisor.status.comment : "";
+    const readerDissertationComments =
+      reader.status.status === "MARKED" ? reader.status.comment : "";
 
     const dissStatus = Grade.autoResolve(
       supervisorDissertationGrade,
@@ -79,6 +91,9 @@ export function prepCSV(data: ProjectMarkingOverview[]): CSVRow[] {
         Grade.checkExtremes(Grade.toLetter(dissGrade)).status === "MODERATE") ||
       false;
 
+    // @ts-ignore
+    console.log(presentation.markers[0].status.comment);
+
     return {
       studentGUID: student.id,
       studentName: student.name,
@@ -95,11 +110,23 @@ export function prepCSV(data: ProjectMarkingOverview[]): CSVRow[] {
       moderatorEmail: requiredModeration
         ? "Paul.Harvey@glasgow.ac.uk"
         : undefined,
+      moderationComments: undefined,
 
       presentationGrade: statusToString(presentation.status) ?? "",
       conductGrade: statusToString(conduct.status) ?? "",
       supervisorDissertationGrade: supervisorDissertationGrade ?? "",
       readerDissertationGrade: readerDissertationGrade ?? "",
+
+      presentationComments:
+        presentation.markers[0].status.status === "MARKED"
+          ? presentation.markers[0].status.comment
+          : "",
+      conductComments:
+        conduct.markers[0].status.status === "MARKED"
+          ? conduct.markers[0].status.comment
+          : "",
+      supervisorDissertationComments: supervisorDissertationComments,
+      readerDissertationComments: readerDissertationComments,
 
       requiredNegotiation,
       negotiatedGrade: requiredNegotiation
@@ -109,6 +136,7 @@ export function prepCSV(data: ProjectMarkingOverview[]): CSVRow[] {
       moderatedGrade: undefined,
       finalDissertationGrade: statusToString(dissertation.status) ?? "",
       overallGrade: statusToString(status) ?? "",
+      penalty: undefined,
     };
   });
 }

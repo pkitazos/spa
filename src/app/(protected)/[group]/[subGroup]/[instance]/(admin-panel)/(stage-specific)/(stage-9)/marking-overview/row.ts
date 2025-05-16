@@ -17,7 +17,11 @@ export const UnitGradingStatus = {
 } as const;
 
 const gradingStatusSchema = z.union([
-  z.object({ status: z.literal(GradingStatus.MARKED), grade: z.number() }),
+  z.object({
+    status: z.literal(GradingStatus.MARKED),
+    grade: z.number(),
+    comment: z.string(),
+  }),
   z.object({ status: z.literal(GradingStatus.PENDING) }),
 ]);
 

@@ -71,20 +71,23 @@
 
 ---
 
-- [ ] delete Eilidh McAlonan
-- [ ] include SEYP on overview page
+- [ ] replicated SQL backups to 2nd machines
+  - [ ] add pull script
+- [ ] auto-start docker services in prod
+  - [ ] add restart notification email sending function
+- [x] CSV Export
+  - [ ] fix issues
+- [x] include SEYP on overview page
 - [x] email submission receipts
 - [x] Marking overview page
-  - [ ] make top level status reactive
-  - [ ] add button to re-compute top level status
-- [ ] data faceting & export
+  - [x] make top level status reactive
 - [ ] Marking overwrite page for unit of assessment (needed for moderation)
       negotiation 3 resolution
   - [ ] link to this too
-- [ ] summary counters on marking overview page
 
 ---
 
+- [ ] summary counters on marking overview page
 - [ ] marking review page
 - [ ] resolve button on my marking page.
 - [ ] TLC to resolve page
@@ -99,3 +102,21 @@
 - [ ] custom deadlines -> 100% a thing
 - [ ] custom weights
 - [ ] allow users to delete users
+- [ ] add a field to the database that records if a project is 40 or 20 credits
+
+  - [ ] This should also be displayed to markers somehow.
+
+---
+
+- [ ] add extra comments to marking overview CSV
+  - presentation, conduct, sup. diss, reader diss, moderation comments.
+- [ ] 'sum of penalties' column
+
+- [ ] reader allocation
+- [ ] project allocation testing
+- [ ] documentation
+- [ ] csv modification stuff
+- [ ] logging
+- [ ] better email for coordinator
+- [ ] daily digest for academics
+- [ ] 'amazon delivery package' tracking for marking (supervisors and readers).
