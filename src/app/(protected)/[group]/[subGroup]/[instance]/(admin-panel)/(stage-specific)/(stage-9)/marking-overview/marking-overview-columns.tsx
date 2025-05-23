@@ -24,6 +24,7 @@ export const columns: ColumnDef<ProjectMarkingOverview>[] = [
 export function StatusBox({ status }: { status: UnitGradingStatus }) {
   const universalStyles =
     "py-2text-sm inline-flex h-10 items-center justify-center rounded-md px-4 font-medium";
+
   if (status.status === "PENDING")
     return (
       <div className={cn(universalStyles, "bg-accent text-accent-foreground")}>
