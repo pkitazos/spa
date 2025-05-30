@@ -45,6 +45,8 @@ next-env.d.ts
 *.t.txt
 *.t.*
 
+*.log
+
 junk/
 
 .react-email/
