@@ -11,10 +11,11 @@ import {
   ProjectMarkingOverview,
   projectMarkingOverviewSchema,
 } from "@/app/(protected)/[group]/[subGroup]/[instance]/(admin-panel)/(stage-specific)/(stage-9)/marking-overview/row";
-// TODO: fix
 import { MarkingSubmissionDTO, UserDTO } from "@/dto";
 import { Grade } from "@/config/grades";
+import { LogLevels } from "@/lib/logging/logger";
 
+// TODO: fix
 export const markingRouter = createTRPCRouter({
   byProjectMarkingSummary: procedure.instance
     .inStage(subsequentStages(Stage.MARK_SUBMISSION))
@@ -288,16 +289,26 @@ export const markingRouter = createTRPCRouter({
     .inStage(subsequentStages(Stage.MARK_SUBMISSION))
     .subGroupAdmin.output(z.void())
     .input(z.object({ markers: z.array(z.object({ email: z.string() })) }))
-    .mutation(async ({ ctx: { mailer }, input: { markers, params } }) => {
-      console.log(markers.map((e) => e.email));
-      await mailer.notifyGenericMarkingOverdue({ params, markers });
-    }),
+    .mutation(
+      async ({ ctx: { mailer, logger, user }, input: { markers, params } }) => {
+        logger.log(LogLevels.AUDIT, "Sending marking reminders", {
+          numAcademics: markers.length,
+          authorizerId: user.id,
+        });
+        await mailer.notifyGenericMarkingOverdue({ params, markers });
+      },
+    ),
 
   sendOverdueNegotiationReminder: procedure.instance
     .inStage(subsequentStages(Stage.MARK_SUBMISSION))
     .subGroupAdmin.output(z.void())
     .input(z.object({ markers: z.array(z.object({ email: z.string() })) }))
-    .mutation(async ({ ctx: { mailer }, input: { markers } }) => {
+    .mutation(async ({ ctx: { mailer, logger, user }, input: { markers } }) => {
+      logger.log(LogLevels.AUDIT, "sending negotiation reminders", {
+        numAcademics: markers.length,
+        authorizerId: user.id,
+      });
+
       await mailer.notifyGenericNegotiationOverdue({ markers });
     }),
 });
