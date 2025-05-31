@@ -15,6 +15,7 @@ import {
   LinkUserResult,
   LinkUserResultSchema,
 } from "@/dto/result/link-user-result";
+import { slugify } from "@/lib/utils/general/slugify";
 
 export const subGroupRouter = createTRPCRouter({
   exists: procedure.subgroup.user
@@ -69,15 +70,26 @@ export const subGroupRouter = createTRPCRouter({
     )
     .output(z.void())
     .mutation(
-      async ({ ctx: { subGroup }, input: { newInstance, flags, tags } }) =>
-        await subGroup.createInstance({ newInstance, flags, tags }),
+      async ({
+        ctx: { subGroup, audit },
+        input: { newInstance, flags, tags },
+      }) => {
+        audit("created instance", subGroup.params, {
+          instance: slugify(newInstance.displayName),
+        });
+        await subGroup.createInstance({ newInstance, flags, tags });
+      },
     ),
 
   deleteInstance: procedure.instance.subGroupAdmin
     .output(z.void())
-    .mutation(async ({ ctx: { instance } }) => await instance.delete()),
+    .mutation(async ({ ctx: { instance, audit } }) => {
+      audit("deleted instance", instance.params);
+      await instance.delete();
+    }),
 
   // BREAKING input and output types changed
+  // TODO emit audit
   addAdmin: procedure.subgroup.groupAdmin
     .input(z.object({ newAdmin: userDtoSchema }))
     .output(LinkUserResultSchema)
@@ -102,7 +114,8 @@ export const subGroupRouter = createTRPCRouter({
   removeAdmin: procedure.subgroup.groupAdmin
     .input(z.object({ userId: z.string() }))
     .output(z.void())
-    .mutation(async ({ ctx: { subGroup }, input: { userId } }) => {
+    .mutation(async ({ ctx: { subGroup, audit }, input: { userId } }) => {
+      audit("removed subgroup admin", { adminId: userId }, subGroup.params);
       await subGroup.unlinkAdmin(userId);
     }),
 });

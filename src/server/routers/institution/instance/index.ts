@@ -210,6 +210,7 @@ export const instanceRouter = createTRPCRouter({
     .query(async ({ ctx: { instance } }) => await instance.getSupervisors()),
 
   // BREAKING input/output type changed
+  // TODO emit audit
   addSupervisor: procedure.instance.subGroupAdmin
     .input(z.object({ newSupervisor: supervisorDtoSchema }))
     .output(LinkUserResultSchema)

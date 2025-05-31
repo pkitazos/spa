@@ -44,7 +44,17 @@ export const createTRPCContext = async (opts: {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
   trpcLogger.log(LogLevels.TRIVIAL, "tRPC Request", { source });
 
-  return { session, db, mailer: new Mailer(sendMail), logger: trpcLogger };
+  function audit(message: string, ...meta: any[]) {
+    trpcLogger.log(LogLevels.AUDIT, message, { authorizer: user }, ...meta);
+  }
+
+  return {
+    session,
+    db,
+    mailer: new Mailer(sendMail),
+    logger: trpcLogger,
+    audit,
+  };
 };
 
 /**

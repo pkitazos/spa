@@ -110,6 +110,7 @@ export const markerRouter = createTRPCRouter({
         ctx: { db, user, mailer, instance },
         input: { studentId, unitOfAssessmentId, grade, comment },
       }) => {
+        // todo audit
         const studentDO = await instance.getStudent(studentId);
 
         const reader = await studentDO.getReader();
@@ -185,6 +186,7 @@ export const markerRouter = createTRPCRouter({
           grade,
         },
       }) => {
+        // todo audit
         const markerType = await user.getMarkerType(studentId);
         const unit = await instance.getUnitOfAssessment(unitOfAssessmentId);
         const { allowedMarkerTypes, components } = unit;

@@ -50,13 +50,15 @@ export const groupRouter = createTRPCRouter({
   createSubGroup: procedure.group.groupAdmin
     .input(z.object({ name: z.string() }))
     .output(subGroupDtoSchema)
-    .mutation(async ({ ctx: { group }, input: { name } }) =>
-      group.createSubGroup(name),
-    ),
+    .mutation(async ({ ctx: { group, audit }, input: { name } }) => {
+      audit("Created subgroup", group.params, { subgroup: name });
+      return group.createSubGroup(name);
+    }),
 
   deleteSubGroup: procedure.subgroup.groupAdmin
     .output(z.void())
-    .mutation(async ({ ctx: { subGroup } }) => {
+    .mutation(async ({ ctx: { subGroup, audit } }) => {
+      audit("Deleted subgroup", subGroup.params);
       await subGroup.delete();
     }),
 
@@ -64,27 +66,31 @@ export const groupRouter = createTRPCRouter({
   addAdmin: procedure.group.superAdmin
     .input(z.object({ newAdmin: userDtoSchema }))
     .output(LinkUserResultSchema)
-    .mutation(async ({ ctx: { group, institution }, input: { newAdmin } }) => {
-      const { id } = newAdmin;
-      const userIsGroupAdmin = await group.isGroupAdmin(id);
+    .mutation(
+      async ({ ctx: { group, institution, audit }, input: { newAdmin } }) => {
+        // audit("Added group admin", { result, user: newAdmin });
 
-      if (userIsGroupAdmin) return LinkUserResult.PRE_EXISTING;
+        const { id } = newAdmin;
+        const userIsGroupAdmin = await group.isGroupAdmin(id);
 
-      const userExists = await institution.userExists(id);
-      if (!userExists) institution.createUser(newAdmin);
+        if (userIsGroupAdmin) return LinkUserResult.PRE_EXISTING;
 
-      await group.linkAdmin(id);
+        const userExists = await institution.userExists(id);
+        if (!userExists) institution.createUser(newAdmin);
 
-      if (!userExists) return LinkUserResult.CREATED_NEW;
+        await group.linkAdmin(id);
 
-      return LinkUserResult.OK;
-    }),
+        if (!userExists) return LinkUserResult.CREATED_NEW;
+
+        return LinkUserResult.OK;
+      },
+    ),
 
   removeAdmin: procedure.group.superAdmin
     .input(z.object({ userId: z.string() }))
     .output(z.void())
-    .mutation(
-      async ({ ctx: { group }, input: { userId } }) =>
-        await group.unlinkAdmin(userId),
-    ),
+    .mutation(async ({ ctx: { group, audit }, input: { userId } }) => {
+      audit("removed group admin", { adminId: userId }, group.params);
+      await group.unlinkAdmin(userId);
+    }),
 });
