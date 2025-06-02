@@ -3,10 +3,8 @@ name: "Docker build and push to GHCR"
 on:
   push:
     branches:
-      - "main"
-      - "staging"
-    paths-ignore:
-      - "**/*.md"
+      - main
+      - staging
 
 jobs:
   build_and_publish:
