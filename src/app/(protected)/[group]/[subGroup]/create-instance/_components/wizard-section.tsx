@@ -71,7 +71,9 @@ export function WizardSection({
 
     void toast.promise(
       createInstanceAsync({ params, newInstance, flags, tags }).then(() =>
-        router.push(`./${params.subGroup}/${slugify(newInstance.displayName)}`),
+        router.push(
+          `/${params.group}/${params.subGroup}/${slugify(newInstance.displayName)}`,
+        ),
       ),
       {
         loading: `Creating ${spacesLabels.instance.full}...`,

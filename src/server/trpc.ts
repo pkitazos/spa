@@ -45,7 +45,11 @@ export const createTRPCContext = async (opts: {
   trpcLogger.log(LogLevels.TRIVIAL, "tRPC Request", { source });
 
   function audit(message: string, ...meta: any[]) {
-    trpcLogger.log(LogLevels.AUDIT, message, { authorizer: user }, ...meta);
+    const data = meta.reduce((acc, val) => ({ ...acc, ...val }), {
+      authorizer: user,
+    });
+
+    trpcLogger.log(LogLevels.AUDIT, message, data);
   }
 
   return {

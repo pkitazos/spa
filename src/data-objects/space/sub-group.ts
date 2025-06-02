@@ -103,8 +103,6 @@ export class AllocationSubGroup extends DataObject {
         data: flags.flatMap((f) =>
           f.unitsOfAssessment.flatMap((u) =>
             u.components.map((c) => ({
-              ...expand(params),
-              flagId: flagTitleToId[f.title],
               unitOfAssessmentId:
                 unitTitleToId[`${flagTitleToId[f.title]}${u.title}`],
               title: c.title,

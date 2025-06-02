@@ -16,12 +16,12 @@ model Project {
   capacityLowerBound            Int                          @map("capacity_lower_bound")
   capacityUpperBound            Int                          @map("capacity_upper_bound")
   preAllocatedStudentId         String?                      @map("pre_allocated_student_id")
-  preAllocatedStudent           StudentDetails?              @relation(fields: [preAllocatedStudentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+  preAllocatedStudent           StudentDetails?              @relation(fields: [preAllocatedStudentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
   // ---
   allocationGroupId             String                       @map("allocation_group_id")
   allocationSubGroupId          String                       @map("allocation_sub_group_id")
   allocationInstanceId          String                       @map("allocation_instance_id")
-  allocationInstance            AllocationInstance           @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id])
+  allocationInstance            AllocationInstance           @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
   // ---
   supervisorId                  String                       @map("supervisor_id")
   supervisor                    SupervisorDetails            @relation(fields: [supervisorId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)

@@ -74,18 +74,19 @@ export const subGroupRouter = createTRPCRouter({
         ctx: { subGroup, audit },
         input: { newInstance, flags, tags },
       }) => {
-        audit("created instance", subGroup.params, {
+        await subGroup.createInstance({ newInstance, flags, tags });
+        audit("created instance", {
+          ...subGroup.params,
           instance: slugify(newInstance.displayName),
         });
-        await subGroup.createInstance({ newInstance, flags, tags });
       },
     ),
 
   deleteInstance: procedure.instance.subGroupAdmin
     .output(z.void())
     .mutation(async ({ ctx: { instance, audit } }) => {
-      audit("deleted instance", instance.params);
       await instance.delete();
+      audit("deleted instance", instance.params);
     }),
 
   // BREAKING input and output types changed
