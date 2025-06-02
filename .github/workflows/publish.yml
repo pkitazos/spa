@@ -3,10 +3,8 @@ name: "Docker build and push to GHCR"
 on:
   push:
     branches:
-      - "main"
-      - "staging"
-    paths-ignore:
-      - "**/*.md"
+      - main
+      - staging
 
 jobs:
   build_and_publish:
@@ -33,9 +31,7 @@ jobs:
       - name: "Build and push app"
         uses: docker/build-push-action@v5
         with:
+          file: ./docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            ghcr.io/pkitazos/amps-app:${{ github.ref_name }}-latest
-            ghcr.io/pkitazos/amps-app:${{ github.ref_name }}-${{ steps.date.outputs.date }}
-            ghcr.io/pkitazos/amps-app:${{ github.ref_name }}-${{ github.sha }}
+          tags: ghcr.io/pkitazos/amps-app:${{ github.ref_name }}-latest,ghcr.io/pkitazos/amps-app:${{ github.ref_name }}-${{ steps.date.outputs.date }},ghcr.io/pkitazos/amps-app:${{ github.ref_name }}-${{ github.sha }}
