@@ -5,4 +5,4 @@ npm-debug.log
 README.md
 .next
 .git
-src/db/migrations
+src/db/migrations/*
