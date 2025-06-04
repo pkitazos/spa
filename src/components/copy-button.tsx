@@ -6,6 +6,7 @@ import { CopyIcon } from "lucide-react";
 import { Tooltip } from "@radix-ui/react-tooltip";
 import { TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
+// pin - check styling @pkitazos
 export function CopyButton({
   data,
   message,

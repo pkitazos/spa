@@ -11,6 +11,7 @@ import { MarkerType, New, Stage } from "@/db/types";
 import { FlagDTO, InstanceDTO, NewUnitOfAssessmentDTO, TagDTO } from "@/dto";
 import { useRouter } from "next/navigation";
 import { slugify } from "@/lib/utils/general/slugify";
+import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 
 export function WizardSection({
   takenNames,
@@ -70,11 +71,14 @@ export function WizardSection({
     const tags = data.tags satisfies New<TagDTO>[];
 
     void toast.promise(
-      createInstanceAsync({ params, newInstance, flags, tags }).then(() =>
-        router.push(
-          `/${params.group}/${params.subGroup}/${slugify(newInstance.displayName)}`,
-        ),
-      ),
+      createInstanceAsync({ params, newInstance, flags, tags }).then(() => {
+        const newPath = formatParamsAsPath({
+          group: params.group,
+          subGroup: params.subGroup,
+          instance: slugify(newInstance.displayName),
+        });
+        router.push(newPath);
+      }),
       {
         loading: `Creating ${spacesLabels.instance.full}...`,
         success: `${spacesLabels.instance.full} created successfully`,
