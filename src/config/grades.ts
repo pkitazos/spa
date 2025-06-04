@@ -33,6 +33,8 @@ export class Grade {
       (acc, val) => acc + val.weight * val.score,
       0,
     );
+
+    // POLICY how should we round non-integer grades?
     const mark = this.round(totalWeightedScore / totalWeight);
     return mark;
   }
@@ -92,7 +94,7 @@ export class Grade {
     return this.toLetter(average);
   }
 
-  // if grade is A1 or Fail (E1 or below) then go to negotiate2
+  // if grade is A1 or Fail (below D3) then go to negotiate2
   public static boundaryCheck(grade: string) {
     if (this.isOnBoundary(grade)) {
       return { status: GradingResult.NEGOTIATE2 };
