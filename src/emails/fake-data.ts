@@ -33,6 +33,16 @@ export const fakeReader = {
   allocationUpperBound: 0,
 };
 
+export const fakeThirdMarker = {
+  id: "",
+  email: "person.personson@uni.ac.uk",
+  name: "Person Personson",
+  joined: false,
+  allocationTarget: 0,
+  allocationLowerBound: 0,
+  allocationUpperBound: 0,
+};
+
 export const fakeStudent = {
   id: "3858475d",
   email: "",
@@ -42,8 +52,32 @@ export const fakeStudent = {
   level: 0,
 };
 
-export const fakeUnit = {
-  id: "9ee86629-4e6c-4572-bea5-2c2dc695e6d4",
+export const fakePresentationUnit = {
+  id: "presentation-unit-id",
+  title: "Presentation",
+  studentSubmissionDeadline: new Date(),
+  markerSubmissionDeadline: new Date(),
+  weight: 0,
+  isOpen: false,
+  components: [],
+  flag: { id: "", title: "", description: "" },
+  allowedMarkerTypes: [],
+};
+
+export const fakeConductUnit = {
+  id: "conduct-unit-id",
+  title: "Conduct",
+  studentSubmissionDeadline: new Date(),
+  markerSubmissionDeadline: new Date(),
+  weight: 0,
+  isOpen: false,
+  components: [],
+  flag: { id: "", title: "", description: "" },
+  allowedMarkerTypes: [],
+};
+
+export const fakeDissertationUnit = {
+  id: "dissertation-unit-id",
   title: "Dissertation",
   studentSubmissionDeadline: new Date(),
   markerSubmissionDeadline: new Date(),
@@ -54,34 +88,34 @@ export const fakeUnit = {
   allowedMarkerTypes: [],
 };
 
-export const fakeCriteria = [
+export const fakePresentationCriteria = [
   {
-    id: "828267e6-ba81-4dc4-877a-956a81134583",
-    unitOfAssessmentId: "6615b424-1e9d-41a1-892a-97369210c7fe",
+    id: "p1-content",
+    unitOfAssessmentId: "presentation-unit-id",
     title: "Content",
     description: "some description goes here",
     weight: 10,
     layoutIndex: 0,
   },
   {
-    id: "f0dfe468-46de-41bf-bba8-b2f62028dced",
-    unitOfAssessmentId: "6615b424-1e9d-41a1-892a-97369210c7fe",
+    id: "p2-visual-aids",
+    unitOfAssessmentId: "presentation-unit-id",
     title: "Use of Visual Aids",
     description: "some description goes here",
     weight: 10,
     layoutIndex: 1,
   },
   {
-    id: "446861ff-cf94-4498-a1c7-df2a56639077",
-    unitOfAssessmentId: "6615b424-1e9d-41a1-892a-97369210c7fe",
+    id: "p3-questions",
+    unitOfAssessmentId: "presentation-unit-id",
     title: "Questions",
     description: "some description goes here",
     weight: 10,
     layoutIndex: 2,
   },
   {
-    id: "ce515944-9b00-4250-a5c7-957ee8cd1c88",
-    unitOfAssessmentId: "6615b424-1e9d-41a1-892a-97369210c7fe",
+    id: "p4-delivery",
+    unitOfAssessmentId: "presentation-unit-id",
     title: "Delivery",
     description: "some description goes here",
     weight: 10,
@@ -89,71 +123,217 @@ export const fakeCriteria = [
   },
 ];
 
-export const fakeReaderSubmission: MarkingSubmissionDTO = {
-  grade: 19,
-  unitOfAssessmentId: "6615b424-1e9d-41a1-892a-97369210c7fe",
-  studentId: "2558994P",
-  markerId: "ba34n",
+export const fakeConductCriteria = [
+  {
+    id: "c1-conduct",
+    unitOfAssessmentId: "conduct-unit-id",
+    title: "Conduct",
+    description:
+      "Did the student attend meetings, and engage effectively with the supervisor?",
+    weight: 10,
+    layoutIndex: 1,
+  },
+];
+
+export const fakeDissertationCriteria = [
+  {
+    id: "d1-analysis",
+    unitOfAssessmentId: "dissertation-unit-id",
+    title: "Analysis",
+    description:
+      "Has the student surveyed relevant research literature? Has he/she analysed the research problem, and devised a suitable approach for solving the problem?",
+    weight: 15,
+    layoutIndex: 0,
+  },
+  {
+    id: "d2-evaluation",
+    unitOfAssessmentId: "dissertation-unit-id",
+    title: "Evaluation",
+    description:
+      "Has the student critically evaluated and analysed the research results? Does he/she understand their significance? Does he/she have good suggestions for further work?",
+    weight: 10,
+    layoutIndex: 1,
+  },
+  {
+    id: "d3-quality",
+    unitOfAssessmentId: "dissertation-unit-id",
+    title: "Dissertation Quality",
+    description:
+      "Is the research paper well-organised, and literate? Does it clearly explain the research problem, and how it was solved? Does it contain a bibliography and proper citations?",
+    weight: 20,
+    layoutIndex: 2,
+  },
+  {
+    id: "d4-output-design",
+    unitOfAssessmentId: "dissertation-unit-id",
+    title: "Output Design",
+    description:
+      "Has the research been conducted well? Does it show evidence of original thinking? Are there any significant errors? Might the research be worthy of publication, perhaps after revision?",
+    weight: 40,
+    layoutIndex: 3,
+  },
+];
+
+// Supervisor Submissions
+export const fakeSupervisorConductSubmission: MarkingSubmissionDTO = {
+  grade: 18,
+  unitOfAssessmentId: "conduct-unit-id",
+  studentId: "3858475d",
+  markerId: "supervisor-id",
   marks: {
-    "828267e6-ba81-4dc4-877a-956a81134583": {
-      mark: 12,
+    "c1-conduct": {
+      mark: 18,
       justification:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum",
-    },
-    "f0dfe468-46de-41bf-bba8-b2f62028dced": {
-      mark: 19,
-      justification:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum",
-    },
-    "446861ff-cf94-4498-a1c7-df2a56639077": {
-      mark: 17,
-      justification:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum",
-    },
-    "ce515944-9b00-4250-a5c7-957ee8cd1c88": {
-      mark: 15,
-      justification:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum",
+        "Student demonstrated excellent engagement throughout the project. Attended all scheduled meetings, came well-prepared with questions and progress updates. Showed initiative in seeking additional guidance when needed.",
     },
   },
   finalComment:
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum",
+    "Outstanding conduct throughout the project. The student was professional, engaged, and proactive in their approach to supervision meetings.",
   recommendation: false,
   draft: false,
 };
 
-export const fakeSupervisorSubmission: MarkingSubmissionDTO = {
-  grade: 12,
-  unitOfAssessmentId: "6615b424-1e9d-41a1-892a-97369210c7fe",
-  studentId: "2558994P",
-  markerId: "ba34n",
+export const fakeSupervisorPresentationSubmission: MarkingSubmissionDTO = {
+  grade: 16,
+  unitOfAssessmentId: "presentation-unit-id",
+  studentId: "3858475d",
+  markerId: "supervisor-id",
   marks: {
-    "828267e6-ba81-4dc4-877a-956a81134583": {
-      mark: 12,
-      justification:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum",
-    },
-    "f0dfe468-46de-41bf-bba8-b2f62028dced": {
-      mark: 19,
-      justification:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum",
-    },
-    "446861ff-cf94-4498-a1c7-df2a56639077": {
-      mark: 17,
-      justification:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum",
-    },
-    "ce515944-9b00-4250-a5c7-957ee8cd1c88": {
+    "p1-content": {
       mark: 15,
       justification:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum",
+        "Good coverage of the research topic with clear explanation of methodology and results. Could have included more discussion of limitations.",
+    },
+    "p2-visual-aids": {
+      mark: 18,
+      justification:
+        "Excellent use of slides and diagrams. Visual elements were clear, professional, and effectively supported the presentation content.",
+    },
+    "p3-questions": {
+      mark: 16,
+      justification:
+        "Handled most questions well, demonstrating good understanding of the work. Struggled slightly with more challenging theoretical questions.",
+    },
+    "p4-delivery": {
+      mark: 15,
+      justification:
+        "Clear speaking voice and good pacing. Could improve eye contact with audience and reduce reliance on notes.",
     },
   },
   finalComment:
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum",
+    "A solid presentation that effectively communicated the research work. Good use of visual aids and generally confident delivery.",
   recommendation: false,
-  draft: true,
+  draft: false,
 };
+
+export const fakeSupervisorDissertationSubmission: MarkingSubmissionDTO = {
+  grade: 17,
+  unitOfAssessmentId: "dissertation-unit-id",
+  studentId: "3858475d",
+  markerId: "supervisor-id",
+  marks: {
+    "d1-analysis": {
+      mark: 16,
+      justification:
+        "Good literature review covering relevant sources. Analysis of the research problem is clear, though could be more comprehensive in considering alternative approaches.",
+    },
+    "d2-evaluation": {
+      mark: 17,
+      justification:
+        "Strong critical evaluation of results with good understanding of their significance. Suggestions for future work are practical and well-reasoned.",
+    },
+    "d3-quality": {
+      mark: 18,
+      justification:
+        "Well-organized dissertation with clear structure. Writing is generally clear and professional. Good use of citations and comprehensive bibliography.",
+    },
+    "d4-output-design": {
+      mark: 17,
+      justification:
+        "Research methodology is sound and well-executed. Shows evidence of original thinking in the approach. Some minor technical issues but overall strong work.",
+    },
+  },
+  finalComment:
+    "A well-executed dissertation that demonstrates good research skills and clear communication. The work shows originality and would benefit from minor revisions for potential publication.",
+  recommendation: false,
+  draft: false,
+};
+
+// Reader Submissions (only for dissertation)
+export const fakeReaderDissertationSubmission: MarkingSubmissionDTO = {
+  grade: 16,
+  unitOfAssessmentId: "dissertation-unit-id",
+  studentId: "3858475d",
+  markerId: "reader-id",
+  marks: {
+    "d1-analysis": {
+      mark: 15,
+      justification:
+        "Adequate literature review but missing some key recent papers in the field. Problem analysis is sound but could be more thorough.",
+    },
+    "d2-evaluation": {
+      mark: 16,
+      justification:
+        "Good evaluation of results with appropriate statistical analysis. Understanding of significance is demonstrated well.",
+    },
+    "d3-quality": {
+      mark: 17,
+      justification:
+        "Well-structured document with clear writing throughout. Citations are appropriate and bibliography is comprehensive.",
+    },
+    "d4-output-design": {
+      mark: 16,
+      justification:
+        "Solid research execution with appropriate methodology. Some innovative elements but could push boundaries further.",
+    },
+  },
+  finalComment:
+    "A competent dissertation that meets the requirements well. The research is solid and the presentation is clear, though there is room for more innovative approaches.",
+  recommendation: false,
+  draft: false,
+};
+
+// Third Marker Submissions (only for dissertation)
+export const fakeThirdMarkerDissertationSubmission: MarkingSubmissionDTO = {
+  grade: 15,
+  unitOfAssessmentId: "dissertation-unit-id",
+  studentId: "3858475d",
+  markerId: "third-marker-id",
+  marks: {
+    "d1-analysis": {
+      mark: 14,
+      justification:
+        "Literature review covers the basics but lacks depth in critical analysis. Problem formulation could be more rigorous.",
+    },
+    "d2-evaluation": {
+      mark: 15,
+      justification:
+        "Reasonable evaluation of results but could benefit from more critical discussion of limitations and alternative interpretations.",
+    },
+    "d3-quality": {
+      mark: 16,
+      justification:
+        "Generally well-written and organized. Some sections could be more concise and focused.",
+    },
+    "d4-output-design": {
+      mark: 15,
+      justification:
+        "Competent execution of research plan. Methodology is appropriate but implementation could be more sophisticated.",
+    },
+  },
+  finalComment:
+    "This dissertation demonstrates competent research skills and meets the basic requirements. While the work is sound, it lacks the innovation and depth that would distinguish it as exceptional work. The student has shown they can conduct research independently, but there is significant room for improvement in critical analysis and methodological sophistication.",
+  recommendation: false,
+  draft: false,
+};
+
+// Exported Fake Data
+export const fakeUnit = fakePresentationUnit;
+export const fakeCriteria = fakePresentationCriteria;
+
+export const fakeReaderSubmission = fakeReaderDissertationSubmission;
+export const fakeThirdMarkerSubmission = fakeThirdMarkerDissertationSubmission;
+export const fakeSupervisorSubmission = fakeSupervisorDissertationSubmission;
 
 export const fakeDeadline = addWeeks(new Date(), 1);
 

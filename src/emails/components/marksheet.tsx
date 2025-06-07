@@ -1,7 +1,7 @@
 import { Grade } from "@/config/grades";
 import { AssessmentCriterionDTO, MarkingSubmissionDTO } from "@/dto";
 import { FormatPercent } from "@/lib/utils/format-percent";
-import { Text, Section, Row } from "@react-email/components";
+import { Text, Section, Row, Heading } from "@react-email/components";
 
 export function Marksheet({
   submission,
@@ -16,14 +16,15 @@ export function Marksheet({
     <>
       {criteria.map((c) => {
         const grade = submission.marks[c.id];
+
         return (
-          <Section>
+          <Section key={c.id}>
             <Row className="flex flex-row">
               <span>
-                <h4 className="mb-0 inline-block">
+                <Heading as="h5" className="mb-0 inline-block">
                   {c.title} (weight {FormatPercent(c.weight / totalWeight)}
                   ):{" "}
-                </h4>
+                </Heading>
                 <i>{Grade.toLetter(grade.mark)}</i>
               </span>
             </Row>
@@ -35,7 +36,9 @@ export function Marksheet({
       <Section>
         <Row className="flex flex-row">
           <span>
-            <h4 className="mb-0 inline-block">Overall: </h4>
+            <Heading as="h5" className="mb-0 inline-block">
+              Overall:{" "}
+            </Heading>
             <i>{Grade.toLetter(submission.grade)}</i>
           </span>
         </Row>
