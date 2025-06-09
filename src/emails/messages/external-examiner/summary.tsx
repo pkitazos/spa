@@ -23,15 +23,15 @@ import {
   fakeStudent,
   fakeSupervisor,
   fakeSupervisorConductSubmission,
-  fakeSupervisorPresentationSubmission,
   fakeSupervisorDissertationSubmission,
   fakeDissertationCriteria,
   fakeConductCriteria,
+  fakeSupervisorMissingPresentationSubmission,
 } from "@/emails/fake-data";
 import { Grade } from "@/config/grades";
 import { Marksheet } from "@/emails/components/marksheet";
 
-interface Props {
+export interface SummaryProps {
   student: StudentDTO;
   project: ProjectDTO;
   reader: ReaderDTO;
@@ -45,12 +45,12 @@ interface Props {
   supervisorPresentationSubmission: MarkingSubmissionDTO;
   supervisorDissertationSubmission: MarkingSubmissionDTO;
   readerDissertationSubmission: MarkingSubmissionDTO;
+  finalMark: number;
 }
 
 export function Summary({
   student,
   project,
-
   supervisor,
   reader,
 
@@ -62,7 +62,8 @@ export function Summary({
   supervisorPresentationSubmission,
   supervisorDissertationSubmission,
   readerDissertationSubmission,
-}: Props) {
+  finalMark,
+}: SummaryProps) {
   return (
     <PDFLayout>
       <Section>
@@ -126,7 +127,9 @@ export function Summary({
           </Column>
           <Column className="text-right">
             <Text className="my-0 text-xl font-semibold text-blue-700">
-              {Grade.toLetter(supervisorConductSubmission.grade)}
+              {supervisorConductSubmission.grade === -2
+                ? "No Submission"
+                : Grade.toLetter(supervisorConductSubmission.grade)}
             </Text>
           </Column>
         </Row>
@@ -153,7 +156,9 @@ export function Summary({
           </Column>
           <Column className="text-right">
             <Text className="my-0 text-xl font-semibold text-blue-700">
-              {Grade.toLetter(supervisorPresentationSubmission.grade)}
+              {supervisorPresentationSubmission.grade === -2
+                ? "No Submission"
+                : Grade.toLetter(supervisorPresentationSubmission.grade)}
             </Text>
           </Column>
         </Row>
@@ -180,7 +185,9 @@ export function Summary({
           </Column>
           <Column className="text-right">
             <Text className="my-0 text-xl font-semibold text-blue-700">
-              {Grade.toLetter(supervisorDissertationSubmission.grade)}
+              {supervisorDissertationSubmission.grade === -2
+                ? "No Submission"
+                : Grade.toLetter(supervisorDissertationSubmission.grade)}
             </Text>
           </Column>
         </Row>
@@ -197,7 +204,9 @@ export function Summary({
           </Column>
           <Column className="text-right">
             <Text className="my-0 text-xl font-semibold text-blue-700">
-              {Grade.toLetter(readerDissertationSubmission.grade)}
+              {readerDissertationSubmission.grade === -2
+                ? "No Submission"
+                : Grade.toLetter(readerDissertationSubmission.grade)}
             </Text>
           </Column>
         </Row>
@@ -205,6 +214,24 @@ export function Summary({
           criteria={dissertationCriteria}
           submission={readerDissertationSubmission}
         />
+      </Section>
+
+      <Section>
+        <Row>
+          <Column>
+            <Heading
+              as="h3"
+              className="underline decoration-blue-700 decoration-[2.5px]"
+            >
+              Final Mark:
+            </Heading>
+          </Column>
+          <Column className="text-right">
+            <Text className="my-0 text-xl font-semibold text-blue-700">
+              {finalMark === -2 ? "No Submission" : Grade.toLetter(finalMark)}
+            </Text>
+          </Column>
+        </Row>
       </Section>
     </PDFLayout>
   );
@@ -221,9 +248,10 @@ Summary.PreviewProps = {
   dissertationCriteria: fakeDissertationCriteria,
 
   supervisorConductSubmission: fakeSupervisorConductSubmission,
-  supervisorPresentationSubmission: fakeSupervisorPresentationSubmission,
+  supervisorPresentationSubmission: fakeSupervisorMissingPresentationSubmission,
   supervisorDissertationSubmission: fakeSupervisorDissertationSubmission,
   readerDissertationSubmission: fakeReaderDissertationSubmission,
-} satisfies Props;
+  finalMark: 20,
+} satisfies SummaryProps;
 
 export default Summary;

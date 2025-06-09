@@ -25,21 +25,19 @@ import {
   fakeSupervisorConductSubmission,
   fakeSupervisorPresentationSubmission,
   fakeSupervisorDissertationSubmission,
-  fakeThirdMarker,
   fakeThirdMarkerDissertationSubmission,
   fakeDissertationCriteria,
   fakeConductCriteria,
 } from "@/emails/fake-data";
-import { ThirdMarkerComments } from "@/emails/components/pdf/third-marker-comments";
 import { Grade } from "@/config/grades";
 import { Marksheet } from "@/emails/components/marksheet";
 
-interface Props {
+export interface ModeratedSummaryProps {
   student: StudentDTO;
   project: ProjectDTO;
   reader: ReaderDTO;
   supervisor: SupervisorDTO;
-  thirdMarker: ReaderDTO;
+  // thirdMarker: UserDTO;
 
   presentationCriteria: AssessmentCriterionDTO[];
   conductCriteria: AssessmentCriterionDTO[];
@@ -50,15 +48,14 @@ interface Props {
   supervisorDissertationSubmission: MarkingSubmissionDTO;
   readerDissertationSubmission: MarkingSubmissionDTO;
   thirdMarkerDissertationSubmission: MarkingSubmissionDTO;
+  finalMark: number;
 }
 
 export function ModeratedSummary({
   student,
   project,
-
   supervisor,
   reader,
-  thirdMarker,
 
   presentationCriteria,
   conductCriteria,
@@ -69,7 +66,8 @@ export function ModeratedSummary({
   supervisorDissertationSubmission,
   readerDissertationSubmission,
   thirdMarkerDissertationSubmission,
-}: Props) {
+  finalMark,
+}: ModeratedSummaryProps) {
   return (
     <PDFLayout>
       <Section>
@@ -114,7 +112,7 @@ export function ModeratedSummary({
             </Text>
           </Column>
         </Row>
-        <Row>
+        {/* <Row>
           <Column>
             <Text className="my-0">Third Marker:</Text>
           </Column>
@@ -123,13 +121,16 @@ export function ModeratedSummary({
               {thirdMarker.name} ({thirdMarker.email})
             </Text>
           </Column>
-        </Row>
+        </Row> */}
       </Section>
 
       <Hr />
 
       <Section>
-        <Heading as="h3" className="underline decoration-sky-600">
+        <Heading
+          as="h3"
+          className="underline decoration-blue-700 decoration-[2.5px]"
+        >
           Conduct:
         </Heading>
         <Row>
@@ -139,7 +140,7 @@ export function ModeratedSummary({
             </Heading>
           </Column>
           <Column className="text-right">
-            <Text className="my-0 text-xl font-semibold text-blue-800">
+            <Text className="my-0 text-xl font-semibold text-blue-700">
               {Grade.toLetter(supervisorConductSubmission.grade)}
             </Text>
           </Column>
@@ -153,7 +154,11 @@ export function ModeratedSummary({
       <Hr />
 
       <Section>
-        <Heading as="h3" className="underline decoration-sky-600">
+        <Heading
+          as="h3"
+          className="underline decoration-blue-700 decoration-[2.5px]"
+        >
+          {" "}
           Presentation:
         </Heading>
         <Row>
@@ -163,7 +168,7 @@ export function ModeratedSummary({
             </Heading>
           </Column>
           <Column className="text-right">
-            <Text className="my-0 text-xl font-semibold text-blue-800">
+            <Text className="my-0 text-xl font-semibold text-blue-700">
               {Grade.toLetter(supervisorPresentationSubmission.grade)}
             </Text>
           </Column>
@@ -177,7 +182,11 @@ export function ModeratedSummary({
       <Hr />
 
       <Section>
-        <Heading as="h3" className="underline decoration-sky-600">
+        <Heading
+          as="h3"
+          className="underline decoration-blue-700 decoration-[2.5px]"
+        >
+          {" "}
           Dissertation:
         </Heading>
         <Row>
@@ -187,7 +196,7 @@ export function ModeratedSummary({
             </Heading>
           </Column>
           <Column className="text-right">
-            <Text className="my-0 text-xl font-semibold text-blue-800">
+            <Text className="my-0 text-xl font-semibold text-blue-700">
               {Grade.toLetter(supervisorDissertationSubmission.grade)}
             </Text>
           </Column>
@@ -204,7 +213,7 @@ export function ModeratedSummary({
             </Heading>
           </Column>
           <Column className="text-right">
-            <Text className="my-0 text-xl font-semibold text-blue-800">
+            <Text className="my-0 text-xl font-semibold text-blue-700">
               {Grade.toLetter(readerDissertationSubmission.grade)}
             </Text>
           </Column>
@@ -221,14 +230,33 @@ export function ModeratedSummary({
             </Heading>
           </Column>
           <Column className="text-right">
-            <Text className="my-0 text-xl font-semibold text-blue-800">
+            <Text className="my-0 text-xl font-semibold text-blue-700">
               {Grade.toLetter(thirdMarkerDissertationSubmission.grade)}
             </Text>
           </Column>
         </Row>
-        <ThirdMarkerComments
-          comments={thirdMarkerDissertationSubmission.finalComment}
+        <Marksheet
+          criteria={dissertationCriteria}
+          submission={thirdMarkerDissertationSubmission}
         />
+      </Section>
+
+      <Section>
+        <Row>
+          <Column>
+            <Heading
+              as="h3"
+              className="underline decoration-blue-700 decoration-[2.5px]"
+            >
+              Final Mark:
+            </Heading>
+          </Column>
+          <Column className="text-right">
+            <Text className="my-0 text-xl font-semibold text-blue-700">
+              {Grade.toLetter(finalMark)}
+            </Text>
+          </Column>
+        </Row>
       </Section>
     </PDFLayout>
   );
@@ -239,7 +267,7 @@ ModeratedSummary.PreviewProps = {
   project: fakeProject,
   supervisor: fakeSupervisor,
   reader: fakeReader,
-  thirdMarker: fakeThirdMarker,
+  // thirdMarker: fakeThirdMarker,
 
   conductCriteria: fakeConductCriteria,
   presentationCriteria: fakeCriteria,
@@ -250,6 +278,7 @@ ModeratedSummary.PreviewProps = {
   supervisorDissertationSubmission: fakeSupervisorDissertationSubmission,
   readerDissertationSubmission: fakeReaderDissertationSubmission,
   thirdMarkerDissertationSubmission: fakeThirdMarkerDissertationSubmission,
-} satisfies Props;
+  finalMark: 20,
+} satisfies ModeratedSummaryProps;
 
 export default ModeratedSummary;

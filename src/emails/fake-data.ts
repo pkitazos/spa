@@ -226,6 +226,35 @@ export const fakeSupervisorPresentationSubmission: MarkingSubmissionDTO = {
   draft: false,
 };
 
+export const fakeSupervisorMissingPresentationSubmission: MarkingSubmissionDTO =
+  {
+    grade: 0,
+    unitOfAssessmentId: "presentation-unit-id",
+    studentId: "3858475d",
+    markerId: "supervisor-id",
+    marks: {
+      "p1-content": {
+        mark: -1,
+        justification: "No video submitted for the presentation.",
+      },
+      "p2-visual-aids": {
+        mark: -1,
+        justification: "No video submitted for the presentation.",
+      },
+      "p3-questions": {
+        mark: -1,
+        justification: "No video submitted for the presentation.",
+      },
+      "p4-delivery": {
+        mark: -1,
+        justification: "No video submitted for the presentation.",
+      },
+    },
+    finalComment: "No video submitted for the presentation.",
+    recommendation: false,
+    draft: false,
+  };
+
 export const fakeSupervisorDissertationSubmission: MarkingSubmissionDTO = {
   grade: 17,
   unitOfAssessmentId: "dissertation-unit-id",

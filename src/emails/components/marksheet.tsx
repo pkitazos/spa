@@ -25,7 +25,7 @@ export function Marksheet({
                   {c.title} (weight {FormatPercent(c.weight / totalWeight)}
                   ):{" "}
                 </Heading>
-                <i>{Grade.toLetter(grade.mark)}</i>
+                <i className="pl-1">{displayGrade(grade.mark)}</i>
               </span>
             </Row>
 
@@ -39,7 +39,7 @@ export function Marksheet({
             <Heading as="h5" className="mb-0 inline-block">
               Overall:{" "}
             </Heading>
-            <i>{Grade.toLetter(submission.grade)}</i>
+            <i className="pl-1">{displayGrade(submission.grade)}</i>
           </span>
         </Row>
 
@@ -47,4 +47,15 @@ export function Marksheet({
       </Section>
     </>
   );
+}
+
+function displayGrade(grade: number): string {
+  switch (grade) {
+    case -2:
+      return "No Submission";
+    case -1:
+      return "N/A";
+    default:
+      return Grade.toLetter(grade);
+  }
 }
