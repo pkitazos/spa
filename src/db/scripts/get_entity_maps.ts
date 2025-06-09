@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { Transformers as T } from "@/db/transformers";
 import { expand } from "@/lib/utils/general/instance-params";
-import { LEVEL4_CONFIG } from "./misc/units_of_assessment_by_flag";
+import { LEVEL4_CONFIG } from "./data/misc/units_of_assessment_by_flag";
 const group = "socs";
 const subGroup = "lvl-4-and-lvl-5-honours";
 const instance = "2024-2025";
@@ -12,7 +12,7 @@ const db = new PrismaClient();
 
 const CONFIG = LEVEL4_CONFIG;
 const MARKING_GROUP = CONFIG.MARKING_GROUP;
-const OUTPUT_DIR = `./src/db/scripts/maps/${MARKING_GROUP}`;
+const OUTPUT_DIR = `./src/db/scripts/data/maps/${MARKING_GROUP}`;
 
 async function main() {
   const fs = await import("fs/promises");

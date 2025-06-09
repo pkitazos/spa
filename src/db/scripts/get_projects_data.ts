@@ -4,7 +4,7 @@ import {
   LEVEL4_CONFIG,
   SEYP_CONFIG,
   UnitOfAssessmentConfigType,
-} from "./misc/units_of_assessment_by_flag";
+} from "./data/misc/units_of_assessment_by_flag";
 import { writeToJsonFile } from "./write-to-json";
 
 const group = "socs";
@@ -21,7 +21,7 @@ async function main() {
 }
 
 async function get_projects(db: DB, config: UnitOfAssessmentConfigType) {
-  const output_dir = `docs/tmp/reports/${config.MARKING_GROUP}`;
+  const output_dir = `./src/db/scripts/data/scores/${config.MARKING_GROUP}`;
 
   const spas = await db.studentProjectAllocation
     .findMany({

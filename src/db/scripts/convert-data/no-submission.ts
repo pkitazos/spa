@@ -2,7 +2,6 @@
 
 import fs from "fs";
 import path from "path";
-import { FINAL_MARK_MAP } from "./maps/seyp/finalMarkMap";
 import { Grade } from "@/config/grades";
 
 // Target interface structure
@@ -17,7 +16,7 @@ interface StudentEntry {
   final: { comment: string; grade: number; letterGrade: string };
 }
 
-// Source data structure from seyp-XXXXXXX-summary.json files
+// Source data structure from level4-XXXXXXX-summary.json files
 interface SourceAssessment {
   summary: string;
   grade: number;
@@ -33,10 +32,11 @@ interface SourceAssessment {
   }>;
 }
 
+// Known unit assessment IDs from the sample data
 const UNIT_ASSESSMENT_IDS = {
-  CONDUCT: "541ad994-22e6-43dd-b55d-2235ee5cceb6",
-  PRESENTATION: "42651c6d-41fe-4c3d-a29f-6c2f3a317ac3",
-  DISSERTATION: "e9a8d706-2190-481f-8339-c251a4941d00",
+  CONDUCT: "7b7e1b93-ca85-4738-823a-c7d4298621c9",
+  PRESENTATION: "91a755c9-c994-4a2c-b221-afb77229d208",
+  DISSERTATION: "9ee86629-4e6c-4572-bea5-2c2dc695e6d4",
 };
 
 function convertAssessmentToSubmission(assessment: SourceAssessment) {
@@ -94,36 +94,34 @@ function processStudentFile(filePath: string): Partial<StudentEntry> | null {
       (a) => a.unitOfAssessmentId === UNIT_ASSESSMENT_IDS.DISSERTATION,
     );
 
-    // Find supervisor: person who marked conduct (and usually presentation)
+    // For no-submission cases, there's typically only one marker for everything
+    // Find supervisor: person who marked conduct
     const supervisor = conductAssessments[0]?.markerId;
     if (!supervisor) {
       console.warn(`No conduct assessment found for student ${studentId}`);
       return null;
     }
 
-    // Find reader: dissertation marker who is NOT the supervisor
+    // Find reader: look for a different marker in dissertation assessments
+    // If no different marker found, we'll handle this case below
     const reader = dissertationAssessments.find(
       (a) => a.markerId !== supervisor,
-    )?.markerId;
-    if (!reader) {
-      console.warn(`No reader found for student ${studentId}`);
-      return null;
-    }
+    )?.markerId!;
+
+    // Special handling: if no reader found, use the supervisor as reader for dissertation
+    // This handles cases where the same person marked everything due to no submission
+    // const finalReader = reader || supervisor;
 
     console.log(`  Supervisor: ${supervisor}, Reader: ${reader}`);
 
     const studentEntry: Partial<StudentEntry> = {
       student: studentId,
       supervisor,
-      reader,
-      final: {
-        comment: "",
-        grade: FINAL_MARK_MAP[studentId],
-        letterGrade: Grade.toLetter(FINAL_MARK_MAP[studentId]),
-      },
+      reader: reader,
+      final: { comment: "", grade: 0, letterGrade: "N/A" },
     };
 
-    // Convert assessments
+    // Convert conduct assessment
     const conductAssessment = conductAssessments.find(
       (a) => a.markerId === supervisor,
     );
@@ -132,29 +130,16 @@ function processStudentFile(filePath: string): Partial<StudentEntry> | null {
         convertAssessmentToSubmission(conductAssessment);
     }
 
+    // Convert presentation assessment
     const presentationAssessment = presentationAssessments.find(
       (a) => a.markerId === supervisor,
     );
     if (presentationAssessment) {
       studentEntry.supervisorPresentationSubmission =
         convertAssessmentToSubmission(presentationAssessment);
-    } else {
-      // Create placeholder for missing presentation (grade -1 case)
-      studentEntry.supervisorPresentationSubmission = {
-        unitOfAssessmentId: UNIT_ASSESSMENT_IDS.PRESENTATION,
-        grade: -1,
-        studentId,
-        supervisorId: supervisor,
-        markerId: supervisor,
-        computed_grade: -1,
-        letterGrade: "N/A",
-        marks: {},
-        finalComment: "No submission",
-        recommendation: false,
-        draft: false,
-      };
     }
 
+    // Convert supervisor dissertation assessment
     const supervisorDissertation = dissertationAssessments.find(
       (a) => a.markerId === supervisor,
     );
@@ -163,12 +148,19 @@ function processStudentFile(filePath: string): Partial<StudentEntry> | null {
         convertAssessmentToSubmission(supervisorDissertation);
     }
 
+    // Convert reader dissertation assessment
     const readerDissertation = dissertationAssessments.find(
       (a) => a.markerId === reader,
     );
     if (readerDissertation) {
       studentEntry.readerDissertationSubmission =
         convertAssessmentToSubmission(readerDissertation);
+    }
+
+    // Validate that we have the minimum required data
+    if (!studentEntry.supervisorConductSubmission) {
+      console.warn(`Missing conduct submission for student ${studentId}`);
+      return null;
     }
 
     return studentEntry as StudentEntry;
@@ -178,19 +170,18 @@ function processStudentFile(filePath: string): Partial<StudentEntry> | null {
   }
 }
 
-function main() {
-  const INPUT_DIR = "/Users/petroskitazos/dev/amps/scripts/tmp"; // Adjust path as needed
-  const OUTPUT_FILE = "./src/db/scripts/converted-seyp-data.json";
+const INPUT_DIR = "~/dev/amps/scripts/tmp"; // Adjust path as needed
+const OUTPUT_FILE =
+  "./src/db/scripts/data/converted/converted-no-submission-data.json";
 
-  // Find all seyp-*-summary.json files
+function main() {
+  // Find all level4-*-summary.json files that contain no-submission cases
   const files = fs
     .readdirSync(INPUT_DIR)
-    .filter(
-      (file) => file.startsWith("seyp-") && file.endsWith("-summary.json"),
-    )
-    .map((file) => path.join(INPUT_DIR, file));
+    .filter((f) => f.startsWith("level4-") && f.endsWith("-summary.json"))
+    .map((f) => path.join(INPUT_DIR, f));
 
-  console.log(`Found ${files.length} files to process`);
+  console.log(`Found ${files.length} no-submission files to process`);
 
   const convertedStudents: StudentEntry[] = [];
 

@@ -1,7 +1,7 @@
 import fs from "fs";
 import { AssessmentCriterionDTO } from "@/dto";
 import { PrismaClient } from "@prisma/client";
-import { LEVEL4_CONFIG } from "./misc/units_of_assessment_by_flag";
+import { LEVEL4_CONFIG } from "./data/misc/units_of_assessment_by_flag";
 
 const group = "socs";
 const subGroup = "lvl-4-and-lvl-5-honours";
@@ -13,7 +13,7 @@ const db = new PrismaClient();
 
 const CONFIG = LEVEL4_CONFIG;
 const MARKING_GROUP = CONFIG.MARKING_GROUP;
-const OUTPUT_DIR = `./src/db/scripts/criteria/${MARKING_GROUP}`;
+const OUTPUT_DIR = `./src/db/scripts/data/criteria/${MARKING_GROUP}`;
 
 async function main() {
   if (!fs.existsSync(OUTPUT_DIR)) {

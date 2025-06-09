@@ -1,7 +1,7 @@
 import fs from "fs";
 import { expand } from "@/lib/utils/general/instance-params";
 import { PrismaClient } from "@prisma/client";
-import { EXCLUDED_STUDENTS_LEVEL4 } from "./misc/excluded_students";
+import { EXCLUDED_STUDENTS_LEVEL4 } from "./data/misc/excluded_students";
 
 const group = "socs";
 const subGroup = "lvl-4-and-lvl-5-honours";
@@ -16,7 +16,7 @@ const IDX = 20; // Replace with the line number of the student you want to query
 const toListIdx = (idx: number) => idx - 4;
 const studentId = EXCLUDED_STUDENTS_LEVEL4[toListIdx(IDX)];
 
-const OUTPUT_DIR = `./src/db/scripts/tmp/`;
+const OUTPUT_DIR = `./src/db/scripts/data/tmp/`;
 
 async function main() {
   if (!fs.existsSync(OUTPUT_DIR)) {

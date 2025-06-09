@@ -50,8 +50,4 @@ next-env.d.ts
 junk/
 docs/tmp/
 .react-email/
-src/db/scripts/input/
-src/db/scripts/out/
-src/db/scripts/maps/
-src/db/scripts/criteria/
-src/db/scripts/misc/
+src/db/scripts/data/

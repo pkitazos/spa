@@ -177,10 +177,10 @@ function processStudentFile(filePath: string): Partial<StudentEntry> | null {
   }
 }
 
-function main() {
-  const INPUT_DIR = "/Users/petroskitazos/dev/amps/scripts/tmp"; // Adjust path as needed
-  const OUTPUT_FILE = "./src/db/scripts/converted-mod-data.json";
+const INPUT_DIR = "~/dev/amps/scripts/tmp"; // Adjust path as needed
+const OUTPUT_FILE = "./src/db/scripts/data/converted/converted-mod-data.json";
 
+function main() {
   // Find all level4-*-summary.json files that are NOT no-submission cases
   const files = fs
     .readdirSync(INPUT_DIR)
