@@ -1,6 +1,7 @@
 {
   "name": "allocation-app",
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "type": "module",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -12,7 +13,7 @@
     "lint": "eslint",
     "tc": "tsc",
     "test": "vitest",
-    "postinstall": "prisma generate",
+    "postinstall": "prisma generate --no-hints",
     "db:generate": "prisma generate",
     "db:generate-push": "pnpm run db:generate && pnpm run db:push",
     "db:studio": "prisma studio",
