@@ -47,7 +47,9 @@ export default async function Page({ params }: { params: PageParams }) {
     flagTitles: project.flags.map((f) => f.title),
     capacityUpperBound: project.capacityUpperBound,
     preAllocatedStudentId: project.preAllocatedStudentId ?? "",
-    isPreAllocated: project.preAllocatedStudentId !== "",
+    isPreAllocated:
+      project.preAllocatedStudentId !== undefined &&
+      project.preAllocatedStudentId !== "",
   };
 
   const isForked = await api.project.getIsForked({ params: toPP1(params) });
