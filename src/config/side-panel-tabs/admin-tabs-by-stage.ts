@@ -47,6 +47,6 @@ export const ADMIN_TABS_BY_STAGE: Record<Stage, TabType[]> = {
   // TODO: fill these in
   [Stage.READER_BIDDING]: [PAGES.uploadReadings],
   [Stage.READER_ALLOCATION]: [PAGES.uploadReadings],
-  [Stage.MARK_SUBMISSION]: [PAGES.unitsOfAssessment],
+  [Stage.MARK_SUBMISSION]: [PAGES.unitsOfAssessment, PAGES.markingOverview],
   [Stage.GRADE_PUBLICATION]: [],
 };

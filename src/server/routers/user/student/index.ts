@@ -183,6 +183,8 @@ export const studentRouter = createTRPCRouter({
         .optional(),
     )
     .query(async ({ ctx: { db, instance }, input: { studentId } }) => {
+      if (!(await instance.isStudent(studentId))) return undefined;
+
       const student = await instance.getStudent(studentId);
 
       if (!(await student.hasAllocation())) return undefined;

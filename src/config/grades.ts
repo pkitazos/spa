@@ -27,18 +27,43 @@ export const GRADES = [
 ];
 
 export class Grade {
+  public static computeFromScores(scores: { score: number; weight: number }[]) {
+    const totalWeight = scores.reduce((acc, val) => acc + val.weight, 0);
+    const totalWeightedScore = scores.reduce(
+      (acc, val) => acc + val.weight * val.score,
+      0,
+    );
+
+    // POLICY how should we round non-integer grades?
+    const mark = this.round(totalWeightedScore / totalWeight);
+    return mark;
+  }
+
+  // POLICY how should we round non-integer grades?
+  public static round(mark: number): number {
+    return Math.round(mark);
+  }
+
   public static toLetter(mark: number): string {
     if (mark !== Math.round(mark)) {
       throw new Error(`Mark must be an integer: ${mark}`);
     }
     const grade = GRADES.find((g) => g.value === mark);
-    if (!grade) throw new Error(`Computed mark not valid: ${mark}`);
+    if (!grade) {
+      console.error(`!!Invalid Grade! ${mark}`);
+      return `invalid ${mark}`;
+    }
+    // throw new Error(`Computed mark not valid: ${mark}`);
     return grade.label;
   }
 
   public static toInt(grade: string): number {
     const gradeObj = GRADES.find((g) => g.label === grade);
-    if (!gradeObj) throw new Error(`Grade not valid: ${grade}`);
+    if (!gradeObj) {
+      console.error(`!!Invalid Grade! ${grade}`);
+      return -1;
+    }
+    // throw new Error(`Grade not valid: ${grade}`);
     return gradeObj.value;
   }
 
@@ -49,7 +74,10 @@ export class Grade {
     return grade[0];
   }
 
-  public static haveBandDifference(grade1: string, grade2: string): boolean {
+  public static haveMajorBandDifference(
+    grade1: string,
+    grade2: string,
+  ): boolean {
     return this.getBand(grade1) === this.getBand(grade2);
   }
 
@@ -58,12 +86,33 @@ export class Grade {
     return ["A1", "H"].includes(grade);
   }
 
-  // TODO test/confirm valid behaviour
+  // POLICY how should we round non-integer grades for between-marker averaging?
   public static average(grade1: string, grade2: string): string {
     const grade1Value = this.toInt(grade1);
     const grade2Value = this.toInt(grade2);
     const average = Math.round((grade1Value + grade2Value) / 2);
     return this.toLetter(average);
+  }
+
+  // if grade is A1 or Fail (below D3) then go to negotiate2
+  public static boundaryCheck(grade: string) {
+    if (this.isOnBoundary(grade)) {
+      return { status: GradingResult.NEGOTIATE2 };
+    } else {
+      return { status: GradingResult.AUTO_RESOLVED, grade };
+    }
+  }
+
+  public static isFailing(grade: string) {
+    return Grade.toInt(grade) < Grade.toInt("D3");
+  }
+
+  public static checkExtremes(grade: string) {
+    if (grade === "A1" || this.isFailing(grade)) {
+      return { status: GradingResult.MODERATE } as const;
+    } else {
+      return { status: GradingResult.AUTO_RESOLVED, grade } as const;
+    }
   }
 
   public static autoResolve(supervisorGrade?: string, readerGrade?: string) {
@@ -76,19 +125,18 @@ export class Grade {
     const diff = Math.abs(supervisorValue - readerValue);
 
     if (diff <= 1) {
-      return { status: GradingResult.AUTO_RESOLVED, grade: supervisorGrade };
+      return this.checkExtremes(supervisorGrade);
     }
 
-    if (diff === 2 && !Grade.haveBandDifference(supervisorGrade, readerGrade)) {
-      return {
-        status: GradingResult.AUTO_RESOLVED,
-        grade: Grade.average(supervisorGrade, readerGrade),
-      };
+    if (
+      diff === 2 &&
+      !Grade.haveMajorBandDifference(supervisorGrade, readerGrade)
+    ) {
+      return this.checkExtremes(Grade.average(supervisorGrade, readerGrade));
     }
 
     if (diff === 2) {
       return { status: GradingResult.NEGOTIATE1 };
-      // send emails using internal smtp server
     }
 
     return { status: GradingResult.NEGOTIATE2 };

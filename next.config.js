@@ -1,5 +1,12 @@
+import createMDX from "@next/mdx";
+
 /*eslint-env node*/
 /** @type {import('next').NextConfig} */
-const nextConfig = { output: "standalone" };
+const nextConfig = {
+  output: "standalone",
+  pageExtensions: ["ts", "tsx", "md", "mdx"],
+};
 
-module.exports = nextConfig;
+const withMDX = createMDX({ extension: /\.(md|mdx)$/ });
+
+export default withMDX(nextConfig);

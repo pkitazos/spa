@@ -36,14 +36,15 @@ export const institutionRouter = createTRPCRouter({
   createGroup: procedure.superAdmin
     .input(z.object({ groupName: z.string() }))
     .output(groupDtoSchema)
-    .mutation(
-      async ({ ctx: { institution }, input: { groupName } }) =>
-        await institution.createGroup(groupName),
-    ),
+    .mutation(async ({ ctx: { institution, audit }, input: { groupName } }) => {
+      audit("created group", { group: groupName });
+      return await institution.createGroup(groupName);
+    }),
 
   deleteGroup: procedure.group.superAdmin
     .output(z.void())
-    .mutation(async ({ ctx: { group } }) => {
+    .mutation(async ({ ctx: { group, audit } }) => {
+      audit("deleted group", group.params);
       await group.delete();
     }),
 });

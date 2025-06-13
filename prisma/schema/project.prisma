@@ -1,162 +1,161 @@
 // TODO: fix
 enum PreferenceType {
-    SHORTLIST
-    PREFERENCE
+  SHORTLIST
+  PREFERENCE
 
-    @@map("preference_type")
+  @@map("preference_type")
 }
 
 model Project {
-    id                            String                       @id @default(uuid())
-    title                         String
-    description                   String
-    specialTechnicalRequirements  String?                      @map("special_technical_requirements")
-    extraInformation              String?                      @map("extra_information")
-    latestEditDateTime            DateTime                     @default(now()) @map("latest_edit_date_time")
-    capacityLowerBound            Int                          @map("capacity_lower_bound")
-    capacityUpperBound            Int                          @map("capacity_upper_bound")
-    preAllocatedStudentId         String?                      @map("pre_allocated_student_id")
-    preAllocatedStudent           StudentDetails?              @relation(fields: [preAllocatedStudentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
-    // ---
-    allocationGroupId             String                       @map("allocation_group_id")
-    allocationSubGroupId          String                       @map("allocation_sub_group_id")
-    allocationInstanceId          String                       @map("allocation_instance_id")
-    allocationInstance            AllocationInstance           @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id])
-    // ---
-    supervisorId                  String                       @map("supervisor_id")
-    supervisor                    SupervisorDetails            @relation(fields: [supervisorId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
-    // ---
-    inStudentDraftPreferences     StudentDraftPreference[]
-    inStudentSubmittedPreferences StudentSubmittedPreference[]
-    inReaderDraftPreferences      ReaderDraftPreference[]
-    inReaderSubmittedPreferences  ReaderSubmittedPreference[]
-    studentAllocations            StudentProjectAllocation[]
-    readerAllocations             ReaderProjectAllocation[]    @relation(name: "project_reader")
-    matchingPairs                 MatchingPair[]
-    // ---
-    flagsOnProject                FlagOnProject[]
-    tagsOnProject                 TagOnProject[]
+  id                            String                       @id @default(uuid())
+  title                         String
+  description                   String
+  specialTechnicalRequirements  String?                      @map("special_technical_requirements")
+  extraInformation              String?                      @map("extra_information")
+  latestEditDateTime            DateTime                     @default(now()) @map("latest_edit_date_time")
+  capacityLowerBound            Int                          @map("capacity_lower_bound")
+  capacityUpperBound            Int                          @map("capacity_upper_bound")
+  preAllocatedStudentId         String?                      @map("pre_allocated_student_id")
+  preAllocatedStudent           StudentDetails?              @relation(fields: [preAllocatedStudentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  // ---
+  allocationGroupId             String                       @map("allocation_group_id")
+  allocationSubGroupId          String                       @map("allocation_sub_group_id")
+  allocationInstanceId          String                       @map("allocation_instance_id")
+  allocationInstance            AllocationInstance           @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+  // ---
+  supervisorId                  String                       @map("supervisor_id")
+  supervisor                    SupervisorDetails            @relation(fields: [supervisorId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  // ---
+  inStudentDraftPreferences     StudentDraftPreference[]
+  inStudentSubmittedPreferences StudentSubmittedPreference[]
+  inReaderDraftPreferences      ReaderDraftPreference[]
+  inReaderSubmittedPreferences  ReaderSubmittedPreference[]
+  studentAllocations            StudentProjectAllocation[]
+  readerAllocations             ReaderProjectAllocation[]    @relation(name: "project_reader")
+  matchingPairs                 MatchingPair[]
+  // ---
+  flagsOnProject                FlagOnProject[]
+  tagsOnProject                 TagOnProject[]
 
-    @@map("project")
+  @@map("project")
 }
 
 model StudentDraftPreference {
-    projectId            String         @map("project_id")
-    userId               String         @map("user_id")
-    score                Float
-    type                 PreferenceType
-    // ---
-    allocationGroupId    String         @map("allocation_group_id")
-    allocationSubGroupId String         @map("allocation_sub_group_id")
-    allocationInstanceId String         @map("allocation_instance_id")
-    // ---
-    project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    student              StudentDetails @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  projectId            String         @map("project_id")
+  userId               String         @map("user_id")
+  score                Float
+  type                 PreferenceType
+  // ---
+  allocationGroupId    String         @map("allocation_group_id")
+  allocationSubGroupId String         @map("allocation_sub_group_id")
+  allocationInstanceId String         @map("allocation_instance_id")
+  // ---
+  project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  student              StudentDetails @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
 
-    @@id(name: "draftPreferenceId", [projectId, userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
-    @@map("student_draft_preference")
+  @@id([projectId, userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], name: "draftPreferenceId")
+  @@map("student_draft_preference")
 }
 
 model StudentSubmittedPreference {
-    projectId            String         @map("project_id")
-    userId               String         @map("user_id")
-    rank                 Int
-    // ---
-    allocationGroupId    String         @map("allocation_group_id")
-    allocationSubGroupId String         @map("allocation_sub_group_id")
-    allocationInstanceId String         @map("allocation_instance_id")
-    // ---
-    project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    student              StudentDetails @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  projectId            String         @map("project_id")
+  userId               String         @map("user_id")
+  rank                 Int
+  // ---
+  allocationGroupId    String         @map("allocation_group_id")
+  allocationSubGroupId String         @map("allocation_sub_group_id")
+  allocationInstanceId String         @map("allocation_instance_id")
+  // ---
+  project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  student              StudentDetails @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
 
-    @@id(name: "studentSubmittedPreferenceId", map: "student_submitted_preference_id", [projectId, userId])
-    @@map("submitted_preference")
+  @@id([projectId, userId], name: "studentSubmittedPreferenceId", map: "student_submitted_preference_id")
+  @@map("submitted_preference")
 }
 
 model StudentProjectAllocation {
-    projectId            String         @map("project_id")
-    userId               String         @map("user_id")
-    studentRanking       Int            @map("student_ranking")
-    // ---
-    allocationGroupId    String         @map("allocation_group_id")
-    allocationSubGroupId String         @map("allocation_sub_group_id")
-    allocationInstanceId String         @map("allocation_instance_id")
-    // ---
-    project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    student              StudentDetails @relation(name: "project_allocation", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
-    finalGrade           FinalGrade?
+  projectId            String         @map("project_id")
+  userId               String         @map("user_id")
+  studentRanking       Int            @map("student_ranking")
+  // ---
+  allocationGroupId    String         @map("allocation_group_id")
+  allocationSubGroupId String         @map("allocation_sub_group_id")
+  allocationInstanceId String         @map("allocation_instance_id")
+  // ---
+  project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  student              StudentDetails @relation("project_allocation", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  finalGrade           FinalGrade?
 
-    @@id(name: "studentProjectAllocationId", map: "student_project_allocation_id", [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
-    @@map("student_project_allocation")
+  @@id([userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], name: "studentProjectAllocationId", map: "student_project_allocation_id")
+  @@map("student_project_allocation")
 }
 
 model ReaderDraftPreference {
-    projectId            String         @map("project_id")
-    userId               String         @map("user_id")
-    score                Float
-    type                 PreferenceType
-    // ---
-    allocationGroupId    String         @map("allocation_group_id")
-    allocationSubGroupId String         @map("allocation_sub_group_id")
-    allocationInstanceId String         @map("allocation_instance_id")
-    // ---
-    project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    reader               ReaderDetails  @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  projectId            String         @map("project_id")
+  userId               String         @map("user_id")
+  score                Float
+  type                 PreferenceType
+  // ---
+  allocationGroupId    String         @map("allocation_group_id")
+  allocationSubGroupId String         @map("allocation_sub_group_id")
+  allocationInstanceId String         @map("allocation_instance_id")
+  // ---
+  project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  reader               ReaderDetails  @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
 
-    @@id(name: "readerDraftPreferenceId", [projectId, userId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
-    @@map("reader_draft_preference")
+  @@id([projectId, userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], name: "readerDraftPreferenceId")
+  @@map("reader_draft_preference")
 }
 
 model ReaderSubmittedPreference {
-    projectId            String        @map("project_id")
-    userId               String        @map("user_id")
-    rank                 Int
-    // ---
-    allocationGroupId    String        @map("allocation_group_id")
-    allocationSubGroupId String        @map("allocation_sub_group_id")
-    allocationInstanceId String        @map("allocation_instance_id")
-    // ---
-    project              Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    reader               ReaderDetails @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  projectId            String        @map("project_id")
+  userId               String        @map("user_id")
+  rank                 Int
+  allocationGroupId    String        @map("allocation_group_id")
+  allocationSubGroupId String        @map("allocation_sub_group_id")
+  allocationInstanceId String        @map("allocation_instance_id")
+  // ---
+  project              Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  reader               ReaderDetails @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
 
-    @@id(name: "readerSubmittedPreferenceId", map: "reader_submitted_preference_id", [projectId, userId])
-    @@map("reader_submitted_preference")
+  @@id([projectId, userId], name: "readerSubmittedPreferenceId", map: "reader_submitted_preference_id")
+  @@map("reader_submitted_preference")
 }
 
 model ReaderProjectAllocation {
-    readerId             String         @map("reader_id")
-    reader               ReaderDetails  @relation(name: "reader_project_allocation", fields: [readerId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
-    projectId            String         @map("project_id")
-    project              Project        @relation(name: "project_reader", fields: [projectId], references: [id], onDelete: Cascade)
-    studentId            String         @map("user_id")
-    student              StudentDetails @relation(name: "student_reader", fields: [studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
-    thirdMarker          Boolean        @default(false) @map("third_marker")
-    // ---
-    allocationGroupId    String         @map("allocation_group_id")
-    allocationSubGroupId String         @map("allocation_sub_group_id")
-    allocationInstanceId String         @map("allocation_instance_id")
+  readerId             String         @map("reader_id")
+  reader               ReaderDetails  @relation("reader_project_allocation", fields: [readerId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  projectId            String         @map("project_id")
+  project              Project        @relation("project_reader", fields: [projectId], references: [id], onDelete: Cascade)
+  studentId            String         @map("user_id")
+  student              StudentDetails @relation("student_reader", fields: [studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  thirdMarker          Boolean        @default(false) @map("third_marker")
+  // ---
+  allocationGroupId    String         @map("allocation_group_id")
+  allocationSubGroupId String         @map("allocation_sub_group_id")
+  allocationInstanceId String         @map("allocation_instance_id")
 
-    @@id(name: "readerProjectAllocationId", map: "reader_project_allocation_id", [readerId, studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId])
-    @@unique([studentId, thirdMarker, allocationGroupId, allocationSubGroupId, allocationInstanceId])
-    @@map("reader_project_allocation")
+  @@id([readerId, studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], name: "readerProjectAllocationId", map: "reader_project_allocation_id")
+  @@unique([studentId, thirdMarker, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+  @@map("reader_project_allocation")
 }
 
 model FlagOnProject {
-    flag      Flag    @relation(fields: [flagId], references: [id], onDelete: Cascade)
-    flagId    String  @map("flag_id")
-    project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    projectId String  @map("project_id")
+  flag      Flag    @relation(fields: [flagId], references: [id], onDelete: Cascade)
+  flagId    String  @map("flag_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String  @map("project_id")
 
-    @@id(name: "flagOnProjectId", map: "flag_on_project_id", [flagId, projectId])
-    @@map("flag_on_project")
+  @@id([flagId, projectId], name: "flagOnProjectId", map: "flag_on_project_id")
+  @@map("flag_on_project")
 }
 
 model TagOnProject {
-    tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
-    tagId     String  @map("tag_id")
-    project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    projectId String  @map("project_id")
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId     String  @map("tag_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String  @map("project_id")
 
-    @@id(name: "tagOnProjectId", map: "tag_on_project_id", [tagId, projectId])
-    @@map("tag_on_project")
+  @@id([tagId, projectId], name: "tagOnProjectId", map: "tag_on_project_id")
+  @@map("tag_on_project")
 }

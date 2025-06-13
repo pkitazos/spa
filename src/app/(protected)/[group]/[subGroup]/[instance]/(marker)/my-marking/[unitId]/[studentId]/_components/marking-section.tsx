@@ -31,28 +31,24 @@ import { api } from "@/lib/trpc/client";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import {
   AssessmentCriterionDTO,
-  AssessmentCriterionWithScoreDTO,
-  PartialMarkDTO,
-  UnitOfAssessmentGradeDTO,
-  unitOfAssessmentGradeDtoSchema,
+  PartialMarkingSubmissionDTO,
+  MarkingSubmissionDTO,
+  markingSubmissionDtoSchema,
 } from "@/dto";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Control, useForm } from "react-hook-form";
-import { GRADES } from "@/config/grades";
-import { useState } from "react";
+import { Grade, GRADES } from "@/config/grades";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { YesNoAction } from "@/components/yes-no-action";
 import { PAGES } from "@/config/pages";
 
 export function MarkingSection({
   markingCriteria,
-  studentId,
-  unitOfAssessmentId,
+  initialState,
 }: {
-  markingCriteria: AssessmentCriterionWithScoreDTO[];
-  studentId: string;
-  unitOfAssessmentId: string;
+  markingCriteria: AssessmentCriterionDTO[];
+  initialState: PartialMarkingSubmissionDTO;
 }) {
   const params = useInstanceParams();
   const router = useRouter();
@@ -62,45 +58,36 @@ export function MarkingSection({
   const { mutateAsync: submitAsync } =
     api.user.marker.submitMarks.useMutation();
 
-  const form = useForm<UnitOfAssessmentGradeDTO>({
-    resolver: zodResolver(unitOfAssessmentGradeDtoSchema),
+  const form = useForm<MarkingSubmissionDTO>({
+    resolver: zodResolver(markingSubmissionDtoSchema),
     reValidateMode: "onBlur",
     defaultValues: {
-      draft: true,
-      // TODO @lewismb27
-      // optional
-      finalComment: "",
-      recommendation: false,
-      studentId,
-      unitOfAssessmentId,
+      ...initialState,
       marks: markingCriteria.reduce(
-        (acc, e) => ({
-          ...acc,
-          [e.criterion.id]: {
-            justification: e.score?.justification ?? "",
-            mark: e.score?.grade ?? -1,
-          },
-        }),
-        {},
+        (acc, val) => {
+          const data = initialState.marks?.[val.id];
+          return {
+            ...acc,
+            [val.id]: {
+              mark: data?.mark ?? -1,
+              justification: data?.justification ?? "",
+            },
+          };
+        },
+        {} as Record<string, { mark: number; justification: string }>,
       ),
     },
   });
 
-  function handleSave(data: PartialMarkDTO) {
-    void toast.promise(
-      saveAsync({ params, ...data }).then(() => {
-        router.push(`${instancePath}/${PAGES.myMarking.href}`);
-        router.refresh();
-      }),
-      {
-        loading: `Saving marks for Student ${data.studentId}...`,
-        error: "Something went wrong",
-        success: `Successfully saved marks for Student ${data.studentId}`,
-      },
-    );
+  function handleSave(data: PartialMarkingSubmissionDTO) {
+    void toast.promise(saveAsync({ params, ...data }), {
+      loading: `Saving marks for Student ${data.studentId}...`,
+      error: "Something went wrong",
+      success: `Successfully saved marks for Student ${data.studentId}`,
+    });
   }
 
-  const handleSubmit = form.handleSubmit((data: UnitOfAssessmentGradeDTO) => {
+  const handleSubmit = form.handleSubmit((data: MarkingSubmissionDTO) => {
     void toast.promise(
       submitAsync({ params, ...data }).then(() => {
         router.push(`${instancePath}/${PAGES.myMarking.href}`);
@@ -114,6 +101,30 @@ export function MarkingSection({
     );
   });
 
+  const grade = form.watch("grade");
+
+  function formatGrade(grade: number) {
+    if (grade !== -1) return Grade.toLetter(grade);
+    else return "-";
+  }
+
+  const computeOverallGrade = useCallback(() => {
+    const marks = form.getValues("marks");
+    if (!markingCriteria.every((c) => marks[c.id].mark !== -1)) return;
+
+    console.log("hello!");
+
+    const scores: { score: number; weight: number }[] = markingCriteria.map(
+      (c) => ({ weight: c.weight, score: marks[c.id].mark }),
+    );
+
+    const grade = Grade.computeFromScores(scores);
+
+    form.setValue("grade", grade, { shouldValidate: true });
+  }, [form, markingCriteria]);
+
+  useEffect(computeOverallGrade, [computeOverallGrade]);
+
   return (
     <Form {...form}>
       <form
@@ -121,63 +132,42 @@ export function MarkingSection({
         className="mt-10 flex w-full max-w-5xl flex-col gap-6"
       >
         <div className="flex flex-col gap-20">
-          {markingCriteria.map(({ criterion }) => (
+          {markingCriteria.map((criterion) => (
             <AssessmentCriterionField
               key={criterion.id}
               criterion={criterion}
               control={form.control}
+              computeOverallGrade={computeOverallGrade}
             />
           ))}
         </div>
-        <FormField
-          control={form.control}
-          name="finalComment"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Summary</FormLabel>
-              <FormDescription>
-                A short summary of your evaluation or additional comments
-              </FormDescription>
-              <FormControl>
-                <Textarea {...field} />
-              </FormControl>
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="recommendation"
-          render={({ field: { value, ...field } }) => (
-            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-              <FormControl>
-                {/* should only be visible on dissertation unit of assessment */}
-                <Checkbox defaultChecked={value} {...field} />
-              </FormControl>
-              <div className="space-y-1 leading-none">
-                {/* TODO: should be flagged to admins */}
-                <FormLabel>
-                  Would you recommend this project for a prize?
-                </FormLabel>
-              </div>
-            </FormItem>
-          )}
-        />
+        <div>
+          <h3>overall mark:</h3>
+          <h4>{formatGrade(grade)}</h4>
+        </div>
+        {markingCriteria.length > 1 ? (
+          <FormField
+            control={form.control}
+            name="finalComment"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Summary</FormLabel>
+                <FormDescription>
+                  A short summary of your evaluation or additional comments
+                </FormDescription>
+                <FormControl>
+                  <Textarea {...field} />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+        ) : (
+          <Fragment />
+        )}
+
         <div className="mt-16 flex justify-end gap-8">
           <Button
-            onClick={() => {
-              // const validState = Object.entries(
-              //   form.formState.touchedFields,
-              // ).every(
-              //   ([name, touched]) =>
-              //     !touched ||
-              //     !form.getFieldState(name as keyof UnitOfAssessmentGradeDTO)
-              //       .invalid,
-              // );
-
-              // if (validState) {
-              handleSave(form.getValues());
-              // }
-            }}
+            onClick={() => handleSave(form.getValues())}
             type="button"
             variant="outline"
             size="lg"
@@ -204,9 +194,11 @@ export function MarkingSection({
 function AssessmentCriterionField({
   criterion,
   control,
+  computeOverallGrade,
 }: {
   criterion: AssessmentCriterionDTO;
-  control: Control<UnitOfAssessmentGradeDTO>;
+  control: Control<MarkingSubmissionDTO>;
+  computeOverallGrade: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const dropDownDefaultVal = "??";
@@ -259,6 +251,7 @@ function AssessmentCriterionField({
                                 onSelect={() => {
                                   field.onChange(grade.value);
                                   setOpen(false);
+                                  computeOverallGrade();
                                 }}
                               >
                                 <Check

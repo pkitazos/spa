@@ -44,3 +44,10 @@ next-env.d.ts
 # project specific
 *.t.txt
 *.t.*
+
+*.log
+
+junk/
+docs/tmp/
+.react-email/
+src/db/scripts/data/

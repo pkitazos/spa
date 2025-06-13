@@ -75,18 +75,24 @@ export function FormWizard<T extends z.ZodTypeAny>({
                     type="button"
                     variant="outline"
                     onClick={handlePrevious}
+                    tabIndex={1}
                   >
                     Previous
                   </Button>
                 )}
                 {currentStep === 0 && (
-                  <Button type="button" size="lg" variant="outline" asChild>
-                    {/* TODO this behavior should be configurable */}
+                  <Button
+                    type="button"
+                    size="lg"
+                    variant="outline"
+                    tabIndex={1}
+                    asChild
+                  >
                     <Link href="./settings">Cancel</Link>
                   </Button>
                 )}
               </div>
-              <Button type="button" onClick={handleNext}>
+              <Button type="button" onClick={handleNext} tabIndex={0}>
                 {currentStep === steps.length - 1 ? "Submit" : "Next"}
               </Button>
             </CardFooter>

@@ -44,8 +44,6 @@
   - well sometimes there's multiple different users in the same model (see RPA)
 - [ ] add separate slug field to spaces (or we are doomed)
   - yep agreed
-- [x] use the new multi-file schema's to make it a bit more tractable?
-  - open to feedback on how to organise these
 
 ## From scratch
 
@@ -53,21 +51,40 @@
 
 - [ ] tests
 - [ ] docs
-- [ ] logs
+- [ ] logs ---< very important - feature requested by client.
 
 # Other Tasks
 
-- upload readings page
+- [ ] add data table for 'uploading reader allocations'
+- [ ] add single input form for 'upload reader allocations' page
+- [-] make instance form multi-page -> this should really be a collection of forms.
 
-- [ ] add data table
-- [ ] add single input form
+---
 
-- [ ] confirm if projects can have multiple allocations
-- [ ] separate stage control into tabs
-- [ ] make instance form multi-page
+- [-] replicated SQL backups to 2nd machines -> add git commit & push to backup script
+- [ ] Marking overwrite page for unit of assessment (needed for moderation)
+      negotiation 3 resolution
+  - [ ] link to this too
 
-- [ ] tabs between chapters
-- [ ] nested dropdown in sidebar
-- [ ] my projects - split into supervisor + reader
-- [ ] my marking - split by submission
-- [ ] dropdown to filter by role for admins only
+---
+
+- [ ] summary counters on marking overview page
+- [ ] marking review page
+- [ ] resolve button on my marking page.
+- [ ] TLC to resolve page
+- [ ] add date when negotiation triggered
+- [ ] index marking overview by academic
+
+# next release
+
+- [ ] change user info (name, email, id)
+- [ ] change project title.
+- [ ] custom deadlines -> 100% a thing
+- [ ] custom weights
+- [ ] allow users to delete users
+- [ ] add a field to the database that records if a project is 40 or 20 credits
+  - [ ] This should also be displayed to markers somehow.
+
+---
+
+- [ ] update NextJS version maybe

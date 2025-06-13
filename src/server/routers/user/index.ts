@@ -81,7 +81,8 @@ export const userRouter = createTRPCRouter({
     ),
 
   joinInstance: procedure.instance.user.mutation(
-    async ({ ctx: { user, instance } }) => {
+    async ({ ctx: { user, instance, audit } }) => {
+      audit("joining instance", { instance: instance.params });
       await user.joinInstance(instance.params);
     },
   ),

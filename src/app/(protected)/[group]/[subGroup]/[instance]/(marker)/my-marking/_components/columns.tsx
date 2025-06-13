@@ -1,24 +1,21 @@
 "use client";
 
 import { ProjectDTO, StudentDTO, UnitOfAssessmentDTO } from "@/dto";
+import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
 import { MarkerType } from "@prisma/client";
 import type { ColumnDef } from "@tanstack/react-table";
-
-export type Submission = {
-  id: string;
-  title: string;
-  dueDate?: string;
-  status: "mark" | "edit" | "submitted" | "not_open";
-};
 
 export type SubmissionTableRow = {
   project: ProjectDTO;
   student: StudentDTO;
   markerType: MarkerType;
-  unitsOfAssessment: UnitOfAssessmentDTO[];
+  unitsOfAssessment: {
+    unit: UnitOfAssessmentDTO;
+    status: MarkingSubmissionStatus;
+  }[];
 };
 
 export const columns: ColumnDef<SubmissionTableRow>[] = [
-  { accessorKey: "projectName", header: "Project" },
-  { accessorKey: "role", header: "Role" },
+  { id: "projectTitle", accessorKey: "project.title", header: "Project" },
+  { id: "role", accessorKey: "markerType", header: "Role" },
 ];

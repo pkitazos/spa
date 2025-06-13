@@ -12,10 +12,14 @@ import superjson from "superjson";
 import { ZodError } from "zod";
 
 import { auth } from "@/lib/auth";
-import { now } from "@/lib/utils/date/now";
 import { Session } from "@/lib/validations/auth";
 
 import { db } from "@/db";
+import { sendMail } from "@/emails";
+import { Mailer } from "@/emails/mailer";
+import { logger, LogLevels } from "@/lib/logging/logger";
+
+const trpcLogger = logger.child({ service: "trpc" });
 
 /**
  * 1. CONTEXT
@@ -33,15 +37,28 @@ export const createTRPCContext = async (opts: {
   headers: Headers;
   session: Session | null;
 }) => {
-  const session = opts.session ?? { user: await auth() };
+  const user = await auth();
+  if (!user) console.error("Failed to get user from auth()");
+  const session = opts.session ?? { user };
 
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
-  const time = now();
+  trpcLogger.log(LogLevels.TRIVIAL, "tRPC Request", { source });
 
-  // TODO: replace with proper logging library
-  // console.log(`>>> tRPC Request from ${source} by`, session.user, `at ${time}`);
+  function audit(message: string, ...meta: any[]) {
+    const data = meta.reduce((acc, val) => ({ ...acc, ...val }), {
+      authorizer: user,
+    });
 
-  return { session, db };
+    trpcLogger.log(LogLevels.AUDIT, message, data);
+  }
+
+  return {
+    session,
+    db,
+    mailer: new Mailer(sendMail),
+    logger: trpcLogger,
+    audit,
+  };
 };
 
 /**

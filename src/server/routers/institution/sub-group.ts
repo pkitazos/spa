@@ -15,6 +15,7 @@ import {
   LinkUserResult,
   LinkUserResultSchema,
 } from "@/dto/result/link-user-result";
+import { slugify } from "@/lib/utils/general/slugify";
 
 export const subGroupRouter = createTRPCRouter({
   exists: procedure.subgroup.user
@@ -69,32 +70,55 @@ export const subGroupRouter = createTRPCRouter({
     )
     .output(z.void())
     .mutation(
-      async ({ ctx: { subGroup }, input: { newInstance, flags, tags } }) =>
-        await subGroup.createInstance({ newInstance, flags, tags }),
+      async ({
+        ctx: { subGroup, audit },
+        input: { newInstance, flags, tags },
+      }) => {
+        await subGroup.createInstance({ newInstance, flags, tags });
+        audit("created instance", {
+          ...subGroup.params,
+          instance: slugify(newInstance.displayName),
+        });
+      },
     ),
 
   deleteInstance: procedure.instance.subGroupAdmin
     .output(z.void())
-    .mutation(async ({ ctx: { instance } }) => await instance.delete()),
+    .mutation(async ({ ctx: { instance, audit } }) => {
+      await instance.delete();
+      audit("deleted instance", instance.params);
+    }),
 
   // BREAKING input and output types changed
   addAdmin: procedure.subgroup.groupAdmin
     .input(z.object({ newAdmin: userDtoSchema }))
     .output(LinkUserResultSchema)
     .mutation(
-      async ({ ctx: { institution, subGroup }, input: { newAdmin } }) => {
+      async ({
+        ctx: { institution, subGroup, audit },
+        input: { newAdmin },
+      }) => {
         const { id } = newAdmin;
         const userIsGroupAdmin = await subGroup.isSubGroupAdmin(id);
 
-        if (userIsGroupAdmin) return LinkUserResult.PRE_EXISTING;
+        if (userIsGroupAdmin) {
+          audit("Added subgroup admin", {
+            result: LinkUserResult.PRE_EXISTING,
+          });
+          return LinkUserResult.PRE_EXISTING;
+        }
 
         const userExists = await institution.userExists(id);
         if (!userExists) institution.createUser(newAdmin);
 
         await subGroup.linkAdmin(id);
 
-        if (!userExists) return LinkUserResult.CREATED_NEW;
+        if (!userExists) {
+          audit("Added subgroup admin", { result: LinkUserResult.CREATED_NEW });
+          return LinkUserResult.CREATED_NEW;
+        }
 
+        audit("Added subgroup admin", { result: LinkUserResult.OK });
         return LinkUserResult.OK;
       },
     ),
@@ -102,7 +126,8 @@ export const subGroupRouter = createTRPCRouter({
   removeAdmin: procedure.subgroup.groupAdmin
     .input(z.object({ userId: z.string() }))
     .output(z.void())
-    .mutation(async ({ ctx: { subGroup }, input: { userId } }) => {
+    .mutation(async ({ ctx: { subGroup, audit }, input: { userId } }) => {
+      audit("removed subgroup admin", { adminId: userId }, subGroup.params);
       await subGroup.unlinkAdmin(userId);
     }),
 });

@@ -119,6 +119,12 @@ export const PAGES = {
     icon: "file-check-2",
   },
 
+  markingOverview: {
+    title: "Marking Overview",
+    href: "marking-overview",
+    icon: "file-check-2",
+  },
+
   allProjects: { title: "All Projects", href: "projects" },
 
   instanceHome: { title: "Instance Home", href: "", icon: "home" },

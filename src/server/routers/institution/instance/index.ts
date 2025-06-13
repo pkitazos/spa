@@ -210,6 +210,7 @@ export const instanceRouter = createTRPCRouter({
     .query(async ({ ctx: { instance } }) => await instance.getSupervisors()),
 
   // BREAKING input/output type changed
+  // TODO emit audit
   addSupervisor: procedure.instance.subGroupAdmin
     .input(z.object({ newSupervisor: supervisorDtoSchema }))
     .output(LinkUserResultSchema)
@@ -656,11 +657,9 @@ export const instanceRouter = createTRPCRouter({
 
             let supervisorGrade: string | undefined;
             if (supervisorScores.every((s) => s !== undefined)) {
-              const mark = supervisorScores.reduce(
-                (acc, val) => acc + val.weight * val.score,
-                0,
+              supervisorGrade = Grade.toLetter(
+                Grade.computeFromScores(supervisorScores),
               );
-              supervisorGrade = Grade.toLetter(mark);
             }
 
             const readerScores = submission.assessmentCriteria.map((c) => {
@@ -673,11 +672,9 @@ export const instanceRouter = createTRPCRouter({
 
             let readerGrade: string | undefined;
             if (readerScores.every((s) => s !== undefined)) {
-              const mark = readerScores.reduce(
-                (acc, val) => acc + val.weight * val.score,
-                0,
+              readerGrade = Grade.toLetter(
+                Grade.computeFromScores(readerScores),
               );
-              readerGrade = Grade.toLetter(mark);
             }
 
             return {

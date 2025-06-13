@@ -3,7 +3,9 @@
 import {
   AssessmentCriterionDTO,
   CriterionScoreDTO,
+  MarkingSubmissionDTO,
   UnitOfAssessmentDTO,
+  UserDTO,
 } from "@/dto";
 import {
   DB_Algorithm,
@@ -23,7 +25,8 @@ import {
   DB_TagOnProject,
   DB_User,
   DB_UserInInstance,
-  DB_ComponentScore,
+  DB_CriterionScore,
+  DB_MarkingSubmission,
 } from "./types";
 
 import {
@@ -41,12 +44,40 @@ import {
 } from "@/dto";
 
 export class Transformers {
-  static toScoreDTO(data: DB_ComponentScore): CriterionScoreDTO {
+  static toUserDTO({
+    id,
+    name,
+    email,
+  }: {
+    id: string;
+    name: string;
+    email: string;
+  }): UserDTO {
+    return { id, name, email };
+  }
+
+  public static toMarkingSubmissionDTO(
+    data: DB_MarkingSubmission & { criterionScores?: DB_CriterionScore[] },
+  ): MarkingSubmissionDTO {
     return {
-      draft: data.draft,
+      markerId: data.markerId,
+      studentId: data.studentId,
       grade: data.grade,
-      justification: data.justification,
+      unitOfAssessmentId: data.unitOfAssessmentId,
+      marks: (data.criterionScores ?? []).reduce(
+        (acc, val) => ({
+          ...acc,
+          [val.assessmentCriterionId]: this.toScoreDTO(val),
+        }),
+        {},
+      ),
+      finalComment: data.summary,
+      recommendation: data.recommendedForPrize,
+      draft: data.draft,
     };
+  }
+  public static toScoreDTO(data: DB_CriterionScore): CriterionScoreDTO {
+    return { mark: data.grade, justification: data.justification };
   }
 
   public static toAllocationGroupDTO(data: DB_AllocationGroup): GroupDTO {
@@ -201,7 +232,6 @@ export class Transformers {
   ): AssessmentCriterionDTO {
     return {
       id: data.id,
-      flagId: data.flagId,
       unitOfAssessmentId: data.unitOfAssessmentId,
       title: data.title,
       description: data.description,

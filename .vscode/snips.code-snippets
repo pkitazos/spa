@@ -1,40 +1,59 @@
 {
-	// Place your allocation-app workspace snippets here. Each snippet is defined under a snippet name and has a scope, prefix, body and 
-	// description. Add comma separated ids of the languages where the snippet is applicable in the scope field. If scope 
-	// is left empty or omitted, the snippet gets applied to all languages. The prefix is what is 
-	// used to trigger the snippet and the body will be expanded and inserted. Possible variables are: 
-	// $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders. 
-	// Placeholders with the same ids are connected.
-	// Example:
-	"Deprecate": {
-		"scope": "javascript,typescript",
-		"prefix": "depr",
-		"body": [
-			"/**",
-			"* @deprecated $0",
-			"*/"
-		],
-		"description": "Log output to console"
-	},
-	"Instance Page": {
-		"prefix": "inpag",
-		"body": [
-			"import { InstanceParams } from \"@/lib/validations/params\";",
-			"export default async function Page({params}:{params:InstanceParams}) {",
-			"  return (<>${0}</>);",
-			"}"
-		],
-		"description": "Creates a page server component with instance params"
-	},
+  // Place your spa workspace snippets here. Each snippet is defined under a snippet name and has a scope, prefix, body and
+  // description. Add comma separated ids of the languages where the snippet is applicable in the scope field. If scope
+  // is left empty or omitted, the snippet gets applied to all languages. The prefix is what is
+  // used to trigger the snippet and the body will be expanded and inserted. Possible variables are:
+  // $1, $2 for tab stops, $0 for the final cursor position, and ${1:label}, ${2:another} for placeholders.
+  // Placeholders with the same ids are connected.
+  // Example:
+  "Deprecate": {
+    "scope": "javascript,typescript",
+    "prefix": "depr",
+    "body": ["/**", "* @deprecated $0", "*/"],
+    "description": "Log output to console",
+  },
+  "Instance Page": {
+    "prefix": "inpag",
+    "body": [
+      "import { InstanceParams } from \"@/lib/validations/params\";",
+      "export default async function Page({params}:{params:InstanceParams}) {",
+      "  return (<>${0}</>);",
+      "}",
+    ],
+    "description": "Creates a page server component with instance params",
+  },
 
-	"DTO type": {
-		"prefix": "dtos",
-		"body": [
-			"export const ${1:objName}DtoSchema = z.object({",
-			"${2}",
-			"});",
-			"",
-			"export type ${1/(.*)/${1:/capitalize}/}DTO = z.infer<typeof ${1}DtoSchema>"
-		]
-	}
+  "DTO type": {
+    "prefix": "dtos",
+    "body": [
+      "export const ${1:objName}DtoSchema = z.object({",
+      "${2}",
+      "});",
+      "",
+      "export type ${1/(.*)/${1:/capitalize}/}DTO = z.infer<typeof ${1}DtoSchema>",
+    ],
+  },
+  "Email Template": {
+    "prefix": "eml",
+    "body": [
+      "import { Html } from \"@react-email/components\";",
+      "",
+      "interface Props {",
+      "",
+      "}",
+      "",
+      "export function ${0}({}: Props) {",
+      "return (",
+      "    <Html>",
+      "    </Html>",
+      "  );",
+      "}",
+      "",
+      "${0}.PreviewProps = {",
+      "",
+      "} satisfies Props;",
+      "",
+      "export default ${0};",
+    ],
+  },
 }

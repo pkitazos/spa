@@ -1,4 +1,4 @@
-import { Heading } from "@/components/heading";
+import { Heading, SubHeading } from "@/components/heading";
 import { PageWrapper } from "@/components/page-wrapper";
 
 import { api } from "@/lib/trpc/server";
@@ -9,6 +9,7 @@ import { InstanceParams } from "@/lib/validations/params";
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 import { MarkingSection } from "./_components/marking-section";
+import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
 
 type PageParams = InstanceParams & { unitId: string; studentId: string };
 
@@ -35,7 +36,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function Marks({
+export default async function MarksPage({
   params: { unitId: unitOfAssessmentId, studentId, ...params },
 }: {
   params: PageParams;
@@ -45,14 +46,45 @@ export default async function Marks({
     studentId,
   });
 
-  const submissionMarkingData =
-    await api.user.marker.getCriteriaAndScoresForStudentSubmission({
-      params,
-      unitOfAssessmentId,
-      studentId,
-    });
+  const unitOfAssessment = await api.user.marker.getUnitById({
+    params,
+    unitOfAssessmentId,
+  });
+
+  const markingCriteria = await api.user.marker.getCriteria({
+    params,
+    unitOfAssessmentId,
+  });
+
+  const { status, submission } = await api.user.marker.getSubmission({
+    params,
+    unitOfAssessmentId,
+    studentId,
+  });
 
   if (!project) throw new Error("no project defined"); // error goes here
+
+  if (status === MarkingSubmissionStatus.CLOSED) {
+    return (
+      <PageWrapper>
+        <div className="grid place-items-center py-20">
+          <h1 className="text-3xl italic">
+            This unit is not yet open for marking
+          </h1>
+        </div>
+      </PageWrapper>
+    );
+  }
+
+  if (status === MarkingSubmissionStatus.SUBMITTED) {
+    return (
+      <PageWrapper>
+        <div className="grid place-items-center py-20">
+          <h1 className="text-3xl italic">This unit has been submitted</h1>
+        </div>
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper>
@@ -66,11 +98,12 @@ export default async function Marks({
         {project.title}
       </Heading>
 
+      <SubHeading>{unitOfAssessment.title}</SubHeading>
+
       <div className="mt-6 flex flex-col gap-6">
         <MarkingSection
-          markingCriteria={submissionMarkingData}
-          studentId={studentId}
-          unitOfAssessmentId={unitOfAssessmentId}
+          markingCriteria={markingCriteria}
+          initialState={submission}
         />
       </div>
     </PageWrapper>
