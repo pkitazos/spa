@@ -25,6 +25,7 @@ export const updateProjectSchema = z.object({
   specialTechnicalRequirements: z.string().nullable().optional(),
   /** set null to erase  */
   preAllocatedStudentId: z.string().nullable().optional(),
+  isPreAllocated: z.boolean().optional(),
   capacityLowerBound: z.number().optional(),
   capacityUpperBound: z.number().optional(),
   supervisorId: z.string().optional(),
