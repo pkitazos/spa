@@ -37,7 +37,7 @@ model AssessmentCriterion {
   unitOfAssessment   UnitOfAssessment @relation(fields: [unitOfAssessmentId], references: [id], onDelete: Cascade)
   scores             CriterionScore[]
 
-  // @@unique([title, unitOfAssessmentId]) // probably right?
+@@unique([title, unitOfAssessmentId])
   @@map("assessment_criterion")
 }
 
