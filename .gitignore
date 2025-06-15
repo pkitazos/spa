@@ -50,4 +50,4 @@ next-env.d.ts
 junk/
 docs/tmp/
 .react-email/
-src/db/scripts/data/
+scripts/db/patch/data/

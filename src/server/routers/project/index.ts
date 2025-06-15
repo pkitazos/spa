@@ -35,10 +35,10 @@ export const projectRouter = createTRPCRouter({
     .output(z.boolean())
     .query(async ({ ctx: { project } }) => await project.exists()),
 
-  // pin
   edit: procedure.project
     .inStage(previousStages(Stage.STUDENT_BIDDING))
-    .supervisor.input(z.object({ updatedProject: updateProjectSchema }))
+    .withRoles([Role.ADMIN, Role.SUPERVISOR])
+    .input(z.object({ updatedProject: updateProjectSchema }))
     .output(z.void())
     .mutation(
       async ({
@@ -50,6 +50,7 @@ export const projectRouter = createTRPCRouter({
             description,
             capacityUpperBound,
             preAllocatedStudentId,
+            isPreAllocated,
             specialTechnicalRequirements,
             tags,
             flags,
@@ -63,18 +64,35 @@ export const projectRouter = createTRPCRouter({
               title,
               description,
               capacityUpperBound,
-              preAllocatedStudentId,
+              preAllocatedStudentId:
+                isPreAllocated && preAllocatedStudentId
+                  ? preAllocatedStudentId
+                  : null,
               latestEditDateTime: new Date(),
               specialTechnicalRequirements,
             },
           });
 
-          if (preAllocatedStudentId) {
+          if (
+            isPreAllocated &&
+            preAllocatedStudentId &&
+            preAllocatedStudentId.trim() !== ""
+          ) {
             await linkPreallocatedStudent(
               tx,
               project.params,
               preAllocatedStudentId,
             );
+          } else {
+            const { preAllocatedStudentId } = await project.get();
+            if (preAllocatedStudentId) {
+              await tx.studentProjectAllocation.deleteMany({
+                where: {
+                  userId: preAllocatedStudentId,
+                  projectId: project.params.projectId,
+                },
+              });
+            }
           }
 
           if (flags) {
@@ -441,7 +459,10 @@ export const projectRouter = createTRPCRouter({
               description: newProject.description,
               capacityLowerBound: 0,
               capacityUpperBound: newProject.capacityUpperBound,
-              preAllocatedStudentId: newProject.preAllocatedStudentId || null,
+              preAllocatedStudentId:
+                newProject.isPreAllocated && newProject.preAllocatedStudentId
+                  ? newProject.preAllocatedStudentId
+                  : null,
               specialTechnicalRequirements:
                 newProject.specialTechnicalRequirements ?? null,
               latestEditDateTime: new Date(),
@@ -449,12 +470,18 @@ export const projectRouter = createTRPCRouter({
             },
           });
 
-          // TODO: disallow empty string
           if (
+            newProject.isPreAllocated &&
             newProject.preAllocatedStudentId &&
-            newProject.preAllocatedStudentId !== ""
+            newProject.preAllocatedStudentId.trim() !== ""
           ) {
-            db.studentProjectAllocation.create({
+            await linkPreallocatedStudent(
+              tx,
+              { ...instance.params, projectId: project.id },
+              newProject.preAllocatedStudentId,
+            );
+
+            await tx.studentProjectAllocation.create({
               data: {
                 ...expand(instance.params),
                 userId: newProject.preAllocatedStudentId,
