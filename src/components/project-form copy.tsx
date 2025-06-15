@@ -39,9 +39,9 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { cn } from "@/lib/utils";
 import {
-  buildUpdatedProjectSchema,
+  DEPR_buildUpdatedProjectSchema,
   CurrentProjectFormDetails,
-  FormInternalData,
+  DEPR_FormInternalData,
   UpdatedProject,
 } from "@/lib/validations/project-form";
 
@@ -66,7 +66,7 @@ export function ProjectForm({
   requiredFlags,
   children: dismissalButton,
 }: {
-  formInternalData: FormInternalData;
+  formInternalData: DEPR_FormInternalData;
   submissionButtonLabel: string;
   onSubmit: (data: UpdatedProject) => void;
   project?: CurrentProjectFormDetails;
@@ -97,7 +97,7 @@ export function ProjectForm({
 
   const form = useForm<UpdatedProject>({
     resolver: zodResolver(
-      buildUpdatedProjectSchema(takenTitles, requiredFlags),
+      DEPR_buildUpdatedProjectSchema(takenTitles, requiredFlags),
     ),
     defaultValues: {
       title: formProject.title,
@@ -197,15 +197,6 @@ export function ProjectForm({
           )}
         />
         <Separator className="mt-4" />
-        {isForked && (
-          <NoteCard>
-            You are in a forked {spacesLabels.instance.short}. Any new flags or
-            keywords assigned to a project will be carried over to the parent{" "}
-            {spacesLabels.instance.short}, and any flags or keywords removed
-            will remain on the project in the parent{" "}
-            {spacesLabels.instance.short} when merging.
-          </NoteCard>
-        )}
         <div className="grid grid-cols-2">
           <FormField
             control={form.control}

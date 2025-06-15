@@ -1,5 +1,5 @@
 import { Heading } from "@/components/heading";
-import { CreateProjectForm } from "@/components/pages/create-project-form";
+import { CreateProjectForm } from "@/components/project-form/create-project";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
@@ -28,7 +28,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
     );
   }
 
-  // TODO@lewsimb27
+  // TODO @lewsimb27
 
   const supervisor = await api.user.get();
   const formDetails = await api.project.getFormDetails({ params });

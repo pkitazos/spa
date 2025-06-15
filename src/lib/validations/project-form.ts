@@ -5,31 +5,12 @@ import { tagTypeSchema } from "@/components/tag/tag-input";
 import { projectFlags } from "@/config/config/flags";
 import { FlagDTO, StudentDTO, TagDTO } from "@/dto";
 
-const ascii_pattern = /^[\x00-\x7F]+$/;
-
-function isAscii(str: string) {
-  return ascii_pattern.test(str);
-}
-
-function findNonAscii(text: string) {
-  const nonAsciiSet = new Set(
-    text.split("").filter((char) => char.charCodeAt(0) > 127),
-  );
-  return Array.from(nonAsciiSet);
-}
-
-const baseProjectFormSchema = z.object({
-  title: z
-    .string()
-    .min(4, "Please enter a longer title")
-    .max(512, "Title must be 512 characters or less"),
-  description: z
-    .string()
-    .min(10, "Please enter a longer description")
-    .max(2048, "Description must be 2048 characters or less")
-    .refine(isAscii, (val) => ({
-      message: `Please remove non-ASCII characters: ${findNonAscii(val).join(", ")}`,
-    })),
+/**
+ * @deprecated
+ */
+const DEPR_baseProjectFormSchema = z.object({
+  title: z.string().min(4, "Please enter a longer title"),
+  description: z.string().min(10, "Please enter a longer description"),
   flagTitles: z
     .array(z.string())
     .refine((value) => value.some((item) => item), {
@@ -42,7 +23,10 @@ const baseProjectFormSchema = z.object({
   specialTechnicalRequirements: z.string().optional(),
 });
 
-export const updatedProjectSchema = baseProjectFormSchema.refine(
+/**
+ * @deprecated
+ */
+export const DEPR_updatedProjectSchema = DEPR_baseProjectFormSchema.refine(
   ({ isPreAllocated, preAllocatedStudentId }) => {
     // if pre-allocated is enabled, student ID must be provided and non-empty
     if (isPreAllocated) {
@@ -54,51 +38,154 @@ export const updatedProjectSchema = baseProjectFormSchema.refine(
   { message: "Please select a student", path: ["preAllocatedStudentId"] },
 );
 
-export type UpdatedProject = z.infer<typeof updatedProjectSchema>;
+/**
+ * @deprecated
+ */
+export type UpdatedProject = z.infer<typeof DEPR_updatedProjectSchema>;
 
-export function buildUpdatedProjectSchema(
+/**
+ * @deprecated
+ */
+export function DEPR_buildUpdatedProjectSchema(
   takenTitles: Set<string>,
   requiredFlags: string[] = [],
 ) {
-  return updatedProjectSchema
-    .refine(({ title }) => !takenTitles.has(title), {
-      message: "This title is already taken",
-      path: ["title"],
-    })
-    .refine(
-      ({ flagTitles }) => {
-        if (requiredFlags.length === 0) return true;
-        return flagTitles.some((title) => requiredFlags.includes(title));
-      },
-      {
-        message: `Must select at least one of "${projectFlags.level4}" or "${projectFlags.level5}"`,
-        path: ["flagTitles"],
-      },
-    );
+  return DEPR_updatedProjectSchema.refine(
+    ({ title }) => !takenTitles.has(title),
+    { message: "This title is already taken", path: ["title"] },
+  ).refine(
+    ({ flagTitles }) => {
+      if (requiredFlags.length === 0) return true;
+      return flagTitles.some((title) => requiredFlags.includes(title));
+    },
+    {
+      message: `Must select at least one of "${projectFlags.level4}" or "${projectFlags.level5}"`,
+      path: ["flagTitles"],
+    },
+  );
 }
 
-export const currentProjectFormDetailsSchema = baseProjectFormSchema
-  .omit({ capacityUpperBound: true, preAllocatedStudentId: true })
-  .extend({
+/**
+ * @deprecated
+ */
+export const DEPR_currentProjectFormDetailsSchema =
+  DEPR_baseProjectFormSchema.omit({
+    capacityUpperBound: true,
+    preAllocatedStudentId: true,
+  }).extend({
     id: z.string(),
     capacityUpperBound: z.number(),
     preAllocatedStudentId: z.string(),
   });
 
+/**
+ * @deprecated
+ */
 export type CurrentProjectFormDetails = z.infer<
-  typeof currentProjectFormDetailsSchema
+  typeof DEPR_currentProjectFormDetailsSchema
 >;
 
-const formInternalDataSchema = z.object({
+/**
+ * @deprecated
+ */
+const DEPR_formInternalDataSchema = z.object({
   takenTitles: z.array(z.string()),
   flags: z.array(z.object({ id: z.string(), title: z.string() })),
   tags: z.array(tagTypeSchema),
   students: z.array(z.object({ id: z.string() })),
 });
 
-export type FormInternalData = {
+/**
+ * @deprecated
+ */
+export type DEPR_FormInternalData = {
   flags: FlagDTO[];
   tags: TagDTO[];
   students: StudentDTO[];
   takenTitles: Set<string>;
+};
+
+// ----
+
+const formInternalStateSchema = z.object({
+  title: z.string().min(4, "Please enter a longer title"),
+  description: z.string().min(10, "Please enter a longer description"),
+  specialTechnicalRequirements: z.string().optional(),
+  flags: z
+    .array(z.object({ id: z.string(), title: z.string() }))
+    .min(1, "You must select at least one flag"),
+  tags: z
+    .array(z.object({ id: z.string(), title: z.string() }))
+    .min(1, "You must select at least one tag"),
+  capacityUpperBound: z.coerce.number().int().positive().default(1),
+  isPreAllocated: z.boolean().default(false),
+  preAllocatedStudentId: z.string().optional(),
+  supervisorId: z.string().optional(),
+});
+
+type FormInternalStateData = z.infer<typeof formInternalStateSchema>;
+
+const formSubmissionSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  specialTechnicalRequirements: z.string().optional(),
+
+  flags: z.array(z.object({ id: z.string(), title: z.string() })),
+  tags: z.array(z.object({ id: z.string(), title: z.string() })),
+
+  capacityUpperBound: z.number().int().positive(),
+  preAllocatedStudentId: z.string().optional(),
+
+  supervisorId: z.string().optional(),
+});
+
+type FormSubmissionData = z.infer<typeof formSubmissionSchema>;
+
+const createApiInputSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  specialTechnicalRequirements: z.string().optional(),
+
+  flagIds: z.array(z.string()),
+  tagIds: z.array(z.string()),
+
+  capacityUpperBound: z.number().int().positive(),
+  preAllocatedStudentId: z.string().optional(),
+
+  supervisorId: z.string(),
+});
+
+type CreateApiInputData = z.infer<typeof createApiInputSchema>;
+
+const editApiInputSchema = createApiInputSchema.extend({ id: z.string() });
+
+type EditApiInputData = z.infer<typeof editApiInputSchema>;
+
+const formInitialisationSchema = z.object({
+  flags: z.array(z.object({ id: z.string(), title: z.string() })),
+  tags: z.array(z.object({ id: z.string(), title: z.string() })),
+  studentIds: z.array(z.string()),
+  supervisorIds: z.array(z.string()),
+
+  takenTitles: z.set(z.string()),
+
+  currentProject: editApiInputSchema.optional(),
+});
+
+type FormInitialisationData = z.infer<typeof formInitialisationSchema>;
+
+export {
+  formInternalStateSchema as projectFormInternalStateSchema,
+  formSubmissionSchema as projectFormSubmissionSchema,
+  createApiInputSchema as projectFormCreateApiInputSchema,
+  editApiInputSchema as projectFormEditApiInputSchema,
+  formInitialisationSchema as projectFormInitialisationSchema,
+};
+
+export type {
+  FormInternalStateData as ProjectFormInternalStateData,
+  FormSubmissionData as ProjectFormSubmissionData,
+  CreateApiInputData as ProjectFormCreateApiInput,
+  EditApiInputData as ProjectFormEditApiInput,
+  FormInitialisationData as ProjectFormInitialisationData,
 };
