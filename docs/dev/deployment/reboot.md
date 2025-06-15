@@ -17,7 +17,7 @@ popd
 
 Make sure this script is executable, with
 
-```
+```bash
 chmod +x ./startup.sh
 ```
 
@@ -46,7 +46,7 @@ should be run on startup. That's what that last line is doing.
 This file should live in the `/etc/systemd/system` directory.
 For me, it's called `/etc/systemd/system/amps-startup.service`
 The filename is important. This service is called `amps-startup`,
-to match the filename.
+after the filename.
 
 Now, we need to enable this service.
 That means just running the following command:
