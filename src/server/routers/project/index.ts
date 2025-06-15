@@ -7,7 +7,10 @@ import {
   previousStages,
   subsequentStages,
 } from "@/lib/utils/permissions/stage-check";
-import { updatedProjectSchema } from "@/lib/validations/project-form";
+import {
+  projectFormCreateApiInputSchema,
+  projectFormEditApiInputSchema,
+} from "@/lib/validations/project-form";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
@@ -15,11 +18,11 @@ import { createTRPCRouter } from "@/server/trpc";
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
 import {
   linkPreallocatedStudent,
-  linkProjectFlags,
-  linkProjectTags,
+  linkProjectFlagIds,
+  linkProjectTagIds,
 } from "@/db/transactions/project-flags";
 import { flagDtoSchema, tagDtoSchema } from "@/dto";
-import { projectDtoSchema, updateProjectSchema } from "@/dto";
+import { projectDtoSchema } from "@/dto";
 import { studentDtoSchema } from "@/dto";
 import { supervisorDtoSchema } from "@/dto";
 import { Transformers as T } from "@/db/transformers";
@@ -38,22 +41,21 @@ export const projectRouter = createTRPCRouter({
   edit: procedure.project
     .inStage(previousStages(Stage.STUDENT_BIDDING))
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
-    .input(z.object({ updatedProject: updateProjectSchema }))
+    .input(z.object({ updatedProject: projectFormEditApiInputSchema }))
     .output(z.void())
     .mutation(
       async ({
         ctx: { db, project },
         input: {
           updatedProject: {
-            id,
             title,
             description,
             capacityUpperBound,
             preAllocatedStudentId,
-            isPreAllocated,
             specialTechnicalRequirements,
-            tags,
-            flags,
+            supervisorId,
+            tagIds,
+            flagIds,
           },
         },
       }) => {
@@ -64,20 +66,14 @@ export const projectRouter = createTRPCRouter({
               title,
               description,
               capacityUpperBound,
-              preAllocatedStudentId:
-                isPreAllocated && preAllocatedStudentId
-                  ? preAllocatedStudentId
-                  : null,
+              supervisorId,
+              preAllocatedStudentId: preAllocatedStudentId ?? null,
               latestEditDateTime: new Date(),
               specialTechnicalRequirements,
             },
           });
 
-          if (
-            isPreAllocated &&
-            preAllocatedStudentId &&
-            preAllocatedStudentId.trim() !== ""
-          ) {
+          if (preAllocatedStudentId && preAllocatedStudentId.trim() !== "") {
             await linkPreallocatedStudent(
               tx,
               project.params,
@@ -95,12 +91,12 @@ export const projectRouter = createTRPCRouter({
             }
           }
 
-          if (flags) {
-            await linkProjectFlags(tx, project.params, flags);
+          if (flagIds.length > 0) {
+            await linkProjectFlagIds(tx, project.params, flagIds);
           }
 
-          if (tags) {
-            await linkProjectTags(tx, project.params, tags);
+          if (tagIds.length > 0) {
+            await linkProjectTagIds(tx, project.params, tagIds);
           }
         });
       },
@@ -439,11 +435,14 @@ export const projectRouter = createTRPCRouter({
     })),
 
   // ok
-  // TODO: change input type
   create: procedure.instance
     .inStage([Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING])
-    .user.input(
-      z.object({ newProject: updatedProjectSchema, supervisorId: z.string() }),
+    .withRoles([Role.ADMIN, Role.SUPERVISOR])
+    .input(
+      z.object({
+        newProject: projectFormCreateApiInputSchema,
+        supervisorId: z.string(),
+      }),
     )
     .output(z.void())
     .mutation(
@@ -459,10 +458,7 @@ export const projectRouter = createTRPCRouter({
               description: newProject.description,
               capacityLowerBound: 0,
               capacityUpperBound: newProject.capacityUpperBound,
-              preAllocatedStudentId:
-                newProject.isPreAllocated && newProject.preAllocatedStudentId
-                  ? newProject.preAllocatedStudentId
-                  : null,
+              preAllocatedStudentId: newProject.preAllocatedStudentId ?? null,
               specialTechnicalRequirements:
                 newProject.specialTechnicalRequirements ?? null,
               latestEditDateTime: new Date(),
@@ -471,7 +467,6 @@ export const projectRouter = createTRPCRouter({
           });
 
           if (
-            newProject.isPreAllocated &&
             newProject.preAllocatedStudentId &&
             newProject.preAllocatedStudentId.trim() !== ""
           ) {
@@ -491,14 +486,14 @@ export const projectRouter = createTRPCRouter({
             });
           }
 
-          await linkProjectFlags(
+          await linkProjectFlagIds(
             tx,
             { ...instance.params, projectId: project.id },
-            newProject.flagTitles,
+            newProject.flagIds,
           );
 
           await tx.tagOnProject.createMany({
-            data: newProject.tags.map(({ id: tagId }) => ({
+            data: newProject.tagIds.map((tagId) => ({
               tagId,
               projectId: project.id,
             })),
@@ -515,10 +510,11 @@ export const projectRouter = createTRPCRouter({
         takenTitles: z.set(z.string()),
         flags: z.array(flagDtoSchema),
         tags: z.array(tagDtoSchema),
-        students: z.array(studentDtoSchema),
+        studentIds: z.array(z.string()),
+        supervisorIds: z.array(z.string()),
       }),
     )
-    .query(async ({ ctx: { instance }, input: { projectId } }) => {
+    .query(async ({ ctx: { instance, user }, input: { projectId } }) => {
       // make sure only students with the correct data are returned
       // (big asterisk considering you can change the flags on a project)
       // so instead get all unallocated students and filter them on the client based on the selected flags
@@ -531,11 +527,22 @@ export const projectRouter = createTRPCRouter({
         takenTitles.delete(project.title);
       }
 
+      const studentIds = await instance
+        .getUnallocatedStudents()
+        .then((students) => students.map((s) => s.id));
+
+      let supervisorIds: string[] = [];
+      if (await user.isSubGroupAdminOrBetter(instance.params)) {
+        const supervisors = await instance.getSupervisors();
+        supervisorIds = supervisors.map((s) => s.id);
+      }
+
       return {
         takenTitles,
-        students: await instance.getUnallocatedStudents(),
         flags: await instance.getFlags(),
         tags: await instance.getTags(),
+        studentIds,
+        supervisorIds,
       };
     }),
 

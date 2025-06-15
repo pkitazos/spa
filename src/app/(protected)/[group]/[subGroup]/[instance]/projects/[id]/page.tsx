@@ -157,13 +157,15 @@ export default async function Project({ params }: { params: PageParams }) {
           },
         }}
       >
-        <section className={cn("mt-16 flex flex-col gap-8")}>
-          <SubHeading>Allocation</SubHeading>
-          <AllocatedStudentCard
-            studentAllocation={allocatedStudent!}
-            preAllocated={!!project.preAllocatedStudentId}
-          />
-        </section>
+        {allocatedStudent && (
+          <section className={cn("mt-16 flex flex-col gap-8")}>
+            <SubHeading>Allocation</SubHeading>
+            <AllocatedStudentCard
+              studentAllocation={allocatedStudent!}
+              preAllocated={!!project.preAllocatedStudentId}
+            />
+          </section>
+        )}
         {/* TODO: fix type errors */}
         {/* <section className="mb-16 flex flex-col">
           <SectionHeading>Special Circumstances</SectionHeading>
