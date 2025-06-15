@@ -1,31 +1,15 @@
-##### DEPENDENCIES
-
-FROM node:22-alpine AS deps
+FROM --platform=$BUILDPLATFORM node:22-alpine AS builder
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
-COPY prisma ./prisma
-
-COPY package.json pnpm-lock.yaml* ./
-RUN corepack enable pnpm
-RUN pnpm i --frozen-lockfile
-
-##### BUILDER
-
-FROM node:22-alpine AS builder
-RUN apk add --no-cache libc6-compat openssl
-WORKDIR /app
-
-COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN corepack enable pnpm 
+RUN corepack enable pnpm
+RUN pnpm i --frozen-lockfile
 RUN pnpm run build
 
-
-##### RUNNER
-
 FROM node:22-alpine AS runner
+LABEL org.opencontainers.image.source="https://github.com/pkitazos/spa"
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
