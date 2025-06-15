@@ -36,15 +36,21 @@ const baseProjectFormSchema = z.object({
       message: "You have to select at least one flag for a project.",
     }),
   tags: z.array(z.object({ id: z.string(), title: z.string() })),
-  isPreAllocated: z.boolean().optional(),
+  isPreAllocated: z.boolean().default(false),
   capacityUpperBound: z.coerce.number().int().positive().default(1),
-  preAllocatedStudentId: z.string().min(1).optional(),
+  preAllocatedStudentId: z.string().optional(),
   specialTechnicalRequirements: z.string().optional(),
 });
 
 export const updatedProjectSchema = baseProjectFormSchema.refine(
-  ({ isPreAllocated, preAllocatedStudentId }) =>
-    !(!!isPreAllocated && preAllocatedStudentId === ""),
+  ({ isPreAllocated, preAllocatedStudentId }) => {
+    // if pre-allocated is enabled, student ID must be provided and non-empty
+    if (isPreAllocated) {
+      return preAllocatedStudentId && preAllocatedStudentId.trim() !== "";
+    }
+    // if pre-allocated is disabled, student ID should be empty or undefined
+    return true;
+  },
   { message: "Please select a student", path: ["preAllocatedStudentId"] },
 );
 
@@ -89,8 +95,6 @@ const formInternalDataSchema = z.object({
   tags: z.array(tagTypeSchema),
   students: z.array(z.object({ id: z.string() })),
 });
-
-// export type FormInternalData = z.infer<typeof formInternalDataSchema>;
 
 export type FormInternalData = {
   flags: FlagDTO[];

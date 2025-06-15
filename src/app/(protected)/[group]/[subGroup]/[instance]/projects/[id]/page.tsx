@@ -204,19 +204,22 @@ export default async function Project({ params }: { params: PageParams }) {
   );
 }
 
-function ProjectDetailsCard({
+async function ProjectDetailsCard({
   roles,
   projectData,
 }: {
   roles: Set<Role>;
   projectData: { project: ProjectDTO; supervisor: SupervisorDTO };
 }) {
+  const user = await api.user.get();
   return (
     <Card className="w-full max-w-sm border-none bg-accent">
       <CardContent className="flex flex-col gap-10 pt-5">
         <AccessControl
           allowedRoles={[Role.ADMIN, Role.STUDENT]}
-          // extraConditions={{ RBAC: { OR: project.supervisor.id === user.id } }}
+          extraConditions={{
+            RBAC: { OR: projectData.supervisor.id === user.id },
+          }}
         >
           <div className="flex items-center space-x-4">
             <UserIcon className="h-6 w-6 text-blue-500" />
