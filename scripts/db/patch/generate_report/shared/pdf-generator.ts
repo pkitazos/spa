@@ -1,4 +1,3 @@
-// shared/pdf-generator.ts
 import React from "react";
 // @ts-ignore
 global.React = React;

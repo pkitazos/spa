@@ -21,7 +21,6 @@
     "db:drop": "eval $(grep '^DATABASE_URL' .env) && prisma migrate reset",
     "docker:db": "docker compose -f docker/docker-compose.yml up -d",
     "docker:prod": "docker compose -f docker/docker-compose.yml -f docker/docker-compose.prod.override.yml up -d",
-    "dev:patch": "tsx src/db/scripts/patch.ts",
     "clearLogs": "rm *.log"
   },
   "dependencies": {

@@ -1,11 +1,12 @@
 import { PrismaClient } from "@prisma/client";
-import { DB } from "../types";
+
 import {
   LEVEL4_CONFIG,
   SEYP_CONFIG,
   UnitOfAssessmentConfigType,
 } from "./data/misc/units_of_assessment_by_flag";
 import { writeToJsonFile } from "./write-to-json";
+import { DB } from "@/db/types";
 
 const group = "socs";
 const subGroup = "lvl-4-and-lvl-5-honours";
