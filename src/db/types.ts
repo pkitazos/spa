@@ -1,7 +1,7 @@
 import { PreferenceType, PrismaClient, Stage } from "@prisma/client";
 import { z } from "zod";
 
-export type PrismaTransactionClient = Omit<
+type PrismaTransactionClient = Omit<
   PrismaClient,
   "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
 >;

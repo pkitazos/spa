@@ -16,6 +16,7 @@ import { formToApiTransformations } from "./transformations";
 
 import { ProjectForm } from ".";
 import { useInstanceParams } from "../params-context";
+import { PAGES } from "@/config/pages";
 
 interface CreateProjectFormProps {
   formInitialisationData: ProjectFormInitialisationData;
@@ -58,7 +59,8 @@ export function CreateProjectForm({
 
       toast.success("Successfully created new project");
 
-      const redirectPath = userRole === Role.ADMIN ? "." : "./my-projects";
+      const redirectPath =
+        userRole === Role.ADMIN ? "." : `./${PAGES.myProjects.href}`;
       router.push(redirectPath);
       router.refresh();
     } catch (error) {
@@ -70,7 +72,8 @@ export function CreateProjectForm({
   };
 
   const handleCancel = () => {
-    const redirectPath = userRole === Role.ADMIN ? "." : "./my-projects";
+    const redirectPath =
+      userRole === Role.ADMIN ? "." : `./${PAGES.myProjects.href}`;
     router.push(redirectPath);
   };
 

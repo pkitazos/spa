@@ -10,8 +10,18 @@ import { InstanceParams } from "@/lib/validations/params";
 import { Role, Stage } from "@/db/types";
 import { EditProjectForm } from "@/components/project-form/edit-project";
 import { ProjectFormInitialisationData } from "@/lib/validations/project-form";
+import { PAGES } from "@/config/pages";
+import { app, metadataTitle } from "@/config/meta";
 
 type PageParams = InstanceParams & { id: string };
+
+export async function generateMetadata({ params }: { params: InstanceParams }) {
+  const { displayName } = await api.institution.instance.get({ params });
+
+  return {
+    title: metadataTitle([PAGES.editProject.title, displayName, app.name]),
+  };
+}
 
 export default async function Page({ params }: { params: PageParams }) {
   const projectId = params.id;
@@ -57,7 +67,7 @@ export default async function Page({ params }: { params: PageParams }) {
 
   return (
     <PageWrapper>
-      <Heading>Edit Project</Heading>
+      <Heading>{PAGES.editProject.title}</Heading>
       <EditProjectForm
         formInitialisationData={formInitialisationData}
         userRole={roles.has(Role.ADMIN) ? Role.ADMIN : Role.SUPERVISOR}

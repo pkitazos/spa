@@ -11,8 +11,15 @@ import { Button } from "@/components/ui/button";
 
 import { api } from "@/lib/trpc/client";
 import { toPP3 } from "@/lib/utils/general/instance-params";
+import { PAGES } from "@/config/pages";
 
-export function ProjectRemovalButton({ projectId }: { projectId: string }) {
+export function ProjectRemovalButton({
+  projectId,
+  isAdmin,
+}: {
+  projectId: string;
+  isAdmin: boolean;
+}) {
   const params = useInstanceParams();
   const router = useRouter();
   const instancePath = useInstancePath();
@@ -22,8 +29,10 @@ export function ProjectRemovalButton({ projectId }: { projectId: string }) {
   function handleDelete() {
     void toast.promise(
       deleteAsync({ params: toPP3(params, projectId) }).then(() => {
-        // TODO: change redirect based on role
-        router.push(`${instancePath}/projects`);
+        const redirectPath = isAdmin
+          ? `${instancePath}/${PAGES.allProjects.href}`
+          : `${instancePath}/${PAGES.myProjects.href}`;
+        router.push(redirectPath);
         router.refresh();
       }),
       {

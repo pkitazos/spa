@@ -95,7 +95,10 @@ export function EditProjectForm({
       >
         Cancel
       </Button>
-      <ProjectRemovalButton projectId={projectId} />
+      <ProjectRemovalButton
+        projectId={projectId}
+        isAdmin={userRole === Role.ADMIN}
+      />
     </ProjectForm>
   );
 }

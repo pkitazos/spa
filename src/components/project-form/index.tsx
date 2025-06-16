@@ -37,10 +37,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { Role } from "@/db/types";
 import {
-  projectFormInternalStateSchema,
-  ProjectFormInternalStateData,
+  buildProjectFormInternalStateSchema,
   ProjectFormSubmissionData,
   ProjectFormInitialisationData,
+  ProjectFormInternalStateData,
 } from "@/lib/validations/project-form";
 
 import { MarkdownEditor } from "../markdown-editor";
@@ -65,11 +65,15 @@ export function ProjectForm({
   children,
   isSubmitting = false,
 }: ProjectFormProps) {
-  const { flags, tags, studentIds, supervisorIds } = formInitialisationData;
+  const { takenTitles, flags, tags, studentIds, supervisorIds } =
+    formInitialisationData;
 
   const [preAllocatedSwitchControl, setPreAllocatedSwitchControl] = useState(
     !!defaultValues?.preAllocatedStudentId,
   );
+
+  const projectFormInternalStateSchema =
+    buildProjectFormInternalStateSchema(takenTitles);
 
   const form = useForm<ProjectFormInternalStateData>({
     resolver: zodResolver(projectFormInternalStateSchema),

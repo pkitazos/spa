@@ -142,6 +142,8 @@ export const PAGES = {
     href: "new-project",
     icon: "file-plus-2",
   },
+
+  editProject: { title: "Edit Project", href: "edit", icon: "pen" },
   myAllocations: {
     title: "My Supervisions",
     href: "my-supervisions",
