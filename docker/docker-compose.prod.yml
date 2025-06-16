@@ -1,0 +1,61 @@
+name: amps
+
+services:
+  app:
+    image: "ghcr.io/pkitazos/amps-app:main-latest"
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}"
+      MATCHING_SERVER_URL: ${MATCHING_SERVER_URL}
+      FRONTEND_SERVER_URL: ${FRONTEND_SERVER_URL}
+
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USER: ${MAIL_USER}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+
+      DEV_ENV: "PROD"
+      VALIDATE_ENV_VARS: "true"
+
+    volumes:
+      - amps-app-logs:/app/logs/
+    networks:
+      - amps-network
+
+
+  matching-service:
+    image: "ghcr.io/pkitazos/matching-service:latest"
+    networks:
+      - amps-network
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "127.0.0.1:6565:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_HOST_AUTH_METHOD: "md5"
+
+    restart: always
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    volumes:
+      - amps-db-data:/var/lib/postgresql/data/
+    networks:
+      - amps-network
+
+networks:
+  amps-network:
+
+volumes:
+  amps-db-data:
+  amps-app-logs:
