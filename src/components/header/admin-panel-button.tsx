@@ -7,8 +7,10 @@ import { InstanceLink } from "./instance-link";
 
 export function AdminPanelButton() {
   const { status, data } = api.user.getAdminPanel.useQuery();
-
   if (status !== "success" || !data) return;
+
+  if (data.length === 0) return;
+
   // TODO: handle multiple admin panels
   return (
     <InstanceLink
