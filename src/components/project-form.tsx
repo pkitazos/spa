@@ -103,6 +103,7 @@ export function ProjectForm({
       title: formProject.title,
       description: formProject.description,
       capacityUpperBound: formProject.capacityUpperBound,
+      isPreAllocated: formProject.isPreAllocated,
       preAllocatedStudentId: formProject.preAllocatedStudentId,
       specialTechnicalRequirements: formProject.specialTechnicalRequirements,
       flagTitles: formProject.flagTitles,
@@ -110,18 +111,19 @@ export function ProjectForm({
     },
   });
 
-  // TODO: investigate why this is happening
-  // ! somehow projects are created with the preAllocatedStudentId set to an empty string
   function handleSwitch() {
     const newState = !preAllocatedSwitchControl;
 
     if (newState) {
+      // when enabling pre-allocation
       form.setValue("capacityUpperBound", 1);
+      form.setValue("isPreAllocated", true);
     } else {
+      // when disabling pre-allocation, clear the student ID
       form.setValue("preAllocatedStudentId", "");
+      form.setValue("isPreAllocated", false);
     }
 
-    form.setValue("isPreAllocated", newState);
     setPreAllocatedSwitchControl(newState);
   }
 

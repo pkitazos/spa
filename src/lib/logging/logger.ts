@@ -25,15 +25,15 @@ export const logger = winston.createLogger({
   format: winston.format.json(),
   transports: [
     new winston.transports.File({
-      filename: "amps.err.log",
+      filename: "./logs/amps.err.log",
       level: LogLevels.ERROR,
     }),
     new winston.transports.File({
-      filename: "amps.audit.log",
+      filename: "./logs/amps.audit.log",
       level: LogLevels.AUDIT,
     }),
     new winston.transports.File({
-      filename: "amps.all.log",
+      filename: "./logs/amps.all.log",
       level: LogLevels.INFO,
     }),
     new winston.transports.Console({
