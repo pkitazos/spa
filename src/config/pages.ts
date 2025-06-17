@@ -108,7 +108,7 @@ export const PAGES = {
     href: "supervisor-tasks",
     icon: "list-checks",
   },
-  noAdminSupervisorTasks: { title: "Tasks", href: "", icon: "list-checks" },
+  nonAdminSupervisorTasks: { title: "Tasks", href: "", icon: "list-checks" },
   unitsOfAssessment: {
     title: "Units of Assessment",
     href: "units-of-assessment",
@@ -163,3 +163,5 @@ export const PAGES = {
   },
   myMarking: { title: "My Marking", href: "my-marking", icon: "file-check-2" },
 };
+
+// TODO add a satisfies clause here.
