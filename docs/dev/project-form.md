@@ -2,14 +2,23 @@
 
 This document explains the schema architecture for the project forms in our app.
 
-## Overview
+## Data Flow
 
-We have designed four distinct schemas that handle data at different stages of the form lifecycle:
+The complete data flow through the system:
 
-1. **Form Internal State Schema** - What React Hook Form manages internally
-2. **Form Submission Schema** - Clean output when form is submitted
-3. **API Input Schemas** - What gets sent to tRPC procedures (Create/Edit variants)
-4. **Form Initialisation Schema** - Data needed to populate and render the form
+1. **Initialisation**: `FormInitialisationData` -> wrapper transforms -> `FormInternalStateData` (defaultValues)
+2. **User interaction**: Form manages `FormInternalStateData` with React Hook Form
+3. **Submission**: `FormInternalStateData` -> form transforms -> `FormSubmissionData`
+4. **API call**: `FormSubmissionData` -> wrapper transforms -> `ApiInputData` -> tRPC procedure
+
+## Role-Based Behavior
+
+The form handles different user roles through conditional rendering and wrapper-level validation:
+
+- **Supervisors**: `supervisorId` auto-filled, `capacityUpperBound` hidden
+- **Admins**: All fields available, `supervisorId` required validation in wrapper
+
+This allows us to keep the core form component role-agnostic while also enabling flexible behavior based on user context.
 
 ## Design
 
@@ -21,11 +30,26 @@ Each schema serves a specific purpose and (attempts to) maintains clear boundari
 - Full `Tag` and `Flag` objects are used consistently throughout the client / form code
 - API layer uses simple ID arrays for simpler server logic
 
-## Schemas
+## Overview
+
+We have designed four distinct schemas that handle data at different stages of the form lifecycle:
+
+1. **Form Internal State Schema** - What React Hook Form manages internally
+2. **Form Submission Schema** - Clean output when the form is submitted
+3. **API Input Schemas** - What gets sent to tRPC procedures (Create/Edit variants)
+4. **Form Initialisation Schema** - Data needed to populate and render the form
+
+## Schema Details
+
+**Location**: `@/dto/project`
 
 ### Form Internal State Schema
 
-This represents what React Hook Form manages internally. It includes all possible fields that any user role might need, even if conditionally rendered. In a perfectly efficient world we would only fetch the data we need depending on the kind of user we're rendering the form for, but we do not live in that world unfortunately
+This represents what React Hook Form manages internally. It includes all possible fields that any user role might need, even if conditionally rendered. In a perfectly efficient world we would only fetch the data we need depending on the kind of user we're rendering the form for, but we do not live in that world unfortunately.
+
+We use full `{id, title}` objects for flags and tags rather than just IDs - this makes the form components much simpler to work with since they can directly display titles without needing to cross-reference separate lookup tables. We also include a UI-only helper field `isPreAllocated` that doesn't correspond to any database field but helps control the behavior of other form elements like capacity bounds and student selection.
+
+All role-specific fields are included in this schema even though they're conditionally rendered, which keeps the form component simple and avoids having multiple schema variants for different user types. The alternative would be complex conditional schema logic that would make the code much harder to maintain.
 
 ```tsx
 const formInternalStateSchema = z.object({
@@ -54,7 +78,9 @@ const formInternalStateSchema = z.object({
 
 ### Form Submission Schema
 
-We clean the output when the form is submitted, before any API transformations. This removes UI-only fields and has more relaxed validation since form validation has already occurred.
+This schema represents the "cleaned up" version of the form data after the user submits. The main purpose is to remove UI-specific fields that don't belong in the business logic layer and to prepare the data for API transformation. The validation rules are intentionally less strict here because we've already validated everything at the form level - this schema is more about ensuring type safety during the transformation process.
+
+The key transformation that happens here is removing the `isPreAllocated` helper field and conditionally clearing the `preAllocatedStudentId` based on the toggle state. This business logic happens in the form component itself rather than in the wrapper because it's directly tied to UI state.
 
 ```tsx
 const formSubmissionSchema = z.object({
@@ -78,14 +104,24 @@ const formSubmissionSchema = z.object({
 
 **Transformation from internal state:**
 
+The transformation from internal state to submission data happens in the ProjectForm component's submit handler. This is where we apply the business rule that pre-allocated projects must have a student ID, while non-pre-allocated projects should have this field cleared. We also remove the UI-only `isPreAllocated` field since it's not needed beyond this point.
+
+The transformation logic is intentionally explicit - we map each field individually rather than using the spread operator to make it crystal clear what data is being passed along.
+
 ```tsx
 const handleSubmit = (internalData: FormInternalStateData) => {
   const submissionData: FormSubmissionData = {
-    ...internalData, // will actually explicitly set all the fields here instead
+    title: internalData.title,
+    description: internalData.description,
+    specialTechnicalRequirements: internalData.specialTechnicalRequirements,
+    flags: internalData.flags,
+    tags: internalData.tags,
+    capacityUpperBound: internalData.capacityUpperBound,
     // clear preAllocatedStudentId if not pre-allocated
     preAllocatedStudentId: internalData.isPreAllocated
       ? internalData.preAllocatedStudentId
       : undefined,
+    supervisorId: internalData.supervisorId,
     // isPreAllocated is omitted since it's a UI-only field
   };
 
@@ -95,7 +131,9 @@ const handleSubmit = (internalData: FormInternalStateData) => {
 
 ### API Input Schemas
 
-This is what gets sent to the tRPC procedures. Objects are transformed to ID arrays for simpler handling on the server.
+The API layer uses a different data format than the form layer because server-side code has different optimisation priorities. We send only IDs for flags and tags, which reduces the payload size and simplifies the server logic.
+
+The wrapper components handle the transformation from rich objects to simple IDs. This keeps the API interface clean and ensures the server only receives the minimal data it needs to perform the operation. We also enforce that `supervisorId` is always present at this level, even if they are not always required by the form - the wrapper components are responsible for ensuring this field is populated based on the user's role.
 
 ```tsx
 const createApiInputSchema = z.object({
@@ -123,10 +161,18 @@ const editApiInputSchema = createApiInputSchema.extend({
 
 **Transformation in wrapper components:**
 
+The wrapper components (CreateProjectForm and EditProjectForm) handle the transformation from submission data to API data. This is where role-specific business logic gets applied - for supervisors, we auto-assign their user ID as the supervisorId, while for admins we require them to have selected a supervisor in the form.
+
+The transformation helpers handle the work of converting object arrays to ID arrays, while the wrapper components handle the contextual logic like user role management. This separation (hopefully) makes the code easier to test and reason about.
+
 ```tsx
 function onSubmit(submissionData: FormSubmissionData) {
   const apiData: ApiInputData = {
-    ...submissionData, // will also actually explicitly set all the fields here instead
+    title: submissionData.title,
+    description: submissionData.description,
+    specialTechnicalRequirements: submissionData.specialTechnicalRequirements,
+    capacityUpperBound: submissionData.capacityUpperBound,
+    preAllocatedStudentId: submissionData.preAllocatedStudentId,
     flagIds: submissionData.flags.map((flag) => flag.id),
     tagIds: submissionData.tags.map((tag) => tag.id),
     supervisorId: submissionData.supervisorId ?? user.id, // wrapper handles role logic
@@ -156,20 +202,20 @@ const formInitialisationSchema = z.object({
 });
 ```
 
-**Edit form initialisation:**
+**Edit form initialization:**
 
 ```tsx
-function EditProjectForm({ formInitialisationData }) {
-  const { currentProject } = formInitialisationData;
+const EditProjectForm = ({ formInitializationData }) => {
+  const { currentProject } = formInitializationData;
 
-  // transform API format back to form format
+  // Transform API format back to form format
   const defaultValues = currentProject
     ? {
-        ...currentProject, // also do this explicitly here
-        flags: formInitialisationData.flags.filter((flag) =>
+        ...currentProject,
+        flags: formInitializationData.flags.filter((flag) =>
           currentProject.flagIds.includes(flag.id),
         ),
-        tags: formInitialisationData.tags.filter((tag) =>
+        tags: formInitializationData.tags.filter((tag) =>
           currentProject.tagIds.includes(tag.id),
         ),
         isPreAllocated: !!currentProject.preAllocatedStudentId,
@@ -181,26 +227,8 @@ function EditProjectForm({ formInitialisationData }) {
     <ProjectForm
       defaultValues={defaultValues}
       onSubmit={handleSubmit}
-      {...anyOtherProps}
+      {...otherProps}
     />
   );
-}
+};
 ```
-
-## Data Flow
-
-The complete data flow through the system:
-
-1. **Initialisation**: `FormInitialisationData` -> wrapper transforms -> `FormInternalStateData` (defaultValues)
-2. **User interaction**: Form manages `FormInternalStateData` with React Hook Form
-3. **Submission**: `FormInternalStateData` -> form transforms -> `FormSubmissionData`
-4. **API call**: `FormSubmissionData` -> wrapper transforms -> `ApiInputData` -> tRPC procedure
-
-## Role-Based Behavior
-
-The form handles different user roles through conditional rendering and wrapper-level validation:
-
-- **Supervisors**: `supervisorId` auto-filled, `capacityUpperBound` hidden
-- **Admins**: All fields available, `supervisorId` required validation in wrapper
-
-This allows us to keep the core form component role-agnostic while also enabling flexible behavior based on user context.
