@@ -35,7 +35,7 @@ export function CreateProjectForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { mutateAsync: createProject } = api.project.create.useMutation();
+  const { mutateAsync: api_createProject } = api.project.create.useMutation();
 
   const handleSubmit = async (submissionData: ProjectFormSubmissionData) => {
     if (userRole === Role.ADMIN && !submissionData.supervisorId) {
@@ -51,11 +51,7 @@ export function CreateProjectForm({
         currentUserId,
       );
 
-      await createProject({
-        params,
-        newProject: apiData,
-        supervisorId: apiData.supervisorId,
-      });
+      await api_createProject({ params, newProject: apiData });
 
       toast.success("Successfully created new project");
 

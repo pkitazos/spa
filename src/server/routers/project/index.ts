@@ -438,69 +438,59 @@ export const projectRouter = createTRPCRouter({
   create: procedure.instance
     .inStage([Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING])
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
-    .input(
-      z.object({
-        newProject: projectFormCreateApiInputSchema,
-        supervisorId: z.string(),
-      }),
-    )
+    .input(z.object({ newProject: projectFormCreateApiInputSchema }))
     .output(z.void())
-    .mutation(
-      async ({
-        ctx: { instance, db },
-        input: { supervisorId, newProject },
-      }) => {
-        await db.$transaction(async (tx) => {
-          const project = await tx.project.create({
-            data: {
-              ...expand(instance.params),
-              title: newProject.title,
-              description: newProject.description,
-              capacityLowerBound: 0,
-              capacityUpperBound: newProject.capacityUpperBound,
-              preAllocatedStudentId: newProject.preAllocatedStudentId ?? null,
-              specialTechnicalRequirements:
-                newProject.specialTechnicalRequirements ?? null,
-              latestEditDateTime: new Date(),
-              supervisorId,
-            },
-          });
+    .mutation(async ({ ctx: { instance, db }, input: { newProject } }) => {
+      await db.$transaction(async (tx) => {
+        const project = await tx.project.create({
+          data: {
+            ...expand(instance.params),
+            title: newProject.title,
+            description: newProject.description,
+            capacityLowerBound: 0,
+            capacityUpperBound: newProject.capacityUpperBound,
+            preAllocatedStudentId: newProject.preAllocatedStudentId ?? null,
+            specialTechnicalRequirements:
+              newProject.specialTechnicalRequirements ?? null,
+            latestEditDateTime: new Date(),
+            supervisorId: newProject.supervisorId,
+          },
+        });
 
-          if (
-            newProject.preAllocatedStudentId &&
-            newProject.preAllocatedStudentId.trim() !== ""
-          ) {
-            await linkPreallocatedStudent(
-              tx,
-              { ...instance.params, projectId: project.id },
-              newProject.preAllocatedStudentId,
-            );
-
-            await tx.studentProjectAllocation.create({
-              data: {
-                ...expand(instance.params),
-                userId: newProject.preAllocatedStudentId,
-                projectId: project.id,
-                studentRanking: 1,
-              },
-            });
-          }
-
-          await linkProjectFlagIds(
+        if (
+          newProject.preAllocatedStudentId &&
+          newProject.preAllocatedStudentId.trim() !== ""
+        ) {
+          await linkPreallocatedStudent(
             tx,
             { ...instance.params, projectId: project.id },
-            newProject.flagIds,
+            newProject.preAllocatedStudentId,
           );
 
-          await tx.tagOnProject.createMany({
-            data: newProject.tagIds.map((tagId) => ({
-              tagId,
+          await tx.studentProjectAllocation.create({
+            data: {
+              ...expand(instance.params),
+              userId: newProject.preAllocatedStudentId,
               projectId: project.id,
-            })),
+              studentRanking: 1,
+            },
           });
+        }
+
+        await linkProjectFlagIds(
+          tx,
+          { ...instance.params, projectId: project.id },
+          newProject.flagIds,
+        );
+
+        await tx.tagOnProject.createMany({
+          data: newProject.tagIds.map((tagId) => ({
+            tagId,
+            projectId: project.id,
+          })),
         });
-      },
-    ),
+      });
+    }),
 
   // BREAKING output type
   getFormDetails: procedure.instance.user
