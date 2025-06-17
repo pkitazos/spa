@@ -6,13 +6,13 @@ import { PageWrapper } from "@/components/page-wrapper";
 import { api } from "@/lib/trpc/server";
 import { InstanceParams } from "@/lib/validations/params";
 
-import { StudentAllocation } from "./_components/student-allocation";
 import { StudentDetailsCard } from "./_components/student-details-card";
-import { StudentPreferencesSection } from "./_components/student-preferences-section";
-import { StudentProjectSection } from "./_components/student-project-section";
 
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
+import { StudentAllocation } from "./_components/student-allocation";
+import { StudentPreferencesSection } from "./_components/student-preferences-section";
+import { StudentProjectSection } from "./_components/student-project-section";
 
 type PageParams = InstanceParams & { id: string };
 
@@ -38,17 +38,19 @@ export default async function Page({ params }: { params: PageParams }) {
   const { student, selfDefinedProjectId, allocation } =
     await api.user.student.getById({ params, studentId });
 
+  console.log("Student Page", { selfDefinedProjectId, allocation });
+
   return (
     <PageWrapper>
       <Heading>{student.name}</Heading>
       <SubHeading>Details</SubHeading>
       <section className="flex gap-10">
         <StudentDetailsCard className="w-1/2" student={student} />
-        {!!selfDefinedProjectId && !!allocation && (
+        {!selfDefinedProjectId && !!allocation && (
           <StudentAllocation className="w-1/2" allocation={allocation} />
         )}
       </section>
-      {selfDefinedProjectId ? (
+      {!selfDefinedProjectId ? (
         <StudentPreferencesSection params={params} />
       ) : (
         <StudentProjectSection params={params} />
