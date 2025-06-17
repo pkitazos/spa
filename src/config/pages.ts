@@ -103,17 +103,12 @@ export const PAGES = {
     href: "export-to-csv",
     icon: "file-spreadsheet",
   },
-  exportToExternalSystem: {
-    title: "Send Data to External System",
-    href: "export-to-external-system",
-    icon: "folder-output",
-  },
-  supervisorTasks: {
+  multiRoleSupervisorTasks: {
     title: "Tasks",
     href: "supervisor-tasks",
     icon: "list-checks",
   },
-  supervisorTasks2: { title: "Tasks", href: "", icon: "list-checks" },
+  noAdminSupervisorTasks: { title: "Tasks", href: "", icon: "list-checks" },
   unitsOfAssessment: {
     title: "Units of Assessment",
     href: "units-of-assessment",
