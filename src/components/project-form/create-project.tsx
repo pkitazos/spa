@@ -9,17 +9,17 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/trpc/client";
 import { Role } from "@/db/types";
 import {
-  ProjectFormInitialisationData,
-  ProjectFormSubmissionData,
-} from "@/lib/validations/project-form";
-import { formToApiTransformations } from "./transformations";
+  ProjectFormInitialisationDTO,
+  ProjectFormSubmissionDTO,
+  formToApiTransformations,
+} from "@/dto/project";
 
 import { ProjectForm } from ".";
 import { useInstanceParams } from "../params-context";
 import { PAGES } from "@/config/pages";
 
 interface CreateProjectFormProps {
-  formInitialisationData: ProjectFormInitialisationData;
+  formInitialisationData: ProjectFormInitialisationDTO;
   userRole: typeof Role.ADMIN | typeof Role.SUPERVISOR;
   currentUserId: string;
   onBehalfOf?: string;
@@ -37,7 +37,7 @@ export function CreateProjectForm({
 
   const { mutateAsync: api_createProject } = api.project.create.useMutation();
 
-  const handleSubmit = async (submissionData: ProjectFormSubmissionData) => {
+  const handleSubmit = async (submissionData: ProjectFormSubmissionDTO) => {
     if (userRole === Role.ADMIN && !submissionData.supervisorId) {
       toast.error("Please select a supervisor for this project");
       return;

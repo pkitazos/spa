@@ -37,19 +37,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { Role } from "@/db/types";
 import {
-  buildProjectFormInternalStateSchema,
-  ProjectFormSubmissionData,
-  ProjectFormInitialisationData,
-  ProjectFormInternalStateData,
-} from "@/lib/validations/project-form";
+  projectForm,
+  ProjectFormSubmissionDTO,
+  ProjectFormInitialisationDTO,
+  ProjectFormInternalStateDTO,
+} from "@/dto/project";
 
 import { MarkdownEditor } from "../markdown-editor";
 import { MultiSelect } from "../ui/multi-select";
 
 interface ProjectFormProps {
-  formInitialisationData: ProjectFormInitialisationData;
-  defaultValues?: Partial<ProjectFormInternalStateData>;
-  onSubmit: (data: ProjectFormSubmissionData) => void;
+  formInitialisationData: ProjectFormInitialisationDTO;
+  defaultValues?: Partial<ProjectFormInternalStateDTO>;
+  onSubmit: (data: ProjectFormSubmissionDTO) => void;
   submissionButtonLabel: string;
   userRole: typeof Role.ADMIN | typeof Role.SUPERVISOR;
   children?: React.ReactNode;
@@ -73,9 +73,9 @@ export function ProjectForm({
   );
 
   const projectFormInternalStateSchema =
-    buildProjectFormInternalStateSchema(takenTitles);
+    projectForm.buildInternalStateSchema(takenTitles);
 
-  const form = useForm<ProjectFormInternalStateData>({
+  const form = useForm<ProjectFormInternalStateDTO>({
     resolver: zodResolver(projectFormInternalStateSchema),
     defaultValues: {
       title: "",
@@ -102,13 +102,14 @@ export function ProjectForm({
       // when disabling pre-allocation, clear the student ID
       form.setValue("preAllocatedStudentId", "");
       form.setValue("isPreAllocated", false);
+      // pin - would be super nice to have the form retain knowledge of the last entered student ID if possible
     }
 
     setPreAllocatedSwitchControl(newState);
   };
 
-  const handleFormSubmit = (internalData: ProjectFormInternalStateData) => {
-    const submissionData: ProjectFormSubmissionData = {
+  const handleFormSubmit = (internalData: ProjectFormInternalStateDTO) => {
+    const submissionData: ProjectFormSubmissionDTO = {
       title: internalData.title,
       description: internalData.description,
       specialTechnicalRequirements: internalData.specialTechnicalRequirements,

@@ -9,7 +9,7 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { Role, Stage } from "@/db/types";
 import { EditProjectForm } from "@/components/project-form/edit-project";
-import { ProjectFormInitialisationData } from "@/lib/validations/project-form";
+import { ProjectFormInitialisationDTO } from "@/dto/project";
 import { PAGES } from "@/config/pages";
 import { app, metadataTitle } from "@/config/meta";
 
@@ -51,7 +51,7 @@ export default async function Page({ params }: { params: PageParams }) {
     projectId,
   });
 
-  const formInitialisationData: ProjectFormInitialisationData = {
+  const formInitialisationData: ProjectFormInitialisationDTO = {
     ...formInternalData,
     currentProject: {
       id: project.id,

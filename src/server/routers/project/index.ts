@@ -7,10 +7,7 @@ import {
   previousStages,
   subsequentStages,
 } from "@/lib/utils/permissions/stage-check";
-import {
-  projectFormCreateApiInputSchema,
-  projectFormEditApiInputSchema,
-} from "@/lib/validations/project-form";
+import { projectForm } from "@/dto/project";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
@@ -41,7 +38,7 @@ export const projectRouter = createTRPCRouter({
   edit: procedure.project
     .inStage(previousStages(Stage.STUDENT_BIDDING))
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
-    .input(z.object({ updatedProject: projectFormEditApiInputSchema }))
+    .input(z.object({ updatedProject: projectForm.editApiInputSchema }))
     .output(z.void())
     .mutation(
       async ({
@@ -438,7 +435,7 @@ export const projectRouter = createTRPCRouter({
   create: procedure.instance
     .inStage([Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING])
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
-    .input(z.object({ newProject: projectFormCreateApiInputSchema }))
+    .input(z.object({ newProject: projectForm.createApiInputSchema }))
     .output(z.void())
     .mutation(async ({ ctx: { instance, db }, input: { newProject } }) => {
       await db.$transaction(async (tx) => {

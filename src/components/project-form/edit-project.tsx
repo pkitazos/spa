@@ -9,10 +9,10 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/trpc/client";
 import { Role } from "@/db/types";
 import {
-  ProjectFormInitialisationData,
-  ProjectFormSubmissionData,
-} from "@/lib/validations/project-form";
-import { formToApiTransformations } from "./transformations";
+  ProjectFormInitialisationDTO,
+  ProjectFormSubmissionDTO,
+  formToApiTransformations,
+} from "@/dto/project";
 
 import { ProjectForm } from ".";
 import { PageParams } from "@/lib/validations/params";
@@ -21,7 +21,7 @@ import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import { ProjectRemovalButton } from "@/components/project-form/project-removal-button";
 
 interface EditProjectFormProps {
-  formInitialisationData: ProjectFormInitialisationData;
+  formInitialisationData: ProjectFormInitialisationDTO;
   userRole: typeof Role.ADMIN | typeof Role.SUPERVISOR;
   currentUserId: string;
   projectId: string;
@@ -38,13 +38,13 @@ export function EditProjectForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { mutateAsync: editProject } = api.project.edit.useMutation();
+  const { mutateAsync: api_editProject } = api.project.edit.useMutation();
 
   const defaultValues = formToApiTransformations.initialisationToDefaultValues(
     formInitialisationData,
   );
 
-  const handleSubmit = async (submissionData: ProjectFormSubmissionData) => {
+  const handleSubmit = async (submissionData: ProjectFormSubmissionDTO) => {
     if (userRole === Role.ADMIN && !submissionData.supervisorId) {
       toast.error("Please select a supervisor for this project");
       return;
@@ -59,7 +59,7 @@ export function EditProjectForm({
         currentUserId,
       );
 
-      await editProject({ params: toPP1(params), updatedProject: apiData });
+      await api_editProject({ params: toPP1(params), updatedProject: apiData });
 
       toast.success(`Successfully updated Project ${projectId}`);
 
