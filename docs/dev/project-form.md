@@ -46,12 +46,7 @@ All of these can be found in `@/dto/project`.
 
 ### Form Initialisation Schema (`ProjectFormInitialisationDTO`)
 
-Data needed to populate and render the form, including available options and current project data for editing.
-
-- flags
-- tags
-- student ids
-- supervisor ids
+This schema defines the data structure for the form's initialisation. It contains all the information required to render the component, including the available options for selection fields and the current project data for editing. It provides the complete Flag and Tag objects for the selection controls, a full list of student IDs to allow a project to be marked as 'student-defined', and a list of all supervisors to enable project assignment by an administrator.
 
 ### Form Internal State Schema (`ProjectFormInternalStateDTO`)
 
