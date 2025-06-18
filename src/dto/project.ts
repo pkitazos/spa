@@ -56,9 +56,23 @@ const submissionSchema = z.object({
 
   capacityUpperBound: z.number().int().positive(),
   preAllocatedStudentId: z.string().optional(),
-
   supervisorId: z.string().optional(),
 });
+
+export const ProjectAllocationStatus = {
+  UNALLOCATED: "UNALLOCATED",
+  PRE_ALLOCATED: "PRE_ALLOCATED",
+  ALLOCATED: "ALLOCATED",
+} as const;
+
+export type ProjectAllocationStatus =
+  (typeof ProjectAllocationStatus)[keyof typeof ProjectAllocationStatus];
+
+export const projectAllocationStatusSchema = z.enum([
+  ProjectAllocationStatus.UNALLOCATED,
+  ProjectAllocationStatus.PRE_ALLOCATED,
+  ProjectAllocationStatus.ALLOCATED,
+]);
 
 type ProjectFormSubmissionDTO = z.infer<typeof submissionSchema>;
 
