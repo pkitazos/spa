@@ -23,6 +23,7 @@ import {
   flagDtoSchema,
   instanceDtoSchema,
   newUnitOfAssessmentSchema,
+  ProjectAllocationStatus,
   projectDtoSchema,
   ReaderDTO,
   readerDtoSchema,
@@ -31,6 +32,7 @@ import {
   supervisorDtoSchema,
   tagDtoSchema,
   unitOfAssessmentDtoSchema,
+  userDtoSchema,
 } from "@/dto";
 import {
   LinkUserResult,
@@ -534,6 +536,106 @@ export const instanceRouter = createTRPCRouter({
 
       return tabGroups;
     }),
+
+  unmatchedStudents: procedure.instance.subGroupAdmin
+    .output(z.array(studentDtoSchema))
+    .query(async ({ ctx: { instance } }) => {
+      const unmatchedStudents = await instance.getUnallocatedStudents();
+      return unmatchedStudents;
+    }),
+
+  supervisorsWithSlack: procedure.instance.subGroupAdmin
+    .output(z.array(userDtoSchema))
+    .query(async ({ ctx: { instance } }) => {
+      const supervisorAllocations =
+        await instance.getSupervisorProjectDetails();
+
+      return supervisorAllocations
+        .filter((s) => s.projectUpperQuota > s.projects.length)
+        .map((s) => ({
+          id: s.institutionId,
+          name: s.fullName,
+          email: s.email,
+        }));
+    }),
+
+  allProjectsWithStatus: procedure.instance.subGroupAdmin.query(
+    async ({ ctx: { instance } }) => {
+      const unallocatedStudents = await instance.getUnallocatedStudents();
+
+      // will get all projects and categorise them as follows:
+      // - pre-allocated: projects that have been pre-allocated to students
+      // - allocated: projects that have been allocated to students
+      // - unallocated: projects that have not been allocated to any students
+
+      const preAllocatedProjects = await instance.getPreAllocations();
+      const allProjects = await instance.getProjectDetails();
+
+      const projects = allProjects
+        .map((p) => {
+          const preAllocated = preAllocatedProjects
+            .map((pa) => pa.project.id)
+            .includes(p.project.id);
+
+          // if preAllocated, then the allocatedTo array will have exactly one element
+
+          const unallocated = p.allocatedTo.length === 0;
+
+          // if unallocated, then the allocatedTo array will be empty
+
+          // if allocated, then the allocatedTo array will have at least one element
+          // and the preAllocated will be false
+
+          // status is one of:
+          // - pre-allocated: if preAllocated is true
+          // - unallocated: if unallocated is true
+          // - allocated: if neither preAllocated nor unallocated is true
+
+          let status: ProjectAllocationStatus;
+          if (preAllocated) {
+            status = ProjectAllocationStatus.PRE_ALLOCATED;
+
+            if (p.allocatedTo.length !== 1) {
+              throw new Error(
+                `Project ${p.project.id} is pre-allocated but has ${p.allocatedTo.length} allocations`,
+              );
+            }
+          } else if (unallocated) {
+            status = ProjectAllocationStatus.UNALLOCATED;
+          } else {
+            status = ProjectAllocationStatus.ALLOCATED;
+
+            if (p.allocatedTo.length === 0) {
+              throw new Error(
+                `Project ${p.project.id} is allocated but has no allocations`,
+              );
+            }
+
+            if (p.allocatedTo.length > 1) {
+              console.warn(
+                `Project ${p.project.id} has multiple allocations: ${p.allocatedTo.length}`,
+              );
+            }
+          }
+
+          return {
+            project: p.project,
+            supervisor: p.supervisor,
+            status,
+            student: p.allocatedTo.at(0),
+          };
+        })
+        .sort((a, b) => b.status.localeCompare(a.status));
+
+      // will also get all supervisors and their allocation status
+      // will include their workload so as to show how many projects they have
+      // allocated to them, and how many they can still take
+
+      const supervisors = await instance.getSupervisors();
+
+      return { projects, supervisors };
+    },
+  ),
 
   // Pin
   fork: procedure.instance
