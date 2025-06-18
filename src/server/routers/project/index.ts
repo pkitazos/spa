@@ -436,9 +436,9 @@ export const projectRouter = createTRPCRouter({
     .inStage([Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING])
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
     .input(z.object({ newProject: projectForm.createApiInputSchema }))
-    .output(z.void())
+    .output(z.object({ id: z.string() }).promise())
     .mutation(async ({ ctx: { instance, db }, input: { newProject } }) => {
-      await db.$transaction(async (tx) => {
+      return await db.$transaction(async (tx) => {
         const project = await tx.project.create({
           data: {
             ...expand(instance.params),
@@ -486,6 +486,8 @@ export const projectRouter = createTRPCRouter({
             projectId: project.id,
           })),
         });
+
+        return { id: project.id };
       });
     }),
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -14,11 +13,11 @@ import {
   formToApiTransformations,
 } from "@/dto/project";
 
-import { ProjectForm } from ".";
 import { PageParams } from "@/lib/validations/params";
 import { toPP1 } from "@/lib/utils/general/instance-params";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
-import { ProjectRemovalButton } from "@/components/project-form/project-removal-button";
+import { ProjectForm } from ".";
+import { ProjectRemovalButton } from "./project-removal-button";
 
 interface EditProjectFormProps {
   formInitialisationData: ProjectFormInitialisationDTO;
@@ -36,41 +35,36 @@ export function EditProjectForm({
   const params = useParams<PageParams>();
 
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { mutateAsync: api_editProject } = api.project.edit.useMutation();
+  const { mutateAsync: api_editProject, isPending } =
+    api.project.edit.useMutation();
 
   const defaultValues = formToApiTransformations.initialisationToDefaultValues(
     formInitialisationData,
   );
 
   const handleSubmit = async (submissionData: ProjectFormSubmissionDTO) => {
-    if (userRole === Role.ADMIN && !submissionData.supervisorId) {
-      toast.error("Please select a supervisor for this project");
-      return;
-    }
+    const apiData = formToApiTransformations.submissionToEditApi(
+      submissionData,
+      projectId,
+      currentUserId,
+    );
 
-    setIsSubmitting(true);
-
-    try {
-      const apiData = formToApiTransformations.submissionToEditApi(
-        submissionData,
-        projectId,
-        currentUserId,
-      );
-
-      await api_editProject({ params: toPP1(params), updatedProject: apiData });
-
-      toast.success(`Successfully updated Project ${projectId}`);
-
-      router.push(`${formatParamsAsPath(params)}/projects/${projectId}`);
-      router.refresh();
-    } catch (error) {
-      toast.error("Something went wrong while updating the project");
-      console.error("Project update error:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    toast.promise(
+      api_editProject({ params: toPP1(params), updatedProject: apiData })
+        .then(() => {
+          router.push(`${formatParamsAsPath(params)}/projects/${projectId}`);
+          router.refresh();
+        })
+        .catch((error) => {
+          console.error("Project update error:", error);
+        }),
+      {
+        success: `Successfully updated Project ${projectId}`,
+        loading: "Updating project...",
+        error: "Something went wrong while updating the project",
+      },
+    );
   };
 
   const handleCancel = () => {
@@ -84,14 +78,14 @@ export function EditProjectForm({
       onSubmit={handleSubmit}
       submissionButtonLabel="Update Project"
       userRole={userRole}
-      isSubmitting={isSubmitting}
+      isSubmitting={isPending}
     >
       <Button
         variant="outline"
         size="lg"
         type="button"
         onClick={handleCancel}
-        disabled={isSubmitting}
+        disabled={isPending}
       >
         Cancel
       </Button>

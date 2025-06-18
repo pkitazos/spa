@@ -45,6 +45,7 @@ import {
 
 import { MarkdownEditor } from "../markdown-editor";
 import { MultiSelect } from "../ui/multi-select";
+import { toast } from "sonner";
 
 interface ProjectFormProps {
   formInitialisationData: ProjectFormInitialisationDTO;
@@ -100,9 +101,9 @@ export function ProjectForm({
       form.setValue("isPreAllocated", true);
     } else {
       // when disabling pre-allocation, clear the student ID
-      form.setValue("preAllocatedStudentId", "");
+      // form.setValue("preAllocatedStudentId", "");
       form.setValue("isPreAllocated", false);
-      // pin - would be super nice to have the form retain knowledge of the last entered student ID if possible
+      // pin - @JakeTrevor would be super nice to have the form retain knowledge of the last entered student ID if possible
     }
 
     setPreAllocatedSwitchControl(newState);
@@ -116,11 +117,17 @@ export function ProjectForm({
       flags: internalData.flags,
       tags: internalData.tags,
       capacityUpperBound: internalData.capacityUpperBound,
-      preAllocatedStudentId: internalData.isPreAllocated
-        ? internalData.preAllocatedStudentId
-        : undefined,
+      preAllocatedStudentId:
+        internalData.isPreAllocated && internalData.preAllocatedStudentId
+          ? internalData.preAllocatedStudentId
+          : undefined,
       supervisorId: internalData.supervisorId,
     };
+
+    if (userRole === Role.ADMIN && !submissionData.supervisorId) {
+      toast.error("Please select a supervisor for this project");
+      return;
+    }
 
     onSubmit(submissionData);
   };
@@ -413,6 +420,7 @@ export function ProjectForm({
           )}
 
           {/* Student Selection */}
+          {/* TODO Consider variant where field is omitted */}
           <FormField
             control={form.control}
             name="preAllocatedStudentId"
@@ -440,9 +448,7 @@ export function ProjectForm({
                           !field.value && "text-slate-400",
                         )}
                       >
-                        {field.value === "" || !field.value
-                          ? "Enter Student GUID"
-                          : field.value}
+                        {!field.value ? "Enter Student GUID" : field.value}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </FormControl>

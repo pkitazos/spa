@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -17,6 +16,7 @@ import {
 import { ProjectForm } from ".";
 import { useInstanceParams } from "../params-context";
 import { PAGES } from "@/config/pages";
+import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 
 interface CreateProjectFormProps {
   formInitialisationData: ProjectFormInitialisationDTO;
@@ -33,38 +33,32 @@ export function CreateProjectForm({
 }: CreateProjectFormProps) {
   const params = useInstanceParams();
   const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { mutateAsync: api_createProject } = api.project.create.useMutation();
+  const { mutateAsync: api_createProject, isPending } =
+    api.project.create.useMutation();
 
   const handleSubmit = async (submissionData: ProjectFormSubmissionDTO) => {
-    if (userRole === Role.ADMIN && !submissionData.supervisorId) {
-      toast.error("Please select a supervisor for this project");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const apiData = formToApiTransformations.submissionToCreateApi(
-        submissionData,
-        currentUserId,
-      );
-
-      await api_createProject({ params, newProject: apiData });
-
-      toast.success("Successfully created new project");
-
-      const redirectPath =
-        userRole === Role.ADMIN ? "." : `./${PAGES.myProjects.href}`;
-      router.push(redirectPath);
-      router.refresh();
-    } catch (error) {
-      toast.error("Something went wrong while creating the project");
-      console.error("Project creation error:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    const apiData = formToApiTransformations.submissionToCreateApi(
+      submissionData,
+      currentUserId,
+    );
+    toast.promise(
+      api_createProject({ params, newProject: apiData })
+        .then(async (data) => {
+          const { id: projectId } = await data;
+          router.push(`${formatParamsAsPath(params)}/projects/${projectId}`);
+          router.refresh();
+          return projectId;
+        })
+        .catch((error) => {
+          console.error("Project creation error:", error);
+        }),
+      {
+        success: (x) => `Successfully created Project ${x}`,
+        loading: "Creating Project...",
+        error: "Something went wrong while creating the project",
+      },
+    );
   };
 
   const handleCancel = () => {
@@ -80,14 +74,14 @@ export function CreateProjectForm({
       onSubmit={handleSubmit}
       submissionButtonLabel="Create New Project"
       userRole={userRole}
-      isSubmitting={isSubmitting}
+      isSubmitting={isPending}
     >
       <Button
         variant="outline"
         size="lg"
         type="button"
         onClick={handleCancel}
-        disabled={isSubmitting}
+        disabled={isPending}
       >
         Cancel
       </Button>
