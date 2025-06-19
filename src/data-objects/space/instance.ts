@@ -309,27 +309,67 @@ export class AllocationInstance extends DataObject {
     return supervisorData.map(T.toSupervisorDTO);
   }
 
-  public async getSupervisorProjectDetails() {
-    const supervisors = await this.db.supervisorDetails.findMany({
+  public async getSupervisorProjectDetails(): Promise<
+    { supervisor: SupervisorDTO; projects: ProjectDTO[] }[]
+  > {
+    const supervisorData = await this.db.supervisorDetails.findMany({
       where: expand(this.params),
       include: {
         userInInstance: { include: { user: true } },
-        projects: { include: { studentAllocations: true } },
+        projects: {
+          include: {
+            flagsOnProject: { include: { flag: true } },
+            tagsOnProject: { include: { tag: true } },
+            studentAllocations: true,
+          },
+        },
       },
     });
 
-    return supervisors.map(({ userInInstance, ...s }) => ({
-      institutionId: userInInstance.user.id,
-      fullName: userInInstance.user.name,
-      email: userInInstance.user.email,
-      joined: userInInstance.joined,
-      projectTarget: s.projectAllocationTarget,
-      projectUpperQuota: s.projectAllocationUpperBound,
-      projects: s.projects.map((p) => ({
-        id: p.id,
-        title: p.title,
-        allocatedTo: p.studentAllocations.map((a) => a.userId),
-      })),
+    return supervisorData.map((s) => ({
+      supervisor: T.toSupervisorDTO(s),
+      projects: s.projects.map((p) => T.toProjectDTO(p)),
+    }));
+  }
+
+  public async getSupervisorAllocationDetails(): Promise<
+    {
+      supervisor: SupervisorDTO;
+      allocations: { project: ProjectDTO; student: StudentDTO }[];
+    }[]
+  > {
+    const supervisorData = await this.db.supervisorDetails.findMany({
+      where: expand(this.params),
+      include: {
+        userInInstance: { include: { user: true } },
+        projects: {
+          where: { studentAllocations: { some: {} } },
+          include: {
+            flagsOnProject: { include: { flag: true } },
+            tagsOnProject: { include: { tag: true } },
+            studentAllocations: {
+              include: {
+                student: {
+                  include: {
+                    studentFlags: { include: { flag: true } },
+                    userInInstance: { include: { user: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return supervisorData.map((s) => ({
+      supervisor: T.toSupervisorDTO(s),
+      allocations: s.projects.flatMap((p) =>
+        p.studentAllocations.map((a) => ({
+          project: T.toProjectDTO(p),
+          student: T.toStudentDTO(a.student),
+        })),
+      ),
     }));
   }
 

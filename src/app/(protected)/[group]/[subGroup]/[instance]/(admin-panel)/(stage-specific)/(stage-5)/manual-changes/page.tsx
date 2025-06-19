@@ -4,18 +4,9 @@ import { PanelWrapper } from "@/components/panel-wrapper";
 import { api } from "@/lib/trpc/server";
 import { InstanceParams } from "@/lib/validations/params";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
-import { ProjectsCombobox } from "./projects-combobox";
-import { SupervisorsCombobox } from "./supervisors-combobox";
+import { ManualAllocationTable } from "./manual-allocation-table";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
@@ -25,55 +16,53 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
   };
 }
 export default async function Page({ params }: { params: InstanceParams }) {
-  const unmatchedStudents = await api.institution.instance.unmatchedStudents({
-    params,
-  });
-
-  if (unmatchedStudents.length === 0) {
-    return (
-      <PanelWrapper className="mt-10">
-        <SubHeading className="mb-4">{PAGES.manualChanges.title}</SubHeading>
-        <p className="text-gray-500">No unmatched students found.</p>
-      </PanelWrapper>
-    );
-  }
+  const allStudents = await api.institution.instance.students({ params });
 
   const { projects, supervisors } =
     await api.institution.instance.allProjectsWithStatus({ params });
 
+  const initialStudents = allStudents.map(({ student, allocation }) => ({
+    studentId: student.id,
+    studentName: student.name,
+    studentFlags: student.flags,
+    originalProjectId: allocation?.id,
+    originalSupervisorId: allocation?.supervisorId,
+    newProjectId: undefined,
+    newSupervisorId: undefined,
+    isDirty: false,
+    warnings: [],
+  }));
+
+  const initialProjects = projects.map(({ project, student, status }) => ({
+    id: project.id,
+    title: project.title,
+    // flags: project.flags,
+    flags: [
+      { id: "level-4", title: "Level 4", description: "" },
+      { id: "level-5", title: "Level 5", description: "" },
+    ],
+    originalSupervisorId: project.supervisorId,
+    currentStudentAllocationId: student,
+    status,
+  }));
+
+  const initialSupervisors = supervisors.map(({ supervisor, allocations }) => ({
+    id: supervisor.id,
+    name: supervisor.name,
+    allocationTarget: supervisor.allocationTarget,
+    allocationUpperBound: supervisor.allocationUpperBound,
+    currentAllocations: allocations.length,
+    pendingAllocations: 0,
+  }));
+
   return (
     <PanelWrapper className="mt-10 flex h-full">
       <SubHeading className="mb-4">{PAGES.manualChanges.title}</SubHeading>
-      {unmatchedStudents.length > 0 && (
-        <div className="mt-6">
-          <h3 className="mb-2 text-lg font-semibold">Unmatched Students</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[200px]">Student</TableHead>
-                <TableHead>Project</TableHead>
-                <TableHead>Supervisor</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {unmatchedStudents.map((student) => (
-                <TableRow key={student.id}>
-                  <TableCell className="flex flex-col items-start gap-1 font-medium">
-                    <span className="font-semibold">{student.id}</span>
-                    <span className="text-gray-500">{student.name}</span>
-                  </TableCell>
-                  <TableCell>
-                    <ProjectsCombobox projects={projects} />
-                  </TableCell>
-                  <TableCell>
-                    <SupervisorsCombobox supervisors={supervisors} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <ManualAllocationTable
+        initialStudents={initialStudents}
+        initialProjects={initialProjects}
+        initialSupervisors={initialSupervisors}
+      />
     </PanelWrapper>
   );
 }
