@@ -32,7 +32,6 @@ import {
   supervisorDtoSchema,
   tagDtoSchema,
   unitOfAssessmentDtoSchema,
-  userDtoSchema,
 } from "@/dto";
 import {
   LinkUserResult,
@@ -544,21 +543,6 @@ export const instanceRouter = createTRPCRouter({
       return unmatchedStudents;
     }),
 
-  supervisorsWithSlack: procedure.instance.subGroupAdmin
-    .output(z.array(userDtoSchema))
-    .query(async ({ ctx: { instance } }) => {
-      const supervisorAllocations =
-        await instance.getSupervisorProjectDetails();
-
-      return supervisorAllocations
-        .filter((s) => s.projectUpperQuota > s.projects.length)
-        .map((s) => ({
-          id: s.institutionId,
-          name: s.fullName,
-          email: s.email,
-        }));
-    }),
-
   allProjectsWithStatus: procedure.instance.subGroupAdmin.query(
     async ({ ctx: { instance } }) => {
       const unallocatedStudents = await instance.getUnallocatedStudents();
@@ -631,7 +615,7 @@ export const instanceRouter = createTRPCRouter({
       // will include their workload so as to show how many projects they have
       // allocated to them, and how many they can still take
 
-      const supervisors = await instance.getSupervisors();
+      const supervisors = await instance.getSupervisorAllocationDetails();
 
       return { projects, supervisors };
     },
