@@ -17,6 +17,27 @@ export const projectDtoSchema = z.object({
 
 export type ProjectDTO = z.infer<typeof projectDtoSchema>;
 
+export const ProjectAllocationStatus = {
+  UNALLOCATED: "UNALLOCATED",
+  PRE_ALLOCATED: "PRE_ALLOCATED",
+  ALLOCATED: "ALLOCATED",
+} as const;
+
+export type ProjectAllocationStatus =
+  (typeof ProjectAllocationStatus)[keyof typeof ProjectAllocationStatus];
+
+export const projectAllocationStatusSchema = z.enum([
+  ProjectAllocationStatus.UNALLOCATED,
+  ProjectAllocationStatus.PRE_ALLOCATED,
+  ProjectAllocationStatus.ALLOCATED,
+]);
+
+export const projectStatusRank = {
+  [ProjectAllocationStatus.UNALLOCATED]: 0,
+  [ProjectAllocationStatus.ALLOCATED]: 1,
+  [ProjectAllocationStatus.PRE_ALLOCATED]: 2,
+};
+
 const formInternalStateSchema = z
   .object({
     title: z.string().min(4, "Please enter a longer title"),
@@ -58,21 +79,6 @@ const submissionSchema = z.object({
   preAllocatedStudentId: z.string().optional(),
   supervisorId: z.string().optional(),
 });
-
-export const ProjectAllocationStatus = {
-  UNALLOCATED: "UNALLOCATED",
-  PRE_ALLOCATED: "PRE_ALLOCATED",
-  ALLOCATED: "ALLOCATED",
-} as const;
-
-export type ProjectAllocationStatus =
-  (typeof ProjectAllocationStatus)[keyof typeof ProjectAllocationStatus];
-
-export const projectAllocationStatusSchema = z.enum([
-  ProjectAllocationStatus.UNALLOCATED,
-  ProjectAllocationStatus.PRE_ALLOCATED,
-  ProjectAllocationStatus.ALLOCATED,
-]);
 
 type ProjectFormSubmissionDTO = z.infer<typeof submissionSchema>;
 
