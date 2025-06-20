@@ -20,7 +20,8 @@ export type ProjectDTO = z.infer<typeof projectDtoSchema>;
 export const ProjectAllocationStatus = {
   UNALLOCATED: "UNALLOCATED",
   PRE_ALLOCATED: "PRE_ALLOCATED",
-  ALLOCATED: "ALLOCATED",
+  ALGORITHMICALLY_ALLOCATED: "ALGORITHMICALLY_ALLOCATED",
+  MANUALLY_ALLOCATED: "MANUALLY_ALLOCATED",
 } as const;
 
 export type ProjectAllocationStatus =
@@ -28,14 +29,16 @@ export type ProjectAllocationStatus =
 
 export const projectAllocationStatusSchema = z.enum([
   ProjectAllocationStatus.UNALLOCATED,
+  ProjectAllocationStatus.MANUALLY_ALLOCATED,
+  ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED,
   ProjectAllocationStatus.PRE_ALLOCATED,
-  ProjectAllocationStatus.ALLOCATED,
 ]);
 
 export const projectStatusRank = {
   [ProjectAllocationStatus.UNALLOCATED]: 0,
-  [ProjectAllocationStatus.ALLOCATED]: 1,
-  [ProjectAllocationStatus.PRE_ALLOCATED]: 2,
+  [ProjectAllocationStatus.MANUALLY_ALLOCATED]: 1,
+  [ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED]: 2,
+  [ProjectAllocationStatus.PRE_ALLOCATED]: 3,
 };
 
 export const updateProjectSchema = z.object({
