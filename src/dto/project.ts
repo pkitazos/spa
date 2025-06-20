@@ -32,6 +32,12 @@ export const projectAllocationStatusSchema = z.enum([
   ProjectAllocationStatus.ALLOCATED,
 ]);
 
+export const projectStatusRank = {
+  [ProjectAllocationStatus.UNALLOCATED]: 0,
+  [ProjectAllocationStatus.ALLOCATED]: 1,
+  [ProjectAllocationStatus.PRE_ALLOCATED]: 2,
+};
+
 export const updateProjectSchema = z.object({
   id: z.string(),
   title: z.string().optional(),
