@@ -46,6 +46,8 @@ export enum ValidationWarningType {
   ExceedsQuota = "exceeds-quota",
   AlreadyAllocated = "already-allocated",
   SupervisorChange = "supervisor-change",
+  ProjectAllocated = "project-allocated",
+  ProjectPreAllocated = "project-pre-allocated",
 }
 
 export enum ValidationWarningSeverity {
