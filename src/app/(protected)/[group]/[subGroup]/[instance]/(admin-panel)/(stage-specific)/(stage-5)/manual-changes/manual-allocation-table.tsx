@@ -68,21 +68,7 @@ export function ManualAllocationTable({
     ): ValidationWarning[] => {
       const warnings: ValidationWarning[] = [];
 
-      console.log(
-        `[calculateWarnings] Starting for student ${allocation.studentId}`,
-      );
-
-      if (currentChange) {
-        console.log(
-          `[calculateWarnings] Current change context:`,
-          currentChange,
-        );
-      }
-
       if (!allocation.newProjectId || !allocation.newSupervisorId) {
-        console.log(
-          `[calculateWarnings] Missing project or supervisor, returning empty warnings`,
-        );
         return warnings;
       }
 
@@ -90,9 +76,6 @@ export function ManualAllocationTable({
       const baseSupervisor = supervisors.find(
         (s) => s.id === allocation.newSupervisorId,
       );
-
-      console.log(`[calculateWarnings] Found project:`, project);
-      console.log(`[calculateWarnings] Found base supervisor:`, baseSupervisor);
 
       if (!project || !baseSupervisor) return warnings;
 
@@ -107,24 +90,13 @@ export function ManualAllocationTable({
           ...baseSupervisor,
           pendingAllocations: baseSupervisor.pendingAllocations + 1,
         };
-        console.log(
-          `[calculateWarnings] Adjusted supervisor for current change (supervisor actually changing):`,
-          supervisor,
-        );
       }
 
       // Flag compatibility check
       const hasCompatibleFlag = allocation.studentFlags.some(
         (flag) => !!project.flags.find((f) => f.title === flag.title),
       );
-      console.log(`[calculateWarnings] Flag compatibility check:`, {
-        studentFlags: allocation.studentFlags.map((f) => f.title),
-        projectFlags: project.flags.map((f) => f.title),
-        hasCompatibleFlag,
-      });
-
       if (!hasCompatibleFlag) {
-        console.log(`[calculateWarnings] Adding flag mismatch warning`);
         warnings.push({
           type: ValidationWarningType.FlagMismatch,
           message: `Student flags (${allocation.studentFlags.map((f) => f.title).join(", ")}) don't match project requirements (${project.flags.map((f) => f.title).join(", ")})`,
@@ -132,68 +104,8 @@ export function ManualAllocationTable({
         });
       }
 
-      // Supervisor workload checks
-      const totalAllocations =
-        supervisor.currentAllocations + supervisor.pendingAllocations;
-      console.log(`[calculateWarnings] Supervisor workload:`, {
-        supervisorId: supervisor.id,
-        supervisorName: supervisor.name,
-        currentAllocations: supervisor.currentAllocations,
-        pendingAllocations: supervisor.pendingAllocations,
-        totalAllocations,
-        allocationTarget: supervisor.allocationTarget,
-        allocationUpperBound: supervisor.allocationUpperBound,
-        exceedsTarget: totalAllocations > supervisor.allocationTarget,
-        exceedsQuota: totalAllocations > supervisor.allocationUpperBound,
-      });
-
-      if (totalAllocations > supervisor.allocationTarget) {
-        console.log(`[calculateWarnings] Adding exceeds target warning`);
-        warnings.push({
-          type: ValidationWarningType.ExceedsTarget,
-          message: `Exceeds supervisor target (${totalAllocations}/${supervisor.allocationTarget})`,
-          severity: ValidationWarningSeverity.Warning,
-        });
-      }
-      if (totalAllocations > supervisor.allocationUpperBound) {
-        console.log(`[calculateWarnings] Adding exceeds quota warning`);
-        warnings.push({
-          type: ValidationWarningType.ExceedsQuota,
-          message: `Exceeds supervisor quota (${totalAllocations}/${supervisor.allocationUpperBound})`,
-          severity: ValidationWarningSeverity.Error,
-        });
-      }
-
-      // Supervisor change warning
-      console.log(`[calculateWarnings] Supervisor change check:`, {
-        projectOriginalSupervisor: project.originalSupervisorId,
-        allocationNewSupervisor: allocation.newSupervisorId,
-        isDifferent:
-          project.originalSupervisorId !== allocation.newSupervisorId,
-      });
-
-      if (project.originalSupervisorId !== allocation.newSupervisorId) {
-        console.log(`[calculateWarnings] Adding supervisor change warning`);
-        warnings.push({
-          type: ValidationWarningType.SupervisorChange,
-          message: "Different supervisor than project proposer",
-          severity: ValidationWarningSeverity.Warning,
-        });
-      }
-
       // Project availability checks
-      console.log(`[calculateWarnings] Project availability check:`, {
-        projectId: project.id,
-        projectStatus: project.status,
-        isAllocated: project.status === ProjectAllocationStatus.ALLOCATED,
-        isPreAllocated:
-          project.status === ProjectAllocationStatus.PRE_ALLOCATED,
-      });
-
       if (project.status === ProjectAllocationStatus.ALLOCATED) {
-        console.log(
-          `[calculateWarnings] Adding project already allocated warning`,
-        );
         warnings.push({
           type: ValidationWarningType.ProjectAllocated,
           message: "This project is already allocated to another student",
@@ -202,7 +114,6 @@ export function ManualAllocationTable({
       }
 
       if (project.status === ProjectAllocationStatus.PRE_ALLOCATED) {
-        console.log(`[calculateWarnings] Adding project pre-allocated warning`);
         warnings.push({
           type: ValidationWarningType.ProjectPreAllocated,
           message: "This project is pre-allocated to another student",
@@ -210,21 +121,38 @@ export function ManualAllocationTable({
         });
       }
 
-      // Already allocated check
-      console.log(`[calculateWarnings] Already allocated check:`, {
-        originalProjectId: allocation.originalProjectId,
-        newProjectId: allocation.newProjectId,
-        hasOriginal: !!allocation.originalProjectId,
-        isDifferent:
-          allocation.originalProjectId &&
-          allocation.originalProjectId !== allocation.newProjectId,
-      });
+      // Supervisor workload checks
+      const totalAllocations =
+        supervisor.currentAllocations + supervisor.pendingAllocations;
+      if (totalAllocations > supervisor.allocationTarget) {
+        warnings.push({
+          type: ValidationWarningType.ExceedsTarget,
+          message: `Exceeds supervisor target (${totalAllocations}/${supervisor.allocationTarget})`,
+          severity: ValidationWarningSeverity.Warning,
+        });
+      }
+      if (totalAllocations > supervisor.allocationUpperBound) {
+        warnings.push({
+          type: ValidationWarningType.ExceedsQuota,
+          message: `Exceeds supervisor quota (${totalAllocations}/${supervisor.allocationUpperBound})`,
+          severity: ValidationWarningSeverity.Error,
+        });
+      }
 
+      // Supervisor change warning
+      if (project.originalSupervisorId !== allocation.newSupervisorId) {
+        warnings.push({
+          type: ValidationWarningType.SupervisorChange,
+          message: "Different supervisor than project proposer",
+          severity: ValidationWarningSeverity.Warning,
+        });
+      }
+
+      // Already allocated check (for existing allocations being changed)
       if (
         allocation.originalProjectId &&
         allocation.originalProjectId !== allocation.newProjectId
       ) {
-        console.log(`[calculateWarnings] Adding already allocated warning`);
         warnings.push({
           type: ValidationWarningType.AlreadyAllocated,
           message: "Student already allocated to different project",
@@ -232,10 +160,6 @@ export function ManualAllocationTable({
         });
       }
 
-      console.log(
-        `[calculateWarnings] Final warnings for ${allocation.studentId}:`,
-        warnings,
-      );
       return warnings;
     },
     [projects, supervisors],
