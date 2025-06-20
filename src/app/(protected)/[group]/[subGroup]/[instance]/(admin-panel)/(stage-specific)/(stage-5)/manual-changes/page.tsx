@@ -21,17 +21,19 @@ export default async function Page({ params }: { params: InstanceParams }) {
   const { projects, supervisors } =
     await api.institution.instance.allProjectsWithStatus({ params });
 
-  const initialStudents = allStudents.map(({ student, allocation }) => ({
-    studentId: student.id,
-    studentName: student.name,
-    studentFlags: student.flags,
-    originalProjectId: allocation?.id,
-    originalSupervisorId: allocation?.supervisorId,
-    newProjectId: undefined,
-    newSupervisorId: undefined,
-    isDirty: false,
-    warnings: [],
-  }));
+  const initialStudents = allStudents
+    .filter((s) => !s.allocation)
+    .map(({ student, allocation }) => ({
+      studentId: student.id,
+      studentName: student.name,
+      studentFlags: student.flags,
+      originalProjectId: allocation?.id,
+      originalSupervisorId: allocation?.supervisorId,
+      newProjectId: undefined,
+      newSupervisorId: undefined,
+      isDirty: false,
+      warnings: [],
+    }));
 
   const initialProjects = projects.map(({ project, student, status }) => ({
     id: project.id,

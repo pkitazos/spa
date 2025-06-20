@@ -3,8 +3,6 @@
 import { useInstanceParams } from "@/components/params-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -29,7 +27,6 @@ import {
   ValidationWarningSeverity,
   ValidationWarningType,
 } from "./types";
-import { useRouter } from "next/navigation";
 
 interface ManualAllocationTableProps {
   initialStudents: StudentAllocation[];
@@ -43,15 +40,18 @@ export function ManualAllocationTable({
   initialSupervisors,
 }: ManualAllocationTableProps) {
   const params = useInstanceParams();
-  const router = useRouter();
+  const utils = api.useUtils();
 
   const [allocations, setAllocations] = useState(initialStudents);
-  const [projects] = useState(initialProjects);
-  const [showAllocatedStudents, setShowAllocatedStudents] = useState(false);
+  const [projects, setProjects] = useState(initialProjects);
   const [baseSupervisors] = useState(initialSupervisors);
 
   const { mutateAsync: saveAllocationsAsync } =
     api.institution.instance.saveManualStudentAllocations.useMutation();
+
+  const invalidateStudents = utils.institution.instance.students.invalidate;
+  const invalidateProjects =
+    utils.institution.instance.allProjectsWithStatus.invalidate;
 
   // Calculate supervisors with pending allocations
   const supervisors = useMemo(() => {
@@ -115,7 +115,10 @@ export function ManualAllocationTable({
       }
 
       // Project availability checks
-      if (project.status === ProjectAllocationStatus.ALLOCATED) {
+      if (
+        project.status === ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED ||
+        project.status === ProjectAllocationStatus.MANUALLY_ALLOCATED
+      ) {
         warnings.push({
           type: ValidationWarningType.ProjectAllocated,
           message: "This project is already allocated to another student",
@@ -267,8 +270,66 @@ export function ManualAllocationTable({
               );
             }
 
-            // TODO: refresh the allocations data from server
-            router.refresh();
+            // trying to optimistically update UI
+            setAllocations((prevAllocations) => {
+              return prevAllocations.map((alloc) => {
+                const result = results.find(
+                  (r) => r.studentId === alloc.studentId,
+                );
+
+                if (!result) return alloc;
+
+                if (result.success) {
+                  // was successfully created so we commit the changes
+                  return {
+                    ...alloc,
+                    originalProjectId: alloc.newProjectId,
+                    originalSupervisorId: alloc.newSupervisorId,
+                    isDirty: false,
+                    warnings: [], // we'll recalculate below
+                  };
+                } else {
+                  // failed to be created so we reset to original state
+                  return {
+                    ...alloc,
+                    newProjectId: alloc.originalProjectId,
+                    newSupervisorId: alloc.originalSupervisorId,
+                    isDirty: false,
+                    warnings: [], // we'll recalculate below
+                  };
+                }
+              });
+            });
+
+            setProjects((prevProjects) => {
+              return prevProjects.map((project) => {
+                const successfulResult = successful.find(
+                  (r) =>
+                    allocations.find((a) => a.studentId === r.studentId)
+                      ?.newProjectId === project.id,
+                );
+
+                if (successfulResult) {
+                  return {
+                    ...project,
+                    status: ProjectAllocationStatus.MANUALLY_ALLOCATED,
+                    currentStudentAllocationId: successfulResult.studentId,
+                  };
+                }
+
+                return project;
+              });
+            });
+
+            // recalculate supervisor counts - this will trigger supervisor memo to update
+            // which will then trigger warning recalculation for all students
+            // This is a bit of a hacky way to force re-render it also does not work :/
+            setAllocations((prevAllocations) => {
+              return prevAllocations.map((alloc) => ({
+                ...alloc,
+                warnings: calculateWarnings(alloc),
+              }));
+            });
 
             return successful.length;
           },
@@ -280,7 +341,7 @@ export function ManualAllocationTable({
         },
       );
     },
-    [allocations, saveAllocationsAsync],
+    [allocations, saveAllocationsAsync, calculateWarnings],
   );
 
   const saveAllChanges = useCallback(async () => {
@@ -294,7 +355,7 @@ export function ManualAllocationTable({
 
     void toast.promise(
       saveAllocationsAsync({ params, allocations: dirtyAllocations }).then(
-        (results) => {
+        async (results) => {
           const successful = results.filter((r) => r.success);
           const failed = results.filter((r) => !r.success);
 
@@ -306,8 +367,8 @@ export function ManualAllocationTable({
             );
           }
 
-          // TODO: refresh the allocations data from server
-          router.refresh();
+          await invalidateStudents({ params });
+          await invalidateProjects({ params });
 
           return successful.length;
         },
@@ -318,14 +379,12 @@ export function ManualAllocationTable({
         success: (count) => `Successfully saved ${count} allocation(s)`,
       },
     );
-  }, [allocations, saveAllocationsAsync]);
-
-  // TODO: this is currently slow asf
-  // Filter allocations based on toggle
-  const filteredAllocations = allocations.filter((allocation) => {
-    if (showAllocatedStudents) return true;
-    return !allocation.originalProjectId; // Show only unallocated
-  });
+  }, [
+    allocations,
+    saveAllocationsAsync,
+    invalidateStudents,
+    invalidateProjects,
+  ]);
 
   const hasChanges = allocations.some((a) => a.isDirty);
 
@@ -333,15 +392,6 @@ export function ManualAllocationTable({
     <div className="space-y-6">
       <div className="flex items-center justify-end">
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="show-allocated"
-              checked={showAllocatedStudents}
-              onCheckedChange={setShowAllocatedStudents}
-            />
-            <Label htmlFor="show-allocated">Show allocated students</Label>
-          </div>
-
           <Button
             onClick={saveAllChanges}
             disabled={!hasChanges}
@@ -373,7 +423,7 @@ export function ManualAllocationTable({
           </TableHeader>
 
           <TableBody>
-            {filteredAllocations.map((allocation) => (
+            {allocations.map((allocation) => (
               <StudentRow
                 key={allocation.studentId}
                 allocation={allocation}
