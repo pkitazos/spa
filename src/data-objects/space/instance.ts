@@ -3,7 +3,7 @@ import { ADMIN_TABS_BY_STAGE } from "@/config/side-panel-tabs/admin-tabs-by-stag
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
 import { collectMatchingData } from "@/db/transactions/collect-matching-data";
 import { Transformers as T } from "@/db/transformers";
-import { DB, New } from "@/db/types";
+import { DB, Stage, New, AllocationMethod } from "@/db/types";
 import {
   UnitOfAssessmentDTO,
   AssessmentCriterionDTO,
@@ -25,7 +25,6 @@ import { RandomAllocationDto } from "@/lib/validations/allocation/data-table-dto
 import { InstanceParams } from "@/lib/validations/params";
 import { SupervisorProjectSubmissionDetails } from "@/lib/validations/supervisor-project-submission-details";
 import { TabType } from "@/lib/validations/tabs";
-import { Stage } from "@prisma/client";
 
 import { MatchingAlgorithm } from "../matching-algorithm";
 import { Project } from "..";
@@ -33,7 +32,10 @@ import { DataObject } from "../data-object";
 import { AllocationGroup } from "./group";
 import { AllocationSubGroup } from "./sub-group";
 import { User, Student, Supervisor } from "../user";
-import { StudentProjectAllocationData } from "../StudentProjectAllocationData";
+import {
+  StudentProjectAllocationData,
+  StudentProjectAllocationDTO,
+} from "../student-project-allocation-data";
 
 export const byTitle = <T extends { title: string }>({ title }: T) => title;
 
@@ -448,6 +450,76 @@ export class AllocationInstance extends DataObject {
         ? T.toProjectDTO(u.projectAllocation.project)
         : undefined,
     }));
+  }
+
+  public async getStudentAllocation(
+    studentId: string,
+  ): Promise<StudentProjectAllocationDTO | undefined> {
+    const allocation = await this.db.studentProjectAllocation.findFirst({
+      where: { userId: studentId, ...expand(this.params) },
+      include: {
+        project: {
+          include: {
+            supervisor: {
+              include: { userInInstance: { include: { user: true } } },
+            },
+            flagsOnProject: { include: { flag: true } },
+            tagsOnProject: { include: { tag: true } },
+          },
+        },
+        student: {
+          include: {
+            userInInstance: { include: { user: true } },
+            studentFlags: { include: { flag: true } },
+          },
+        },
+      },
+    });
+
+    if (!allocation) return undefined;
+
+    return {
+      student: T.toStudentDTO(allocation.student),
+      project: T.toProjectDTO(allocation.project),
+      supervisor: T.toSupervisorDTO(allocation.project.supervisor),
+      ranking: allocation.studentRanking,
+      allocationMethod: allocation.allocationMethod,
+    };
+  }
+
+  public async getProjectAllocation(
+    projectId: string,
+  ): Promise<StudentDTO | undefined> {
+    const allocation = await this.db.studentProjectAllocation.findFirst({
+      where: { projectId, ...expand(this.params) },
+      include: {
+        student: {
+          include: {
+            studentFlags: { include: { flag: true } },
+            userInInstance: { include: { user: true } },
+          },
+        },
+      },
+    });
+
+    if (!allocation) return undefined;
+
+    return T.toStudentDTO(allocation.student);
+  }
+
+  public async createManualAllocation(
+    studentId: string,
+    projectId: string,
+  ): Promise<void> {
+    await this.db.studentProjectAllocation.create({
+      data: {
+        ...expand(this.params),
+        userId: studentId,
+        projectId,
+        studentRanking: 1,
+        allocationMethod: AllocationMethod.MANUAL,
+      },
+    });
   }
 
   public async getSummaryResults() {
@@ -1101,7 +1173,7 @@ export class AllocationInstance extends DataObject {
 
     await this.db.$transaction([
       this.db.studentProjectAllocation.deleteMany({ where: spaId }),
-      this.db.studentSubmittedPreference.deleteMany({ where: spaId }),
+      // this.db.studentSubmittedPreference.deleteMany({ where: spaId }), @JakeTrevor is this needed?
     ]);
   }
 
