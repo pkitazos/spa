@@ -624,6 +624,59 @@ export const instanceRouter = createTRPCRouter({
     },
   ),
 
+  saveManualStudentAllocations: procedure.instance.subGroupAdmin
+    .input(
+      z.object({
+        allocations: z.array(
+          z.object({
+            studentId: z.string(),
+            projectId: z.string(),
+            supervisorId: z.string(),
+          }),
+        ),
+      }),
+    )
+    .output(z.array(z.object({ studentId: z.string(), success: z.boolean() })))
+    .mutation(async ({ ctx: { instance }, input: { allocations } }) => {
+      const results = [];
+
+      for (const allocation of allocations) {
+        const { studentId, projectId, supervisorId } = allocation;
+
+        // todo: this whole thing should be in a transaction
+        try {
+          await instance.deleteStudentAllocation(studentId);
+
+          const conflictStudent =
+            await instance.getProjectAllocation(projectId);
+
+          if (conflictStudent) {
+            await instance.deleteStudentAllocation(conflictStudent.id);
+          }
+
+          const project = instance.getProject(projectId);
+          await project.clearPreAllocation();
+
+          const projectData = await project.get();
+          if (projectData.supervisorId !== supervisorId) {
+            await project.transferSupervisor(supervisorId);
+          }
+
+          const student = await instance.getStudent(studentId);
+          const studentData = await student.get();
+          await project.addFlags(studentData.flags);
+
+          await instance.createManualAllocation(studentId, projectId);
+
+          results.push({ studentId, success: true });
+        } catch (error) {
+          results.push({ studentId, success: false });
+        }
+      }
+
+      return results;
+    }),
+
   // Pin
   fork: procedure.instance
     .inStage([Stage.ALLOCATION_PUBLICATION])

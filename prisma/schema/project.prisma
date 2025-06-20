@@ -6,6 +6,12 @@ enum PreferenceType {
   @@map("preference_type")
 }
 
+enum AllocationMethod {
+  PRE_ALLOCATED
+  ALGORITHMIC
+  MANUAL
+}
+
 model Project {
   id                            String                       @id @default(uuid())
   title                         String
@@ -74,17 +80,18 @@ model StudentSubmittedPreference {
 }
 
 model StudentProjectAllocation {
-  projectId            String         @map("project_id")
-  userId               String         @map("user_id")
-  studentRanking       Int            @map("student_ranking")
-  createdAt            DateTime       @default(now()) @map("created_at")
+  projectId            String           @map("project_id")
+  userId               String           @map("user_id")
+  studentRanking       Int              @map("student_ranking")
+  allocationMethod     AllocationMethod @default(ALGORITHMIC)
+  createdAt            DateTime         @default(now()) @map("created_at")
   // ---
-  allocationGroupId    String         @map("allocation_group_id")
-  allocationSubGroupId String         @map("allocation_sub_group_id")
-  allocationInstanceId String         @map("allocation_instance_id")
+  allocationGroupId    String           @map("allocation_group_id")
+  allocationSubGroupId String           @map("allocation_sub_group_id")
+  allocationInstanceId String           @map("allocation_instance_id")
   // ---
-  project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  student              StudentDetails @relation("project_allocation", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  project              Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  student              StudentDetails   @relation("project_allocation", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
   finalGrade           FinalGrade?
 
   @@id([userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], name: "studentProjectAllocationId", map: "student_project_allocation_id")

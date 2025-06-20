@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { Button } from "@/components/ui/button";
+import { useInstanceParams } from "@/components/params-context";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { RotateCcw, Save, SaveAll, AlertTriangle, Info } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -14,18 +13,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ProjectAllocationStatus } from "@/dto";
+import { api } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
+import { AlertTriangle, Info, RotateCcw, Save, SaveAll } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { ProjectCombobox } from "./project-combobox";
+import { SupervisorCombobox } from "./supervisor-combobox";
 import {
-  type StudentAllocation,
   type ProjectInfo,
+  type StudentAllocation,
   type SupervisorInfo,
   type ValidationWarning,
   ValidationWarningSeverity,
   ValidationWarningType,
 } from "./types";
-import { ProjectCombobox } from "./project-combobox";
-import { SupervisorCombobox } from "./supervisor-combobox";
-import { cn } from "@/lib/utils";
-import { ProjectAllocationStatus } from "@/dto";
+import { useRouter } from "next/navigation";
 
 interface ManualAllocationTableProps {
   initialStudents: StudentAllocation[];
@@ -38,10 +42,16 @@ export function ManualAllocationTable({
   initialProjects,
   initialSupervisors,
 }: ManualAllocationTableProps) {
+  const params = useInstanceParams();
+  const router = useRouter();
+
   const [allocations, setAllocations] = useState(initialStudents);
   const [projects] = useState(initialProjects);
   const [showAllocatedStudents, setShowAllocatedStudents] = useState(false);
   const [baseSupervisors] = useState(initialSupervisors);
+
+  const { mutateAsync: saveAllocationsAsync } =
+    api.institution.instance.saveManualStudentAllocations.useMutation();
 
   // Calculate supervisors with pending allocations
   const supervisors = useMemo(() => {
@@ -176,7 +186,6 @@ export function ManualAllocationTable({
         prev.map((allocation) => {
           if (allocation.studentId !== studentId) return allocation;
 
-          // Create new allocation object with the field update
           let newAllocation = { ...allocation, [field]: value };
 
           // Auto-select supervisor when project is selected
@@ -190,18 +199,15 @@ export function ManualAllocationTable({
             }
           }
 
-          // Calculate dirty state
           const isOriginalState =
             newAllocation.newProjectId === newAllocation.originalProjectId &&
             newAllocation.newSupervisorId ===
               newAllocation.originalSupervisorId;
 
-          // Determine if we should pass current change context
           const currentChange = newAllocation.newSupervisorId
             ? { studentId, supervisorId: newAllocation.newSupervisorId }
             : undefined;
 
-          // Return completely new object
           return {
             ...newAllocation,
             isDirty: !isOriginalState,
@@ -229,37 +235,90 @@ export function ManualAllocationTable({
     );
   }, []);
 
-  const saveStudent = useCallback(async (studentId: string) => {
-    console.log("Saving student:", studentId);
-    // TODO: add trpc api call here
+  const saveStudent = useCallback(
+    async (studentId: string) => {
+      const allocation = allocations.find((a) => a.studentId === studentId);
+      if (
+        !allocation ||
+        !allocation.newProjectId ||
+        !allocation.newSupervisorId
+      )
+        return;
 
-    setAllocations((prev) =>
-      prev.map((allocation) => {
-        if (allocation.studentId !== studentId) return allocation;
-        return {
-          ...allocation,
-          originalProjectId: allocation.newProjectId,
-          originalSupervisorId: allocation.newSupervisorId,
-          isDirty: false,
-        };
-      }),
-    );
-  }, []);
+      const allocationData = [
+        {
+          studentId: allocation.studentId,
+          projectId: allocation.newProjectId,
+          supervisorId: allocation.newSupervisorId,
+        },
+      ];
+
+      void toast.promise(
+        saveAllocationsAsync({ params, allocations: allocationData }).then(
+          (results) => {
+            const successful = results.filter((r) => r.success);
+            const failed = results.filter((r) => !r.success);
+
+            if (failed.length > 0) {
+              const failedIds = failed.map((f) => f.studentId);
+              toast.error(
+                `Failed to save allocation for student: ${failedIds.join(", ")}`,
+                { duration: Infinity, closeButton: true },
+              );
+            }
+
+            // TODO: refresh the allocations data from server
+            router.refresh();
+
+            return successful.length;
+          },
+        ),
+        {
+          loading: `Saving allocation for student ${studentId}...`,
+          error: "Something went wrong",
+          success: (count) => `Successfully saved ${count} allocation(s)`,
+        },
+      );
+    },
+    [allocations, saveAllocationsAsync],
+  );
 
   const saveAllChanges = useCallback(async () => {
-    const dirtyAllocations = allocations.filter((a) => a.isDirty);
-    console.log("Saving all changes:", dirtyAllocations);
-    // TODO: add trpc api call here
+    const dirtyAllocations = allocations
+      .filter((a) => a.isDirty && a.newProjectId && a.newSupervisorId)
+      .map((a) => ({
+        studentId: a.studentId,
+        projectId: a.newProjectId!,
+        supervisorId: a.newSupervisorId!,
+      }));
 
-    setAllocations((prev) =>
-      prev.map((allocation) => ({
-        ...allocation,
-        originalProjectId: allocation.newProjectId,
-        originalSupervisorId: allocation.newSupervisorId,
-        isDirty: false,
-      })),
+    void toast.promise(
+      saveAllocationsAsync({ params, allocations: dirtyAllocations }).then(
+        (results) => {
+          const successful = results.filter((r) => r.success);
+          const failed = results.filter((r) => !r.success);
+
+          if (failed.length > 0) {
+            const failedIds = failed.map((f) => f.studentId);
+            toast.error(
+              `Failed to save allocations for students: ${failedIds.join(", ")}`,
+              { duration: Infinity, closeButton: true },
+            );
+          }
+
+          // TODO: refresh the allocations data from server
+          router.refresh();
+
+          return successful.length;
+        },
+      ),
+      {
+        loading: `Saving ${dirtyAllocations.length} allocation(s)...`,
+        error: "Something went wrong",
+        success: (count) => `Successfully saved ${count} allocation(s)`,
+      },
     );
-  }, [allocations]);
+  }, [allocations, saveAllocationsAsync]);
 
   // TODO: this is currently slow asf
   // Filter allocations based on toggle
@@ -351,7 +410,6 @@ function StudentRow({
   onReset: (studentId: string) => void;
   onSave: (studentId: string) => void;
 }) {
-  // Group warnings by severity for better display
   const errorWarnings = allocation.warnings.filter(
     (w) => w.severity === ValidationWarningSeverity.Error,
   );

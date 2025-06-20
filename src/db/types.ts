@@ -120,6 +120,7 @@ export {
   PreferenceType,
   Stage,
   MarkerType,
+  AllocationMethod,
 } from "@prisma/client";
 
 export type New<T> = Omit<T, "id">;
