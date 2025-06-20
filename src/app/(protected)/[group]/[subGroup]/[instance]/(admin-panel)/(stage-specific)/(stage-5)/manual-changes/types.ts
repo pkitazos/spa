@@ -40,13 +40,21 @@ export type AllocationChange = {
   warnings: ValidationWarning[];
 };
 
+export enum ValidationWarningType {
+  FlagMismatch = "flag-mismatch",
+  ExceedsTarget = "exceeds-target",
+  ExceedsQuota = "exceeds-quota",
+  AlreadyAllocated = "already-allocated",
+  SupervisorChange = "supervisor-change",
+}
+
+export enum ValidationWarningSeverity {
+  Warning = "warning",
+  Error = "error",
+}
+
 export type ValidationWarning = {
-  type:
-    | "flag-mismatch"
-    | "exceeds-target"
-    | "exceeds-quota"
-    | "already-allocated"
-    | "supervisor-change";
+  type: ValidationWarningType;
   message: string;
-  severity: "warning" | "error";
+  severity: ValidationWarningSeverity;
 };

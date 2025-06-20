@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/popover";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ProjectInfo } from "./types";
+import type { ProjectInfo } from "./types";
 import { fuzzyMatch } from "@/lib/utils/general/fuzzy-match";
 import { ProjectAllocationStatus } from "@/dto";
 import { Badge } from "@/components/ui/badge";
@@ -27,16 +27,13 @@ interface ProjectComboboxProps {
   projects: ProjectWithStatus[];
   value?: string;
   onValueChange: (value: string) => void;
-  placeholder?: string;
   className?: string;
 }
 
-// Project Combobox Component
 export function ProjectCombobox({
   projects,
   value,
   onValueChange,
-  placeholder = "Select project...",
   className,
 }: ProjectComboboxProps) {
   const [open, setOpen] = useState(false);
@@ -52,16 +49,84 @@ export function ProjectCombobox({
     return fuzzyMatch(search, project.id);
   };
 
-  const getStatusBadgeVariant = (status: ProjectAllocationStatus) => {
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className={cn(
+            "h-auto min-h-[40px] w-[350px] justify-between p-3",
+            className,
+          )}
+        >
+          {selectedProject ? (
+            <ProjectCell project={selectedProject} selected />
+          ) : (
+            <span className="text-muted-foreground">Select project...</span>
+          )}
+          <ChevronsUpDown className="ml-2 h-4 w-4 flex-shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[500px] p-0">
+        <Command
+          filter={(value, search) => {
+            const project = projects.find((p) => p.id === value);
+            return project && filterProjects(search, project) ? 1 : 0;
+          }}
+        >
+          <CommandInput placeholder="Search projects..." className="h-9" />
+          <CommandList>
+            <CommandEmpty>No project found.</CommandEmpty>
+            <CommandGroup>
+              {projects.map((project) => (
+                <CommandItem
+                  key={project.id}
+                  value={project.id}
+                  onSelect={(currentValue) => {
+                    const newValue = currentValue === value ? "" : currentValue;
+                    onValueChange(newValue);
+                    setOpen(false);
+                  }}
+                  className="cursor-pointer p-4"
+                >
+                  <div className="flex w-full items-start justify-between">
+                    <ProjectCell project={project} />
+                    <Check
+                      className={cn(
+                        "mt-1 h-4 w-4 flex-shrink-0",
+                        value === project.id ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function ProjectCell({
+  project,
+  selected = false,
+}: {
+  project: ProjectWithStatus;
+  selected?: boolean;
+}) {
+  const getStatusColor = (status: ProjectAllocationStatus) => {
     switch (status) {
       case ProjectAllocationStatus.UNALLOCATED:
-        return "success";
+        return "text-green-600 bg-green-100 border-green-200";
       case ProjectAllocationStatus.PRE_ALLOCATED:
-        return "destructive";
+        return "text-red-600 bg-red-100 border-red-200";
       case ProjectAllocationStatus.ALLOCATED:
-        return "destructive";
+        return "text-orange-600 bg-orange-100 border-orange-200";
       default:
-        return "outline";
+        throw new Error(`Unknown status: ${status}`);
     }
   };
 
@@ -74,120 +139,56 @@ export function ProjectCombobox({
       case ProjectAllocationStatus.ALLOCATED:
         return "Allocated";
       default:
-        return status;
+        throw new Error(`Unknown status: ${status}`);
     }
   };
 
+  if (selected) {
+    return (
+      <div className="flex w-full min-w-0 flex-col items-start">
+        <div className="flex w-full items-center justify-between">
+          <span className="truncate pr-2 text-sm font-medium">
+            {project.title}
+          </span>
+          <div
+            className={cn(
+              "flex-shrink-0 rounded-full border px-2 py-1 text-xs font-medium",
+              getStatusColor(project.status),
+            )}
+          >
+            {getStatusLabel(project.status)}
+          </div>
+        </div>
+        <span className="mt-1 text-xs text-muted-foreground">
+          #{project.id}
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn("w-[350px] justify-between", className)}
-        >
-          {selectedProject ? (
-            <div className="flex w-full min-w-0 items-center justify-between">
-              <div className="mr-2 flex min-w-0 items-center">
-                <span className="truncate font-medium">
-                  {selectedProject.title}
-                </span>
-                <span className="ml-2 text-sm text-gray-500">
-                  {selectedProject.id}
-                </span>
-              </div>
-              <Badge
-                variant={getStatusBadgeVariant(selectedProject.status)}
-                className="flex-shrink-0 text-xs"
-              >
-                {getStatusLabel(selectedProject.status)}
-              </Badge>
-            </div>
-          ) : (
-            placeholder
+    <div className="mr-3 min-w-0 flex-1">
+      <div className="mb-2 flex items-start justify-between">
+        <h4 className="pr-2 text-sm font-medium leading-tight">
+          {project.title}
+        </h4>
+        <div
+          className={cn(
+            "flex-shrink-0 rounded-full border px-2 py-1 text-xs font-medium",
+            getStatusColor(project.status),
           )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 flex-shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full max-w-3xl p-0">
-        <Command
-          filter={(value, search) => {
-            console.log("ProjectCombobox Command filter called:", {
-              value,
-              search,
-            });
-            const project = projects.find((p) => p.id === value);
-            console.log("ProjectCombobox found project:", project);
-            const result = project && filterProjects(search, project) ? 1 : 0;
-            console.log("ProjectCombobox filter result:", result);
-            return result;
-          }}
         >
-          <CommandInput placeholder="Search projects..." className="h-9" />
-          <CommandList>
-            <CommandEmpty>No project found.</CommandEmpty>
-            <CommandGroup>
-              {projects.map((project) => (
-                <CommandItem
-                  key={project.id}
-                  value={project.id}
-                  onSelect={(currentValue) => {
-                    console.log("ProjectCombobox onSelect called:", {
-                      currentValue,
-                      value,
-                    });
-                    const newValue = currentValue === value ? "" : currentValue;
-                    console.log(
-                      "ProjectCombobox calling onValueChange with:",
-                      newValue,
-                    );
-                    onValueChange(newValue);
-                    setOpen(false);
-                  }}
-                  className="p-3"
-                >
-                  <div className="flex w-full items-center justify-between">
-                    <div className="min-w-0 flex-1">
-                      <div className="mb-1 flex items-center">
-                        <span className="truncate font-medium">
-                          {project.title}
-                        </span>
-                        <span className="ml-2 text-sm text-gray-500">
-                          #{project.id}
-                        </span>
-                      </div>
-                      <div className="mb-1 flex items-center gap-1">
-                        {project.flags.map((flag) => (
-                          <Badge
-                            key={flag.id}
-                            variant="outline"
-                            className="text-xs"
-                          >
-                            {flag.title}
-                          </Badge>
-                        ))}
-                      </div>
-                      <Badge
-                        variant={getStatusBadgeVariant(project.status)}
-                        className="text-xs"
-                      >
-                        {getStatusLabel(project.status)}
-                      </Badge>
-                    </div>
-                    <Check
-                      className={cn(
-                        "ml-2 h-4 w-4 flex-shrink-0",
-                        value === project.id ? "opacity-100" : "opacity-0",
-                      )}
-                    />
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+          {getStatusLabel(project.status)}
+        </div>
+      </div>
+      <p className="mb-2 text-xs text-muted-foreground">#{project.id}</p>
+      <div className="flex flex-wrap gap-1">
+        {project.flags.map((flag) => (
+          <Badge key={flag.id} variant="accent">
+            {flag.title}
+          </Badge>
+        ))}
+      </div>
+    </div>
   );
 }
