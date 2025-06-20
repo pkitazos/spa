@@ -17,6 +17,30 @@ export const projectDtoSchema = z.object({
 
 export type ProjectDTO = z.infer<typeof projectDtoSchema>;
 
+export const ProjectAllocationStatus = {
+  UNALLOCATED: "UNALLOCATED",
+  PRE_ALLOCATED: "PRE_ALLOCATED",
+  ALGORITHMICALLY_ALLOCATED: "ALGORITHMICALLY_ALLOCATED",
+  MANUALLY_ALLOCATED: "MANUALLY_ALLOCATED",
+} as const;
+
+export type ProjectAllocationStatus =
+  (typeof ProjectAllocationStatus)[keyof typeof ProjectAllocationStatus];
+
+export const projectAllocationStatusSchema = z.enum([
+  ProjectAllocationStatus.UNALLOCATED,
+  ProjectAllocationStatus.MANUALLY_ALLOCATED,
+  ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED,
+  ProjectAllocationStatus.PRE_ALLOCATED,
+]);
+
+export const projectStatusRank = {
+  [ProjectAllocationStatus.UNALLOCATED]: 0,
+  [ProjectAllocationStatus.MANUALLY_ALLOCATED]: 1,
+  [ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED]: 2,
+  [ProjectAllocationStatus.PRE_ALLOCATED]: 3,
+};
+
 export const updateProjectSchema = z.object({
   id: z.string(),
   title: z.string().optional(),

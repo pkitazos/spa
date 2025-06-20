@@ -7,12 +7,8 @@ import {
 import { expand } from "@/lib/utils/general/instance-params";
 import { getRandomInt } from "@/lib/utils/general/random";
 import {
-  ProjectInfo,
   projectInfoSchema,
-  StudentRow,
   studentRowSchema,
-  SupervisorDetails,
-  supervisorDetailsSchema,
 } from "@/lib/validations/allocation-adjustment";
 import { allocationCsvDataSchema } from "@/lib/validations/allocation-csv-data";
 import { instanceParamsSchema } from "@/lib/validations/params";
@@ -44,68 +40,6 @@ export const matchingRouter = createTRPCRouter({
     .mutation(
       async ({ ctx: { instance } }) => await instance.clearAllAlgResults(),
     ),
-
-  // BREAKING
-  // move, maybe rename
-  // TODO: change output type to something more standard
-  rowData: procedure.instance.subGroupAdmin
-    .output(
-      z.object({
-        students: z.array(studentRowSchema),
-        projects: z.array(projectInfoSchema),
-        supervisors: z.array(supervisorDetailsSchema),
-      }),
-    )
-    .query(async ({ ctx: { instance } }) => {
-      const studentData = await instance.getStudentPreferenceDetails();
-      const projectData = await instance.getProjectDetails();
-      const supervisorData = await instance.getSupervisorProjectDetails();
-
-      const allocationRecord = await instance
-        .getAllocationData()
-        .then((data) => data.toRecord());
-
-      const supervisors = supervisorData.map(
-        (s) =>
-          ({
-            supervisorId: s.institutionId,
-            lowerBound: 0,
-            target: s.projectTarget,
-            upperBound: s.projectUpperQuota,
-            projects: s.projects.map((e) => e.id),
-          }) satisfies SupervisorDetails,
-      );
-
-      const students = studentData
-        .map(
-          (s) =>
-            ({
-              student: { id: s.institutionId, name: s.fullName },
-              projects: s.submittedPreferences.map(({ projectId: id }) => ({
-                id,
-                selected:
-                  allocationRecord[id]?.includes(s.institutionId) ?? false,
-              })),
-            }) satisfies StudentRow,
-        )
-        .filter((e) => e.projects.length > 0);
-
-      const projects = projectData.map(
-        (p) =>
-          ({
-            id: p.project.id,
-            title: p.project.title,
-            capacityLowerBound: p.project.capacityLowerBound,
-            capacityUpperBound: p.project.capacityUpperBound,
-            allocatedTo: p.allocatedTo,
-            projectAllocationLowerBound: p.supervisor.allocationLowerBound,
-            projectAllocationTarget: p.supervisor.allocationTarget,
-            projectAllocationUpperBound: p.supervisor.allocationUpperBound,
-          }) satisfies ProjectInfo,
-      );
-
-      return { supervisors, students, projects };
-    }),
 
   // TODO
   updateAllocation: procedure.instance.subGroupAdmin

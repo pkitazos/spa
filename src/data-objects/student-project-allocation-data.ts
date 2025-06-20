@@ -1,23 +1,24 @@
 import { guidToMatric } from "@/config/guid-to-matric";
 import { Transformers as T } from "@/db/transformers";
-import { DB } from "@/db/types";
+import { AllocationMethod, DB } from "@/db/types";
 import { expand } from "@/lib/utils/general/instance-params";
 import { InstanceParams } from "@/lib/validations/params";
 import { StudentDTO, SupervisorDTO, ProjectDTO } from "@/dto";
 
 import { DataObject } from "./data-object";
 
-export type allocationDataDTO = {
+export type StudentProjectAllocationDTO = {
   student: StudentDTO;
   supervisor: SupervisorDTO;
   project: ProjectDTO;
   ranking: number;
+  allocationMethod: AllocationMethod;
 };
 
 export class StudentProjectAllocationData extends DataObject {
-  private allocationData: allocationDataDTO[];
+  private allocationData: StudentProjectAllocationDTO[];
 
-  constructor(db: DB, data: allocationDataDTO[]) {
+  constructor(db: DB, data: StudentProjectAllocationDTO[]) {
     super(db);
     this.db = db;
     this.allocationData = data;
@@ -50,6 +51,7 @@ export class StudentProjectAllocationData extends DataObject {
       supervisor: T.toSupervisorDTO(x.project.supervisor),
       project: T.toProjectDTO(x.project),
       ranking: x.studentRanking,
+      allocationMethod: x.allocationMethod,
     }));
 
     return new StudentProjectAllocationData(db, formatData);

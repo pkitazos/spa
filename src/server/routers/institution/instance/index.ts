@@ -23,7 +23,9 @@ import {
   flagDtoSchema,
   instanceDtoSchema,
   newUnitOfAssessmentSchema,
+  ProjectAllocationStatus,
   projectDtoSchema,
+  projectStatusRank,
   ReaderDTO,
   readerDtoSchema,
   studentDtoSchema,
@@ -533,6 +535,146 @@ export const instanceRouter = createTRPCRouter({
       }
 
       return tabGroups;
+    }),
+
+  unmatchedStudents: procedure.instance.subGroupAdmin
+    .output(z.array(studentDtoSchema))
+    .query(async ({ ctx: { instance } }) => {
+      const unmatchedStudents = await instance.getUnallocatedStudents();
+      return unmatchedStudents;
+    }),
+
+  allProjectsWithStatus: procedure.instance.subGroupAdmin.query(
+    async ({ ctx: { instance } }) => {
+      const unallocatedStudents = await instance.getUnallocatedStudents();
+
+      // will get all projects and categorise them as follows:
+      // - pre-allocated: projects that have been pre-allocated to students
+      // - allocated: projects that have been allocated to students
+      // - unallocated: projects that have not been allocated to any students
+
+      const preAllocatedProjects = await instance.getPreAllocations();
+      const allProjects = await instance.getProjectDetails();
+
+      const projects = allProjects
+        .map((p) => {
+          const preAllocated = preAllocatedProjects
+            .map((pa) => pa.project.id)
+            .includes(p.project.id);
+
+          // if preAllocated, then the allocatedTo array will have exactly one element
+
+          const unallocated = p.allocatedTo.length === 0;
+
+          // if unallocated, then the allocatedTo array will be empty
+
+          // if allocated, then the allocatedTo array will have at least one element
+          // and the preAllocated will be false
+
+          // status is one of:
+          // - pre-allocated: if preAllocated is true
+          // - unallocated: if unallocated is true
+          // - allocated: if neither preAllocated nor unallocated is true
+
+          let status: ProjectAllocationStatus;
+          if (preAllocated) {
+            status = ProjectAllocationStatus.PRE_ALLOCATED;
+
+            if (p.allocatedTo.length !== 1) {
+              throw new Error(
+                `Project ${p.project.id} is pre-allocated but has ${p.allocatedTo.length} allocations`,
+              );
+            }
+          } else if (unallocated) {
+            status = ProjectAllocationStatus.UNALLOCATED;
+          } else {
+            status = ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED;
+
+            if (p.allocatedTo.length === 0) {
+              throw new Error(
+                `Project ${p.project.id} is allocated but has no allocations`,
+              );
+            }
+
+            if (p.allocatedTo.length > 1) {
+              console.warn(
+                `Project ${p.project.id} has multiple allocations: ${p.allocatedTo.length}`,
+              );
+            }
+          }
+
+          return {
+            project: p.project,
+            supervisor: p.supervisor,
+            status,
+            student: p.allocatedTo.at(0),
+          };
+        })
+        .sort(
+          (a, b) => projectStatusRank[a.status] - projectStatusRank[b.status],
+        );
+
+      // will also get all supervisors and their allocation status
+      // will include their workload so as to show how many projects they have
+      // allocated to them, and how many they can still take
+
+      const supervisors = await instance.getSupervisorAllocationDetails();
+
+      return { projects, supervisors };
+    },
+  ),
+
+  saveManualStudentAllocations: procedure.instance.subGroupAdmin
+    .input(
+      z.object({
+        allocations: z.array(
+          z.object({
+            studentId: z.string(),
+            projectId: z.string(),
+            supervisorId: z.string(),
+          }),
+        ),
+      }),
+    )
+    .output(z.array(z.object({ studentId: z.string(), success: z.boolean() })))
+    .mutation(async ({ ctx: { instance }, input: { allocations } }) => {
+      const results = [];
+
+      for (const allocation of allocations) {
+        const { studentId, projectId, supervisorId } = allocation;
+
+        // todo: this whole thing should be in a transaction
+        try {
+          await instance.deleteStudentAllocation(studentId);
+
+          const conflictStudent =
+            await instance.getProjectAllocation(projectId);
+
+          if (conflictStudent) {
+            await instance.deleteStudentAllocation(conflictStudent.id);
+          }
+
+          const project = instance.getProject(projectId);
+          await project.clearPreAllocation();
+
+          const projectData = await project.get();
+          if (projectData.supervisorId !== supervisorId) {
+            await project.transferSupervisor(supervisorId);
+          }
+
+          const student = await instance.getStudent(studentId);
+          const studentData = await student.get();
+          await project.addFlags(studentData.flags);
+
+          await instance.createManualAllocation(studentId, projectId);
+
+          results.push({ studentId, success: true });
+        } catch (error) {
+          results.push({ studentId, success: false });
+        }
+      }
+
+      return results;
     }),
 
   // Pin
