@@ -6,7 +6,7 @@ import { InstanceParams } from "@/lib/validations/params";
 
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
-import { ManualAllocationTable } from "./manual-allocation-table";
+import { ManualAllocationTable } from "./_components/manual-allocation-table";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
