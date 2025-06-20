@@ -61,6 +61,30 @@ export class Project extends DataObject {
     return data.flagsOnProject.map((f) => T.toFlagDTO(f.flag));
   }
 
+  public async transferSupervisor(newSupervisorId: string): Promise<void> {
+    await this.db.project.update({
+      where: toPP2(this.params),
+      data: { supervisorId: newSupervisorId },
+    });
+  }
+
+  public async addFlags(flags: FlagDTO[]): Promise<void> {
+    await this.db.flagOnProject.createMany({
+      data: flags.map((flag) => ({
+        projectId: this.params.projectId,
+        flagId: flag.id,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  public async clearPreAllocation(): Promise<void> {
+    await this.db.project.update({
+      where: toPP2(this.params),
+      data: { preAllocatedStudentId: null },
+    });
+  }
+
   public async delete(): Promise<void> {
     await this.db.project.delete({ where: toPP2(this.params) });
   }
