@@ -588,7 +588,7 @@ export const instanceRouter = createTRPCRouter({
           } else if (unallocated) {
             status = ProjectAllocationStatus.UNALLOCATED;
           } else {
-            status = ProjectAllocationStatus.ALLOCATED;
+            status = ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED;
 
             if (p.allocatedTo.length === 0) {
               throw new Error(
