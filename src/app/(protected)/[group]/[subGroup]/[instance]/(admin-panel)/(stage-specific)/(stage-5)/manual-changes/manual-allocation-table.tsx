@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { RotateCcw, Save, SaveAll } from "lucide-react";
+import { RotateCcw, Save, SaveAll, AlertTriangle, Info } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -15,13 +15,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  StudentAllocation,
-  ProjectInfo,
-  SupervisorInfo,
-  ValidationWarning,
+  type StudentAllocation,
+  type ProjectInfo,
+  type SupervisorInfo,
+  type ValidationWarning,
+  ValidationWarningSeverity,
+  ValidationWarningType,
 } from "./types";
 import { ProjectCombobox } from "./project-combobox";
 import { SupervisorCombobox } from "./supervisor-combobox";
+import { cn } from "@/lib/utils";
 
 interface ManualAllocationTableProps {
   initialStudents: StudentAllocation[];
@@ -73,14 +76,15 @@ export function ManualAllocationTable({
       if (!project || !supervisor) return warnings;
 
       // Flag compatibility check
-      const hasCompatibleFlag = allocation.studentFlags.some((flag) =>
-        project.flags.includes(flag),
+      const hasCompatibleFlag = allocation.studentFlags.some(
+        // TODO: technically this should check IDs instead of titles,
+        (flag) => !!project.flags.find((f) => f.title === flag.title),
       );
       if (!hasCompatibleFlag) {
         warnings.push({
-          type: "flag-mismatch",
+          type: ValidationWarningType.FlagMismatch,
           message: `Student flags (${allocation.studentFlags.join(", ")}) don't match project requirements (${project.flags.join(", ")})`,
-          severity: "warning",
+          severity: ValidationWarningSeverity.Warning,
         });
       }
 
@@ -89,25 +93,25 @@ export function ManualAllocationTable({
         supervisor.currentAllocations + supervisor.pendingAllocations;
       if (totalAllocations > supervisor.allocationTarget) {
         warnings.push({
-          type: "exceeds-target",
+          type: ValidationWarningType.ExceedsTarget,
           message: `Exceeds supervisor target (${totalAllocations}/${supervisor.allocationTarget})`,
-          severity: "warning",
+          severity: ValidationWarningSeverity.Warning,
         });
       }
       if (totalAllocations > supervisor.allocationUpperBound) {
         warnings.push({
-          type: "exceeds-quota",
+          type: ValidationWarningType.ExceedsQuota,
           message: `Exceeds supervisor quota (${totalAllocations}/${supervisor.allocationUpperBound})`,
-          severity: "error",
+          severity: ValidationWarningSeverity.Error,
         });
       }
 
       // Supervisor change warning
       if (project.originalSupervisorId !== allocation.newSupervisorId) {
         warnings.push({
-          type: "supervisor-change",
+          type: ValidationWarningType.SupervisorChange,
           message: "Different supervisor than project proposer",
-          severity: "warning",
+          severity: ValidationWarningSeverity.Warning,
         });
       }
 
@@ -117,9 +121,9 @@ export function ManualAllocationTable({
         allocation.originalProjectId !== allocation.newProjectId
       ) {
         warnings.push({
-          type: "already-allocated",
+          type: ValidationWarningType.AlreadyAllocated,
           message: "Student already allocated to different project",
-          severity: "warning",
+          severity: ValidationWarningSeverity.Warning,
         });
       }
 
@@ -139,7 +143,7 @@ export function ManualAllocationTable({
         prev.map((allocation) => {
           if (allocation.studentId !== studentId) return allocation;
 
-          let updated = { ...allocation, [field]: value };
+          const updated = { ...allocation, [field]: value };
 
           // Auto-select supervisor when project is selected
           if (field === "newProjectId" && value) {
@@ -164,7 +168,6 @@ export function ManualAllocationTable({
     [projects, calculateWarnings],
   );
 
-  // Reset individual student
   const resetStudent = useCallback((studentId: string) => {
     setAllocations((prev) =>
       prev.map((allocation) => {
@@ -181,7 +184,6 @@ export function ManualAllocationTable({
     );
   }, []);
 
-  // Save individual student
   const saveStudent = useCallback(async (studentId: string) => {
     console.log("Saving student:", studentId);
     // TODO: add trpc api call here
@@ -199,7 +201,6 @@ export function ManualAllocationTable({
     );
   }, []);
 
-  // Save all changes
   const saveAllChanges = useCallback(async () => {
     const dirtyAllocations = allocations.filter((a) => a.isDirty);
     console.log("Saving all changes:", dirtyAllocations);
@@ -215,6 +216,7 @@ export function ManualAllocationTable({
     );
   }, [allocations]);
 
+  // TODO: this is currently slow asf
   // Filter allocations based on toggle
   const filteredAllocations = allocations.filter((allocation) => {
     if (showAllocatedStudents) return true;
@@ -260,9 +262,6 @@ export function ManualAllocationTable({
               <TableHead className="px-4 py-3 text-left font-medium">
                 Supervisor
               </TableHead>
-              <TableHead className="px-4 py-3 text-left font-medium">
-                Warnings
-              </TableHead>
               <TableHead className="w-[120px] px-4 py-3 text-left font-medium">
                 Actions
               </TableHead>
@@ -307,85 +306,151 @@ function StudentRow({
   onReset: (studentId: string) => void;
   onSave: (studentId: string) => void;
 }) {
+  // Group warnings by severity for better display
+  const errorWarnings = allocation.warnings.filter(
+    (w) => w.severity === ValidationWarningSeverity.Error,
+  );
+  const warningMessages = allocation.warnings.filter(
+    (w) => w.severity === ValidationWarningSeverity.Warning,
+  );
+  const hasWarnings = errorWarnings.length > 0 || warningMessages.length > 0;
+
   return (
-    <TableRow className={`border-b ${allocation.isDirty ? "bg-blue-50" : ""}`}>
-      <TableCell className="px-4 py-3">
-        <div className="space-y-1">
-          <div className="font-medium">{allocation.studentName}</div>
-          <div className="text-sm text-gray-500">{allocation.studentId}</div>
-          <div className="flex gap-1">
-            {allocation.studentFlags.map((flag) => (
-              <Badge key={flag.id} variant="outline" className="text-xs">
-                {flag.title}
-              </Badge>
-            ))}
+    <>
+      {/* Main table row */}
+      <TableRow
+        className={cn(
+          "transition-colors",
+          allocation.isDirty ? "bg-blue-50/50" : "hover:bg-muted/50",
+          hasWarnings ? "border-b-0" : "border-b",
+        )}
+      >
+        <TableCell className="px-4 py-4">
+          <div className="space-y-2">
+            <div className="text-sm font-medium">{allocation.studentName}</div>
+            <div className="text-xs text-muted-foreground">
+              {allocation.studentId}
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {allocation.studentFlags.map((flag) => (
+                <Badge
+                  key={flag.id}
+                  variant="accent"
+                  className="px-2 py-1 text-xs"
+                >
+                  {flag.title}
+                </Badge>
+              ))}
+            </div>
           </div>
-        </div>
-      </TableCell>
+        </TableCell>
 
-      <TableCell className="px-4 py-3">
-        <ProjectCombobox
-          projects={projects}
-          value={allocation.newProjectId}
-          onValueChange={(value) =>
-            onUpdateAllocation(
-              allocation.studentId,
-              "newProjectId",
-              value || undefined,
-            )
-          }
-        />
-      </TableCell>
+        <TableCell className="px-4 py-4">
+          <ProjectCombobox
+            projects={projects}
+            value={allocation.newProjectId}
+            onValueChange={(value) =>
+              onUpdateAllocation(
+                allocation.studentId,
+                "newProjectId",
+                value || undefined,
+              )
+            }
+          />
+        </TableCell>
 
-      <TableCell className="px-4 py-3">
-        <SupervisorCombobox
-          supervisors={supervisors}
-          value={allocation.newSupervisorId}
-          onValueChange={(value) =>
-            onUpdateAllocation(
-              allocation.studentId,
-              "newSupervisorId",
-              value || undefined,
-            )
-          }
-        />
-      </TableCell>
+        <TableCell className="px-4 py-4">
+          <SupervisorCombobox
+            supervisors={supervisors}
+            value={allocation.newSupervisorId}
+            onValueChange={(value) =>
+              onUpdateAllocation(
+                allocation.studentId,
+                "newSupervisorId",
+                value || undefined,
+              )
+            }
+          />
+        </TableCell>
 
-      <TableCell className="px-4 py-3">
-        <div className="space-y-1">
-          {allocation.warnings.map((warning, index) => (
-            <Badge
-              key={index}
-              variant={
-                warning.severity === "error" ? "destructive" : "secondary"
-              }
-              className="text-xs"
+        <TableCell className="px-4 py-4">
+          <div className="flex items-center gap-2">
+            {/* Status indicator */}
+            {allocation.isDirty && (
+              <div className="mr-2 flex items-center gap-1">
+                <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                <span className="text-xs font-medium text-blue-700">
+                  Pending
+                </span>
+              </div>
+            )}
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onReset(allocation.studentId)}
+              disabled={!allocation.isDirty}
+              className="h-8 w-8 p-0"
             >
-              {warning.message}
-            </Badge>
-          ))}
-        </div>
-      </TableCell>
+              <RotateCcw className="h-3 w-3" />
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => onSave(allocation.studentId)}
+              disabled={!allocation.isDirty}
+              className="h-8 w-8 p-0"
+            >
+              <Save className="h-3 w-3" />
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
 
-      <TableCell className="px-4 py-3">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onReset(allocation.studentId)}
-            disabled={!allocation.isDirty}
-          >
-            <RotateCcw className="h-3 w-3" />
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => onSave(allocation.studentId)}
-            disabled={!allocation.isDirty}
-          >
-            <Save className="h-3 w-3" />
-          </Button>
-        </div>
-      </TableCell>
-    </TableRow>
+      {/* Warnings row - only shown when there are warnings */}
+      {hasWarnings && (
+        <TableRow
+          className={cn(
+            "border-b",
+            allocation.isDirty ? "bg-blue-50/30" : "bg-gray-50/50",
+          )}
+        >
+          <TableCell colSpan={4} className="px-4 py-3">
+            <div className="space-y-2">
+              {errorWarnings.length > 0 && (
+                <div className="space-y-2">
+                  {errorWarnings.map((warning, index) => (
+                    <div
+                      key={index}
+                      className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 p-3"
+                    >
+                      <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-600" />
+                      <span className="text-sm text-red-800">
+                        {warning.message}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {warningMessages.length > 0 && (
+                <div className="space-y-2">
+                  {warningMessages.map((warning, index) => (
+                    <div
+                      key={index}
+                      className="flex items-start gap-2 rounded-md border border-orange-200 bg-orange-50 p-3"
+                    >
+                      <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-orange-600" />
+                      <span className="text-sm text-orange-800">
+                        {warning.message}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   );
 }
