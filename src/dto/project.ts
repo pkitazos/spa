@@ -17,21 +17,26 @@ export const projectDtoSchema = z.object({
 
 export type ProjectDTO = z.infer<typeof projectDtoSchema>;
 
-const formInternalStateSchema = z.object({
-  title: z.string().min(4, "Please enter a longer title"),
-  description: z.string().min(10, "Please enter a longer description"),
-  specialTechnicalRequirements: z.string().optional(),
-  flags: z
-    .array(z.object({ id: z.string(), title: z.string() }))
-    .min(1, "You must select at least one flag"),
-  tags: z
-    .array(z.object({ id: z.string(), title: z.string() }))
-    .min(1, "You must select at least one tag"),
-  capacityUpperBound: z.coerce.number().int().positive().default(1),
-  isPreAllocated: z.boolean().default(false),
-  preAllocatedStudentId: z.string().optional(),
-  supervisorId: z.string().optional(),
-});
+const formInternalStateSchema = z
+  .object({
+    title: z.string().min(4, "Please enter a longer title"),
+    description: z.string().min(10, "Please enter a longer description"),
+    specialTechnicalRequirements: z.string().optional(),
+    flags: z
+      .array(z.object({ id: z.string(), title: z.string() }))
+      .min(1, "You must select at least one flag"),
+    tags: z
+      .array(z.object({ id: z.string(), title: z.string() }))
+      .min(1, "You must select at least one tag"),
+    capacityUpperBound: z.coerce.number().int().positive().default(1),
+    isPreAllocated: z.boolean().default(false),
+    preAllocatedStudentId: z.string().optional(),
+    supervisorId: z.string().optional(),
+  })
+  .refine((data) => !data.isPreAllocated || !!data.preAllocatedStudentId, {
+    message: "A student ID must be provided", // TODO wording @pkitazos
+    path: ["preAllocatedStudentId"],
+  });
 
 const buildInternalStateSchema = (takenTitles: Set<string>) =>
   formInternalStateSchema.refine((data) => !takenTitles.has(data.title), {
