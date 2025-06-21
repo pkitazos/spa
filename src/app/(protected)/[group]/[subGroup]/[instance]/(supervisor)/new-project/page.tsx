@@ -29,6 +29,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
   }
 
   const supervisor = await api.user.get();
+  const userRoles = await api.user.roles({ params });
   const formInitData = await api.project.getFormInitialisationData({ params });
 
   return (
@@ -36,8 +37,9 @@ export default async function Page({ params }: { params: InstanceParams }) {
       <Heading>{PAGES.newProject.title}</Heading>
       <CreateProjectForm
         formInitialisationData={formInitData}
-        userRole={Role.SUPERVISOR}
+        userRole={userRoles.has(Role.ADMIN) ? Role.ADMIN : Role.SUPERVISOR}
         currentUserId={supervisor.id}
+        onBehalfOf={supervisor.id}
       />
     </PageWrapper>
   );
