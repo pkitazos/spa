@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronsUpDown } from "lucide-react";
@@ -69,10 +68,6 @@ export function ProjectForm({
   const { takenTitles, flags, tags, studentIds, supervisorIds } =
     formInitialisationData;
 
-  const [preAllocatedSwitchControl, setPreAllocatedSwitchControl] = useState(
-    !!defaultValues?.preAllocatedStudentId,
-  );
-
   const projectFormInternalStateSchema =
     projectForm.buildInternalStateSchema(takenTitles);
 
@@ -92,21 +87,17 @@ export function ProjectForm({
     },
   });
 
+  const isPreAllocated = form.watch("isPreAllocated");
+
   const handlePreAllocatedToggle = () => {
-    const newState = !preAllocatedSwitchControl;
+    const newState = !isPreAllocated;
 
     if (newState) {
-      // when enabling pre-allocation
       form.setValue("capacityUpperBound", 1);
       form.setValue("isPreAllocated", true);
     } else {
-      // when disabling pre-allocation, clear the student ID
-      // form.setValue("preAllocatedStudentId", "");
       form.setValue("isPreAllocated", false);
-      // pin - @JakeTrevor would be super nice to have the form retain knowledge of the last entered student ID if possible
     }
-
-    setPreAllocatedSwitchControl(newState);
   };
 
   const handleFormSubmit = (internalData: ProjectFormInternalStateDTO) => {
@@ -368,7 +359,7 @@ export function ProjectForm({
                 <div className="flex items-center justify-start gap-2">
                   <Switch
                     id="pre-allocated-student-id"
-                    checked={preAllocatedSwitchControl}
+                    checked={isPreAllocated}
                     onCheckedChange={handlePreAllocatedToggle}
                     disabled={isSubmitting}
                   />
@@ -393,23 +384,21 @@ export function ProjectForm({
                   <FormLabel
                     className={cn(
                       "text-xl",
-                      preAllocatedSwitchControl && "text-slate-400",
+                      isPreAllocated && "text-slate-400",
                     )}
                   >
                     Capacity Upper Bound
                   </FormLabel>
                   <FormControl>
                     <Input
-                      disabled={preAllocatedSwitchControl || isSubmitting}
+                      disabled={isPreAllocated || isSubmitting}
                       className="w-16"
                       placeholder="1"
                       {...field}
                     />
                   </FormControl>
                   <FormDescription
-                    className={cn(
-                      preAllocatedSwitchControl && "text-slate-400",
-                    )}
+                    className={cn(isPreAllocated && "text-slate-400")}
                   >
                     The maximum number this project is suitable for
                   </FormDescription>
@@ -427,16 +416,13 @@ export function ProjectForm({
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel
-                  className={cn(
-                    "text-xl",
-                    !preAllocatedSwitchControl && "text-slate-400",
-                  )}
+                  className={cn("text-xl", !isPreAllocated && "text-slate-400")}
                 >
                   Student
                 </FormLabel>
                 <Popover>
                   <PopoverTrigger
-                    disabled={!preAllocatedSwitchControl || isSubmitting}
+                    disabled={!isPreAllocated || isSubmitting}
                     asChild
                   >
                     <FormControl>
@@ -482,14 +468,14 @@ export function ProjectForm({
                       </CommandGroup>
                       <CommandInput
                         placeholder="Search student..."
-                        disabled={!preAllocatedSwitchControl}
+                        disabled={!isPreAllocated}
                       />
                       <CommandEmpty>No Student found.</CommandEmpty>
                     </Command>
                   </PopoverContent>
                 </Popover>
                 <FormDescription
-                  className={cn(!preAllocatedSwitchControl && "text-slate-400")}
+                  className={cn(!isPreAllocated && "text-slate-400")}
                 >
                   This is the student which self-defined this project.
                 </FormDescription>
