@@ -31,6 +31,21 @@ export async function linkProjectFlags(
   });
 }
 
+export async function linkProjectFlagIds(
+  db: TX,
+  params: ProjectParams,
+  flagsIds: string[],
+) {
+  await db.flagOnProject.deleteMany({
+    where: { projectId: params.projectId, flagId: { notIn: flagsIds } },
+  });
+
+  await db.flagOnProject.createMany({
+    data: flagsIds.map((id) => ({ projectId: params.projectId, flagId: id })),
+    skipDuplicates: true,
+  });
+}
+
 export async function linkProjectTags(
   db: TX,
   params: ProjectParams,
@@ -45,6 +60,21 @@ export async function linkProjectTags(
 
   await db.tagOnProject.createMany({
     data: tags.map(({ id }) => ({ projectId: params.projectId, tagId: id })),
+    skipDuplicates: true,
+  });
+}
+
+export async function linkProjectTagIds(
+  db: TX,
+  params: ProjectParams,
+  tagIds: string[],
+) {
+  await db.tagOnProject.deleteMany({
+    where: { projectId: params.projectId, tagId: { notIn: tagIds } },
+  });
+
+  await db.tagOnProject.createMany({
+    data: tagIds.map((id) => ({ projectId: params.projectId, tagId: id })),
     skipDuplicates: true,
   });
 }

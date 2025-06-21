@@ -1,15 +1,15 @@
 import { Heading } from "@/components/heading";
-import { CreateProjectForm } from "@/components/pages/create-project-form";
+import { CreateProjectForm } from "@/components/project-form/create-project";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
-import { makeRequiredFlags } from "@/lib/utils/general/make-required-flags";
 import { stageGt } from "@/lib/utils/permissions/stage-check";
 import { InstanceParams } from "@/lib/validations/params";
 
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
-import { Stage } from "@/db/types";
+import { Role, Stage } from "@/db/types";
+import { PageWrapper } from "@/components/page-wrapper";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
@@ -28,23 +28,19 @@ export default async function Page({ params }: { params: InstanceParams }) {
     );
   }
 
-  // TODO@lewsimb27
-
   const supervisor = await api.user.get();
-  const formDetails = await api.project.getFormDetails({ params });
-  const instanceFlags = await api.institution.instance.getFlags({ params });
-  const requiredFlags = makeRequiredFlags(instanceFlags);
+  const userRoles = await api.user.roles({ params });
+  const formInitData = await api.project.getFormInitialisationData({ params });
 
   return (
-    <div className="w-full max-w-5xl">
-      <Heading>New Project</Heading>
-      <div className="mx-10">
-        <CreateProjectForm
-          formInternalData={formDetails}
-          supervisor={supervisor}
-          requiredFlags={requiredFlags}
-        />
-      </div>
-    </div>
+    <PageWrapper>
+      <Heading>{PAGES.newProject.title}</Heading>
+      <CreateProjectForm
+        formInitialisationData={formInitData}
+        userRole={userRoles.has(Role.ADMIN) ? Role.ADMIN : Role.SUPERVISOR}
+        currentUserId={supervisor.id}
+        onBehalfOf={supervisor.id}
+      />
+    </PageWrapper>
   );
 }

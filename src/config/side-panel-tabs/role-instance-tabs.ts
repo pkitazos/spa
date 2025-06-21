@@ -41,5 +41,5 @@ export const ADMIN_TABS = [
   PAGES.forkInstance,
   PAGES.mergeInstance,
   PAGES.exportToCSV,
-  PAGES.supervisorTasks,
+  PAGES.multiRoleSupervisorTasks,
 ];
