@@ -12,6 +12,7 @@ import { Role } from "@/db/types";
 import { instanceDisplayDataSchema, userDtoSchema } from "@/dto";
 import { User, AllocationInstance } from "@/data-objects";
 import { markerRouter } from "./marker";
+import { testUserEmails } from "@/config/testing-users";
 
 export const userRouter = createTRPCRouter({
   student: studentRouter,
@@ -86,4 +87,22 @@ export const userRouter = createTRPCRouter({
       await user.joinInstance(instance.params);
     },
   ),
+
+  getTestUsers: procedure.user
+    .output(z.array(userDtoSchema))
+    .query(async ({ ctx: { db } }) => {
+      const users = await db.user.findMany({
+        where: { email: { in: testUserEmails.map((x) => x.email) } },
+      });
+
+      return users.sort((a, b) => {
+        const aOrd =
+          testUserEmails.find((x) => x.email === a.email)?.ord ?? 1000;
+
+        const bOrd =
+          testUserEmails.find((x) => x.email === b.email)?.ord ?? 1000;
+
+        return aOrd - bOrd;
+      });
+    }),
 });

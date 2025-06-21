@@ -1,8 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { AdminPanelButton } from "./admin-panel-button";
 import { InstanceHeader } from "./instance-header";
+import { RolePicker } from "./role-picker";
+import { env } from "@/env";
 import { UserButton } from "./user-button";
 
 export async function Header() {
@@ -21,8 +22,7 @@ export async function Header() {
         <InstanceHeader />
       </div>
       <div className="flex basis-1/4 items-center justify-end gap-4">
-        <AdminPanelButton />
-        <UserButton />
+        {env.DEV_ENV === "PROD" ? <UserButton /> : <RolePicker />}
       </div>
     </nav>
   );

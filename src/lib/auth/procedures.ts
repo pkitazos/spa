@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 
 import { ShibUser } from "@/lib/validations/auth";
+import { getCurrentDevUser } from "./actions";
 
 import { db } from "@/db";
 import { env } from "@/env";
@@ -16,9 +17,19 @@ export async function getShibUserFromHeaders() {
     shib_displayName = headers().get("DH75HDYT77");
     shib_email = headers().get("DH75HDYT80");
   } else {
-    shib_guid = env.DEV_ID!;
-    shib_displayName = env.DEV_NAME!;
-    shib_email = env.DEV_EMAIL!;
+    // in dev mode, check for user switcher cookie first
+    const devUser = await getCurrentDevUser();
+
+    if (devUser) {
+      shib_guid = devUser.id;
+      shib_displayName = devUser.name;
+      shib_email = devUser.email;
+    } else {
+      // if no cookie set, use env vars as default
+      shib_guid = env.DEV_ID!;
+      shib_displayName = env.DEV_NAME!;
+      shib_email = env.DEV_EMAIL!;
+    }
   }
 
   const guid = z.string().parse(shib_guid);
