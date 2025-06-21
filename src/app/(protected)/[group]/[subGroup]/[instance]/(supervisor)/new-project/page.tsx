@@ -29,13 +29,13 @@ export default async function Page({ params }: { params: InstanceParams }) {
   }
 
   const supervisor = await api.user.get();
-  const formDetails = await api.project.getFormDetails({ params });
+  const formInitData = await api.project.getFormInitialisationData({ params });
 
   return (
     <PageWrapper>
       <Heading>{PAGES.newProject.title}</Heading>
       <CreateProjectForm
-        formInitialisationData={formDetails}
+        formInitialisationData={formInitData}
         userRole={Role.SUPERVISOR}
         currentUserId={supervisor.id}
       />

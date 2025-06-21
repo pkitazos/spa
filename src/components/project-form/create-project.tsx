@@ -42,10 +42,9 @@ export function CreateProjectForm({
       submissionData,
       currentUserId,
     );
-    toast.promise(
+    void toast.promise(
       api_createProject({ params, newProject: apiData })
-        .then(async (data) => {
-          const { id: projectId } = await data;
+        .then((projectId) => {
           router.push(`${formatParamsAsPath(params)}/projects/${projectId}`);
           router.refresh();
           return projectId;
@@ -54,7 +53,7 @@ export function CreateProjectForm({
           console.error("Project creation error:", error);
         }),
       {
-        success: (x) => `Successfully created Project ${x}`,
+        success: "Successfully created project",
         loading: "Creating Project...",
         error: "Something went wrong while creating the project",
       },

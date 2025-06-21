@@ -38,7 +38,7 @@ export default async function Page({ params }: { params: PageParams }) {
 
   const user = await api.user.get();
   const supervisor = await api.user.getById({ userId: params.id });
-  const formDetails = await api.project.getFormDetails({ params });
+  const formInitData = await api.project.getFormInitialisationData({ params });
 
   return (
     <PageWrapper>
@@ -47,7 +47,7 @@ export default async function Page({ params }: { params: PageParams }) {
         <p className="text-3xl text-muted-foreground">for {supervisor.name}</p>
       </Heading>
       <CreateProjectForm
-        formInitialisationData={formDetails}
+        formInitialisationData={formInitData}
         userRole={Role.ADMIN}
         currentUserId={user.id}
         onBehalfOf={supervisor.id}

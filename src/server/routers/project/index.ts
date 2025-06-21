@@ -71,6 +71,7 @@ export const projectRouter = createTRPCRouter({
           });
 
           if (preAllocatedStudentId && preAllocatedStudentId.trim() !== "") {
+            // ! would just override another pre-allocated student - bad probably
             await linkPreallocatedStudent(
               tx,
               project.params,
@@ -436,7 +437,7 @@ export const projectRouter = createTRPCRouter({
     .inStage([Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING])
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
     .input(z.object({ newProject: projectForm.createApiInputSchema }))
-    .output(z.object({ id: z.string() }).promise())
+    .output(z.string())
     .mutation(async ({ ctx: { instance, db }, input: { newProject } }) => {
       return await db.$transaction(async (tx) => {
         const project = await tx.project.create({
@@ -458,20 +459,12 @@ export const projectRouter = createTRPCRouter({
           newProject.preAllocatedStudentId &&
           newProject.preAllocatedStudentId.trim() !== ""
         ) {
+          // ! would just override another pre-allocated student - bad probably
           await linkPreallocatedStudent(
             tx,
             { ...instance.params, projectId: project.id },
             newProject.preAllocatedStudentId,
           );
-
-          await tx.studentProjectAllocation.create({
-            data: {
-              ...expand(instance.params),
-              userId: newProject.preAllocatedStudentId,
-              projectId: project.id,
-              studentRanking: 1,
-            },
-          });
         }
 
         await linkProjectFlagIds(
@@ -480,19 +473,17 @@ export const projectRouter = createTRPCRouter({
           newProject.flagIds,
         );
 
-        await tx.tagOnProject.createMany({
-          data: newProject.tagIds.map((tagId) => ({
-            tagId,
-            projectId: project.id,
-          })),
-        });
+        await linkProjectTagIds(
+          tx,
+          { ...instance.params, projectId: project.id },
+          newProject.tagIds,
+        );
 
-        return { id: project.id };
+        return project.id;
       });
     }),
 
-  // BREAKING output type
-  getFormDetails: procedure.instance.user
+  getFormInitialisationData: procedure.instance.user
     .input(z.object({ projectId: z.string().optional() }))
     .output(
       z.object({
@@ -511,14 +502,19 @@ export const projectRouter = createTRPCRouter({
       const allProjects = await instance.getProjectDetails();
       const takenTitles = new Set(allProjects.map(({ project: p }) => p.title));
 
+      let studentIds = await instance
+        .getUnallocatedStudents()
+        .then((students) => students.map((s) => s.id));
+
       if (projectId) {
         const project = await instance.getProject(projectId).get();
         takenTitles.delete(project.title);
-      }
 
-      const studentIds = await instance
-        .getUnallocatedStudents()
-        .then((students) => students.map((s) => s.id));
+        // if the project has a pre-allocated student, we should allow them to be re-selected
+        if (project.preAllocatedStudentId) {
+          studentIds.push(project.preAllocatedStudentId);
+        }
+      }
 
       let supervisorIds: string[] = [];
       if (await user.isSubGroupAdminOrBetter(instance.params)) {

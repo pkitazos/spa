@@ -46,13 +46,13 @@ export default async function Page({ params }: { params: PageParams }) {
     );
   }
 
-  const formInternalData = await api.project.getFormDetails({
+  const formInitData = await api.project.getFormInitialisationData({
     params,
     projectId,
   });
 
   const formInitialisationData: ProjectFormInitialisationDTO = {
-    ...formInternalData,
+    ...formInitData,
     currentProject: {
       id: project.id,
       title: project.title,
