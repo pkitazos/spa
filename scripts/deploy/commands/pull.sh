@@ -2,8 +2,8 @@
 
 pushd $AMPS_LOC
 
-docker compose -f "./docker/docker-compose.$AMPS_DEP_MODE.yml" pull
-docker compose -f "./docker/docker-compose.$AMPS_DEP_MODE.yml" up -d
+docker compose --env-file=./.env -f "./docker/docker-compose.$AMPS_DEP_MODE.yml" pull
+docker compose --env-file=./.env -f "./docker/docker-compose.$AMPS_DEP_MODE.yml" up -d
 
 docker image prune -f
 
