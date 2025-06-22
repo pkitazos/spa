@@ -1,0 +1,28 @@
+#!/usr/bin/bash
+
+if [ -z $AMPS_DEP_MODE ]; then
+    echo "AMPS deployment mode not defined."
+    exit 1
+elif [ -z $AMPS_LOC ]; then
+    echo "AMPS repo location not defined."
+    exit 1
+fi
+
+pushd $AMPS_LOC/scripts/deploy/commands
+
+
+if [[ $1 == "start" ]]; then
+    echo "starting AMPS..."
+    ./start.sh
+elif [[ $1 == "stop" ]]; then
+    echo "stoping AMPS..."
+    ./stop.sh
+elif [[ $1 == "pull" ]]; then
+    echo "pulling AMPS..."
+    ./pull.sh
+else
+    echo "unrecognized command"
+    exit 1
+fi
+
+popd
