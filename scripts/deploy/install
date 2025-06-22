@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Check if we are *probably* in the right directory
+if [ ! -f package.json ]; then
+    echo "No package json found; make sure you run this command in the repository root"
+    exit 1
+fi
+
+# Check deployment mode is properly set
+if [[ ! "staging prod" =~ (^|[[:space:]])"$1"($|[[:space:]]) ]]; then
+    echo "Usage: install <mode>"
+    echo "Deployment mode must be either 'staging' or 'prod'"
+    exit 1
+fi
+
+
+# Set system-wide environment variable so future scripts can find the right place
+prev_env=$(cat /etc/environment | grep -v "AMPS_LOC" | grep -v "AMPS_DEP_MODE")
+
+(echo "$prev_env"; echo "AMPS_LOC=\"$(pwd)\""; echo "AMPS_DEP_MODE=\"$1\"") \
+    | sudo tee /etc/environment > /dev/null
+
+# Link the amps CLI
+sudo ln -s ~/spa/scripts/deploy/amps \
+    /usr/local/bin/amps
+
+# Link the service description file
+sudo ln -s ~/spa/scripts/deploy/amps-startup.service \
+    /etc/systemd/system/amps-startup.service
+
+# And start the service
+sudo systemctl enable amps-startup.service
+
+# For prod, add pull to crontab
+if [[ "$1" == "prod" ]]; then
+    cron_job="0 3 * * * 'amps pull'"
+    prev_cron=$(crontab -l | grep -v "amps")
+
+    (echo "$cron_job"; echo -n "$prev_cron") | crontab -
+fi
+
+# For staging, setup webhook
+# TODO
