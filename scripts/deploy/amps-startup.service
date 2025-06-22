@@ -3,7 +3,7 @@ Description=Amps-app startup service
 
 [Service]
 Type=exec
-ExecStart=/usr/local/bin/amps-startup.sh
+ExecStart=amps start
 
 [Install]
 WantedBy=multi-user.target
