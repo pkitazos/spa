@@ -8,9 +8,7 @@ export async function RolePicker() {
 
   const currentUserId = currentDevUser?.id || testUsers[0]?.id;
 
-  if (!currentUserId) {
-    return null;
-  }
+  if (!currentUserId) return;
 
   return (
     <UserSwitcher

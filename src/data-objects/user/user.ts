@@ -213,11 +213,9 @@ export class User extends DataObject {
       where: { groupAdmins: { some: { userId: this.id } } },
     });
 
-    // TODO: maybe make transformers for this?
-    return groups.map(({ displayName, id }) => ({ displayName, group: id }));
+    return groups.map(T.toGroupDTO);
   }
 
-  // TODO REVIEW; I fixed the bug but I am not sure if I did it right
   public async getManagedSubGroups(): Promise<SubGroupDTO[]> {
     const subGroups = await this.db.allocationSubGroup.findMany({
       where: {
@@ -228,14 +226,9 @@ export class User extends DataObject {
       },
     });
 
-    return subGroups.map(({ displayName, allocationGroupId, id }) => ({
-      displayName,
-      group: allocationGroupId,
-      subGroup: id,
-    }));
+    return subGroups.map(T.toSubGroupDTO);
   }
 
-  // TODO: still don't know if this is the best way to do this
   public async getManagedSubGroupsWithGroups(): Promise<
     { group: GroupDTO; subGroup: SubGroupDTO }[]
   > {
@@ -249,12 +242,9 @@ export class User extends DataObject {
       include: { allocationGroup: true },
     });
 
-    return subGroups.map(({ displayName, allocationGroup, id }) => ({
-      group: {
-        displayName: allocationGroup.displayName,
-        group: allocationGroup.id,
-      },
-      subGroup: { displayName, group: allocationGroup.id, subGroup: id },
+    return subGroups.map((subGroup) => ({
+      group: T.toGroupDTO(subGroup.allocationGroup),
+      subGroup: T.toSubGroupDTO(subGroup),
     }));
   }
 

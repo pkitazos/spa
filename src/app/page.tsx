@@ -19,9 +19,7 @@ export default async function Home() {
         <h1 className="mb-2 text-4xl font-bold text-gray-900">
           Welcome <span className="text-indigo-600">{user.name}</span>!
         </h1>
-        <p className="text-xl text-gray-600">
-          to the SoCS allocation & marking project system
-        </p>
+        <p className="text-xl text-gray-600">to the SoCS {app.descriptor}</p>
       </div>
       <Separator className="my-4 w-1/3" />
       <UserSpacesGrid />
