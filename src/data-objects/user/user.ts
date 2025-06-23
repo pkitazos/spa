@@ -1,6 +1,12 @@
 import { Transformers as T } from "@/db/transformers";
 import { DB, Role } from "@/db/types";
-import { UserDTO, InstanceDTO, InstanceUserDTO } from "@/dto";
+import {
+  UserDTO,
+  InstanceDTO,
+  InstanceUserDTO,
+  GroupDTO,
+  SubGroupDTO,
+} from "@/dto";
 import { expand } from "@/lib/utils/general/instance-params";
 import { ValidatedSegments } from "@/lib/validations/breadcrumbs";
 import {
@@ -202,23 +208,18 @@ export class User extends DataObject {
     );
   }
 
-  // TODO return type
-  // that formatting should live elsewhere
-  public async getManagedGroups() {
+  public async getManagedGroups(): Promise<GroupDTO[]> {
     const groups = await this.db.allocationGroup.findMany({
       where: { groupAdmins: { some: { userId: this.id } } },
     });
 
-    return groups.map(({ displayName, id }) => ({
-      displayName: displayName,
-      path: `/${id}`,
-    }));
+    // TODO: maybe make transformers for this?
+    return groups.map(({ displayName, id }) => ({ displayName, group: id }));
   }
 
   // TODO REVIEW; I fixed the bug but I am not sure if I did it right
-  // TODO return type wth is that?
-  public async getManagedSubGroups() {
-    const subgroups = await this.db.allocationSubGroup.findMany({
+  public async getManagedSubGroups(): Promise<SubGroupDTO[]> {
+    const subGroups = await this.db.allocationSubGroup.findMany({
       where: {
         OR: [
           { subGroupAdmins: { some: { userId: this.id } } },
@@ -227,9 +228,33 @@ export class User extends DataObject {
       },
     });
 
-    return subgroups.map(({ displayName, allocationGroupId, id }) => ({
-      displayName: displayName,
-      path: `/${allocationGroupId}/${id}`,
+    return subGroups.map(({ displayName, allocationGroupId, id }) => ({
+      displayName,
+      group: allocationGroupId,
+      subGroup: id,
+    }));
+  }
+
+  // TODO: still don't know if this is the best way to do this
+  public async getManagedSubGroupsWithGroups(): Promise<
+    { group: GroupDTO; subGroup: SubGroupDTO }[]
+  > {
+    const subGroups = await this.db.allocationSubGroup.findMany({
+      where: {
+        OR: [
+          { subGroupAdmins: { some: { userId: this.id } } },
+          { allocationGroup: { groupAdmins: { some: { userId: this.id } } } },
+        ],
+      },
+      include: { allocationGroup: true },
+    });
+
+    return subGroups.map(({ displayName, allocationGroup, id }) => ({
+      group: {
+        displayName: allocationGroup.displayName,
+        group: allocationGroup.id,
+      },
+      subGroup: { displayName, group: allocationGroup.id, subGroup: id },
     }));
   }
 

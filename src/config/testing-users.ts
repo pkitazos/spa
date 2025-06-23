@@ -1,6 +1,7 @@
 import { Role } from "@/db/types";
 
 export const testUserEmails = [
+  { ord: 0, email: "petros.kitazos@glasgow.ac.uk", roles: [Role.ADMIN] },
   { ord: 1, email: "william.pettersson@glasgow.ac.uk", roles: [Role.ADMIN] },
   {
     ord: 2,
@@ -18,6 +19,6 @@ export const testUserEmails = [
     email: "david.manlove@glasgow.ac.uk",
     roles: [Role.SUPERVISOR, Role.READER],
   },
-  { ord: 6, email: "j.trevor.1@research.gla.ac.uk", roles: [Role.READER] },
-  { ord: 7, email: "2526547k@student.gla.ac.uk", roles: [Role.STUDENT] },
+  { ord: 6, email: "Craig.Macdonald@glasgow.ac.uk", roles: [Role.READER] },
+  { ord: 7, email: "2084268d@student.gla.ac.uk", roles: [Role.STUDENT] },
 ];

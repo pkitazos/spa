@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-import { relativeComplement } from "@/lib/utils/general/set-difference";
 import {
   instanceParamsSchema,
   refinedSpaceParamsSchema,
@@ -14,21 +13,6 @@ import { adminLevelSchema } from "@/db/types";
 import { readerStages, studentStages, supervisorStages } from "@/config/stages";
 
 export const accessControlRouter = createTRPCRouter({
-  allAdminPanels: procedure.user.query(async ({ ctx: { user } }) => {
-    if (await user.isSuperAdmin()) return [{ title: "Admin", href: "/admin" }];
-
-    const allGroups = await user.getManagedGroups();
-    const allSubGroups = await user.getManagedSubGroups();
-
-    const uniqueSubGroups = relativeComplement(
-      allSubGroups,
-      allGroups,
-      (sg, g) => sg.path.startsWith(g.path),
-    );
-
-    return [...allGroups, ...uniqueSubGroups];
-  }),
-
   adminInInstance: procedure.instance.user
     .output(z.boolean())
     .query(
