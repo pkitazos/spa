@@ -260,4 +260,16 @@ export class Transformers {
       allowedMarkerTypes: data.allowedMarkerTypes,
     };
   }
+
+  public static toGroupDTO(group: DB_AllocationGroup): GroupDTO {
+    return { group: group.id, displayName: group.displayName };
+  }
+
+  public static toSubGroupDTO(subGroup: DB_AllocationSubGroup): SubGroupDTO {
+    return {
+      group: subGroup.allocationGroupId,
+      subGroup: subGroup.id,
+      displayName: subGroup.displayName,
+    };
+  }
 }

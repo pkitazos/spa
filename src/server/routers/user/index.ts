@@ -161,10 +161,12 @@ export const userRouter = createTRPCRouter({
 
       return users.sort((a, b) => {
         const aOrd =
-          testUserEmails.find((x) => x.email === a.email)?.ord ?? 1000;
+          testUserEmails.find((x) => x.email === a.email)?.ord ??
+          Number.MAX_SAFE_INTEGER;
 
         const bOrd =
-          testUserEmails.find((x) => x.email === b.email)?.ord ?? 1000;
+          testUserEmails.find((x) => x.email === b.email)?.ord ??
+          Number.MAX_SAFE_INTEGER;
 
         return aOrd - bOrd;
       });
