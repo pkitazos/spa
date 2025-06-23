@@ -1,39 +1,31 @@
 import { Metadata } from "next";
 
 import { Separator } from "@/components/ui/separator";
-import { UserInstances } from "@/components/user-instances";
-
-import { auth } from "@/lib/auth";
 
 import { app, metadataTitle } from "@/config/meta";
+import { api } from "@/lib/trpc/server";
+import UserSpacesGrid from "@/components/pages/landing-page/user-spaces-grid";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = { title: metadataTitle(["Home", app.name]) };
 
 export default async function Home() {
-  const user = await auth();
+  const user = await api.user.get();
 
   return (
-    <div className="relative flex h-full w-full flex-col items-center justify-center gap-6">
-      <h1 className="flex flex-col items-center gap-3 font-medium">
-        <p className="text-4xl">
-          Welcome{" "}
-          <span className="font-mono font-semibold tracking-tighter text-indigo-600">
-            {user.name}
-          </span>
-          !
+    <div className="flex w-full flex-col items-center justify-center gap-6 pt-32">
+      <div className="mb-12 text-center">
+        <h1 className="mb-2 text-4xl font-bold text-gray-900">
+          Welcome <span className="text-indigo-600">{user.name}</span>!
+        </h1>
+        <p className="text-xl text-gray-600">
+          to the SoCS allocation & marking project system
         </p>
-        <p className="text-3xl text-slate-500">
-          to the SoCS project allocation system
-        </p>
-      </h1>
+      </div>
       <Separator className="my-4 w-1/3" />
-      {user && (
-        <div className="absolute bottom-0 w-full max-w-5xl">
-          <UserInstances />
-        </div>
-      )}
+      <UserSpacesGrid />
+      <div className="h-20">&nbsp;</div>
     </div>
   );
 }

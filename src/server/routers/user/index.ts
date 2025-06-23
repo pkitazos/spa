@@ -8,11 +8,17 @@ import { createTRPCRouter } from "@/server/trpc";
 import { studentRouter } from "./student";
 import { supervisorRouter } from "./supervisor";
 
-import { Role } from "@/db/types";
-import { instanceDisplayDataSchema, userDtoSchema } from "@/dto";
+import { Role, roleSchema } from "@/db/types";
+import {
+  adminPanelPathSchema,
+  instanceDisplayDataSchema,
+  InstanceDTO,
+  userDtoSchema,
+} from "@/dto";
 import { User, AllocationInstance } from "@/data-objects";
 import { markerRouter } from "./marker";
 import { testUserEmails } from "@/config/testing-users";
+import { relativeComplement } from "@/lib/utils/general/set-difference";
 
 export const userRouter = createTRPCRouter({
   student: studentRouter,
@@ -48,29 +54,87 @@ export const userRouter = createTRPCRouter({
         .then((student) => student.hasSelfDefinedProject());
     }),
 
-  getAdminPanel: procedure.user
-    .output(z.array(z.object({ displayName: z.string(), path: z.string() })))
+  // TODO: the output type is whack
+  getAdminPanels: procedure.user
+    .output(z.array(adminPanelPathSchema))
     .query(async ({ ctx: { user } }) => {
       if (await user.isSuperAdmin()) {
+        // ? since we show super-admins all instances, should we also show them all admin panels?
+        // ? or should we just show them the super-admin panel?
         return [{ displayName: "Super-Admin Panel", path: "/admin" }];
       }
 
-      const groups = await user.getManagedGroups();
-      const subGroups = await user.getManagedSubGroups();
+      const groups = await user
+        .getManagedGroups()
+        .then((groupData) =>
+          groupData
+            .sort((a, b) => a.displayName.localeCompare(b.displayName))
+            .map(({ displayName, group }) => ({
+              displayName: displayName,
+              path: `/${group}`,
+              group: { id: group, displayName: displayName },
+            })),
+        );
 
-      // TODO does this need to be nubs'ed?
-      return [...groups, ...subGroups];
+      const subGroups = await user
+        .getManagedSubGroupsWithGroups()
+        .then((subGroupData) =>
+          subGroupData
+            .sort((a, b) =>
+              a.subGroup.displayName.localeCompare(b.subGroup.displayName),
+            )
+            .sort((a, b) =>
+              a.group.displayName.localeCompare(b.group.displayName),
+            )
+            .map(({ subGroup: s, group: g }) => ({
+              displayName: s.displayName,
+              path: `/${g.group}/${s.subGroup}`,
+              group: { id: g.group, displayName: g.displayName },
+              subGroup: { id: s.subGroup, displayName: s.displayName },
+            })),
+        );
+
+      const uniqueSubGroups = relativeComplement(subGroups, groups, (sg, g) =>
+        sg.path.startsWith(g.path),
+      );
+
+      return [...groups, ...uniqueSubGroups];
     }),
 
-  instances: procedure.user
-    .output(z.array(instanceDisplayDataSchema))
-    .query(
-      async ({ ctx: { db, user } }) =>
-        await AllocationInstance.toQualifiedPaths(
-          db,
-          await user.getInstances(),
-        ),
-    ),
+  // TODO: the output type is whack
+  getInstances: procedure.user
+    .output(
+      z.array(instanceDisplayDataSchema.extend({ roles: z.array(roleSchema) })),
+    )
+    .query(async ({ ctx: { db, user } }) => {
+      const userInstances = await user.getInstances();
+      if (userInstances.length === 0) return [];
+
+      const instanceRoles: { instance: InstanceDTO; roles: Role[] }[] = [];
+      for (const i of userInstances) {
+        const roles = await user.getRolesInInstance(i);
+        instanceRoles.push({ instance: i, roles: Array.from(roles) });
+      }
+
+      const qualifiedPaths = await AllocationInstance.toQualifiedPaths(
+        db,
+        userInstances,
+      );
+
+      return qualifiedPaths.map((path) => {
+        const matchingInstanceRole = instanceRoles.find(
+          ({ instance }) =>
+            instance.group === path.group.id &&
+            instance.subGroup === path.subGroup.id &&
+            instance.instance === path.instance.id,
+        );
+
+        return {
+          ...path,
+          roles: matchingInstanceRole?.roles.map((role) => role) || [],
+        };
+      });
+    }),
 
   // TODO: rename
   breadcrumbs: procedure.user
