@@ -13,11 +13,18 @@ if [[ ! "staging prod" =~ (^|[[:space:]])"$1"($|[[:space:]]) ]]; then
     exit 1
 fi
 
+dev_emails=""
+
+if [ -z $2 ]; then
+    echo "Dev emails provided; environment will be configured"
+    echo "$2"
+    dev_emails="AMPS_DEV_EMAILS=\"$2\""
+fi
 
 # Set system-wide environment variable so future scripts can find the right place
 prev_env=$(cat /etc/environment | grep -v "AMPS_LOC" | grep -v "AMPS_DEP_MODE")
 
-(echo "$prev_env"; echo "AMPS_LOC=\"$(pwd)\""; echo "AMPS_DEP_MODE=\"$1\"") \
+(echo "$prev_env"; echo "AMPS_LOC=\"$(pwd)\""; echo "AMPS_DEP_MODE=\"$1\""; echo "$dev_emails") \
     | sudo tee /etc/environment > /dev/null
 
 # Link the amps CLI
