@@ -13,6 +13,7 @@ import {
 import { UserDTO } from "@/dto";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { switchDevUser } from "@/lib/auth/actions";
 
 function getInitials(name: string) {
   const nameParts = name.trim().split(" ");
@@ -59,14 +60,9 @@ function getColorFromName(name: string): string {
 interface UserSwitcherProps {
   users: UserDTO[];
   currentUserId: string;
-  switchUser: (userId: string) => Promise<void>;
 }
 
-export function UserSwitcher({
-  users,
-  currentUserId,
-  switchUser,
-}: UserSwitcherProps) {
+export function UserSwitcher({ users, currentUserId }: UserSwitcherProps) {
   const router = useRouter();
   const user = users.find((a) => a.id === currentUserId);
 
@@ -77,7 +73,7 @@ export function UserSwitcher({
   const handleUserChange = async (newUserId: string) => {
     if (newUserId === currentUserId) return;
 
-    await switchUser(newUserId);
+    await switchDevUser(newUserId);
     router.refresh();
   };
 
