@@ -1,5 +1,5 @@
 import { api } from "@/lib/trpc/server";
-import { switchDevUser, getCurrentDevUser } from "@/lib/auth/actions";
+import { getCurrentDevUser } from "@/lib/auth/actions";
 import { UserSwitcher } from "./user-switcher";
 
 export async function RolePicker() {
@@ -10,11 +10,5 @@ export async function RolePicker() {
 
   if (!currentUserId) return;
 
-  return (
-    <UserSwitcher
-      users={testUsers}
-      currentUserId={currentUserId}
-      switchUser={switchDevUser}
-    />
-  );
+  return <UserSwitcher users={testUsers} currentUserId={currentUserId} />;
 }
