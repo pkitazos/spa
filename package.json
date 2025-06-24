@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:db": "docker compose --env-file=./.env -f ./docker/docker-compose.dev-db.yml up -d",
     "dev:email": "dotenvx run -- email dev --dir ./src/emails/messages -p 3001",
     "build:email": "dotenvx run -- email build --dir ./src/emails/messages",
     "start:email": "dotenvx run -- email start",
@@ -22,7 +23,6 @@
     "db:studio": "prisma studio",
     "db:push": "eval $(grep '^DATABASE_URL' .env) && prisma db push",
     "db:drop": "eval $(grep '^DATABASE_URL' .env) && prisma migrate reset",
-    "docker:db": "docker compose -f docker/docker-compose.yml up -d",
     "docker:prod": "docker compose -f docker/docker-compose.yml -f docker/docker-compose.prod.override.yml up -d",
     "clearLogs": "rm *.log"
   },

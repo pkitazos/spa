@@ -12,7 +12,11 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([PAGES.supervisorTasks.title, displayName, app.name]),
+    title: metadataTitle([
+      PAGES.multiRoleSupervisorTasks.title,
+      displayName,
+      app.name,
+    ]),
   };
 }
 

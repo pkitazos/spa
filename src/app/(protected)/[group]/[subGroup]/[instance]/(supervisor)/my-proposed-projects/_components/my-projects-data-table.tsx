@@ -56,6 +56,7 @@ export function MyProjectsDataTable({
 
   return (
     <DataTable
+      className="w-full"
       searchableColumn={{ id: "Project Title", displayName: "Project Titles" }}
       columns={columns}
       data={projects}

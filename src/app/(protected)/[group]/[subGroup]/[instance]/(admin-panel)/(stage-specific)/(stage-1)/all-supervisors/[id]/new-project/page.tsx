@@ -1,16 +1,15 @@
 import { Heading } from "@/components/heading";
 import { PageWrapper } from "@/components/page-wrapper";
-import { CreateProjectForm } from "@/components/pages/create-project-form";
+import { CreateProjectForm } from "@/components/project-form/create-project";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
-import { makeRequiredFlags } from "@/lib/utils/general/make-required-flags";
 import { stageGt } from "@/lib/utils/permissions/stage-check";
 import { InstanceParams } from "@/lib/validations/params";
 
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
-import { Stage } from "@/db/types";
+import { Role, Stage } from "@/db/types";
 
 type PageParams = InstanceParams & { id: string };
 
@@ -37,10 +36,9 @@ export default async function Page({ params }: { params: PageParams }) {
     );
   }
 
+  const user = await api.user.get();
   const supervisor = await api.user.getById({ userId: params.id });
-  const formDetails = await api.project.getFormDetails({ params });
-  const instanceFlags = await api.institution.instance.getFlags({ params });
-  const requiredFlags = makeRequiredFlags(instanceFlags);
+  const formInitData = await api.project.getFormInitialisationData({ params });
 
   return (
     <PageWrapper>
@@ -49,10 +47,10 @@ export default async function Page({ params }: { params: PageParams }) {
         <p className="text-3xl text-muted-foreground">for {supervisor.name}</p>
       </Heading>
       <CreateProjectForm
-        formInternalData={formDetails}
-        supervisor={supervisor}
-        requiredFlags={requiredFlags}
-        createdByAdmin
+        formInitialisationData={formInitData}
+        userRole={Role.ADMIN}
+        currentUserId={user.id}
+        onBehalfOf={supervisor.id}
       />
     </PageWrapper>
   );

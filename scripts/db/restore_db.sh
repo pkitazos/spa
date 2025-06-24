@@ -23,7 +23,7 @@ if [ ! -f "$DUMP_FILE" ]; then
     exit 1
 fi
 
-echo "🚀 Starting database restore process..."
+echo "Starting database restore process..."
 
 # 1. Copy the SQL dump into the Docker container
 echo "   - Copying '$DUMP_FILE' to the container..."

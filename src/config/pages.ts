@@ -103,16 +103,12 @@ export const PAGES = {
     href: "export-to-csv",
     icon: "file-spreadsheet",
   },
-  exportToExternalSystem: {
-    title: "Send Data to External System",
-    href: "export-to-external-system",
-    icon: "folder-output",
-  },
-  supervisorTasks: {
+  multiRoleSupervisorTasks: {
     title: "Tasks",
     href: "supervisor-tasks",
     icon: "list-checks",
   },
+  nonAdminSupervisorTasks: { title: "Tasks", href: "", icon: "list-checks" },
   unitsOfAssessment: {
     title: "Units of Assessment",
     href: "units-of-assessment",
@@ -141,6 +137,8 @@ export const PAGES = {
     href: "new-project",
     icon: "file-plus-2",
   },
+
+  editProject: { title: "Edit Project", href: "edit", icon: "pen" },
   myAllocations: {
     title: "My Supervisions",
     href: "my-supervisions",
@@ -165,3 +163,5 @@ export const PAGES = {
   },
   myMarking: { title: "My Marking", href: "my-marking", icon: "file-check-2" },
 };
+
+// TODO add a satisfies clause here.

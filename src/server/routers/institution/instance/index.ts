@@ -514,7 +514,7 @@ export const instanceRouter = createTRPCRouter({
         if (!isSecondRole) {
           supervisorTabs.unshift(PAGES.instanceTasks);
         } else if (stage !== Stage.SETUP) {
-          supervisorTabs.unshift(PAGES.supervisorTasks);
+          supervisorTabs.unshift(PAGES.nonAdminSupervisorTasks);
         }
 
         tabGroups.push({ title: "Supervisor", tabs: supervisorTabs });
