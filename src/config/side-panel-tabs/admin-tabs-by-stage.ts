@@ -29,7 +29,7 @@ export const ADMIN_TABS_BY_STAGE: Record<Stage, TabType[]> = {
     PAGES.preAllocatedProjects,
   ],
   [Stage.ALLOCATION_ADJUSTMENT]: [
-    PAGES.manualChanges,
+    PAGES.manualAllocations,
     PAGES.randomAllocations,
     PAGES.results,
     PAGES.preferenceStatistics,

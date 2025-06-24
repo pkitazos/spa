@@ -68,9 +68,9 @@ export const PAGES = {
     href: "preference-statistics",
     icon: "bar-chart",
   },
-  manualChanges: {
-    title: "Manual Changes",
-    href: "manual-changes",
+  manualAllocations: {
+    title: "Manual Allocations",
+    href: "manual-allocations",
     icon: "mouse-pointer",
   },
   randomAllocations: {

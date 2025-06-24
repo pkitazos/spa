@@ -36,7 +36,7 @@ export const ADMIN_TABS = [
   PAGES.algorithms,
   PAGES.results,
   PAGES.preferenceStatistics,
-  PAGES.manualChanges,
+  PAGES.manualAllocations,
   PAGES.allocationOverview,
   PAGES.forkInstance,
   PAGES.mergeInstance,
