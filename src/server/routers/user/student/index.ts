@@ -3,7 +3,6 @@ import { z } from "zod";
 
 import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
 import { stageGte } from "@/lib/utils/permissions/stage-check";
-import { randomAllocationDtoSchema } from "@/lib/validations/allocation/data-table-dto";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
@@ -227,14 +226,5 @@ export const studentRouter = createTRPCRouter({
       }
 
       await instance.unlinkStudents(studentIds);
-    }),
-
-  // MOVE to instance router
-  getUnallocated: procedure.instance.subGroupAdmin
-    .output(z.array(randomAllocationDtoSchema).optional())
-    .query(async ({ ctx: { instance } }) => {
-      const { selectedAlgConfigId } = await instance.get();
-      if (!selectedAlgConfigId) return;
-      return await instance.getStudentsForRandomAllocation();
     }),
 });

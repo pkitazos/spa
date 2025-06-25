@@ -5,13 +5,17 @@ import { toast } from "sonner";
 
 import { useInstanceParams } from "@/components/params-context";
 import DataTable from "@/components/ui/data-table/data-table";
-import { Skeleton } from "@/components/ui/skeleton";
 
 import { api } from "@/lib/trpc/client";
 
 import { useRandomAllocationColumns } from "./random-allocation-column";
+import { ProjectDTO, StudentDTO } from "@/dto";
 
-export function RandomAllocationsDataTable() {
+export function RandomAllocationsDataTable({
+  studentData,
+}: {
+  studentData: { student: StudentDTO; project?: ProjectDTO }[];
+}) {
   const params = useInstanceParams();
   const router = useRouter();
 
@@ -26,7 +30,10 @@ export function RandomAllocationsDataTable() {
 
   const utils = api.useUtils();
 
-  const refetchData = utils.user.student.getUnallocated.refetch;
+  function refetchData() {
+    utils.institution.instance.getRandomlyAllocatedStudents.refetch({ params });
+    utils.institution.instance.getUnallocatedStudents.refetch({ params });
+  }
 
   async function handleRandomAllocation(studentId: string) {
     void toast.promise(
@@ -70,21 +77,17 @@ export function RandomAllocationsDataTable() {
     );
   }
 
-  const { status, data } = api.user.student.getUnallocated.useQuery({ params });
-
   const columns = useRandomAllocationColumns({
     getRandomAllocation: handleRandomAllocation,
     getRandomAllocationForAll: handleRandomAllocationForAll,
     removeAllocation: handleRemoveAllocation,
   });
 
-  if (status !== "success") return <Skeleton className="h-60 w-full" />;
-
   return (
     <DataTable
       searchableColumn={{ id: "Student Name", displayName: "Names" }}
       columns={columns}
-      data={data ?? []}
+      data={studentData}
     />
   );
 }
