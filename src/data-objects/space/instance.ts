@@ -21,7 +21,6 @@ import {
 } from "@/dto";
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { setDiff } from "@/lib/utils/general/set-difference";
-import { RandomAllocationDto } from "@/lib/validations/allocation/data-table-dto";
 import { InstanceParams } from "@/lib/validations/params";
 import { SupervisorProjectSubmissionDetails } from "@/lib/validations/supervisor-project-submission-details";
 import { TabType } from "@/lib/validations/tabs";
@@ -597,40 +596,31 @@ export class AllocationInstance extends DataObject {
     return studentData.map((s) => T.toStudentDTO(s));
   }
 
-  // BREAKING
-  public async getStudentsForRandomAllocation(): Promise<
-    RandomAllocationDto[]
-  > {
-    const { selectedAlgConfigId } = await this.get();
-
-    const students = await this.db.studentDetails
-      .findMany({
-        where: expand(this.params),
-        include: {
-          userInInstance: { select: { user: true } },
-          projectAllocation: { select: { project: true } },
+  public async getAllocatedStudentsByMethod(
+    method: AllocationMethod,
+  ): Promise<{ student: StudentDTO; project: ProjectDTO }[]> {
+    const studentData = await this.db.studentProjectAllocation.findMany({
+      where: { ...expand(this.params), allocationMethod: method },
+      include: {
+        student: {
+          include: {
+            userInInstance: { include: { user: true } },
+            studentFlags: { include: { flag: true } },
+          },
         },
-      })
-      .then((d) =>
-        d.map((s) => ({
-          student: { ...s.userInInstance.user, level: s.studentLevel },
-          project: s.projectAllocation?.project
-            ? {
-                id: s.projectAllocation?.project.id,
-                title: s.projectAllocation?.project.title,
-              }
-            : undefined,
-        })),
-      );
+        project: {
+          include: {
+            flagsOnProject: { include: { flag: true } },
+            tagsOnProject: { include: { tag: true } },
+          },
+        },
+      },
+    });
 
-    const matchedStudentIds = await this.db.matchingResult
-      .findFirstOrThrow({
-        where: { ...expand(this.params), algorithmId: selectedAlgConfigId },
-        include: { matching: true },
-      })
-      .then((x) => new Set(x.matching.map((m) => m.userId)));
-
-    return students.filter((s) => !matchedStudentIds.has(s.student.id));
+    return studentData.map((s) => ({
+      student: T.toStudentDTO(s.student),
+      project: T.toProjectDTO(s.project),
+    }));
   }
 
   get group() {
