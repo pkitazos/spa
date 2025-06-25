@@ -20,35 +20,46 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
   };
 }
 export default async function Page({ params }: { params: InstanceParams }) {
-  const allStudents = await api.institution.instance.students({ params });
+  const unallocatedStudents =
+    await api.institution.instance.getUnallocatedStudents({ params });
 
-  const { projects, supervisors } =
-    await api.institution.instance.allProjectsWithStatus({ params });
+  const manuallyAllocatedStudentData =
+    await api.institution.instance.getManuallyAllocatedStudents({ params });
 
-  const initialStudents = allStudents
-    .filter((s) => !s.allocation)
-    .map(({ student, allocation }) => ({
-      studentId: student.id,
-      studentName: student.name,
-      studentFlags: student.flags,
-      originalProjectId: allocation?.id,
-      originalSupervisorId: allocation?.supervisorId,
-      newProjectId: undefined,
-      newSupervisorId: undefined,
-      isDirty: false,
-      warnings: [],
-    }));
+  const unallocatedStudentData = unallocatedStudents.map((student) => ({
+    student,
+    project: undefined,
+  }));
 
-  const initialProjects = projects.map(({ project, student, status }) => ({
+  const allStudents = [
+    ...unallocatedStudentData,
+    ...manuallyAllocatedStudentData,
+  ];
+
+  const initialStudents = allStudents.map(({ student, project }) => ({
+    studentId: student.id,
+    studentName: student.name,
+    studentFlags: student.flags,
+    originalProjectId: project?.id,
+    originalSupervisorId: project?.supervisorId,
+    newProjectId: undefined,
+    newSupervisorId: undefined,
+    isDirty: false,
+    warnings: [],
+  }));
+
+  const projectData =
+    await api.institution.instance.getProjectsWithAllocationStatus({ params });
+
+  const supervisors =
+    await api.institution.instance.getSupervisorsWithAllocations({ params });
+
+  const initialProjects = projectData.map(({ project, studentId, status }) => ({
     id: project.id,
     title: project.title,
-    // flags: project.flags,
-    flags: [
-      { id: "level-4", title: "Level 4", description: "" },
-      { id: "level-5", title: "Level 5", description: "" },
-    ],
+    flags: project.flags,
     originalSupervisorId: project.supervisorId,
-    currentStudentAllocationId: student,
+    currentStudentAllocationId: studentId,
     status,
   }));
 
