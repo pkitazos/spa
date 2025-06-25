@@ -10,6 +10,7 @@ enum AllocationMethod {
   PRE_ALLOCATED
   ALGORITHMIC
   MANUAL
+  RANDOM
 }
 
 model Project {
