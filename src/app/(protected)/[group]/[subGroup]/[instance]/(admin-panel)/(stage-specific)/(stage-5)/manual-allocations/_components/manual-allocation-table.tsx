@@ -51,7 +51,7 @@ export function ManualAllocationTable({
 
   const invalidateStudents = utils.institution.instance.students.invalidate;
   const invalidateProjects =
-    utils.institution.instance.allProjectsWithStatus.invalidate;
+    utils.institution.instance.getProjectsWithAllocationStatus.invalidate;
 
   // Calculate supervisors with pending allocations
   const supervisors = useMemo(() => {
@@ -117,7 +117,8 @@ export function ManualAllocationTable({
       // Project availability checks
       if (
         project.status === ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED ||
-        project.status === ProjectAllocationStatus.MANUALLY_ALLOCATED
+        project.status === ProjectAllocationStatus.MANUALLY_ALLOCATED ||
+        project.status === ProjectAllocationStatus.RANDOMLY_ALLOCATED
       ) {
         warnings.push({
           type: ValidationWarningType.ProjectAllocated,
