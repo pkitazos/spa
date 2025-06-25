@@ -15,6 +15,7 @@ import { instanceParamsSchema } from "@/lib/validations/params";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
+import { AllocationMethod } from "@/db/types";
 
 export const matchingRouter = createTRPCRouter({
   // ok
@@ -111,6 +112,10 @@ export const matchingRouter = createTRPCRouter({
     .mutation(async ({ ctx: { instance, db }, input: { studentId } }) => {
       const projects = await instance.getStudentSuitableProjects(studentId);
 
+      console.log(
+        `Found ${projects.length} suitable projects for student ${studentId}`,
+      );
+
       const randomIdx = getRandomInt(projects.length - 1);
       const randomAllocation = projects[randomIdx];
 
@@ -142,8 +147,13 @@ export const matchingRouter = createTRPCRouter({
             projectId: randomAllocation.id,
             userId: studentId,
             studentRanking: 1,
+            allocationMethod: AllocationMethod.RANDOM,
           },
-          update: { projectId: randomAllocation.id, studentRanking: 1 },
+          update: {
+            projectId: randomAllocation.id,
+            studentRanking: 1,
+            allocationMethod: AllocationMethod.RANDOM,
+          },
         }),
       ]);
     }),
@@ -154,7 +164,9 @@ export const matchingRouter = createTRPCRouter({
       const { selectedAlgConfigId: selectedAlgName } = await instance.get();
       if (!selectedAlgName) return;
 
-      const data = await instance.getStudentsForRandomAllocation();
+      const data = await instance.getAllocatedStudentsByMethod(
+        AllocationMethod.RANDOM,
+      );
 
       // wtf Petro?
       for (const { student } of data) {
@@ -190,8 +202,13 @@ export const matchingRouter = createTRPCRouter({
               projectId: randomAllocation.id,
               userId: student.id,
               studentRanking: 1,
+              allocationMethod: AllocationMethod.RANDOM,
             },
-            update: { projectId: randomAllocation.id, studentRanking: 1 },
+            update: {
+              projectId: randomAllocation.id,
+              studentRanking: 1,
+              allocationMethod: AllocationMethod.RANDOM,
+            },
           }),
         ]);
       }
