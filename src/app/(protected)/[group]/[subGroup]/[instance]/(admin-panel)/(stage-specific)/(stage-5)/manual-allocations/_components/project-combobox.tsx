@@ -121,6 +121,7 @@ function ProjectCell({
     switch (status) {
       case ProjectAllocationStatus.UNALLOCATED:
         return "text-green-600 bg-green-100 border-green-200";
+      case ProjectAllocationStatus.RANDOMLY_ALLOCATED:
       case ProjectAllocationStatus.MANUALLY_ALLOCATED:
         return "text-amber-600 bg-amber-100 border-amber-200";
       case ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED:
@@ -136,6 +137,8 @@ function ProjectCell({
     switch (status) {
       case ProjectAllocationStatus.UNALLOCATED:
         return "Available";
+      case ProjectAllocationStatus.RANDOMLY_ALLOCATED:
+        return "Randomly Allocated";
       case ProjectAllocationStatus.PRE_ALLOCATED:
         return "Pre-allocated";
       case ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED:
