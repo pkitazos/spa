@@ -16,7 +16,7 @@ import { PAGES } from "@/config/pages";
 import { AllocationInstance } from "@/data-objects";
 import { forkInstanceTransaction } from "@/db/transactions/fork/transaction";
 import { mergeInstanceTrx } from "@/db/transactions/merge/transaction";
-import { Role, Stage } from "@/db/types";
+import { AllocationMethod, Role, Stage } from "@/db/types";
 import { stageSchema } from "@/db/types";
 
 import {
@@ -537,15 +537,54 @@ export const instanceRouter = createTRPCRouter({
       return tabGroups;
     }),
 
-  unmatchedStudents: procedure.instance.subGroupAdmin
+  getRandomlyAllocatedStudents: procedure.instance.subGroupAdmin
+    .output(
+      z.array(
+        z.object({
+          student: studentDtoSchema,
+          project: projectDtoSchema.optional(),
+        }),
+      ),
+    )
+    .query(
+      async ({ ctx: { instance } }) =>
+        await instance.getAllocatedStudentsByMethod(AllocationMethod.RANDOM),
+    ),
+
+  getManuallyAllocatedStudents: procedure.instance.subGroupAdmin
+    .output(
+      z.array(
+        z.object({
+          student: studentDtoSchema,
+          project: projectDtoSchema.optional(),
+        }),
+      ),
+    )
+    .query(
+      async ({ ctx: { instance } }) =>
+        await instance.getAllocatedStudentsByMethod(AllocationMethod.MANUAL),
+    ),
+
+  getUnallocatedStudents: procedure.instance.subGroupAdmin
     .output(z.array(studentDtoSchema))
     .query(async ({ ctx: { instance } }) => {
       const unmatchedStudents = await instance.getUnallocatedStudents();
       return unmatchedStudents;
     }),
 
-  allProjectsWithStatus: procedure.instance.subGroupAdmin.query(
-    async ({ ctx: { instance } }) => {
+  // todo: fix this
+  getProjectsWithAllocationStatus: procedure.instance.subGroupAdmin
+    .output(
+      z.array(
+        z.object({
+          project: projectDtoSchema,
+          supervisor: supervisorDtoSchema,
+          status: z.nativeEnum(ProjectAllocationStatus),
+          studentId: z.string().optional(),
+        }),
+      ),
+    )
+    .query(async ({ ctx: { instance } }) => {
       const unallocatedStudents = await instance.getUnallocatedStudents();
 
       // will get all projects and categorise them as follows:
@@ -607,7 +646,7 @@ export const instanceRouter = createTRPCRouter({
             project: p.project,
             supervisor: p.supervisor,
             status,
-            student: p.allocatedTo.at(0),
+            studentId: p.allocatedTo.at(0),
           };
         })
         .sort(
@@ -618,11 +657,24 @@ export const instanceRouter = createTRPCRouter({
       // will include their workload so as to show how many projects they have
       // allocated to them, and how many they can still take
 
-      const supervisors = await instance.getSupervisorAllocationDetails();
+      return projects;
+    }),
 
-      return { projects, supervisors };
-    },
-  ),
+  getSupervisorsWithAllocations: procedure.instance.subGroupAdmin
+    .output(
+      z.array(
+        z.object({
+          supervisor: supervisorDtoSchema,
+          allocations: z.array(
+            z.object({ project: projectDtoSchema, student: studentDtoSchema }),
+          ),
+        }),
+      ),
+    )
+    .query(
+      async ({ ctx: { instance } }) =>
+        await instance.getSupervisorAllocationDetails(),
+    ),
 
   saveManualStudentAllocations: procedure.instance.subGroupAdmin
     .input(

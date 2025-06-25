@@ -9,8 +9,10 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-col
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { cn } from "@/lib/utils";
-import { RandomAllocationDto } from "@/lib/validations/allocation/data-table-dto";
 import { PAGES } from "@/config/pages";
+import { ProjectDTO, StudentDTO } from "@/dto";
+
+type RandomAllocationDTO = { student: StudentDTO; project?: ProjectDTO };
 
 export function useRandomAllocationColumns({
   getRandomAllocation,
@@ -20,8 +22,8 @@ export function useRandomAllocationColumns({
   getRandomAllocation: (studentId: string) => Promise<void>;
   getRandomAllocationForAll: () => Promise<void>;
   removeAllocation: (studentId: string) => Promise<void>;
-}): ColumnDef<RandomAllocationDto>[] {
-  const columns: ColumnDef<RandomAllocationDto>[] = [
+}): ColumnDef<RandomAllocationDTO>[] {
+  const columns: ColumnDef<RandomAllocationDTO>[] = [
     {
       id: "Random Allocation",
       header: () => {
