@@ -108,7 +108,7 @@ export function useManualAllocationColumns({
             projects={projects}
             value={student.selectedProjectId ?? student.originalProjectId}
             onValueChange={(value) =>
-              onUpdateAllocation(student.id, "project", value || undefined)
+              onUpdateAllocation(student.id, "project", value ?? undefined)
             }
           />
         );
@@ -124,7 +124,7 @@ export function useManualAllocationColumns({
             supervisors={supervisors}
             value={student.selectedSupervisorId ?? student.originalSupervisorId}
             onValueChange={(value) =>
-              onUpdateAllocation(student.id, "supervisor", value || undefined)
+              onUpdateAllocation(student.id, "supervisor", value ?? undefined)
             }
           />
         );

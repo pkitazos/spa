@@ -14,7 +14,6 @@ import {
 } from "@tanstack/react-table";
 import { SaveAll } from "lucide-react";
 import { AlertTriangle, Info } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -26,7 +25,6 @@ import {
 } from "@/components/ui/table";
 import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
 import { cn } from "@/lib/utils";
-
 import { useManualAllocationColumns } from "./manual-allocation-columns";
 import {
   ManualAllocationProject,
@@ -35,7 +33,6 @@ import {
   ValidationWarningSeverity,
 } from "./manual-allocation-types";
 import { ManualAllocationToolbar } from "./manual-allocation-toolbar";
-
 type ManualAllocationDataTableProps = {
   students: ManualAllocationStudent[];
   projects: ManualAllocationProject[];
