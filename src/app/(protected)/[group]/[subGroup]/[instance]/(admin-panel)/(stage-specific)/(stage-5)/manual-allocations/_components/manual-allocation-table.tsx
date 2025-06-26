@@ -116,9 +116,9 @@ export function ManualAllocationTable({
 
       // Project availability checks
       if (
-        project.status === ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED ||
-        project.status === ProjectAllocationStatus.MANUALLY_ALLOCATED ||
-        project.status === ProjectAllocationStatus.RANDOMLY_ALLOCATED
+        project.status === ProjectAllocationStatus.ALGORITHMIC ||
+        project.status === ProjectAllocationStatus.MANUAL ||
+        project.status === ProjectAllocationStatus.RANDOM
       ) {
         warnings.push({
           type: ValidationWarningType.ProjectAllocated,
@@ -313,7 +313,7 @@ export function ManualAllocationTable({
                 if (successfulResult) {
                   return {
                     ...project,
-                    status: ProjectAllocationStatus.MANUALLY_ALLOCATED,
+                    status: ProjectAllocationStatus.MANUAL,
                     currentStudentAllocationId: successfulResult.studentId,
                   };
                 }

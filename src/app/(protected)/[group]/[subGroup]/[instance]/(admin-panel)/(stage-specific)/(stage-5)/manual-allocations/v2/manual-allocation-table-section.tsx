@@ -51,6 +51,9 @@ export function ManualAllocationDataTableSection({
     }));
   }, [students, baseSupervisors]);
 
+  // this is too complicated idk what I was thinking
+  // it's also not even totally right
+  // I'll have to revisit this when I have both hands
   const calculateWarnings = useCallback(
     (
       allocation: ManualAllocationStudent,
@@ -75,8 +78,8 @@ export function ManualAllocationDataTableSection({
       let supervisor = baseSupervisor;
       if (
         currentChange &&
-        currentChange.supervisorId === allocation.selectedSupervisorId &&
-        project.supervisorId !== allocation.selectedSupervisorId
+        currentChange.supervisorId === allocation.selectedSupervisorId
+        // && project.supervisorId !== allocation.selectedSupervisorId
       ) {
         supervisor = {
           ...baseSupervisor,
@@ -98,9 +101,9 @@ export function ManualAllocationDataTableSection({
 
       // Project availability checks
       if (
-        project.status === ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED ||
-        project.status === ProjectAllocationStatus.MANUALLY_ALLOCATED ||
-        project.status === ProjectAllocationStatus.RANDOMLY_ALLOCATED
+        project.status === ProjectAllocationStatus.ALGORITHMIC ||
+        project.status === ProjectAllocationStatus.MANUAL ||
+        project.status === ProjectAllocationStatus.RANDOM
       ) {
         warnings.push({
           type: ValidationWarningType.ProjectAllocated,
@@ -190,7 +193,10 @@ export function ManualAllocationDataTableSection({
             updatedStudent.selectedSupervisorId !==
               updatedStudent.originalSupervisorId;
 
-          updatedStudent.warnings = calculateWarnings(updatedStudent);
+          updatedStudent.warnings = updatedStudent.warnings = calculateWarnings(
+            updatedStudent,
+            { studentId, supervisorId: updatedStudent.selectedSupervisorId },
+          );
 
           return updatedStudent;
         }),
