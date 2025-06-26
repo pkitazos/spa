@@ -59,10 +59,12 @@ export function DataTableToolbar<TData>({
 
           const filterValues = filter.options
             ? filter.options
-            : table.getCoreRowModel().rows.map((row) => ({
-                id: row.id,
-                title: row.original[filter.columnId as keyof TData] as string,
-              }));
+            : table
+                .getCoreRowModel()
+                .rows.map((row) => ({
+                  id: row.id,
+                  title: row.original[filter.columnId as keyof TData] as string,
+                }));
 
           return (
             <DataTableFacetedFilter
