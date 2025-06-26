@@ -16,11 +16,11 @@ import {
 } from "@/components/ui/popover";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { SupervisorInfo } from "./types";
 import { fuzzyMatch } from "@/lib/utils/general/fuzzy-match";
+import { ManualAllocationSupervisor } from "./manual-allocation-types";
 
 interface SupervisorComboboxProps {
-  supervisors: SupervisorInfo[];
+  supervisors: ManualAllocationSupervisor[];
   value?: string;
   onValueChange: (value: string) => void;
   className?: string;
@@ -40,7 +40,7 @@ export function SupervisorCombobox({
 
   const filterSupervisors = (
     searchTerm: string,
-    supervisor: SupervisorInfo,
+    supervisor: ManualAllocationSupervisor,
   ) => {
     const search = searchTerm.toLowerCase();
 
@@ -115,16 +115,16 @@ function SupervisorCell({
   supervisor,
   selected = false,
 }: {
-  supervisor: SupervisorInfo;
+  supervisor: ManualAllocationSupervisor;
   selected?: boolean;
 }) {
-  const getSupervisorStatusColor = (supervisor: SupervisorInfo) => {
+  const getSupervisorStatusColor = (supervisor: ManualAllocationSupervisor) => {
     const total = supervisor.currentAllocations + supervisor.pendingAllocations;
     if (total > supervisor.allocationUpperBound) return "text-red-600";
     if (total > supervisor.allocationTarget) return "text-orange-600";
     return "text-gray-500";
   };
-  const formatSupervisorDetails = (supervisor: SupervisorInfo) => {
+  const formatSupervisorDetails = (supervisor: ManualAllocationSupervisor) => {
     return `(${supervisor.currentAllocations} current, ${supervisor.pendingAllocations} pending / ${supervisor.allocationTarget} target / ${supervisor.allocationUpperBound} max)`;
   };
 
