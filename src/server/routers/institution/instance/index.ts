@@ -25,7 +25,7 @@ import {
   newUnitOfAssessmentSchema,
   ProjectAllocationStatus,
   projectDtoSchema,
-  projectStatusRank,
+  projectStatusRank as statusRank,
   ReaderDTO,
   readerDtoSchema,
   studentDtoSchema,
@@ -649,9 +649,8 @@ export const instanceRouter = createTRPCRouter({
             studentId: p.allocatedTo.at(0),
           };
         })
-        .sort(
-          (a, b) => projectStatusRank[a.status] - projectStatusRank[b.status],
-        );
+        .sort((a, b) => a.project.title.localeCompare(b.project.title))
+        .sort((a, b) => statusRank[a.status] - statusRank[b.status]);
 
       // will also get all supervisors and their allocation status
       // will include their workload so as to show how many projects they have
