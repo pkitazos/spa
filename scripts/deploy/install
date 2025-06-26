@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Check if we are *probably* in the right directory
 if [ ! -f package.json ]; then
@@ -24,8 +24,13 @@ fi
 # Set system-wide environment variable so future scripts can find the right place
 prev_env=$(cat /etc/environment | grep -v "AMPS_LOC" | grep -v "AMPS_DEP_MODE")
 
-(echo "$prev_env"; echo "AMPS_LOC=\"$(pwd)\""; echo "AMPS_DEP_MODE=\"$1\""; echo "$dev_emails") \
-    | sudo tee /etc/environment > /dev/null
+(
+    echo "$prev_env"
+    echo "AMPS_LOC=\"$(pwd)\""
+    echo "AMPS_DEP_MODE=\"$1\""
+    echo "$dev_emails"
+) |
+    sudo tee /etc/environment >/dev/null
 
 # Link the amps CLI
 sudo ln -s ~/spa/scripts/deploy/amps \
@@ -43,7 +48,10 @@ if [[ "$1" == "prod" ]]; then
     cron_job="0 3 * * * 'amps pull'"
     prev_cron=$(crontab -l | grep -v "amps")
 
-    (echo "$cron_job"; echo -n "$prev_cron") | crontab -
+    (
+        echo "$cron_job"
+        echo -n "$prev_cron"
+    ) | crontab -
 fi
 
 # For staging, setup webhook
