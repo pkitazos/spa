@@ -16,15 +16,13 @@ import {
 } from "@/components/ui/popover";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ProjectInfo } from "./types";
 import { fuzzyMatch } from "@/lib/utils/general/fuzzy-match";
 import { ProjectAllocationStatus } from "@/dto";
 import { Badge } from "@/components/ui/badge";
-
-type ProjectWithStatus = ProjectInfo & { status: ProjectAllocationStatus };
+import { ManualAllocationProject } from "./manual-allocation-types";
 
 interface ProjectComboboxProps {
-  projects: ProjectWithStatus[];
+  projects: ManualAllocationProject[];
   value?: string;
   onValueChange: (value: string) => void;
   className?: string;
@@ -40,7 +38,10 @@ export function ProjectCombobox({
 
   const selectedProject = projects.find((project) => project.id === value);
 
-  const filterProjects = (searchTerm: string, project: ProjectWithStatus) => {
+  const filterProjects = (
+    searchTerm: string,
+    project: ManualAllocationProject,
+  ) => {
     const search = searchTerm.toLowerCase();
 
     const titleMatch = fuzzyMatch(search, project.title);
@@ -114,7 +115,7 @@ function ProjectCell({
   project,
   selected = false,
 }: {
-  project: ProjectWithStatus;
+  project: ManualAllocationProject;
   selected?: boolean;
 }) {
   const getStatusColor = (status: ProjectAllocationStatus) => {
@@ -122,6 +123,7 @@ function ProjectCell({
       case ProjectAllocationStatus.UNALLOCATED:
         return "text-green-600 bg-green-100 border-green-200";
       case ProjectAllocationStatus.RANDOM:
+        return "text-yellow-600 bg-yellow-100 border-yellow-200";
       case ProjectAllocationStatus.MANUAL:
         return "text-amber-600 bg-amber-100 border-amber-200";
       case ProjectAllocationStatus.ALGORITHMIC:
