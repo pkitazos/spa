@@ -537,32 +537,82 @@ export const instanceRouter = createTRPCRouter({
       return tabGroups;
     }),
 
+  getAllocatedStudents: procedure.instance.subGroupAdmin
+    .output(
+      z.array(
+        z.object({ student: studentDtoSchema, project: projectDtoSchema }),
+      ),
+    )
+    .query(async ({ ctx: { instance } }) => {
+      const randomlyAllocatedStudents =
+        await instance.getAllocatedStudentsByMethods([AllocationMethod.RANDOM]);
+
+      const manuallyAllocatedStudents =
+        await instance.getAllocatedStudentsByMethods([AllocationMethod.MANUAL]);
+
+      const algorithmicallyAllocatedStudents =
+        await instance.getAllocatedStudentsByMethods([
+          AllocationMethod.ALGORITHMIC,
+        ]);
+
+      const preAllocatedStudents = await instance.getAllocatedStudentsByMethods(
+        [AllocationMethod.PRE_ALLOCATED],
+      );
+
+      return [
+        ...randomlyAllocatedStudents,
+        ...manuallyAllocatedStudents,
+        ...algorithmicallyAllocatedStudents,
+        ...preAllocatedStudents,
+      ];
+    }),
+
   getRandomlyAllocatedStudents: procedure.instance.subGroupAdmin
     .output(
       z.array(
-        z.object({
-          student: studentDtoSchema,
-          project: projectDtoSchema.optional(),
-        }),
+        z.object({ student: studentDtoSchema, project: projectDtoSchema }),
       ),
     )
     .query(
       async ({ ctx: { instance } }) =>
-        await instance.getAllocatedStudentsByMethod(AllocationMethod.RANDOM),
+        await instance.getAllocatedStudentsByMethods([AllocationMethod.RANDOM]),
     ),
 
   getManuallyAllocatedStudents: procedure.instance.subGroupAdmin
     .output(
       z.array(
-        z.object({
-          student: studentDtoSchema,
-          project: projectDtoSchema.optional(),
-        }),
+        z.object({ student: studentDtoSchema, project: projectDtoSchema }),
       ),
     )
     .query(
       async ({ ctx: { instance } }) =>
-        await instance.getAllocatedStudentsByMethod(AllocationMethod.MANUAL),
+        await instance.getAllocatedStudentsByMethods([AllocationMethod.MANUAL]),
+    ),
+
+  getAlgorithmAllocatedStudents: procedure.instance.subGroupAdmin
+    .output(
+      z.array(
+        z.object({ student: studentDtoSchema, project: projectDtoSchema }),
+      ),
+    )
+    .query(
+      async ({ ctx: { instance } }) =>
+        await instance.getAllocatedStudentsByMethods([
+          AllocationMethod.ALGORITHMIC,
+        ]),
+    ),
+
+  getPreAllocatedStudents: procedure.instance.subGroupAdmin
+    .output(
+      z.array(
+        z.object({ student: studentDtoSchema, project: projectDtoSchema }),
+      ),
+    )
+    .query(
+      async ({ ctx: { instance } }) =>
+        await instance.getAllocatedStudentsByMethods([
+          AllocationMethod.PRE_ALLOCATED,
+        ]),
     ),
 
   getUnallocatedStudents: procedure.instance.subGroupAdmin
@@ -585,78 +635,41 @@ export const instanceRouter = createTRPCRouter({
       ),
     )
     .query(async ({ ctx: { instance } }) => {
-      const unallocatedStudents = await instance.getUnallocatedStudents();
-
-      // will get all projects and categorise them as follows:
-      // - pre-allocated: projects that have been pre-allocated to students
-      // - allocated: projects that have been allocated to students
-      // - unallocated: projects that have not been allocated to any students
-
-      const preAllocatedProjects = await instance.getPreAllocations();
       const allProjects = await instance.getProjectDetails();
 
-      const projects = allProjects
-        .map((p) => {
-          const preAllocated = preAllocatedProjects
-            .map((pa) => pa.project.id)
-            .includes(p.project.id);
+      const allAllocations = await instance.getProjectAllocations();
 
-          // if preAllocated, then the allocatedTo array will have exactly one element
+      const allAllocationsMap = allAllocations.reduce(
+        (acc, a) => ({ ...acc, [a.project.id]: a.method }),
+        {} as Record<string, AllocationMethod>,
+      );
 
-          const unallocated = p.allocatedTo.length === 0;
+      return allProjects
+        .map(({ project, supervisor, allocatedTo }) => {
+          if (!allAllocationsMap[project.id]) {
+            return {
+              project,
+              supervisor: supervisor,
+              status: ProjectAllocationStatus.UNALLOCATED,
+              studentId: undefined,
+            };
+          }
 
-          // if unallocated, then the allocatedTo array will be empty
-
-          // if allocated, then the allocatedTo array will have at least one element
-          // and the preAllocated will be false
-
-          // status is one of:
-          // - pre-allocated: if preAllocated is true
-          // - unallocated: if unallocated is true
-          // - allocated: if neither preAllocated nor unallocated is true
-
-          let status: ProjectAllocationStatus;
-          if (preAllocated) {
-            status = ProjectAllocationStatus.PRE_ALLOCATED;
-
-            if (p.allocatedTo.length !== 1) {
-              throw new Error(
-                `Project ${p.project.id} is pre-allocated but has ${p.allocatedTo.length} allocations`,
-              );
-            }
-          } else if (unallocated) {
-            status = ProjectAllocationStatus.UNALLOCATED;
-          } else {
-            status = ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED;
-
-            if (p.allocatedTo.length === 0) {
-              throw new Error(
-                `Project ${p.project.id} is allocated but has no allocations`,
-              );
-            }
-
-            if (p.allocatedTo.length > 1) {
-              console.warn(
-                `Project ${p.project.id} has multiple allocations: ${p.allocatedTo.length}`,
-              );
-            }
+          if (allocatedTo.length !== 1) {
+            throw new Error(
+              `Project ${project.id} should have exactly one allocated student, but has ${allocatedTo.length ?? 0}`,
+            );
           }
 
           return {
-            project: p.project,
-            supervisor: p.supervisor,
-            status,
-            studentId: p.allocatedTo.at(0),
+            project,
+            supervisor: supervisor,
+            status: allAllocationsMap[project.id],
+            studentId: allocatedTo[0],
           };
         })
         .sort((a, b) => a.project.title.localeCompare(b.project.title))
         .sort((a, b) => statusRank[a.status] - statusRank[b.status]);
-
-      // will also get all supervisors and their allocation status
-      // will include their workload so as to show how many projects they have
-      // allocated to them, and how many they can still take
-
-      return projects;
     }),
 
   getSupervisorsWithAllocations: procedure.instance.subGroupAdmin

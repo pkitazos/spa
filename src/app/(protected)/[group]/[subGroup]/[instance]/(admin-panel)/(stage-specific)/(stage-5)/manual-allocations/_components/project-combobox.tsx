@@ -121,10 +121,10 @@ function ProjectCell({
     switch (status) {
       case ProjectAllocationStatus.UNALLOCATED:
         return "text-green-600 bg-green-100 border-green-200";
-      case ProjectAllocationStatus.RANDOMLY_ALLOCATED:
-      case ProjectAllocationStatus.MANUALLY_ALLOCATED:
+      case ProjectAllocationStatus.RANDOM:
+      case ProjectAllocationStatus.MANUAL:
         return "text-amber-600 bg-amber-100 border-amber-200";
-      case ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED:
+      case ProjectAllocationStatus.ALGORITHMIC:
         return "text-orange-600 bg-orange-100 border-orange-200";
       case ProjectAllocationStatus.PRE_ALLOCATED:
         return "text-red-600 bg-red-100 border-red-200";
@@ -137,13 +137,13 @@ function ProjectCell({
     switch (status) {
       case ProjectAllocationStatus.UNALLOCATED:
         return "Available";
-      case ProjectAllocationStatus.RANDOMLY_ALLOCATED:
+      case ProjectAllocationStatus.RANDOM:
         return "Randomly Allocated";
       case ProjectAllocationStatus.PRE_ALLOCATED:
         return "Pre-allocated";
-      case ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED:
+      case ProjectAllocationStatus.ALGORITHMIC:
         return "Algorithmically Allocated";
-      case ProjectAllocationStatus.MANUALLY_ALLOCATED:
+      case ProjectAllocationStatus.MANUAL:
         return "Manually Allocated";
       default:
         throw new Error(`Unknown status: ${status}`);

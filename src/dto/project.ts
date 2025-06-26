@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { flagDtoSchema, tagDtoSchema } from "./flag-tag";
+import { AllocationMethod } from "@/db/types";
 
 export const projectDtoSchema = z.object({
   id: z.string(),
@@ -18,11 +19,8 @@ export const projectDtoSchema = z.object({
 export type ProjectDTO = z.infer<typeof projectDtoSchema>;
 
 export const ProjectAllocationStatus = {
+  ...AllocationMethod,
   UNALLOCATED: "UNALLOCATED",
-  RANDOMLY_ALLOCATED: "RANDOMLY_ALLOCATED",
-  PRE_ALLOCATED: "PRE_ALLOCATED",
-  ALGORITHMICALLY_ALLOCATED: "ALGORITHMICALLY_ALLOCATED",
-  MANUALLY_ALLOCATED: "MANUALLY_ALLOCATED",
 } as const;
 
 export type ProjectAllocationStatus =
@@ -30,17 +28,17 @@ export type ProjectAllocationStatus =
 
 export const projectAllocationStatusSchema = z.enum([
   ProjectAllocationStatus.UNALLOCATED,
-  ProjectAllocationStatus.RANDOMLY_ALLOCATED,
-  ProjectAllocationStatus.MANUALLY_ALLOCATED,
-  ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED,
+  ProjectAllocationStatus.RANDOM,
+  ProjectAllocationStatus.MANUAL,
+  ProjectAllocationStatus.ALGORITHMIC,
   ProjectAllocationStatus.PRE_ALLOCATED,
 ]);
 
 export const projectStatusRank = {
   [ProjectAllocationStatus.UNALLOCATED]: 0,
-  [ProjectAllocationStatus.RANDOMLY_ALLOCATED]: 1,
-  [ProjectAllocationStatus.MANUALLY_ALLOCATED]: 2,
-  [ProjectAllocationStatus.ALGORITHMICALLY_ALLOCATED]: 3,
+  [ProjectAllocationStatus.RANDOM]: 1,
+  [ProjectAllocationStatus.MANUAL]: 2,
+  [ProjectAllocationStatus.ALGORITHMIC]: 3,
   [ProjectAllocationStatus.PRE_ALLOCATED]: 4,
 };
 
