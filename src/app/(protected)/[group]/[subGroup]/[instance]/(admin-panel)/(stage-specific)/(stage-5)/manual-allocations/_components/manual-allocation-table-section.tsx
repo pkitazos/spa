@@ -5,16 +5,18 @@ import { toast } from "sonner";
 
 import { useInstanceParams } from "@/components/params-context";
 
+import { ProjectAllocationStatus } from "@/dto";
+import { api } from "@/lib/trpc/client";
+import { useRouter } from "next/navigation";
 import { ManualAllocationDataTable } from "./manual-allocation-data-table";
 import {
-  ManualAllocationStudent,
   ManualAllocationProject,
+  ManualAllocationStudent,
   ManualAllocationSupervisor,
   ValidationWarning,
-  ValidationWarningType,
   ValidationWarningSeverity,
+  ValidationWarningType,
 } from "./manual-allocation-types";
-import { ProjectAllocationStatus } from "@/dto";
 
 interface ManualAllocationDataTableSectionProps {
   initialStudents: ManualAllocationStudent[];
@@ -28,9 +30,23 @@ export function ManualAllocationDataTableSection({
   initialSupervisors,
 }: ManualAllocationDataTableSectionProps) {
   const params = useInstanceParams();
+  const router = useRouter();
+
   const [students, setStudents] = useState(initialStudents);
   const [projects] = useState(initialProjects);
   const [baseSupervisors] = useState(initialSupervisors);
+
+  const utils = api.useUtils();
+
+  function refetchData() {
+    utils.institution.instance.getAllocatedStudents.refetch();
+    utils.institution.instance.getUnallocatedStudents.refetch();
+    utils.institution.instance.getSupervisorsWithAllocations.refetch();
+    utils.institution.instance.getProjectsWithAllocationStatus.refetch();
+  }
+
+  const { mutateAsync: api_saveAllocations } =
+    api.institution.instance.saveManualStudentAllocations.useMutation({});
 
   // compute supervisors pending allocations
   const supervisors = useMemo(() => {
@@ -51,6 +67,7 @@ export function ManualAllocationDataTableSection({
     }));
   }, [students, baseSupervisors]);
 
+  // todo: redo this somehow
   // this is too complicated idk what I was thinking
   // it's also not even totally right
   // I'll have to revisit this when I have both hands
@@ -164,9 +181,8 @@ export function ManualAllocationDataTableSection({
     [projects, supervisors],
   );
 
-  // todo: FP this boi
   const handleUpdateAllocation = useCallback(
-    (studentId: string, field: "project" | "supervisor", value?: string) => {
+    (studentId: string, field: "project" | "supervisor", id?: string) => {
       setStudents((prev) =>
         prev.map((student) => {
           if (student.id !== studentId) return student;
@@ -174,62 +190,122 @@ export function ManualAllocationDataTableSection({
           let updatedStudent = { ...student };
 
           if (field === "project") {
-            // auto-select supervisor when project is selected
-            updatedStudent.selectedProjectId = value;
+            const project = id ? projects.find((p) => p.id === id) : undefined;
 
-            if (value) {
-              const project = projects.find((p) => p.id === value);
-              if (project) {
-                updatedStudent.selectedSupervisorId = project.supervisorId;
-              }
-            }
-          } else {
-            updatedStudent.selectedSupervisorId = value;
+            updatedStudent = {
+              ...updatedStudent,
+              selectedProjectId: id,
+              selectedSupervisorId: project?.supervisorId,
+            };
+          } else if (field === "supervisor") {
+            updatedStudent = { ...updatedStudent, selectedSupervisorId: id };
           }
 
-          updatedStudent.isDirty =
+          const isDirty =
             updatedStudent.selectedProjectId !==
               updatedStudent.originalProjectId ||
             updatedStudent.selectedSupervisorId !==
               updatedStudent.originalSupervisorId;
 
-          updatedStudent.warnings = updatedStudent.warnings = calculateWarnings(
-            updatedStudent,
-            { studentId, supervisorId: updatedStudent.selectedSupervisorId },
-          );
+          const warnings = calculateWarnings(updatedStudent, {
+            studentId,
+            supervisorId: updatedStudent.selectedSupervisorId,
+          });
 
-          return updatedStudent;
+          return { ...updatedStudent, isDirty, warnings };
         }),
       );
     },
-    [projects, calculateWarnings],
+    [projects, calculateWarnings, students, setStudents],
   );
 
   const handleRemoveAllocation = useCallback((studentId: string) => {
-    // todo: implement removal logic
+    // todo: implement removal logic (+ UI)
     toast.info(`Remove allocation for student ${studentId} (not implemented)`);
   }, []);
 
-  const handleSave = useCallback(async (studentId: string) => {
-    // todo: implement save logic
-    toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-      loading: `Saving allocation for student ${studentId}...`,
-      success: "Successfully saved allocation",
-      error: "Failed to save allocation",
-    });
-  }, []);
+  const handleSave = useCallback(
+    async (studentId: string) => {
+      const student = students.find((s) => s.id === studentId);
+      if (!student) {
+        toast.error(`Student with ID ${studentId} not found`);
+        return;
+      }
+
+      if (!student.selectedProjectId || !student.selectedSupervisorId) {
+        toast.error("Please select both project and supervisor before saving");
+        return;
+      }
+
+      const allocations = [
+        {
+          studentId: student.id,
+          projectId: student.selectedProjectId,
+          supervisorId: student.selectedSupervisorId,
+        },
+      ];
+
+      toast.promise(
+        api_saveAllocations({ params, allocations }).then(() => {
+          router.refresh();
+          refetchData();
+          // todo: post-save the save changes button still shows as dirty need to manually reset the state
+        }),
+        {
+          loading: `Saving allocation for student ${studentId}...`,
+          success: "Successfully saved allocation",
+          error: "Failed to save allocation",
+        },
+      );
+    },
+    [students],
+  );
 
   const handleSaveAll = useCallback(async () => {
     const dirtyStudents = students.filter((s) => s.isDirty);
-    // todo: implement save logic
-    toast.promise(new Promise((resolve) => setTimeout(resolve, 2000)), {
-      loading: `Saving ${dirtyStudents.length} allocation(s)...`,
-      success: `Successfully saved ${dirtyStudents.length} allocation(s)`,
-      error: "Failed to save allocations",
-    });
+
+    if (dirtyStudents.length === 0) {
+      toast.info("No allocations to save");
+      return;
+    }
+
+    const invalidStudents = dirtyStudents.filter(
+      (student) => !student.selectedProjectId || !student.selectedSupervisorId,
+    );
+
+    const allocations = dirtyStudents
+      .map((student) => {
+        if (student.selectedProjectId && student.selectedSupervisorId)
+          return {
+            studentId: student.id,
+            projectId: student.selectedProjectId,
+            supervisorId: student.selectedSupervisorId,
+          };
+      })
+      .filter(Boolean);
+
+    if (invalidStudents.length > 0) {
+      toast.error(
+        `${invalidStudents.length} student(s) have missing project or supervisor selections.`,
+      );
+    }
+
+    toast.promise(
+      api_saveAllocations({ params, allocations }).then(() => {
+        router.refresh();
+        refetchData();
+        // todo: post-save the save changes button still shows as dirty need to manually reset the state
+      }),
+      {
+        loading: `Saving ${dirtyStudents.length} allocation(s)...`,
+        success: `Successfully saved ${dirtyStudents.length} allocation(s)`,
+        error: "Failed to save allocations",
+      },
+    );
   }, [students]);
 
   const handleReset = useCallback((studentId: string) => {
+    // todo: resetting a change does not correctly updated the number of unsaved changes
     setStudents((prev) =>
       prev.map((student) => {
         if (student.id !== studentId) return student;
