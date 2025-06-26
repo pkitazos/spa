@@ -14,7 +14,7 @@ import { createTRPCRouter } from "@/server/trpc";
 
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
 import {
-  linkPreallocatedStudent,
+  linkPreAllocatedStudent,
   linkProjectFlags,
   linkProjectTags,
 } from "@/db/transactions/project-flags";
@@ -73,12 +73,9 @@ export const projectRouter = createTRPCRouter({
             },
           });
 
-          if (
-            isPreAllocated &&
-            preAllocatedStudentId &&
-            preAllocatedStudentId.trim() !== ""
-          ) {
-            await linkPreallocatedStudent(
+          if (preAllocatedStudentId && preAllocatedStudentId.trim() !== "") {
+            // ! would just override another pre-allocated student - bad probably
+            await linkPreAllocatedStudent(
               tx,
               project.params,
               preAllocatedStudentId,
@@ -471,11 +468,11 @@ export const projectRouter = createTRPCRouter({
           });
 
           if (
-            newProject.isPreAllocated &&
             newProject.preAllocatedStudentId &&
             newProject.preAllocatedStudentId.trim() !== ""
           ) {
-            await linkPreallocatedStudent(
+            // ! would just override another pre-allocated student - bad probably
+            await linkPreAllocatedStudent(
               tx,
               { ...instance.params, projectId: project.id },
               newProject.preAllocatedStudentId,

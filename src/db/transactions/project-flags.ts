@@ -1,6 +1,6 @@
 import { ProjectParams } from "@/lib/validations/params";
 
-import { TX } from "@/db/types";
+import { AllocationMethod, TX } from "@/db/types";
 import { expand } from "@/lib/utils/general/instance-params";
 
 // move
@@ -49,7 +49,22 @@ export async function linkProjectTags(
   });
 }
 
-export async function linkPreallocatedStudent(
+export async function linkProjectTagIds(
+  db: TX,
+  params: ProjectParams,
+  tagIds: string[],
+) {
+  await db.tagOnProject.deleteMany({
+    where: { projectId: params.projectId, tagId: { notIn: tagIds } },
+  });
+
+  await db.tagOnProject.createMany({
+    data: tagIds.map((id) => ({ projectId: params.projectId, tagId: id })),
+    skipDuplicates: true,
+  });
+}
+
+export async function linkPreAllocatedStudent(
   tx: TX,
   params: ProjectParams,
   userId: string,
@@ -64,6 +79,7 @@ export async function linkPreallocatedStudent(
       projectId: params.projectId,
       userId,
       studentRanking: 1,
+      allocationMethod: AllocationMethod.PRE_ALLOCATED,
     },
   });
 }
