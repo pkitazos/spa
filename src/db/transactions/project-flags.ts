@@ -1,6 +1,6 @@
 import { ProjectParams } from "@/lib/validations/params";
 
-import { TX } from "@/db/types";
+import { AllocationMethod, TX } from "@/db/types";
 import { expand } from "@/lib/utils/general/instance-params";
 
 // move
@@ -79,7 +79,7 @@ export async function linkProjectTagIds(
   });
 }
 
-export async function linkPreallocatedStudent(
+export async function linkPreAllocatedStudent(
   tx: TX,
   params: ProjectParams,
   userId: string,
@@ -94,6 +94,7 @@ export async function linkPreallocatedStudent(
       projectId: params.projectId,
       userId,
       studentRanking: 1,
+      allocationMethod: AllocationMethod.PRE_ALLOCATED,
     },
   });
 }
