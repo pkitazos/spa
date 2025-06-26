@@ -38,6 +38,27 @@ case $1 in
     echo "pulling AMPS..."
     ./pull.sh
     ;;
+
+"db")
+    case $2 in
+    "backup")
+        echo "pulling AMPS..."
+        ./db/backup
+        ;;
+    "prepare")
+        echo "pulling AMPS..."
+        ./db/prepare
+        ;;
+    "restore")
+        echo "pulling AMPS..."
+        ./db/restore
+        ;;
+    *)
+        echo "unrecognized command: '$1 $2'"
+        exit 1
+        ;;
+    esac
+    ;;
 *)
     echo "unrecognized command: '$1'"
     exit 1
