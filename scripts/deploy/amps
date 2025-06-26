@@ -8,21 +8,40 @@ elif [ -z $AMPS_LOC ]; then
     exit 1
 fi
 
-pushd $AMPS_LOC/scripts/deploy/commands
+pushd "$AMPS_LOC/scripts/deploy/commands"
 
+# Parse flags
+for arg; do
+    if [[ $arg == '-'* ]]; then
+        case $arg in
+        "-g" | "--git")
+            export AMPS_CLI_GIT="true"
+            ;;
+        "-e" | "--email")
+            export AMPS_CLI_EMAIL="true"
+            ;;
+        esac
+    fi
+done
 
-if [[ $1 == "start" ]]; then
+# Handle actual commands
+case $1 in
+"start")
     echo "starting AMPS..."
     ./start.sh
-elif [[ $1 == "stop" ]]; then
+    ;;
+"stop")
     echo "stoping AMPS..."
     ./stop.sh
-elif [[ $1 == "pull" ]]; then
+    ;;
+"pull")
     echo "pulling AMPS..."
     ./pull.sh
-else
-    echo "unrecognized command"
+    ;;
+*)
+    echo "unrecognized command: '$1'"
     exit 1
-fi
+    ;;
+esac
 
 popd
