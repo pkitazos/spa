@@ -34,7 +34,7 @@ import {
   ManualAllocationSupervisor,
   ValidationWarningSeverity,
 } from "./manual-allocation-types";
-import { DataTableToolbar } from "@/components/ui/data-table/data-table-toolbar";
+import { ManualAllocationToolbar } from "./manual-allocation-toolbar";
 
 type ManualAllocationDataTableProps = {
   students: ManualAllocationStudent[];
@@ -94,18 +94,13 @@ export function ManualAllocationDataTable({
   const dirtyCount = students.filter((s) => s.isDirty).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       <div className="flex items-center justify-between">
-        <DataTableToolbar
-          searchableColumn={{ id: "student", displayName: "Students" }}
-          data={students}
-          filters={[]}
-          table={table}
-        />
+        <ManualAllocationToolbar table={table} students={students} />
         <Button
           onClick={onSaveAll}
           disabled={!hasChanges}
-          className="flex items-center gap-2"
+          className="flex w-64 items-center gap-2"
         >
           <SaveAll className="h-4 w-4" />
           Save All Changes ({dirtyCount})
@@ -143,7 +138,7 @@ export function ManualAllocationDataTable({
                       key={row.id}
                       data-state={row.getIsSelected() && "selected"}
                       className={cn(
-                        "cursor-pointer transition-colors",
+                        "transition-colors",
                         student.isDirty ? "bg-blue-50/50" : "hover:bg-muted/50",
                         hasWarnings ? "border-b-0" : "border-b",
                       )}

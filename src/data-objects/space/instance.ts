@@ -239,6 +239,44 @@ export class AllocationInstance extends DataObject {
       allocatedTo: p.studentAllocations.map((a) => a.userId),
     }));
   }
+
+  public async getProjectAllocations(): Promise<
+    {
+      project: ProjectDTO;
+      supervisor: SupervisorDTO;
+      student: StudentDTO;
+      method: AllocationMethod;
+    }[]
+  > {
+    const data = await this.db.studentProjectAllocation.findMany({
+      where: expand(this.params),
+      include: {
+        project: {
+          include: {
+            supervisor: {
+              include: { userInInstance: { include: { user: true } } },
+            },
+            flagsOnProject: { include: { flag: true } },
+            tagsOnProject: { include: { tag: true } },
+          },
+        },
+        student: {
+          include: {
+            userInInstance: { include: { user: true } },
+            studentFlags: { include: { flag: true } },
+          },
+        },
+      },
+    });
+
+    return data.map((a) => ({
+      project: T.toProjectDTO(a.project),
+      supervisor: T.toSupervisorDTO(a.project.supervisor),
+      student: T.toStudentDTO(a.student),
+      method: a.allocationMethod,
+    }));
+  }
+
   /**
    * Creates a userInInstance object linking the specified user to this instance;
    * Should not be run on its own - follow with appropriate calls to linkSupervisor, linkStudent, or linkReader
@@ -596,11 +634,11 @@ export class AllocationInstance extends DataObject {
     return studentData.map((s) => T.toStudentDTO(s));
   }
 
-  public async getAllocatedStudentsByMethod(
-    method: AllocationMethod,
+  public async getAllocatedStudentsByMethods(
+    methods: AllocationMethod[],
   ): Promise<{ student: StudentDTO; project: ProjectDTO }[]> {
     const studentData = await this.db.studentProjectAllocation.findMany({
-      where: { ...expand(this.params), allocationMethod: method },
+      where: { ...expand(this.params), allocationMethod: { in: methods } },
       include: {
         student: {
           include: {

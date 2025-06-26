@@ -37,6 +37,16 @@ export function useInstancePath() {
   return formatParamsAsPath(instance.params);
 }
 
+export function usePathInInstance() {
+  const instance = useContext(InstanceContext);
+  if (!instance) throw new Error("Missing InstanceParamsProvider in the tree");
+
+  return {
+    basePath: formatParamsAsPath(instance.params),
+    getPath: (path: string) => `${formatParamsAsPath(instance.params)}/${path}`,
+  };
+}
+
 export function useInstanceStage() {
   const instance = useContext(InstanceContext);
   if (!instance) throw new Error("Missing InstanceParamsProvider in the tree");

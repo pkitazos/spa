@@ -69,7 +69,7 @@ export const PAGES = {
     icon: "bar-chart",
   },
   manualAllocations: {
-    title: "Manual Allocations",
+    title: "Manual Allocations & Overrides",
     href: "manual-allocations",
     icon: "mouse-pointer",
   },

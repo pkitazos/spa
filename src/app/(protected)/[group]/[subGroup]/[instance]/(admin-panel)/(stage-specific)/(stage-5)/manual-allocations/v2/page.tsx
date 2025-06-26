@@ -24,18 +24,16 @@ export default async function Page({ params }: { params: InstanceParams }) {
   const unallocatedStudents =
     await api.institution.instance.getUnallocatedStudents({ params });
 
-  const manuallyAllocatedStudentData =
-    await api.institution.instance.getManuallyAllocatedStudents({ params });
+  const allocatedStudents = await api.institution.instance.getAllocatedStudents(
+    { params },
+  );
 
   const unallocatedStudentData = unallocatedStudents.map((student) => ({
     student,
     project: undefined,
   }));
 
-  const allStudents = [
-    ...unallocatedStudentData,
-    ...manuallyAllocatedStudentData,
-  ];
+  const allStudents = [...unallocatedStudentData, ...allocatedStudents];
 
   const projectData =
     await api.institution.instance.getProjectsWithAllocationStatus({ params });
