@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
-pushd $AMPS_BACKUP_DIR
+pushd $AMPS_DB_BACKUP_DIR
 
-LATEST_BACKUP=$(ls -t *.gz | head -n 1)
+latestBackup=$(ls -t *.gz | head -n 1)
 
-if [ ! -z $LATEST_BACKUP ]; then
-    echo "Error: No .gz backup files found in '$AMPS_BACKUP_DIR'."
+if [ ! -z $latestBackup ]; then
+    echo "Error: No .gz backup files found in '$AMPS_DB_BACKUP_DIR'."
     exit 1
 fi
 
-cp "$LATEST_BACKUP" "~"
+cp "$latestBackup" "~"
 
 popd
