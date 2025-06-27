@@ -27,7 +27,15 @@ if [ -z $AMPS_LOC ]; then
     export AMPS_LOC=$(pwd)
 fi
 
-pushd "$AMPS_LOC/scripts/deploy/commands" >/dev/null
+pushd $AMPS_LOC >/dev/null
+
+# Check if we are *probably* in the right directory
+if [ ! -f package.json ]; then
+    echo "No package json found; make sure '\$AMPS_LOC' is properly set, or that you run this command in the root of the repository"
+    exit 1
+fi
+
+pushd scripts/deploy/commands >/dev/null
 
 # Parse flags
 set -- $(getopt -n amps -o eg --long email,git -- "$@")
@@ -51,6 +59,28 @@ done
 
 # Handle actual commands
 case "$1" in
+"'config'")
+    case $2 in
+    "'init'")
+        ./config/init.sh
+        ;;
+    "'email'")
+        ./config/email.sh
+        ;;
+    "'db-backup'")
+        ./config/db-backup.sh
+        ;;
+    "'log-backup'")
+        echo "TODO - sorry"
+        ;;
+    "'startup'")
+        ./config/startup.sh
+        ;;
+    "'updater'")
+        ./config/updater.sh
+        ;;
+    esac
+    ;;
 "'start'")
     assert_dep_mode
     echo "starting AMPS..."
