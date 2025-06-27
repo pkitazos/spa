@@ -1,55 +1,83 @@
 #!/usr/bin/env bash
 
-if [ -z $AMPS_DEP_MODE ]; then
-    echo "AMPS deployment mode not defined."
-    exit 1
-elif [ -z $AMPS_LOC ]; then
-    echo "AMPS repo location not defined."
-    exit 1
+set -eo pipefail
+
+assert_dep_mode() {
+    if [ -z $AMPS_DEPLOYMENT_MODE ]; then
+        echo "AMPS deployment mode not defined."
+        exit 1
+    fi
+}
+
+assert_db_backup_dir() {
+    if [ -z $AMPS_DB_BACKUP_DIR ]; then
+        echo "AMPS database backup directory not specified."
+        exit 1
+    fi
+}
+
+assert_log_backup_dir() {
+    if [ -z $AMPS_LOG_BACKUP_DIR ]; then
+        echo "AMPS log backup directory not specified."
+        exit 1
+    fi
+}
+
+if [ -z $AMPS_LOC ]; then
+    export AMPS_LOC=$(pwd)
 fi
 
-pushd "$AMPS_LOC/scripts/deploy/commands"
+pushd "$AMPS_LOC/scripts/deploy/commands" >/dev/null
 
 # Parse flags
-for arg; do
-    if [[ $arg == '-'* ]]; then
-        case $arg in
-        "-g" | "--git")
-            export AMPS_CLI_GIT="true"
-            ;;
-        "-e" | "--email")
-            export AMPS_CLI_EMAIL="true"
-            ;;
-        esac
-    fi
+set -- $(getopt -n amps -o eg --long email,git -- "$@")
+
+while true; do
+    case "$1" in
+    "-g" | "--git")
+        export AMPS_CLI_GIT="true"
+        shift
+        ;;
+    "-e" | "--email")
+        export AMPS_CLI_EMAIL="true"
+        shift
+        ;;
+    "--")
+        shift
+        break
+        ;;
+    esac
 done
 
 # Handle actual commands
-case $1 in
-"start")
+case "$1" in
+"'start'")
+    assert_dep_mode
     echo "starting AMPS..."
     ./start.sh
     ;;
-"stop")
+"'stop'")
+    assert_dep_mode
     echo "stoping AMPS..."
     ./stop.sh
     ;;
-"pull")
+"'pull'")
+    assert_dep_mode
     echo "pulling AMPS..."
     ./pull.sh
     ;;
 
-"db")
+"'db'")
     case $2 in
-    "backup")
+    "'backup'")
         echo "pulling AMPS..."
         ./db/backup
         ;;
-    "prepare")
+    "'prepare'")
         echo "pulling AMPS..."
         ./db/prepare
         ;;
-    "restore")
+    "'restore'")
         echo "pulling AMPS..."
         ./db/restore
         ;;

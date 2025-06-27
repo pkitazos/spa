@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-DUMP_FILE=$1
+dumpFile=$1
 
-if [ ! -f "$DUMP_FILE" ]; then
-    echo "Error: Dump file '$DUMP_FILE' not found in the current directory."
+if [ ! -f "$dumpFile" ]; then
+    echo "Error: Dump file '$dumpFile' not found in the current directory."
     exit 1
 fi
 
-docker cp "$DUMP_FILE" "amps-db-1:db-image.sql"
+docker cp "$dumpFile" "amps-db-1:db-image.sql"
 
 # TODO
 # Ideally, we want to do this as a single transaction.

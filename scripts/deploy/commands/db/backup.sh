@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-pushd $AMPS_BACKUP_DIR
+pushd $AMPS_DB_BACKUP_DIR
 
 outfile=db-image-$(date --iso-8601=seconds).sql
 
