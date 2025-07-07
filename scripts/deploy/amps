@@ -38,7 +38,7 @@ fi
 pushd scripts/deploy/commands >/dev/null
 
 # Parse flags
-set -- $(getopt -n amps -o eg --long email,git -- "$@")
+set -- $(getopt -n amps -o eg --long email,git -- $*)
 
 while true; do
     case "$1" in
@@ -67,17 +67,27 @@ case "$1" in
     "'email'")
         ./config/email.sh
         ;;
-    "'db-backup'")
-        ./config/db-backup.sh
+    "'db-backups'")
+        ./config/db-backups.sh
         ;;
-    "'log-backup'")
-        echo "TODO - sorry"
+    "'log-backups'")
+        ./config/log-backups.sh
         ;;
     "'startup'")
-        ./config/startup.sh
+        ./config/startup-service.sh
         ;;
     "'updater'")
         ./config/updater.sh
+        ;;
+    *)
+        echo "unknown command: '$1 $2'"
+        ;;
+    esac
+    ;;
+"'logs'")
+    case $2 in
+    "'backup'")
+        ./logs/backup.sh
         ;;
     esac
     ;;
@@ -101,15 +111,15 @@ case "$1" in
     case $2 in
     "'backup'")
         echo "pulling AMPS..."
-        ./db/backup
+        ./db/backup.sh
         ;;
     "'prepare'")
         echo "pulling AMPS..."
-        ./db/prepare
+        ./db/prepare.sh
         ;;
     "'restore'")
         echo "pulling AMPS..."
-        ./db/restore
+        ./db/restore.sh
         ;;
     *)
         echo "unrecognized command: '$1 $2'"
@@ -123,4 +133,4 @@ case "$1" in
     ;;
 esac
 
-popd
+popd >/dev/null

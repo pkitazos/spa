@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-pushd $AMPS_LOC
+pushd $AMPS_LOC >/dev/null
 
 docker compose --env-file=./.env -f "./docker/docker-compose.$AMPS_DEPLOYMENT_MODE.yml" up -d
 
@@ -13,4 +13,4 @@ if [ ! -z $AMPS_CLI_EMAIL ]; then
         mutt -s "AMPS $AMPS_DEPLOYMENT_MODE: started" "$AMPS_DEV_EMAILS"
 fi
 
-popd
+popd >/dev/null

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-pushd $AMPS_LOG_BACKUP_DIR
+pushd $AMPS_LOG_BACKUP_DIR >/dev/null
 
 timestamp=$(date --iso-8601=seconds)
 outfile=all-logs-$timestamp.tgz
@@ -19,4 +19,4 @@ if [ ! -z $AMPS_CLI_GIT ]; then
     git push
 fi
 
-popd
+popd >/dev/null
