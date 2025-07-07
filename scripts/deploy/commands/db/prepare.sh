@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-pushd $AMPS_DB_BACKUP_DIR
+pushd $AMPS_DB_BACKUP_DIR >/dev/null
 
 latestBackup=$(ls -t *.gz | head -n 1)
 
@@ -11,4 +11,4 @@ fi
 
 cp "$latestBackup" "~"
 
-popd
+popd >/dev/null
