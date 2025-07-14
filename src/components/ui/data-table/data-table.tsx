@@ -1,11 +1,5 @@
 "use client";
-import { useState } from "react";
-import type {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-} from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   flexRender,
   getCoreRowModel,
@@ -30,10 +24,19 @@ import { SearchableColumn } from "@/lib/validations/table";
 
 import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar, TableFilter } from "./data-table-toolbar";
+import {
+  usePaginationSearchParams,
+  useVisibilitySearchParams,
+  useSortingSearchParams,
+  useColumnFilterSearchParams,
+  useGlobalFilterSearchParams,
+} from "./hooks";
+import { useRowSelectionSearchParams } from "./hooks/row-selection";
 
 interface DataTableProps<TData, TValue> {
   className?: string;
-  searchableColumn?: SearchableColumn;
+  // @deprecated dont use this
+  searchableColumn?: SearchableColumn; // <- this makes no sense
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   filters?: TableFilter[];
@@ -42,41 +45,65 @@ interface DataTableProps<TData, TValue> {
 
 export default function DataTable<TData, TValue>({
   className,
-  searchableColumn,
   columns,
   data,
   filters = [],
   removeRow,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
+  const [pagination, setPagination] = usePaginationSearchParams();
+  const [columnVisibility, setColumnVisibility] =
+    useVisibilitySearchParams(columns);
+
+  const [sorting, setSorting] = useSortingSearchParams();
+
+  const [columnFilters, setColumnFilters] =
+    useColumnFilterSearchParams(columns);
+
+  const [globalFilter, setGlobalFilter] = useGlobalFilterSearchParams();
+
+  const [rowSelection, setRowSelection] = useRowSelectionSearchParams();
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+
+    // Pagination [x]
     getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
+    onPaginationChange: setPagination,
+
+    // Col Visibility [x]
     onColumnVisibilityChange: setColumnVisibility,
+
+    // Sorting [x]
+    getSortedRowModel: getSortedRowModel(),
+    enableMultiSort: false,
+    onSortingChange: setSorting,
+
+    // Col filtering [x]
+    getFilteredRowModel: getFilteredRowModel(),
+    onColumnFiltersChange: setColumnFilters,
+
+    // Global filtering [x]
+    onGlobalFilterChange: setGlobalFilter,
+
+    // Row selection [ ]
     onRowSelectionChange: setRowSelection,
-    state: { sorting, columnFilters, columnVisibility, rowSelection },
+    state: {
+      globalFilter,
+      columnFilters,
+      columnVisibility,
+      rowSelection,
+      pagination,
+      sorting,
+    },
     meta: { removeRow: removeRow },
   });
 
   return (
     <div className={cn(className)}>
       <div className="flex items-center gap-4 py-4">
-        <DataTableToolbar
-          searchableColumn={searchableColumn}
-          data={data}
-          filters={filters}
-          table={table}
-        />
+        <DataTableToolbar data={data} filters={filters} table={table} />
       </div>
       <div className="w-full rounded-md border border-accent dark:border-slate-600">
         <Table>
