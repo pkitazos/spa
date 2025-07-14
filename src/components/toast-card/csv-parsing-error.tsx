@@ -1,11 +1,13 @@
+import z from "zod";
+
 export function CSVParsingErrorCard({
   title,
   errors,
   getError = (error) => error.message,
 }: {
   title: string;
-  errors: Zod.ZodIssue[];
-  getError?: (error: Zod.ZodIssue) => string;
+  errors: z.core.$ZodIssue[];
+  getError?: (error: z.core.$ZodIssue) => string;
 }) {
   const uniqueErrors = [...new Set(errors.map(getError))];
   return (

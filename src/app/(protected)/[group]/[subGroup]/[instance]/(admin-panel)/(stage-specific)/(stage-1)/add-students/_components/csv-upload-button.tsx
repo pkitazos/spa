@@ -38,7 +38,7 @@ export function CSVUploadButton({
 
           const result = z.array(addStudentsCsvRowSchema).safeParse(res.data);
           if (!result.success) {
-            const allErrors = result.error.errors;
+            const allErrors = result.error.issues;
             const uniqueErrors = [...new Set(allErrors)];
             toast.error(
               <CSVParsingErrorCard

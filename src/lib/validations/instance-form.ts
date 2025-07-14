@@ -47,58 +47,43 @@ export function buildInstanceFormSchema(takenNames: Set<string>) {
     })
     .extend({
       minStudentPreferences: z.coerce
-        .number({
-          invalid_type_error: "Please enter an integer",
-          required_error: "Please enter an integer",
-        })
-        .int({ message: "Number must be an integer" })
+        .number("Please enter an integer")
+        .int("Number must be an integer")
         .positive(),
       maxStudentPreferences: z.coerce
-        .number({
-          invalid_type_error: "Please enter an integer",
-          required_error: "Please enter an integer",
-        })
-        .int({ message: "Number must be an integer" })
+        .number("Please enter an integer")
+        .int("Number must be an integer")
         .positive(),
       maxStudentPreferencesPerSupervisor: z.coerce
-        .number({
-          invalid_type_error: "Please enter an integer",
-          required_error: "Please enter an integer",
-        })
-        .int({ message: "Number must be an integer" })
+        .number("Please enter an integer")
+        .int("Number must be an integer")
         .positive(),
       minReaderPreferences: z.coerce
-        .number({
-          invalid_type_error: "Please enter an integer",
-          required_error: "Please enter an integer",
-        })
-        .int({ message: "Number must be an integer" })
+        .number("Please enter an integer")
+        .int("Number must be an integer")
         .positive(),
       maxReaderPreferences: z.coerce
-        .number({
-          invalid_type_error: "Please enter an integer",
-          required_error: "Please enter an integer",
-        })
-        .int({ message: "Number must be an integer" })
+        .number("Please enter an integer")
+        .int("Number must be an integer")
         .positive(),
     })
     .refine(({ flags }) => flags.length > 0, {
-      message: "Please add at least one flag",
+      error: "Please add at least one flag",
       path: ["flags.0.title"],
     })
     .refine(({ displayName }) => !takenNames.has(displayName), {
-      message: "This name is already taken",
+      error: "This name is already taken",
       path: ["displayName"],
     })
     .refine((x) => x.minStudentPreferences <= x.maxStudentPreferences, {
-      message:
+      error:
         "Maximum Number of Preferences can't be less than Minimum Number of Preferences",
       path: ["maxStudentPreferences"],
     })
     .refine(
       (x) => x.maxStudentPreferencesPerSupervisor <= x.maxStudentPreferences,
       {
-        message:
+        error:
           "Maximum Number of Preferences per supervisor can't be more than Maximum Number of Preferences",
         path: ["maxStudentPreferencesPerSupervisor"],
       },
@@ -110,13 +95,13 @@ export function buildInstanceFormSchema(takenNames: Set<string>) {
           x.projectSubmissionDeadline,
         ),
       {
-        message:
+        error:
           "Student Preference Submission deadline can't be before Project Upload deadline",
         path: ["studentPreferenceSubmissionDeadline"],
       },
     )
     .refine((x) => x.minReaderPreferences <= x.maxReaderPreferences, {
-      message:
+      error:
         "Maximum Number of Preferences can't be less than Minimum Number of Preferences",
       path: ["maxReaderPreferences"],
     })
@@ -127,7 +112,7 @@ export function buildInstanceFormSchema(takenNames: Set<string>) {
           x.studentPreferenceSubmissionDeadline,
         ),
       {
-        message:
+        error:
           "Reader Preference Submission deadline can't be before Student Preference Submission deadline",
         path: ["readerPreferenceSubmissionDeadline"],
       },
@@ -137,7 +122,7 @@ export function buildInstanceFormSchema(takenNames: Set<string>) {
         const flagSet = new Set(flags.map(({ title }) => title));
         return flags.length === flagSet.size;
       },
-      { message: "Flags must have distinct values", path: ["flags.0.title"] },
+      { error: "Flags must have distinct values", path: ["flags.0.title"] },
     );
 }
 
@@ -154,11 +139,11 @@ export type ForkedInstanceDetails = z.infer<typeof baseForkedSchema>;
 export function buildForkedInstanceSchema(takenNames: Set<string>) {
   return baseForkedSchema
     .refine((x) => !takenNames.has(x.displayName), {
-      message: "This name is already taken",
+      error: "This name is already taken",
       path: ["displayName"],
     })
     .refine((x) => isAfter(x.projectSubmissionDeadline, new Date()), {
-      message: "Project Submission Deadline must be after today",
+      error: "Project Submission Deadline must be after today",
       path: ["projectSubmissionDeadline"],
     })
     .refine(
@@ -168,7 +153,7 @@ export function buildForkedInstanceSchema(takenNames: Set<string>) {
           x.projectSubmissionDeadline,
         ),
       {
-        message:
+        error:
           "Preference Submission deadline can't be before Project Upload deadline",
         path: ["preferenceSubmissionDeadline"],
       },

@@ -16,67 +16,32 @@ export const addSupervisorsCsvHeaders = [
 ];
 
 export const addStudentsCsvRowSchema = z.object({
-  full_name: z.string({
-    required_error: "a valid Full Name",
-    invalid_type_error: "a valid Full Name",
-  }),
-  guid: z.string({
-    required_error: "a valid GUID",
-    invalid_type_error: "a valid GUID",
-  }),
-  email: z
-    .string({
-      required_error: "a valid Email",
-      invalid_type_error: "a valid Email",
-    })
-    .email({ message: "a valid Email" }),
+  full_name: z.string("a valid Full Name"),
+  guid: z.string("a valid GUID"),
+  email: z.email("a valid Email"),
   student_level: z
-    .number({
-      required_error: "a valid Student Level",
-      invalid_type_error: "a valid Student Level",
-    })
-    .int({ message: "an integer Student Level" })
-    .positive({ message: "a positive Student Level" })
-    .refine((level) => level === 4 || level === 5, {
-      message: "a valid Student Level",
-    }),
+    .number("a valid Student Level")
+    .int("an integer Student Level")
+    .positive("a positive Student Level")
+    .refine((level) => level === 4 || level === 5, "a valid Student Level"),
 });
 
 export const addSupervisorsCsvRowSchema = z
   .object({
-    full_name: z.string({
-      required_error: "a valid Full Name",
-      invalid_type_error: "a valid Full Name",
-    }),
-    guid: z.string({
-      required_error: "a valid GUID",
-      invalid_type_error: "a valid GUID",
-    }),
-    email: z
-      .string({
-        required_error: "a valid Email",
-        invalid_type_error: "a valid Email",
-      })
-      .email({ message: "a valid Email" }),
+    full_name: z.string("a valid Full Name"),
+    guid: z.string("a valid GUID"),
+    email: z.email("a valid Email"),
     project_target: z
-      .number({
-        required_error: "a valid Target",
-        invalid_type_error: "a valid Target",
-      })
-      .int({ message: "an integer Target value" })
-      .nonnegative({ message: "a non-negative Target value" }),
+      .number(" valid Target")
+      .int("an integer Target value")
+      .nonnegative("a non-negative Target value"),
     project_upper_quota: z
-      .number({
-        required_error: "a valid Upper Quota",
-        invalid_type_error: "a valid Upper Quota",
-      })
-      .int({ message: "an integer Upper Quota" })
-      .positive({ message: "a positive Upper Quota" }),
+      .number("a valid Upper Quota")
+      .int("an integer Upper Quota")
+      .positive("a positive Upper Quota"),
   })
   .refine(
     ({ project_target, project_upper_quota }) =>
       project_target <= project_upper_quota,
-    {
-      message: "a Target value less than or equal to the Upper Quota value",
-    },
+    "a Target value less than or equal to the Upper Quota value",
   );

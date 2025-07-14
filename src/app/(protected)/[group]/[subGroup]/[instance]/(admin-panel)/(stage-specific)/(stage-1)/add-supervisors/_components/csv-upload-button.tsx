@@ -43,7 +43,7 @@ export function CSVUploadButton({
             .safeParse(res.data);
 
           if (!result.success) {
-            const allErrors = result.error.errors;
+            const allErrors = result.error.issues;
             const uniqueErrors = [...new Set(allErrors)];
             toast.error(
               <CSVParsingErrorCard
