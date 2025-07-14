@@ -15,23 +15,23 @@ export type WizardStep<T> = {
   render: React.FC<{}>;
 };
 
-export function FormWizard<T extends z.ZodTypeAny>({
+export function FormWizard<
+  TSchema extends z.ZodType<any>,
+  TOut extends z.output<TSchema>,
+>({
   onSubmit,
   steps,
   defaultValues,
   schema,
 }: {
-  onSubmit: (data: z.infer<T>) => Promise<void>;
-  steps: WizardStep<z.infer<T>>[];
-  defaultValues: z.infer<T>;
-  schema: T;
+  onSubmit: (data: TOut) => Promise<void>;
+  steps: WizardStep<TOut>[];
+  defaultValues: TOut;
+  schema: TSchema;
 }) {
   const [currentStep, setCurrentStep] = useState(0);
 
-  const form = useForm<z.infer<T>>({
-    resolver: zodResolver(schema),
-    defaultValues,
-  });
+  const form = useForm<TOut>({ resolver: zodResolver(schema), defaultValues });
 
   async function handleNext() {
     if (currentStep === steps.length - 1) {

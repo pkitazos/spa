@@ -38,13 +38,10 @@ export const flagsAssessmentSchema = z
           allowed_marker_types: z
             .array(
               z.union([z.literal("supervisor"), z.literal("reader")], {
-                errorMap(err) {
-                  if (err.code === "invalid_union") {
-                    return {
-                      message: "Values must be either supervisor or reader",
-                    };
-                  } else return { message: err.message ?? "freaky error" };
-                },
+                error: (issue) =>
+                  issue.code === "invalid_union"
+                    ? "Values must be either supervisor or reader"
+                    : (issue.message ?? "freaky error"),
               }),
             )
             .refine((arr) => arr.length === new Set(arr).size, {
@@ -70,9 +67,7 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
       displayName: z
         .string()
         .min(1, "Please enter a name")
-        .refine((name) => !takenNames.has(name), {
-          message: "This name is already taken",
-        }),
+        .refine((name) => !takenNames.has(name), "This name is already taken"),
 
       // flags and assessment
       flags: flagsAssessmentSchema,
@@ -86,65 +81,49 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
 
       // deadlines
       //deadlines should validate after input
-      projectSubmissionDeadline: z.date({
-        required_error: "Please select a project submission deadline",
-      }),
+      projectSubmissionDeadline: z.date(
+        "Please select a project submission deadline",
+      ),
 
-      studentPreferenceSubmissionDeadline: z.date({
-        required_error:
-          "Please select a student preference submission deadline",
-      }),
+      studentPreferenceSubmissionDeadline: z.date(
+        "Please select a student preference submission deadline",
+      ),
 
-      readerPreferenceSubmissionDeadline: z.date({
-        required_error: "Please select a reader preference submission deadline",
-      }),
+      readerPreferenceSubmissionDeadline: z.date(
+        "Please select a reader preference submission deadline",
+      ),
 
       // student preferences
       minStudentPreferences: z.coerce
-        .number({
-          invalid_type_error: "Please enter an integer",
-          required_error: "Please enter an integer",
-        })
-        .int({ message: "Number must be an integer" })
+        .number("Please enter an integer")
+        .int("Number must be an integer")
         .positive(),
 
       maxStudentPreferences: z.coerce
-        .number({
-          invalid_type_error: "Please enter an integer",
-          required_error: "Please enter an integer",
-        })
-        .int({ message: "Number must be an integer" })
+        .number("Please enter an integer")
+        .int("Number must be an integer")
         .positive(),
 
       maxStudentPreferencesPerSupervisor: z.coerce
-        .number({
-          invalid_type_error: "Please enter an integer",
-          required_error: "Please enter an integer",
-        })
-        .int({ message: "Number must be an integer" })
+        .number("Please enter an integer")
+        .int("Number must be an integer")
         .positive(),
 
       // reader preferences
       minReaderPreferences: z.coerce
-        .number({
-          invalid_type_error: "Please enter an integer",
-          required_error: "Please enter an integer",
-        })
-        .int({ message: "Number must be an integer" })
+        .number("Please enter an integer")
+        .int("Number must be an integer")
         .positive(),
 
       maxReaderPreferences: z.coerce
-        .number({
-          invalid_type_error: "Please enter an integer",
-          required_error: "Please enter an integer",
-        })
-        .int({ message: "Number must be an integer" })
+        .number("Please enter an integer")
+        .int("Number must be an integer")
         .positive(),
     })
     .refine(
       (data) => data.minStudentPreferences <= data.maxStudentPreferences,
       {
-        message:
+        error:
           "Maximum Number of Preferences can't be less than Minimum Number of Preferences",
         path: ["maxStudentPreferences"],
       },
@@ -153,20 +132,20 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
       (data) =>
         data.maxStudentPreferencesPerSupervisor <= data.maxStudentPreferences,
       {
-        message:
+        error:
           "Maximum Number of Preferences per supervisor can't be more than Maximum Number of Preferences",
         path: ["maxStudentPreferencesPerSupervisor"],
       },
     )
     .refine((data) => data.minReaderPreferences <= data.maxReaderPreferences, {
-      message:
+      error:
         "Maximum Number of Preferences can't be less than Minimum Number of Preferences",
       path: ["maxReaderPreferences"],
     })
     .refine(
       (data) => data.minStudentPreferences <= data.maxStudentPreferences,
       {
-        message:
+        error:
           "Maximum Number of Preferences can't be less than Minimum Number of Preferences",
 
         path: ["maxStudentPreferences"],
@@ -179,7 +158,7 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
           data.projectSubmissionDeadline,
         ),
       {
-        message:
+        error:
           "Student Preference Submission deadline must be after Project Upload deadline",
         path: ["studentPreferenceSubmissionDeadline"],
       },
@@ -191,7 +170,7 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
           data.studentPreferenceSubmissionDeadline,
         ),
       {
-        message:
+        error:
           "Reader Preference Submission deadline must be after Student Preference Submission deadline",
         path: ["readerPreferenceSubmissionDeadline"],
       },

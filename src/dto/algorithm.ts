@@ -9,7 +9,7 @@ import {
 } from "@/config/algorithms";
 import { matchingResultDtoSchema } from "@/lib/validations/matching";
 
-export const algorithmFlagSchema = z.nativeEnum(AlgorithmFlag);
+export const algorithmFlagSchema = z.enum(AlgorithmFlag);
 
 export const algorithmDtoSchema = z.object({
   id: z.string(),
@@ -51,7 +51,7 @@ export function buildNewAlgorithmSchema(takenNames: Set<string>) {
 
   return z.object({
     displayName: z
-      .string({ required_error: "Please select an Algorithm Name" })
+      .string("Please select an Algorithm Name")
       .refine((item) => !allTakenNames.has(item), "This name is already taken"),
     flag1: algorithmFlagSchema,
     flag2: algorithmFlagSchema.optional(),
