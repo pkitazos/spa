@@ -1,4 +1,26 @@
 {
   "objectWrap": "collapse",
-  "plugins": ["prettier-plugin-tailwindcss"]
+  "plugins": [
+    "prettier-plugin-tailwindcss",
+    "@trivago/prettier-plugin-sort-imports"
+  ],
+  "importOrderSeparation": true,
+  "importOrder": [
+    "^react",
+    "<THIRD_PARTY_MODULES>",
+    "^(@/config)(/.*|$)",
+    "^(@/dto)(/.*|$)",
+    "^(@/data-objects)(/.*|$)",
+    "^(@/db)(/.*|$)",
+    "^(@/server)(/.*|$)",
+    "^(@/components)(/.*|$)",
+    "^(@/lib)(/.*|$)",
+    "^\\u0000",
+    "^\\.\\.(?!/?$)",
+    "^\\.\\./?$",
+    "^\\./(?=.*/)(?!/?$)",
+    "^\\.(?!/?$)",
+    "^\\./?$",
+    "^.+\\.?(css)$"
+  ]
 }
