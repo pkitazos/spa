@@ -745,21 +745,8 @@ export class AllocationInstance extends DataObject {
 
   // --- side panel tab methods
   public async getAdminTabs() {
-    const { stage, parentInstanceId } = await this.get();
-    const stageTabs = ADMIN_TABS_BY_STAGE[stage];
-
-    if (stage === Stage.ALLOCATION_PUBLICATION) {
-      if (parentInstanceId) {
-        return stageTabs.toSpliced(3, 0, PAGES.mergeInstance);
-      }
-
-      const notForked = !(await this.getChildInstance());
-      if (notForked) {
-        return stageTabs.toSpliced(3, 0, PAGES.forkInstance);
-      }
-    }
-
-    return stageTabs;
+    const { stage } = await this.get();
+    return ADMIN_TABS_BY_STAGE[stage];
   }
 
   public async getStudentTabs(canStudentBid: boolean) {

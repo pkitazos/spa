@@ -88,16 +88,6 @@ export const PAGES = {
     href: "manage-user-access",
     icon: "user-cog",
   },
-  forkInstance: {
-    title: "Fork Instance",
-    href: "fork-instance",
-    icon: "split",
-  },
-  mergeInstance: {
-    title: "Merge Instance",
-    href: "merge-instance",
-    icon: "merge",
-  },
   exportToCSV: {
     title: "Export to CSV",
     href: "export-to-csv",

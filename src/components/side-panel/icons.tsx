@@ -14,13 +14,11 @@ import {
   HomeIcon,
   LayersIcon,
   ListChecksIcon,
-  MergeIcon,
   MousePointerSquareIcon,
   School2Icon,
   ServerIcon,
   SettingsIcon,
   ShuffleIcon,
-  SplitIcon,
   SquareKanbanIcon,
   UserCog2,
   UserPlusIcon,
@@ -74,9 +72,6 @@ export function Icon({ type }: { type: string }) {
     case "list-checks":
       return <ListChecksIcon className="mr-2 h-4 w-4" />;
 
-    case "merge":
-      return <MergeIcon className="mr-2 h-4 w-4" />;
-
     case "mouse-pointer":
       return <MousePointerSquareIcon className="mr-2 h-4 w-4" />;
 
@@ -88,9 +83,6 @@ export function Icon({ type }: { type: string }) {
 
     case "shuffle":
       return <ShuffleIcon className="mr-2 h-4 w-4" />;
-
-    case "split":
-      return <SplitIcon className="mr-2 h-4 w-4" />;
 
     case "square-kanban":
       return <SquareKanbanIcon className="mr-2 h-4 w-4" />;

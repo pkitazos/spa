@@ -38,8 +38,6 @@ export const ADMIN_TABS = [
   PAGES.preferenceStatistics,
   PAGES.manualAllocations,
   PAGES.allocationOverview,
-  PAGES.forkInstance,
-  PAGES.mergeInstance,
   PAGES.exportToCSV,
   PAGES.multiRoleSupervisorTasks,
 ];

@@ -125,37 +125,3 @@ export function buildInstanceFormSchema(takenNames: Set<string>) {
       { error: "Flags must have distinct values", path: ["flags.0.title"] },
     );
 }
-
-const baseForkedSchema = z.object({
-  displayName: z.string().min(1, "Please enter a name"),
-  studentPreferenceSubmissionDeadline: z.date(),
-  projectSubmissionDeadline: z.date(),
-});
-
-export const forkedInstanceSchema = baseForkedSchema;
-
-export type ForkedInstanceDetails = z.infer<typeof baseForkedSchema>;
-
-export function buildForkedInstanceSchema(takenNames: Set<string>) {
-  return baseForkedSchema
-    .refine((x) => !takenNames.has(x.displayName), {
-      error: "This name is already taken",
-      path: ["displayName"],
-    })
-    .refine((x) => isAfter(x.projectSubmissionDeadline, new Date()), {
-      error: "Project Submission Deadline must be after today",
-      path: ["projectSubmissionDeadline"],
-    })
-    .refine(
-      (x) =>
-        isAfter(
-          x.studentPreferenceSubmissionDeadline,
-          x.projectSubmissionDeadline,
-        ),
-      {
-        error:
-          "Preference Submission deadline can't be before Project Upload deadline",
-        path: ["preferenceSubmissionDeadline"],
-      },
-    );
-}
