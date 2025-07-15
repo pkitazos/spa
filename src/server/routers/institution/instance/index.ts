@@ -219,9 +219,9 @@ export const instanceRouter = createTRPCRouter({
           return LinkUserResult.PRE_EXISTING;
         }
 
-        const userExists = institution.userExists(newSupervisor.id);
+        const userExists = await institution.userExists(newSupervisor.id);
 
-        if (!userExists) institution.createUser(newSupervisor);
+        if (!userExists) await institution.createUser(newSupervisor);
 
         await instance.linkUser(newSupervisor);
         await instance.linkSupervisor(newSupervisor);
@@ -335,9 +335,9 @@ export const instanceRouter = createTRPCRouter({
           return LinkUserResult.PRE_EXISTING;
         }
 
-        const userExists = institution.userExists(newStudent.id);
+        const userExists = await institution.userExists(newStudent.id);
 
-        if (!userExists) institution.createUser(newStudent);
+        if (!userExists) await institution.createUser(newStudent);
 
         await instance.linkUser(newStudent);
         await instance.linkStudents([newStudent]);

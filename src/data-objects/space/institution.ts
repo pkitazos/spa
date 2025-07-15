@@ -35,12 +35,12 @@ export class Institution extends DataObject {
     return instances.map(T.toAllocationInstanceDTO);
   }
 
-  public async createUser(data: UserDTO): Promise<void> {
-    this.db.user.create({ data });
+  public async createUser({ id, name, email }: UserDTO): Promise<void> {
+    await this.db.user.create({ data: { id, name, email } });
   }
 
   public async createUsers(users: UserDTO[]): Promise<void> {
-    this.db.user.createMany({ data: users, skipDuplicates: true });
+    await this.db.user.createMany({ data: users, skipDuplicates: true });
   }
 
   public async userExists(id: string): Promise<boolean> {

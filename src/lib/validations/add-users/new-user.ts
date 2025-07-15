@@ -48,7 +48,7 @@ export const newSupervisorSchema = z
     ({ projectTarget, projectUpperQuota }) =>
       projectTarget <= projectUpperQuota,
     {
-      message: "Project target can't be greater than the project upper quota",
+      error: "Project target can't be greater than the project upper quota",
       path: ["projectTarget"],
     },
   );
