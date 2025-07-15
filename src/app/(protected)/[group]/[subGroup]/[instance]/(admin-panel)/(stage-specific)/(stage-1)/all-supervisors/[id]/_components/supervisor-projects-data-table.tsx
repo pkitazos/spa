@@ -7,15 +7,15 @@ import DataTable from "@/components/ui/data-table/data-table";
 import { useDataTableProjectFilters } from "@/components/ui/data-table/data-table-context";
 
 import { api } from "@/lib/trpc/client";
-import { SupervisorProjectDto } from "@/lib/validations/dto/project";
 
 import { useSupervisorProjectsColumns } from "./supervisor-projects-columns";
 import { toPP3 } from "@/lib/utils/general/instance-params";
+import { ProjectAllocationStatus, ProjectDTO, StudentDTO } from "@/dto";
 
 export function SupervisorProjectsDataTable({
   data,
 }: {
-  data: SupervisorProjectDto[];
+  data: { project: ProjectDTO; allocatedStudent?: StudentDTO }[];
 }) {
   const params = useInstanceParams();
   const router = useRouter();
@@ -66,10 +66,15 @@ export function SupervisorProjectsDataTable({
           columnId: "Student",
           title: "Allocation Status",
           options: [
-            { id: "1", title: "Algorithm Allocated" },
-            { id: "2", title: "Pre-allocated" },
-            { id: "3", title: "Allocated" },
-            { id: "0", title: "Unallocated" },
+            {
+              id: ProjectAllocationStatus.ALGORITHMIC,
+              title: "Algorithm Allocated",
+            },
+            {
+              id: ProjectAllocationStatus.PRE_ALLOCATED,
+              title: "Pre-allocated",
+            },
+            { id: ProjectAllocationStatus.UNALLOCATED, title: "Unallocated" },
           ],
         },
       ]}

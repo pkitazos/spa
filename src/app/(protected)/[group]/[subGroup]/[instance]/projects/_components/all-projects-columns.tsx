@@ -11,7 +11,10 @@ import Link from "next/link";
 
 import { AccessControl } from "@/components/access-control";
 import { ExportCSVButton } from "@/components/export-csv";
-import { useInstancePath, useInstanceStage } from "@/components/params-context";
+import {
+  useInstanceStage,
+  usePathInInstance,
+} from "@/components/params-context";
 import { StudentPreferenceActionSubMenu } from "@/components/student-preference-action-menu";
 import { TagType } from "@/components/tag/tag-input";
 import { Badge, badgeVariants } from "@/components/ui/badge";
@@ -36,12 +39,14 @@ import {
 import { cn } from "@/lib/utils";
 import { stageIn } from "@/lib/utils/permissions/stage-check";
 import { User } from "@/lib/validations/auth";
-import { ProjectTableDataDto } from "@/lib/validations/dto/project";
 import { StudentPreferenceType } from "@/lib/validations/student-preference";
 
 import { spacesLabels } from "@/config/spaces";
 import { PreferenceType, Role, Stage } from "@/db/types";
 import { PAGES } from "@/config/pages";
+import { ProjectDTO, SupervisorDTO } from "@/dto";
+
+type ProjectData = { project: ProjectDTO; supervisor: SupervisorDTO };
 
 export function useAllProjectsColumns({
   user,
@@ -67,22 +72,22 @@ export function useAllProjectsColumns({
     newType: StudentPreferenceType,
     projectIds: string[],
   ) => Promise<void>;
-}): ColumnDef<ProjectTableDataDto>[] {
-  const instancePath = useInstancePath();
+}): ColumnDef<ProjectData>[] {
+  const { getPath } = usePathInInstance();
   const stage = useInstanceStage();
 
-  const selectCol = getSelectColumn<ProjectTableDataDto>();
+  const selectCol = getSelectColumn<ProjectData>();
 
-  const baseCols: ColumnDef<ProjectTableDataDto>[] = [
+  const baseCols: ColumnDef<ProjectData>[] = [
     {
       id: "Title",
-      accessorFn: ({ title }) => title,
+      accessorFn: ({ project }) => project.title,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Title" />
       ),
       cell: ({
         row: {
-          original: { id, title },
+          original: { project },
         },
       }) => (
         <Link
@@ -90,9 +95,9 @@ export function useAllProjectsColumns({
             buttonVariants({ variant: "link" }),
             "inline-block h-max min-w-60 px-0 text-start",
           )}
-          href={`${instancePath}/projects/${id}`}
+          href={getPath(`projects/${project.id}`)}
         >
-          {title}
+          {project.title}
         </Link>
       ),
     },
@@ -104,25 +109,23 @@ export function useAllProjectsColumns({
       ),
       cell: ({
         row: {
-          original: {
-            supervisor: { id, name },
-          },
+          original: { supervisor },
         },
       }) =>
         roles.has(Role.ADMIN) ? (
           <Link
             className={buttonVariants({ variant: "link" })}
-            href={`${instancePath}/${PAGES.allSupervisors.href}/${id}`}
+            href={getPath(`${PAGES.allSupervisors.href}/${supervisor.id}`)}
           >
-            {name}
+            {supervisor.name}
           </Link>
         ) : (
-          <p className="font-medium">{name}</p>
+          <p className="font-medium">{supervisor.name}</p>
         ),
     },
     {
       id: "Flags",
-      accessorFn: (row) => row.flags,
+      accessorFn: (row) => row.project.flags,
       header: () => <div className="text-center">Flags</div>,
       filterFn: (row, columnId, value) => {
         const ids = value as string[];
@@ -131,20 +134,20 @@ export function useAllProjectsColumns({
       },
       cell: ({
         row: {
-          original: { flags },
+          original: { project },
         },
       }) => (
         <div className="flex flex-col gap-2">
-          {flags.length > 2 ? (
+          {project.flags.length > 2 ? (
             <>
-              <Badge className="w-fit" key={flags[0]!.id}>
-                {flags[0]!.title}
+              <Badge className="w-fit" key={project.flags[0]!.id}>
+                {project.flags[0]!.title}
               </Badge>
               <WithTooltip
                 side="right"
                 tip={
                   <ul className="flex list-disc flex-col gap-1 p-2 pl-1">
-                    {flags.slice(1).map((flag) => (
+                    {project.flags.slice(1).map((flag) => (
                       <Badge className="w-fit" key={flag.id}>
                         {flag.title}
                       </Badge>
@@ -153,12 +156,12 @@ export function useAllProjectsColumns({
                 }
               >
                 <div className={cn(badgeVariants(), "w-fit font-normal")}>
-                  {flags.length - 1}+
+                  {project.flags.length - 1}+
                 </div>
               </WithTooltip>
             </>
           ) : (
-            flags.map((flag) => (
+            project.flags.map((flag) => (
               <Badge className="w-fit" key={flag.id}>
                 {flag.title}
               </Badge>
@@ -169,7 +172,7 @@ export function useAllProjectsColumns({
     },
     {
       id: "Keywords",
-      accessorFn: (row) => row.tags,
+      accessorFn: (row) => row.project.tags,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Keywords" />
       ),
@@ -180,20 +183,24 @@ export function useAllProjectsColumns({
       },
       cell: ({
         row: {
-          original: { tags },
+          original: { project },
         },
       }) => (
         <div className="flex flex-col gap-2">
-          {tags.length > 2 ? (
+          {project.tags.length > 2 ? (
             <>
-              <Badge variant="outline" className="w-fit" key={tags[0]!.id}>
-                {tags[0]!.title}
+              <Badge
+                variant="outline"
+                className="w-fit"
+                key={project.tags[0]!.id}
+              >
+                {project.tags[0]!.title}
               </Badge>
               <WithTooltip
                 side="right"
                 tip={
                   <ul className="flex list-disc flex-col gap-1 p-2 pl-1">
-                    {tags.slice(1).map((tag) => (
+                    {project.tags.slice(1).map((tag) => (
                       <Badge variant="outline" className="w-fit" key={tag.id}>
                         {tag.title}
                       </Badge>
@@ -207,12 +214,12 @@ export function useAllProjectsColumns({
                     "w-fit font-normal",
                   )}
                 >
-                  {tags.length - 1}+
+                  {project.tags.length - 1}+
                 </div>
               </WithTooltip>
             </>
           ) : (
-            tags.map((tag) => (
+            project.tags.map((tag) => (
               <Badge variant="outline" className="w-fit" key={tag.id}>
                 {tag.title}
               </Badge>
@@ -230,18 +237,18 @@ export function useAllProjectsColumns({
 
         const selectedProjectIds = table
           .getSelectedRowModel()
-          .rows.map((e) => e.original.id);
+          .rows.map((e) => e.original.project.id);
 
         const data = table
           .getSelectedRowModel()
           .rows.map((e) => [
-            e.original.title,
-            e.original.description,
-            e.original.specialTechnicalRequirements,
+            e.original.project.title,
+            e.original.project.description,
+            e.original.project.specialTechnicalRequirements,
             e.original.supervisor.name,
             e.original.supervisor.email,
-            e.original.flags.map((f) => f.title).join("; "),
-            e.original.tags.map((t) => t.title).join("; "),
+            e.original.project.flags.map((f) => f.title).join("; "),
+            e.original.project.tags.map((t) => t.title).join("; "),
           ]);
 
         if (someSelected && !hasSelfDefinedProject)
@@ -317,7 +324,7 @@ export function useAllProjectsColumns({
         return <ActionColumnLabel />;
       },
       cell: ({ row, table }) => {
-        const project = row.original;
+        const project = row.original.project;
         const supervisor = row.original.supervisor;
 
         async function handleDelete() {
@@ -347,7 +354,7 @@ export function useAllProjectsColumns({
                   <DropdownMenuItem className="group/item">
                     <Link
                       className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                      href={`${instancePath}/projects/${project.id}`}
+                      href={getPath(`projects/${project.id}`)}
                     >
                       <CornerDownRightIcon className="h-4 w-4" />
                       <p className="flex items-center">
@@ -382,7 +389,7 @@ export function useAllProjectsColumns({
                     <DropdownMenuItem className="group/item">
                       <Link
                         className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                        href={`${instancePath}/projects/${project.id}/edit`}
+                        href={getPath(`projects/${project.id}/edit`)}
                       >
                         <PenIcon className="h-4 w-4" />
                         <span>Edit Project details</span>

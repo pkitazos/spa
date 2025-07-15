@@ -99,41 +99,6 @@ export const projectRouter = createTRPCRouter({
       },
     ),
 
-  // TODO rename + review output type
-  getAllForStudentPreferences: procedure.instance.user
-    .input(z.object({ studentId: z.string() }))
-    .output(
-      z.array(
-        z.object({
-          id: z.string(),
-          title: z.string(),
-          flags: z.array(flagDtoSchema),
-        }),
-      ),
-    )
-    .query(async ({ ctx: { instance }, input: { studentId } }) => {
-      const projectData = await instance.getProjectDetails();
-
-      const student = await instance.getStudent(studentId);
-      const studentData = await student.get();
-      const preferences = await student.getAllDraftPreferences();
-
-      const preferenceIds = new Set(preferences.map(({ project: p }) => p.id));
-
-      return projectData
-        .filter((p) => {
-          if (preferenceIds.has(p.project.id)) return false;
-          const projectFlags = new Set(p.project.flags.map((f) => f.title));
-          const studentFlags = new Set(studentData.flags.map((f) => f.title));
-          return studentFlags.intersection(projectFlags).size !== 0;
-        })
-        .map((p) => ({
-          id: p.project.id,
-          title: p.project.title,
-          flags: p.project.flags,
-        }));
-    }),
-
   // BREAKING input/output type
   getAllForUser: procedure.instance.user
     .output(

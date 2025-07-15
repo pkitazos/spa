@@ -15,13 +15,13 @@ import { useDataTableProjectFilters } from "@/components/ui/data-table/data-tabl
 import { api } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { User } from "@/lib/validations/auth";
-import { ProjectTableDataDto } from "@/lib/validations/dto/project";
 import { StudentPreferenceType } from "@/lib/validations/student-preference";
 
 import { useAllProjectsColumns } from "./all-projects-columns";
 
 import { PreferenceType, Role } from "@/db/types";
 import { toPP3 } from "@/lib/utils/general/instance-params";
+import { ProjectDTO, SupervisorDTO } from "@/dto";
 
 export function AllProjectsDataTable({
   data,
@@ -30,7 +30,7 @@ export function AllProjectsDataTable({
   projectPreferences,
   hasSelfDefinedProject,
 }: {
-  data: ProjectTableDataDto[];
+  data: { project: ProjectDTO; supervisor: SupervisorDTO }[];
   user: User;
   roles: Set<Role>;
   projectPreferences: Record<string, PreferenceType>;

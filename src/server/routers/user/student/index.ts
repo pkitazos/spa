@@ -227,4 +227,25 @@ export const studentRouter = createTRPCRouter({
 
       await instance.unlinkStudents(studentIds);
     }),
+
+  getSuitableProjects: procedure.instance.subGroupAdmin
+    .input(z.object({ studentId: z.string() }))
+    .output(z.array(projectDtoSchema))
+    .query(async ({ ctx: { instance }, input: { studentId } }) => {
+      const student = await instance.getStudent(studentId);
+      const { flags } = await student.get();
+      const preferences = await student.getAllDraftPreferences();
+      const preferenceIds = new Set(preferences.map(({ project: p }) => p.id));
+
+      const projectData = await instance.getProjectDetails();
+
+      return projectData
+        .filter((p) => {
+          if (preferenceIds.has(p.project.id)) return false;
+          const projectFlags = new Set(p.project.flags.map((f) => f.title));
+          const studentFlags = new Set(flags.map((f) => f.title));
+          return studentFlags.intersection(projectFlags).size !== 0;
+        })
+        .map(({ project }) => project);
+    }),
 });
