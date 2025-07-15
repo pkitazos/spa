@@ -52,7 +52,6 @@ model AllocationInstance {
   stage                               Stage              @default(SETUP)
   // ---
   selectedAlgId                       String?            @map("selected_alg_id")
-  parentInstanceId                    String?            @map("parent_instance_id")
   // supervisor details
   projectSubmissionDeadline           DateTime           @map("project_submission_deadline")
   supervisorAllocationAccess          Boolean            @default(false) @map("supervisor_allocation_access")

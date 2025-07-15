@@ -10,7 +10,7 @@ import {
   ArrowUpIcon,
   EyeOffIcon,
   Search,
-  X,
+  XIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -64,7 +64,7 @@ export function DataTableColumnHeader<TData, TValue>({
         <DropdownMenuContent className="backdrop-blur-lg" align="start">
           {column.getIsSorted() && (
             <DropdownMenuItem onClick={() => column.clearSorting()}>
-              <X className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
+              <XIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
               Clear
             </DropdownMenuItem>
           )}

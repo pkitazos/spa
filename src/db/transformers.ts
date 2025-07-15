@@ -104,7 +104,6 @@ export class Transformers {
       displayName: data.displayName,
       stage: data.stage,
       selectedAlgConfigId: data.selectedAlgId ?? undefined,
-      parentInstanceId: data.parentInstanceId ?? undefined,
       projectSubmissionDeadline: data.projectSubmissionDeadline,
       supervisorAllocationAccess: data.supervisorAllocationAccess,
       minStudentPreferences: data.minStudentPreferences,

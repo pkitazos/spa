@@ -11,6 +11,8 @@ type InstanceData = { params: InstanceParams; stage: Stage; roles: Set<Role> };
 
 const InstanceContext = createContext<InstanceData | undefined>(undefined);
 
+// move this stuff
+
 export function InstanceParamsProvider({
   children,
   instance,

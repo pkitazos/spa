@@ -22,7 +22,6 @@ import {
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { setDiff } from "@/lib/utils/general/set-difference";
 import { InstanceParams } from "@/lib/validations/params";
-import { SupervisorProjectSubmissionDetails } from "@/lib/validations/supervisor-project-submission-details";
 import { TabType } from "@/lib/validations/tabs";
 
 import { MatchingAlgorithm } from "../matching-algorithm";
@@ -131,37 +130,6 @@ export class AllocationInstance extends DataObject {
     return await StudentProjectAllocationData.fromDB(this.db, this.params);
   }
 
-  public async getParentInstance(): Promise<AllocationInstance> {
-    const { parentInstanceId } = await this.get();
-
-    if (!parentInstanceId) throw new Error("No parent instance found");
-
-    return new AllocationInstance(this.db, {
-      ...this.params,
-      instance: parentInstanceId,
-    });
-  }
-
-  public async getChildInstance(): Promise<AllocationInstance | undefined> {
-    const childData = await this.db.allocationInstance.findFirst({
-      where: {
-        parentInstanceId: this.params.instance,
-        allocationGroupId: this.params.group,
-        allocationSubGroupId: this.params.subGroup,
-      },
-    });
-
-    if (!childData) return undefined;
-
-    const childInstance = new AllocationInstance(this.db, {
-      ...this.params,
-      instance: childData.id,
-    });
-
-    childInstance._data = T.toAllocationInstanceDTO(childData);
-
-    return childInstance;
-  }
   // ---------------------------------------------------------------------------
   public async createAlgorithm(
     data: Omit<AlgorithmDTO, "id">,
@@ -816,7 +784,13 @@ export class AllocationInstance extends DataObject {
 
   // ---
   public async getSupervisorSubmissionDetails(): Promise<
-    SupervisorProjectSubmissionDetails[]
+    {
+      supervisor: SupervisorDTO;
+      submittedProjectsCount: number;
+      allocatedCount: number;
+      submissionTarget: number;
+      targetMet: boolean;
+    }[]
   > {
     const data = await this.db.supervisorDetails.findMany({
       where: expand(this.params),
@@ -827,22 +801,22 @@ export class AllocationInstance extends DataObject {
       orderBy: { userId: "asc" },
     });
 
-    return data.map(({ projects, projectAllocationTarget, ...s }) => {
+    return data.map(({ projects, ...s }) => {
       const allocatedCount = projects
         .map((p) => p.studentAllocations.length)
         .reduce((a, b) => a + b, 0);
 
+      const submissionTarget = computeProjectSubmissionTarget(
+        s.projectAllocationTarget,
+        allocatedCount,
+      );
+
       return {
-        userId: s.userInInstance.user.id,
-        name: s.userInInstance.user.name,
-        email: s.userInInstance.user.email,
-        projectAllocationTarget,
+        supervisor: T.toSupervisorDTO(s),
         allocatedCount,
         submittedProjectsCount: projects.length,
-        submissionTarget: computeProjectSubmissionTarget(
-          projectAllocationTarget,
-          allocatedCount,
-        ),
+        submissionTarget,
+        targetMet: projects.length >= submissionTarget,
       };
     });
   }

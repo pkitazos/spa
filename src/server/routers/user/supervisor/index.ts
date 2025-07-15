@@ -91,9 +91,6 @@ export const supervisorRouter = createTRPCRouter({
       };
     }),
 
-  // ? not sure about the output schema definition here
-  // TODO consider renaming e.g. projectStats?
-  // TODO split
   projectStats: procedure.instance.supervisor
     .output(
       z.object({
@@ -102,29 +99,14 @@ export const supervisorRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx: { instance, user } }) => {
-      const { parentInstanceId } = await instance.get();
-
       // TODO: this call returns allocated students and it does not have to
       // so the name is lying here
       const allProjects = await user.getProjects();
       const { projectTarget: target } = await user.getCapacityDetails();
 
-      let totalCount: number;
-      if (parentInstanceId) {
-        const forkedPreAllocatedCount = allProjects.reduce(
-          (acc, val) => (val.project.preAllocatedStudentId ? acc + 1 : acc),
-          0,
-        );
-
-        const parentCount =
-          await user.countAllocationsInParent(parentInstanceId);
-
-        totalCount = forkedPreAllocatedCount + parentCount;
-      } else {
-        totalCount = await user
-          .getSupervisionAllocations()
-          .then((allocations) => allocations.length);
-      }
+      const totalCount = await user
+        .getSupervisionAllocations()
+        .then((allocations) => allocations.length);
 
       return {
         currentSubmissionCount: allProjects.length,

@@ -2,14 +2,18 @@
 
 import DataTable from "@/components/ui/data-table/data-table";
 
-import { ProjectSubmissionDto } from "@/lib/validations/dto/project";
-
 import { useProjectSubmissionColumns } from "./project-submissions-columns";
+import { SupervisorDTO } from "@/dto";
 
 export function ProjectSubmissionsDataTable({
   data,
 }: {
-  data: ProjectSubmissionDto[];
+  data: {
+    supervisor: SupervisorDTO;
+    submittedProjectsCount: number;
+    submissionTarget: number;
+    targetMet: boolean;
+  }[];
 }) {
   const columns = useProjectSubmissionColumns();
 

@@ -24,7 +24,6 @@ export const instanceDtoSchema = z.object({
   displayName: z.string(),
   stage: stageSchema,
   selectedAlgConfigId: z.string().optional(),
-  parentInstanceId: z.string().optional(),
   projectSubmissionDeadline: z.date(),
   supervisorAllocationAccess: z.boolean(),
   minStudentPreferences: z.number(),

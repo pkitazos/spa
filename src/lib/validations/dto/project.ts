@@ -1,6 +1,7 @@
 import { z } from "zod";
-
 import { TagType, tagTypeSchema } from "@/components/tag/tag-input";
+
+// TODO: deprecate this whole file
 
 export const projectTableDataDtoSchema = z.object({
   id: z.string(),
@@ -13,17 +14,6 @@ export const projectTableDataDtoSchema = z.object({
 });
 
 export type ProjectTableDataDto = z.infer<typeof projectTableDataDtoSchema>;
-
-export const projectSubmissionDtoSchema = z.object({
-  name: z.string(),
-  email: z.string(),
-  userId: z.string(),
-  submittedProjectsCount: z.number(),
-  submissionTarget: z.number(),
-  targetMet: z.boolean(),
-});
-
-export type ProjectSubmissionDto = z.infer<typeof projectSubmissionDtoSchema>;
 
 export const newStudentProjectDtoSchema = z.object({
   id: z.string(),
