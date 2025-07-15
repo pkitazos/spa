@@ -5,20 +5,33 @@ import {
   ProjectAllocationStatus,
 } from "@/dto";
 
-export enum ValidationWarningType {
-  FlagMismatch = "flag-mismatch",
-  ExceedsTarget = "exceeds-target",
-  ExceedsQuota = "exceeds-quota",
-  AlreadyAllocated = "already-allocated",
-  SupervisorChange = "supervisor-change",
-  ProjectAllocated = "project-allocated",
-  ProjectPreAllocated = "project-pre-allocated",
-}
+export const ValidationWarningType = {
+  /** Student flag and Project flags are incompatible */
+  FLAG_MISMATCH: "flag-mismatch",
+  /** Allocating to this Supervisor will exceed their supervision target */
+  EXCEEDS_TARGET: "exceeds-target",
+  /** Allocating to this Supervisor will exceed their supervision upper quota */
+  EXCEEDS_QUOTA: "exceeds-quota",
+  /** This Student already has a different Project allocation */
+  ALREADY_ALLOCATED: "already-allocated",
+  /** Allocating Project to a different Supervisor */
+  SUPERVISOR_CHANGE: "supervisor-change",
+  /** This Project is already allocated to a different Student */
+  PROJECT_ALLOCATED: "project-allocated",
+  /** This Project was self-defined by a different Student */
+  PROJECT_PRE_ALLOCATED: "project-pre-allocated",
+} as const;
 
-export enum ValidationWarningSeverity {
-  Warning = "warning",
-  Error = "error",
-}
+export type ValidationWarningType =
+  (typeof ValidationWarningType)[keyof typeof ValidationWarningType];
+
+export const ValidationWarningSeverity = {
+  WARNING: "warning",
+  ERROR: "error",
+} as const;
+
+export type ValidationWarningSeverity =
+  (typeof ValidationWarningSeverity)[keyof typeof ValidationWarningSeverity];
 
 export type ValidationWarning = {
   type: ValidationWarningType;

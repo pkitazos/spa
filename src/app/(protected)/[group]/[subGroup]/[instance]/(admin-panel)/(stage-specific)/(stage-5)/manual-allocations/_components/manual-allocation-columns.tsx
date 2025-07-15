@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { AlertTriangle, Info, RotateCcw, Save } from "lucide-react";
+import { RotateCcw, Save } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -13,20 +13,19 @@ import {
   ManualAllocationStudent,
   ManualAllocationProject,
   ManualAllocationSupervisor,
-  ValidationWarningSeverity,
 } from "./manual-allocation-types";
 import Link from "next/link";
 import { usePathInInstance } from "@/components/params-context";
 import { PAGES } from "@/config/pages";
 import { cn } from "@/lib/utils";
+import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 type ManualAllocationColumnsProps = {
   projects: ManualAllocationProject[];
   supervisors: ManualAllocationSupervisor[];
   onUpdateAllocation: (
     studentId: string,
-    field: "project" | "supervisor",
-    value?: string,
+    { projectId, supervisorId }: { projectId?: string; supervisorId?: string },
   ) => void;
   onRemoveAllocation: (studentId: string) => void;
   onSave: (studentId: string) => Promise<void>;
@@ -108,7 +107,7 @@ export function useManualAllocationColumns({
             projects={projects}
             value={student.selectedProjectId ?? student.originalProjectId}
             onValueChange={(value) =>
-              onUpdateAllocation(student.id, "project", value ?? undefined)
+              onUpdateAllocation(student.id, { projectId: value ?? undefined })
             }
           />
         );
@@ -124,7 +123,9 @@ export function useManualAllocationColumns({
             supervisors={supervisors}
             value={student.selectedSupervisorId ?? student.originalSupervisorId}
             onValueChange={(value) =>
-              onUpdateAllocation(student.id, "supervisor", value ?? undefined)
+              onUpdateAllocation(student.id, {
+                supervisorId: value ?? undefined,
+              })
             }
           />
         );
@@ -133,59 +134,42 @@ export function useManualAllocationColumns({
     {
       id: "actions",
       header: "Actions",
-      cell: ({ row }) => {
-        const student = row.original;
-        const hasErrors = student.warnings.some(
-          (w) => w.severity === ValidationWarningSeverity.Error,
-        );
-        const hasWarnings = student.warnings.length > 0;
-
-        return (
+      cell: ({ row: { original: student } }) => (
+        <div>
           <div className="flex items-center gap-2">
-            {/* Status indicator */}
-            {student.isDirty && (
-              <div className="mr-2 flex items-center gap-1">
-                <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                <span className="text-xs font-medium text-blue-700">
-                  Pending
-                </span>
-              </div>
-            )}
-
-            {/* Warning indicator */}
-            {hasWarnings && (
-              <div className="flex items-center gap-1">
-                {hasErrors ? (
-                  <AlertTriangle className="h-4 w-4 text-red-600" />
-                ) : (
-                  <Info className="h-4 w-4 text-orange-600" />
+            <WithTooltip tip="Reset">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onReset(student.id)}
+                disabled={!student.isDirty}
+                className="h-8 w-8 p-0 "
+              >
+                <RotateCcw className="h-3 w-3" />
+              </Button>
+            </WithTooltip>
+            <WithTooltip tip="Save">
+              <Button
+                size="sm"
+                onClick={() => onSave(student.id)}
+                disabled={!student.isDirty}
+                className={cn(
+                  "h-8 w-8 bg-muted p-0 text-muted-foreground",
+                  student.isDirty && "bg-primary text-primary-foreground",
                 )}
-                <span className="text-xs text-muted-foreground">
-                  {student.warnings.length}
-                </span>
-              </div>
-            )}
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onReset(student.id)}
-              disabled={!student.isDirty}
-              className="h-8 w-8 p-0"
-            >
-              <RotateCcw className="h-3 w-3" />
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => onSave(student.id)}
-              disabled={!student.isDirty || hasErrors}
-              className="h-8 w-8 p-0"
-            >
-              <Save className="h-3 w-3" />
-            </Button>
+              >
+                <Save className="h-3 w-3" />
+              </Button>
+            </WithTooltip>
           </div>
-        );
-      },
+          {student.isDirty && (
+            <div className="mr-2 mt-3 flex items-center justify-center gap-1">
+              <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+              <span className="text-xs font-medium text-blue-700">Pending</span>
+            </div>
+          )}
+        </div>
+      ),
     },
   ];
 }

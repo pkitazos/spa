@@ -40,8 +40,7 @@ type ManualAllocationDataTableProps = {
 
   onUpdateAllocation: (
     studentId: string,
-    field: "project" | "supervisor",
-    value?: string,
+    { projectId, supervisorId }: { projectId?: string; supervisorId?: string },
   ) => void;
   onRemoveAllocation: (studentId: string) => void;
   onSave: (studentId: string) => Promise<void>;
@@ -193,10 +192,10 @@ function WarningsDisplay({
   warnings: ManualAllocationStudent["warnings"];
 }) {
   const errorWarnings = warnings.filter(
-    (w) => w.severity === ValidationWarningSeverity.Error,
+    (w) => w.severity === ValidationWarningSeverity.ERROR,
   );
   const warningMessages = warnings.filter(
-    (w) => w.severity === ValidationWarningSeverity.Warning,
+    (w) => w.severity === ValidationWarningSeverity.WARNING,
   );
 
   return (

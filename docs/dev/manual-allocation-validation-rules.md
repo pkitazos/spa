@@ -2,6 +2,8 @@
 
 This document describes the validation warnings and errors that are detected and reported during the manual student-project allocation process.
 
+Neither Errors nor Warnings currently block.
+
 ## Error Types
 
 severity: **Error**
