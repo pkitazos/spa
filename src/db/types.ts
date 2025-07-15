@@ -59,6 +59,26 @@ export const roleSchema = z.enum([
   Role.STUDENT,
 ]);
 
+export const ExpandedRole = {
+  SUPER_ADMIN: "SUPER_ADMIN",
+  GROUP_ADMIN: "GROUP_ADMIN",
+  SUB_GROUP_ADMIN: "SUB_GROUP_ADMIN",
+  SUPERVISOR: Role.SUPERVISOR,
+  READER: Role.READER,
+  STUDENT: Role.STUDENT,
+};
+
+export type ExpandedRole = (typeof ExpandedRole)[keyof typeof ExpandedRole];
+
+export const expandedRoleSchema = z.enum([
+  ExpandedRole.SUPER_ADMIN,
+  ExpandedRole.GROUP_ADMIN,
+  ExpandedRole.SUB_GROUP_ADMIN,
+  ExpandedRole.SUPERVISOR,
+  ExpandedRole.READER,
+  ExpandedRole.STUDENT,
+]);
+
 export const stageOrd = {
   [Stage.SETUP]: 1,
   [Stage.PROJECT_SUBMISSION]: 2,

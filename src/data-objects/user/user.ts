@@ -25,6 +25,7 @@ import {
   SuperAdmin,
   Supervisor,
 } from ".";
+import { PAGES } from "@/config/pages";
 
 export class User extends DataObject {
   id: string;
@@ -275,21 +276,61 @@ export class User extends DataObject {
   }
 
   public async authoriseBreadcrumbs(segments: string[]) {
-    const [group, subGroup, instance, staticSegment, id] = segments;
+    const [group, subGroup, instance, staticSegment, id, projectEdit] =
+      segments;
     const res: ValidatedSegments[] = [];
+
+    if (group === PAGES.me.href) {
+      res.push({ segment: group, access: true });
+      if (subGroup) throw new Error("Unknown Segment");
+      return res;
+    }
+
+    if (group === PAGES.superAdminPanel.href) {
+      const isSuperAdmin = await this.isSuperAdmin();
+      res.push({ segment: group, access: isSuperAdmin });
+
+      if (subGroup === PAGES.newGroup.href) {
+        res.push({ segment: subGroup, access: isSuperAdmin });
+      } else if (subGroup) throw new Error("Unknown Segment");
+
+      return res;
+    }
 
     if (group) {
       res.push({
         segment: group,
         access: await this.isGroupAdminOrBetter({ group }),
       });
+
+      if (subGroup === PAGES.newSubGroup.href) {
+        res.push({
+          segment: subGroup,
+          access: await this.isGroupAdminOrBetter({ group }),
+        });
+
+        if (instance) throw new Error("Unknown Segment");
+        return res;
+      }
     }
+
     if (group && subGroup) {
       res.push({
         segment: subGroup,
         access: await this.isSubGroupAdminOrBetter({ group, subGroup }),
       });
+
+      if (instance === PAGES.newInstance.href) {
+        res.push({
+          segment: instance,
+          access: await this.isSubGroupAdminOrBetter({ group, subGroup }),
+        });
+
+        if (staticSegment) throw new Error("Unknown Segment");
+        return res;
+      }
     }
+
     if (group && subGroup && instance) {
       res.push({
         segment: instance,
@@ -297,36 +338,62 @@ export class User extends DataObject {
       });
     }
 
-    // TODO: this doesn't yet handle users access to the /supervisors/[id] and /students/[id] routes (possibly going to be a new /readers/[id] route)
-    // users who don't have access to those pages should still see the breadcrumbs with the correct permissions to be able to navigate back to their allowed pages
-    // @pkitazos here's is a skeleton implementation - just needs you to implement the rules for when access is possible
-    if (staticSegment) {
-      res.push({ segment: staticSegment, access: true });
+    class UrlSegment {
+      public static isStaticValid(segment: string): boolean {
+        const validStaticSegment = new Set(
+          Object.values(PAGES)
+            .filter((page) => page.level === 4)
+            .map((page) => page.href),
+        );
+        return validStaticSegment.has(segment);
+      }
+
+      public static getSegmentRoles(segment: string): Set<Role> {
+        return new Set(
+          Object.values(PAGES).find((page) => page.href === segment)
+            ?.allowedRoles ?? [],
+        );
+      }
+
+      public static hasSubRoute(segment: string): boolean {
+        return (
+          Object.values(PAGES).find((page) => page.href === segment)
+            ?.hasSubRoute ?? false
+        );
+      }
     }
 
-    if (id) {
-      switch (staticSegment) {
-        case "projects":
-          res.push({ segment: id, access: true });
-          break;
+    if (staticSegment) {
+      if (!UrlSegment.isStaticValid(staticSegment)) {
+        res.push({ segment: staticSegment, access: false });
+        res.push({ segment: id, access: false });
+        return res;
+      }
 
-        case "students":
-          res.push({ segment: id, access: true });
-          break;
+      const segmentRoles = UrlSegment.getSegmentRoles(staticSegment);
+      const userRoles = await this.getRolesInInstance({
+        group,
+        subGroup,
+        instance,
+      });
 
-        case "supervisors":
-          res.push({ segment: id, access: true });
-          break;
+      const staticSegmentAccess = segmentRoles.isSupersetOf(userRoles);
 
-        case "readers":
-          res.push({ segment: id, access: true });
-          break;
+      res.push({ segment: staticSegment, access: staticSegmentAccess });
 
-        default:
-          res.push({ segment: id, access: true });
-          console.error(
-            `User.AuthoriseBreadcrumbs: Unknown static segment ${staticSegment}`,
-          );
+      if (id && UrlSegment.hasSubRoute(staticSegment)) {
+        res.push({ segment: id, access: staticSegmentAccess });
+      } else if (id && !UrlSegment.hasSubRoute(staticSegment)) {
+        throw new Error("Unknown Segment");
+      }
+
+      if (
+        projectEdit === PAGES.editProject.href &&
+        staticSegment === PAGES.allProjects.href
+      ) {
+        res.push({ segment: projectEdit, access: staticSegmentAccess });
+      } else if (projectEdit) {
+        throw new Error("Unknown Segment");
       }
     }
 
