@@ -38,7 +38,7 @@ Then run `./scripts/deploy/amps config init`.
 Make sure you run this in the root of the repository. The script checks for a `package.json` file,
 so it should error if you get this wrong.
 
-The install wizard will ask you a series of questions about how you want you're deployment configured.
+The install wizard will ask you a series of questions about how you want your deployment configured.
 Just answer them, and it will take care of it.
 
 One of the things this does is put the amps cli on the path - so you can just use
