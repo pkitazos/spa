@@ -12,7 +12,6 @@ import { projectForm } from "@/dto/project";
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
-import { computeProjectSubmissionTarget } from "@/config/submission-target";
 import {
   linkPreAllocatedStudent,
   linkProjectFlagIds,
@@ -236,30 +235,6 @@ export const projectRouter = createTRPCRouter({
       };
     }),
 
-  // ok
-  getIsForked: procedure.project.user.query(
-    async ({
-      ctx: { instance, db },
-      input: {
-        params: { projectId },
-      },
-    }) => {
-      const { parentInstanceId } = await instance.get();
-
-      const projects = await db.project.findMany({
-        where: {
-          id: projectId,
-          OR: [
-            expand(instance.params),
-            expand(instance.params, parentInstanceId),
-          ],
-        },
-      });
-
-      return projects.length === 2;
-    },
-  ),
-
   // MOVE to ac
   // ok
   getUserAccess: procedure.project.user
@@ -302,7 +277,7 @@ export const projectRouter = createTRPCRouter({
         z.object({
           student: studentDtoSchema,
           preference: z.object({
-            type: z.nativeEnum(PreferenceType).or(z.literal("SUBMITTED")),
+            type: z.enum(PreferenceType).or(z.literal("SUBMITTED")),
             rank: z.number().optional(),
           }),
         }),
@@ -557,60 +532,20 @@ export const projectRouter = createTRPCRouter({
       };
     }),
 
-  // ok
-  // TODO: change output type
   supervisorSubmissionInfo: procedure.instance.subGroupAdmin
     .output(
       z.array(
         z.object({
-          email: z.string(),
-          name: z.string(),
-          userId: z.string(),
+          supervisor: supervisorDtoSchema,
           submittedProjectsCount: z.number(),
-          projectAllocationTarget: z.number(),
           allocatedCount: z.number(),
           submissionTarget: z.number(),
           targetMet: z.boolean(),
         }),
       ),
     )
-    .query(async ({ ctx: { instance } }) => {
-      const instanceData = await instance.get();
-
-      const currentInstanceSubmissionDetails =
-        await instance.getSupervisorSubmissionDetails();
-
-      if (!instanceData.parentInstanceId) {
-        return currentInstanceSubmissionDetails.map((c) => ({
-          ...c,
-          targetMet: c.submittedProjectsCount >= c.submissionTarget,
-        }));
-      }
-
-      const parent = await instance.getParentInstance();
-      const parentInstanceSubmissionDetails =
-        await parent.getSupervisorSubmissionDetails();
-
-      const parentAllocationMap = parentInstanceSubmissionDetails.reduce(
-        (acc, val) => ({ ...acc, [val.userId]: val.submittedProjectsCount }),
-        {} as Record<string, number>,
-      );
-
-      return currentInstanceSubmissionDetails.map((f) => {
-        const newAllocatedCount =
-          f.allocatedCount + (parentAllocationMap[f.userId] ?? 0);
-
-        const newSubmissionTarget = computeProjectSubmissionTarget(
-          f.projectAllocationTarget,
-          newAllocatedCount,
-        );
-
-        return {
-          ...f,
-          allocatedCount: newAllocatedCount,
-          submissionTarget: newSubmissionTarget,
-          targetMet: f.submittedProjectsCount >= newSubmissionTarget,
-        };
-      });
-    }),
+    .query(
+      async ({ ctx: { instance } }) =>
+        await instance.getSupervisorSubmissionDetails(),
+    ),
 });

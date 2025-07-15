@@ -26,9 +26,11 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 }
 
 export default async function Page({ params }: { params: InstanceParams }) {
-  const supervisors = await api.project.supervisorSubmissionInfo({ params });
+  const submissionData = await api.project.supervisorSubmissionInfo({ params });
 
-  const incomplete = supervisors.filter((supervisor) => !supervisor.targetMet);
+  const incomplete = submissionData
+    .filter((s) => !s.targetMet)
+    .map((s) => s.supervisor);
 
   return (
     <PanelWrapper className="mt-10 flex flex-col items-start gap-16 px-12">
@@ -44,7 +46,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
               <>
                 <p>
                   <span className="font-semibold">{incomplete.length}</span> out
-                  of <span className="font-semibold">{supervisors.length}</span>{" "}
+                  of{" "}
+                  <span className="font-semibold">{submissionData.length}</span>{" "}
                   supervisors have not met their submission target
                 </p>
                 <CopyEmailsButton data={incomplete} />
@@ -60,7 +63,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
           <DatabaseIcon className="mr-2 h-6 w-6 text-indigo-500" />
           <span>All data</span>
         </SectionHeading>
-        <ProjectSubmissionsDataTable data={supervisors} />
+        <ProjectSubmissionsDataTable data={submissionData} />
       </section>
     </PanelWrapper>
   );

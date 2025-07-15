@@ -138,18 +138,6 @@ export class Supervisor extends Marker {
     }));
   }
 
-  // Probably a bad access path
-  public async countAllocationsInParent(parentInstanceId: string) {
-    const parentInstanceParams = {
-      ...this.instance.params,
-      instance: parentInstanceId,
-    };
-
-    return await new Supervisor(this.db, this.id, parentInstanceParams)
-      .getSupervisionAllocations()
-      .then((allocations) => allocations.length);
-  }
-
   public async countAllocations() {
     return await this.getSupervisionAllocations().then(
       (allocations) => allocations.length,
