@@ -39,10 +39,10 @@ export function ManualAllocationDataTableSection({
   const utils = api.useUtils();
 
   function refetchData() {
-    utils.institution.instance.getAllocatedStudents.refetch();
-    utils.institution.instance.getUnallocatedStudents.refetch();
-    utils.institution.instance.getSupervisorsWithAllocations.refetch();
-    utils.institution.instance.getProjectsWithAllocationStatus.refetch();
+    utils.institution.instance.getAllocatedStudents.invalidate();
+    utils.institution.instance.getUnallocatedStudents.invalidate();
+    utils.institution.instance.getSupervisorsWithAllocations.invalidate();
+    utils.institution.instance.getProjectsWithAllocationStatus.invalidate();
   }
 
   const { mutateAsync: api_saveAllocations } =
@@ -110,9 +110,9 @@ export function ManualAllocationDataTableSection({
       );
       if (!hasCompatibleFlag) {
         warnings.push({
-          type: ValidationWarningType.FlagMismatch,
+          type: ValidationWarningType.FLAG_MISMATCH,
           message: `Student flags (${allocation.flags.map((f) => f.title).join(", ")}) don't match project requirements (${project.flags.map((f) => f.title).join(", ")})`,
-          severity: ValidationWarningSeverity.Warning,
+          severity: ValidationWarningSeverity.WARNING,
         });
       }
 
@@ -123,17 +123,17 @@ export function ManualAllocationDataTableSection({
         project.status === ProjectAllocationStatus.RANDOM
       ) {
         warnings.push({
-          type: ValidationWarningType.ProjectAllocated,
+          type: ValidationWarningType.PROJECT_ALLOCATED,
           message: "This project is already allocated to another student",
-          severity: ValidationWarningSeverity.Error,
+          severity: ValidationWarningSeverity.ERROR,
         });
       }
 
       if (project.status === ProjectAllocationStatus.PRE_ALLOCATED) {
         warnings.push({
-          type: ValidationWarningType.ProjectPreAllocated,
+          type: ValidationWarningType.PROJECT_PRE_ALLOCATED,
           message: "This project is pre-allocated to another student",
-          severity: ValidationWarningSeverity.Error,
+          severity: ValidationWarningSeverity.ERROR,
         });
       }
 
@@ -142,25 +142,25 @@ export function ManualAllocationDataTableSection({
         supervisor.currentAllocations + supervisor.pendingAllocations;
       if (totalAllocations > supervisor.allocationTarget) {
         warnings.push({
-          type: ValidationWarningType.ExceedsTarget,
+          type: ValidationWarningType.EXCEEDS_TARGET,
           message: `Exceeds supervisor target (${totalAllocations}/${supervisor.allocationTarget})`,
-          severity: ValidationWarningSeverity.Warning,
+          severity: ValidationWarningSeverity.WARNING,
         });
       }
       if (totalAllocations > supervisor.allocationUpperBound) {
         warnings.push({
-          type: ValidationWarningType.ExceedsQuota,
+          type: ValidationWarningType.EXCEEDS_QUOTA,
           message: `Exceeds supervisor quota (${totalAllocations}/${supervisor.allocationUpperBound})`,
-          severity: ValidationWarningSeverity.Error,
+          severity: ValidationWarningSeverity.ERROR,
         });
       }
 
       // Supervisor change warning
       if (project.supervisorId !== allocation.selectedSupervisorId) {
         warnings.push({
-          type: ValidationWarningType.SupervisorChange,
+          type: ValidationWarningType.SUPERVISOR_CHANGE,
           message: "Different supervisor than project proposer",
-          severity: ValidationWarningSeverity.Warning,
+          severity: ValidationWarningSeverity.WARNING,
         });
       }
 
@@ -170,9 +170,9 @@ export function ManualAllocationDataTableSection({
         allocation.originalProjectId !== allocation.selectedProjectId
       ) {
         warnings.push({
-          type: ValidationWarningType.AlreadyAllocated,
+          type: ValidationWarningType.ALREADY_ALLOCATED,
           message: "Student already allocated to different project",
-          severity: ValidationWarningSeverity.Warning,
+          severity: ValidationWarningSeverity.WARNING,
         });
       }
 
@@ -182,23 +182,36 @@ export function ManualAllocationDataTableSection({
   );
 
   const handleUpdateAllocation = useCallback(
-    (studentId: string, field: "project" | "supervisor", id?: string) => {
+    (
+      studentId: string,
+      {
+        projectId,
+        supervisorId,
+      }: { projectId?: string; supervisorId?: string },
+    ) => {
       setStudents((prev) =>
         prev.map((student) => {
           if (student.id !== studentId) return student;
 
           let updatedStudent = { ...student };
 
-          if (field === "project") {
-            const project = id ? projects.find((p) => p.id === id) : undefined;
+          if (projectId !== undefined) {
+            const project = projectId
+              ? projects.find((p) => p.id === projectId)
+              : undefined;
 
             updatedStudent = {
               ...updatedStudent,
-              selectedProjectId: id,
+              selectedProjectId: projectId,
               selectedSupervisorId: project?.supervisorId,
             };
-          } else if (field === "supervisor") {
-            updatedStudent = { ...updatedStudent, selectedSupervisorId: id };
+          }
+
+          if (supervisorId !== undefined) {
+            updatedStudent = {
+              ...updatedStudent,
+              selectedSupervisorId: supervisorId,
+            };
           }
 
           const isDirty =
@@ -249,7 +262,19 @@ export function ManualAllocationDataTableSection({
         api_saveAllocations({ params, allocations }).then(() => {
           router.refresh();
           refetchData();
-          // todo: post-save the save changes button still shows as dirty need to manually reset the state
+          setStudents((prev) =>
+            prev.map((s) => {
+              if (s.id !== studentId) return s;
+
+              return {
+                ...s,
+                originalProjectId: s.selectedProjectId,
+                originalSupervisorId: s.selectedSupervisorId,
+                isDirty: false,
+                warnings: [],
+              };
+            }),
+          );
         }),
         {
           loading: `Saving allocation for student ${studentId}...`,
@@ -294,7 +319,20 @@ export function ManualAllocationDataTableSection({
       api_saveAllocations({ params, allocations }).then(() => {
         router.refresh();
         refetchData();
-        // todo: post-save the save changes button still shows as dirty need to manually reset the state
+        setStudents((prev) =>
+          prev.map((s) => {
+            const dirtyStudent = dirtyStudents.find((ds) => ds.id === s.id);
+            if (!dirtyStudent) return s;
+
+            return {
+              ...s,
+              originalProjectId: s.selectedProjectId,
+              originalSupervisorId: s.selectedSupervisorId,
+              isDirty: false,
+              warnings: [],
+            };
+          }),
+        );
       }),
       {
         loading: `Saving ${dirtyStudents.length} allocation(s)...`,
@@ -305,7 +343,6 @@ export function ManualAllocationDataTableSection({
   }, [students]);
 
   const handleReset = useCallback((studentId: string) => {
-    // todo: resetting a change does not correctly updated the number of unsaved changes
     setStudents((prev) =>
       prev.map((student) => {
         if (student.id !== studentId) return student;
