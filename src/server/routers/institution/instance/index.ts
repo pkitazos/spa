@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
-import { forkedInstanceSchema } from "@/lib/validations/instance-form";
 import { instanceParamsSchema } from "@/lib/validations/params";
 import { tabGroupSchema } from "@/lib/validations/tabs";
 
@@ -14,8 +13,6 @@ import { preferenceRouter } from "./preference";
 
 import { PAGES } from "@/config/pages";
 import { AllocationInstance } from "@/data-objects";
-import { forkInstanceTransaction } from "@/db/transactions/fork/transaction";
-import { mergeInstanceTrx } from "@/db/transactions/merge/transaction";
 import { AllocationMethod, Role, Stage } from "@/db/types";
 import { stageSchema } from "@/db/types";
 
@@ -739,22 +736,6 @@ export const instanceRouter = createTRPCRouter({
       }
 
       return results;
-    }),
-
-  // Pin
-  fork: procedure.instance
-    .inStage([Stage.ALLOCATION_PUBLICATION])
-    .subGroupAdmin.input(z.object({ newInstance: forkedInstanceSchema }))
-    .output(z.void())
-    .mutation(async ({ ctx, input: { params, newInstance: forked } }) => {
-      await forkInstanceTransaction(ctx.db, forked, params);
-    }),
-
-  // Pin
-  merge: procedure.instance.subGroupAdmin
-    .output(z.void())
-    .mutation(async ({ ctx, input: { params } }) => {
-      await mergeInstanceTrx(ctx.db, params);
     }),
 
   // TODO rename? e.g. getFlagTitles
