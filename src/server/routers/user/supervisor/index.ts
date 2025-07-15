@@ -16,7 +16,6 @@ import {
   StudentDTO,
   studentDtoSchema,
   supervisorDtoSchema,
-  userDtoSchema,
 } from "@/dto";
 
 export const supervisorRouter = createTRPCRouter({
@@ -27,6 +26,14 @@ export const supervisorRouter = createTRPCRouter({
       async ({ ctx: { instance }, input: { supervisorId } }) =>
         await instance.isSupervisor(supervisorId),
     ),
+
+  getById: procedure.instance.subGroupAdmin
+    .input(z.object({ supervisorId: z.string() }))
+    .output(supervisorDtoSchema)
+    .query(async ({ ctx: { instance }, input: { supervisorId } }) => {
+      const supervisor = await instance.getSupervisor(supervisorId);
+      return await supervisor.toDTO();
+    }),
 
   allocationAccess: procedure.instance.user
     .output(z.boolean())
@@ -67,28 +74,19 @@ export const supervisorRouter = createTRPCRouter({
       };
     }),
 
-  // TODO rename
-  // TODO change output schema
-  // MOVE to instance router
-  instanceData: procedure.instance.subGroupAdmin
+  instanceProjects: procedure.instance.subGroupAdmin
     .input(z.object({ supervisorId: z.string() }))
     .output(
-      // TODO compose don't extend
-      z.object({
-        supervisor: supervisorDtoSchema,
-        projects: z.array(
-          projectDtoSchema.extend({
-            allocatedStudents: z.array(userDtoSchema),
-          }),
-        ),
-      }),
+      z.array(
+        z.object({
+          project: projectDtoSchema,
+          allocatedStudent: studentDtoSchema.optional(),
+        }),
+      ),
     )
     .query(async ({ ctx: { instance }, input: { supervisorId } }) => {
       const supervisor = await instance.getSupervisor(supervisorId);
-      return {
-        supervisor: await supervisor.toDTO(),
-        projects: await supervisor.getProjectsWithDetails(),
-      };
+      return await supervisor.getProjectsWithStudentAllocation();
     }),
 
   projectStats: procedure.instance.supervisor

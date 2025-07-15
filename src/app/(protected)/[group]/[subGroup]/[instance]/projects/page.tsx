@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 export default async function Projects({ params }: { params: InstanceParams }) {
   const user = await auth();
   const roles = await api.user.roles({ params });
-  const projects = await api.project.getAllForUser({ params });
+  const projectData = await api.project.getAllForUser({ params });
 
   // TODO: fix this it's kinda janky
   let projectPreferences: Record<string, PreferenceType> = {};
@@ -43,16 +43,7 @@ export default async function Projects({ params }: { params: InstanceParams }) {
       <AllProjectsDataTable
         user={user}
         roles={roles}
-        data={projects.map((p) => ({
-          id: p.project.id,
-          description: p.project.description,
-          title: p.project.title,
-          specialTechnicalRequirements:
-            p.project.specialTechnicalRequirements ?? "",
-          flags: p.project.flags,
-          tags: p.project.tags,
-          supervisor: p.supervisor,
-        }))}
+        data={projectData}
         projectPreferences={projectPreferences}
         hasSelfDefinedProject={hasSelfDefinedProject}
       />

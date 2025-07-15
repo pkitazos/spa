@@ -41,7 +41,7 @@ export default async function Page({ params }: { params: PageParams }) {
     params,
   });
 
-  const availableProjects = await api.project.getAllForStudentPreferences({
+  const availableProjects = await api.user.student.getSuitableProjects({
     params,
     studentId,
   });

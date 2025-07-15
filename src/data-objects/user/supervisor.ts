@@ -104,7 +104,9 @@ export class Supervisor extends Marker {
     }));
   }
 
-  public async getProjectsWithDetails() {
+  public async getProjectsWithStudentAllocation(): Promise<
+    { project: ProjectDTO; allocatedStudent?: StudentDTO }[]
+  > {
     const { projects: projectData } =
       await this.db.supervisorDetails.findFirstOrThrow({
         where: { userId: this.id, ...expand(this.instance.params) },
@@ -114,7 +116,10 @@ export class Supervisor extends Marker {
               studentAllocations: {
                 include: {
                   student: {
-                    include: { userInInstance: { include: { user: true } } },
+                    include: {
+                      userInInstance: { include: { user: true } },
+                      studentFlags: { include: { flag: true } },
+                    },
                   },
                 },
               },
@@ -127,14 +132,9 @@ export class Supervisor extends Marker {
 
     return projectData.map((data) => ({
       project: T.toProjectDTO(data),
-      // TODO remove below
-      ...T.toProjectDTO(data),
-      allocatedStudents: data.studentAllocations.map((u) => ({
-        level: u.student.studentLevel,
-        ...u.student.userInInstance.user,
-      })),
-      flags: data.flagsOnProject.map((f) => T.toFlagDTO(f.flag)),
-      tags: data.tagsOnProject.map((t) => T.toTagDTO(t.tag)),
+      allocatedStudent: data.studentAllocations
+        .map(({ student }) => T.toStudentDTO(student))
+        .at(0),
     }));
   }
 

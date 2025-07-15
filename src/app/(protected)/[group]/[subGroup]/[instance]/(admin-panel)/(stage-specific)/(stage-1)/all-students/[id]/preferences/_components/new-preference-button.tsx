@@ -47,14 +47,14 @@ import {
   NewProjectPreferenceDto,
   newProjectPreferenceDtoSchema,
 } from "@/lib/validations/dto/preference";
-import { NewStudentProjectDto } from "@/lib/validations/dto/project";
 import { PageParams } from "@/lib/validations/params";
+import { ProjectDTO } from "@/dto";
 
 export function NewPreferenceButton({
   availableProjects,
   className,
 }: {
-  availableProjects: NewStudentProjectDto[];
+  availableProjects: ProjectDTO[];
   className?: ClassValue;
 }) {
   const params = useParams<PageParams>();
@@ -64,9 +64,7 @@ export function NewPreferenceButton({
 
   const form = useForm<NewProjectPreferenceDto>({
     resolver: zodResolver(newProjectPreferenceDtoSchema),
-    defaultValues: {
-      preferenceType: PreferenceType.PREFERENCE,
-    },
+    defaultValues: { preferenceType: PreferenceType.PREFERENCE },
   });
 
   const { mutateAsync: updatePreferencesAsync } =

@@ -7,19 +7,19 @@ import { BoardDetailsProvider } from "@/components/kanban-board/store";
 import { Card, CardContent } from "@/components/ui/card";
 
 import { PreferenceBoard } from "@/lib/validations/board";
-import { NewStudentProjectDto } from "@/lib/validations/dto/project";
 import { PageParams } from "@/lib/validations/params";
 
 import { KanbanBoardSection } from "./kanban-board-section";
 import { NewPreferenceButton } from "./new-preference-button";
 
 import { Stage } from "@/db/types";
+import { ProjectDTO } from "@/dto";
 
 export function CurrentBoardState({
   availableProjects,
   initialProjects,
 }: {
-  availableProjects: NewStudentProjectDto[];
+  availableProjects: ProjectDTO[];
   initialProjects: PreferenceBoard;
 }) {
   const params = useParams<PageParams>();
