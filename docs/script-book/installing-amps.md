@@ -29,6 +29,8 @@ If you're going to set up backups for logs or the database, then you will also n
 - set up a remote git repository to store each (one for logs, one for db-images).
 - configure git for root so that it has push rights for both of these.
 
+> You can test if root has a working ssh key using `ssh -T git@<your remote>`
+
 You don't need to clone these; the setup script will take care of it.
 But make sure you have their remote URLs on hand.
 
