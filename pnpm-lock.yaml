@@ -246,6 +246,9 @@ importers:
       '@total-typescript/ts-reset':
         specifier: ^0.6.1
         version: 0.6.1
+      '@trivago/prettier-plugin-sort-imports':
+        specifier: ^5.2.2
+        version: 5.2.2(prettier@3.5.3)
       '@types/node':
         specifier: 22.5.1
         version: 22.5.1
@@ -5840,12 +5843,11 @@ snapshots:
       '@babel/helper-validator-identifier': 7.27.1
       js-tokens: 4.0.0
       picocolors: 1.1.1
-    optional: true
 
   '@babel/generator@7.27.0':
     dependencies:
-      '@babel/parser': 7.27.0
-      '@babel/types': 7.27.0
+      '@babel/parser': 7.28.0
+      '@babel/types': 7.28.1
       '@jridgewell/gen-mapping': 0.3.5
       '@jridgewell/trace-mapping': 0.3.25
       jsesc: 3.1.0
@@ -5857,20 +5859,16 @@ snapshots:
       '@jridgewell/gen-mapping': 0.3.12
       '@jridgewell/trace-mapping': 0.3.29
       jsesc: 3.1.0
-    optional: true
 
-  '@babel/helper-globals@7.28.0':
-    optional: true
+  '@babel/helper-globals@7.28.0': {}
 
   '@babel/helper-string-parser@7.25.9': {}
 
-  '@babel/helper-string-parser@7.27.1':
-    optional: true
+  '@babel/helper-string-parser@7.27.1': {}
 
   '@babel/helper-validator-identifier@7.25.9': {}
 
-  '@babel/helper-validator-identifier@7.27.1':
-    optional: true
+  '@babel/helper-validator-identifier@7.27.1': {}
 
   '@babel/parser@7.24.5':
     dependencies:
@@ -5878,12 +5876,11 @@ snapshots:
 
   '@babel/parser@7.27.0':
     dependencies:
-      '@babel/types': 7.27.0
+      '@babel/types': 7.28.1
 
   '@babel/parser@7.28.0':
     dependencies:
       '@babel/types': 7.28.1
-    optional: true
 
   '@babel/runtime@7.25.0':
     dependencies:
@@ -5892,15 +5889,14 @@ snapshots:
   '@babel/template@7.27.0':
     dependencies:
       '@babel/code-frame': 7.26.2
-      '@babel/parser': 7.27.0
-      '@babel/types': 7.27.0
+      '@babel/parser': 7.28.0
+      '@babel/types': 7.28.1
 
   '@babel/template@7.27.2':
     dependencies:
       '@babel/code-frame': 7.27.1
       '@babel/parser': 7.28.0
       '@babel/types': 7.28.1
-    optional: true
 
   '@babel/traverse@7.25.6':
     dependencies:
@@ -5925,7 +5921,6 @@ snapshots:
       debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   '@babel/types@7.27.0':
     dependencies:
@@ -5936,7 +5931,6 @@ snapshots:
     dependencies:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.27.1
-    optional: true
 
   '@colors/colors@1.6.0': {}
 
@@ -6337,13 +6331,12 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.0
       '@jridgewell/trace-mapping': 0.3.29
-    optional: true
 
   '@jridgewell/gen-mapping@0.3.5':
     dependencies:
       '@jridgewell/set-array': 1.2.1
       '@jridgewell/sourcemap-codec': 1.5.0
-      '@jridgewell/trace-mapping': 0.3.25
+      '@jridgewell/trace-mapping': 0.3.29
 
   '@jridgewell/resolve-uri@3.1.2': {}
 
@@ -6360,7 +6353,6 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
-    optional: true
 
   '@jridgewell/trace-mapping@0.3.9':
     dependencies:
@@ -7438,16 +7430,15 @@ snapshots:
 
   '@trivago/prettier-plugin-sort-imports@5.2.2(prettier@3.5.3)':
     dependencies:
-      '@babel/generator': 7.27.0
-      '@babel/parser': 7.27.0
+      '@babel/generator': 7.28.0
+      '@babel/parser': 7.28.0
       '@babel/traverse': 7.28.0
-      '@babel/types': 7.27.0
+      '@babel/types': 7.28.1
       javascript-natural-sort: 0.7.1
       lodash: 4.17.21
       prettier: 3.5.3
     transitivePeerDependencies:
       - supports-color
-    optional: true
 
   '@trpc/client@11.0.0-next-beta.294(@trpc/server@11.0.0-next-beta.294)':
     dependencies:
@@ -9577,8 +9568,7 @@ snapshots:
     optionalDependencies:
       '@pkgjs/parseargs': 0.11.0
 
-  javascript-natural-sort@0.7.1:
-    optional: true
+  javascript-natural-sort@0.7.1: {}
 
   jiti@1.21.6: {}
 
@@ -9678,8 +9668,7 @@ snapshots:
 
   lodash.merge@4.6.2: {}
 
-  lodash@4.17.21:
-    optional: true
+  lodash@4.17.21: {}
 
   log-symbols@4.1.0:
     dependencies:
