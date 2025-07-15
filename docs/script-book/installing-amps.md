@@ -30,7 +30,7 @@ If you're going to set up backups for logs or the database, then you will also n
 - configure git for root so that it has push rights for both of these.
 
 You don't need to clone these; the setup script will take care of it.
-But make sure you have their remote URLs to hand.
+But make sure you have their remote URLs on hand.
 
 Once this is all sorted, you can clone the AMPS repository;
 
