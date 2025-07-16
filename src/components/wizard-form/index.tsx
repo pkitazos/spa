@@ -15,11 +15,11 @@ export type WizardStep<T> = {
   id: string;
   title: string;
   fieldsToValidate: Path<T>[];
-  render: React.FC<{}>;
+  render: React.FC;
 };
 
 export function FormWizard<
-  TSchema extends z.ZodType<any>,
+  TSchema extends z.ZodType<unknown>,
   TOut extends z.output<TSchema>,
 >({
   onSubmit,

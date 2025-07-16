@@ -3,9 +3,7 @@ import { Heading, Section, Text } from "@react-email/components";
 
 import { Layout } from "../components/layout";
 
-interface Props {}
-
-export function MarkingOverdueGeneric({}: Props) {
+export function MarkingOverdueGeneric() {
   return (
     <Layout previewText="Marking Overdue">
       <Section>
@@ -29,7 +27,5 @@ export function MarkingOverdueGeneric({}: Props) {
     </Layout>
   );
 }
-
-MarkingOverdueGeneric.PreviewProps = {} satisfies Props;
 
 export default MarkingOverdueGeneric;

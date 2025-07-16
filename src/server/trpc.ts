@@ -43,8 +43,7 @@ export const createTRPCContext = async (opts: {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
   trpcLogger.log(LogLevels.TRIVIAL, "tRPC Request", { source });
 
-  function audit(message: string, ...meta: any[]) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return
+  function audit(message: string, ...meta: Record<string, unknown>[]) {
     const data = meta.reduce((acc, val) => ({ ...acc, ...val }), {
       authorizer: user,
     });
