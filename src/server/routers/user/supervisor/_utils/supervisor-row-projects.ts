@@ -1,7 +1,8 @@
 // MOVE
 // TODO: Refactor this file to use the new DTOs
-import { ProjectDTO, projectDtoSchema, userDtoSchema } from "@/dto";
 import { z } from "zod";
+
+import { type ProjectDTO, projectDtoSchema, userDtoSchema } from "@/dto";
 
 type ProjectCapacities = {
   capacityLowerBound: number;
@@ -54,7 +55,7 @@ export function formatSupervisorRowProjects(
       return {
         ...rest,
         allocatedStudentId: preAllocatedStudentId,
-        allocatedStudentName: allocatedStudents[idx]!.name,
+        allocatedStudentName: allocatedStudents[idx].name,
       };
     }
 

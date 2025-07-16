@@ -1,7 +1,13 @@
 "use client";
+
 import { TRPCClientError } from "@trpc/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { spacesLabels } from "@/config/spaces";
+
+import { type StudentDTO } from "@/dto";
+import { type LinkUserResult } from "@/dto/result/link-user-result";
 
 import { useInstanceParams } from "@/components/params-context";
 import DataTable from "@/components/ui/data-table/data-table";
@@ -11,27 +17,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { api } from "@/lib/trpc/client";
 import { addStudentsCsvHeaders } from "@/lib/validations/add-users/csv";
-import { NewStudent } from "@/lib/validations/add-users/new-user";
+import { type NewStudent } from "@/lib/validations/add-users/new-user";
 
 import { CSVUploadButton } from "./csv-upload-button";
 import { FormSection } from "./form-section";
 import { useNewStudentColumns } from "./new-student-columns";
 
-import { spacesLabels } from "@/config/spaces";
-import { LinkUserResult } from "@/dto/result/link-user-result";
-import { StudentDTO } from "@/dto";
-
 export function AddStudentsSection() {
   const router = useRouter();
   const params = useInstanceParams();
 
-  const utils = api.useUtils();
-
-  const { data, isLoading } = api.institution.instance.getStudents.useQuery({
-    params,
-  });
-
-  const refetchData = () => utils.institution.instance.getStudents.refetch();
+  const { data, isLoading, refetch } =
+    api.institution.instance.getStudents.useQuery({ params });
 
   const { mutateAsync: addStudentAsync } =
     api.institution.instance.addStudent.useMutation();
@@ -49,9 +46,9 @@ export function AddStudentsSection() {
     };
 
     void toast.promise(
-      addStudentAsync({ params, newStudent }).then(() => {
+      addStudentAsync({ params, newStudent }).then(async () => {
         router.refresh();
-        refetchData();
+        await refetch();
       }),
       {
         loading: "Adding student...",
@@ -78,14 +75,16 @@ export function AddStudentsSection() {
       flags: [], // TODO: update form to accept flags
     }));
 
-    const res = await addStudentsAsync({ params, newStudents }).then((data) => {
-      router.refresh();
-      refetchData();
-      return data.reduce(
-        (acc, val) => ({ ...acc, [val]: (acc[val] ?? 0) + 1 }),
-        {} as Record<LinkUserResult, number>,
-      );
-    });
+    const _res = await addStudentsAsync({ params, newStudents }).then(
+      async (data) => {
+        router.refresh();
+        await refetch();
+        return data.reduce(
+          (acc, val) => ({ ...acc, [val]: (acc[val] ?? 0) + 1 }),
+          {} as Record<LinkUserResult, number>,
+        );
+      },
+    );
 
     // TODO: report status of csv upload
 
@@ -117,9 +116,9 @@ export function AddStudentsSection() {
 
   async function handleStudentRemoval(studentId: string) {
     void toast.promise(
-      removeStudentAsync({ params, studentId }).then(() => {
+      removeStudentAsync({ params, studentId }).then(async () => {
         router.refresh();
-        refetchData();
+        await refetch();
       }),
       {
         loading: "Removing student...",
@@ -134,9 +133,9 @@ export function AddStudentsSection() {
 
   async function handleStudentsRemoval(studentIds: string[]) {
     void toast.promise(
-      removeStudentsAsync({ params, studentIds }).then(() => {
+      removeStudentsAsync({ params, studentIds }).then(async () => {
         router.refresh();
-        refetchData();
+        await refetch();
       }),
       {
         loading: "Removing students...",
