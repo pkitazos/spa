@@ -1,5 +1,7 @@
 "use client";
+
 import React from "react";
+
 import { parse } from "papaparse";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -10,7 +12,7 @@ import { Input } from "@/components/ui/input";
 
 import { parseForDuplicates } from "@/lib/utils/csv/parse-for-duplicates";
 import { addStudentsCsvRowSchema } from "@/lib/validations/add-users/csv";
-import { NewStudent } from "@/lib/validations/add-users/new-user";
+import { type NewStudent } from "@/lib/validations/add-users/new-user";
 
 export function CSVUploadButton({
   handleUpload,
@@ -67,7 +69,8 @@ export function CSVUploadButton({
             );
           }
 
-          handleUpload(
+          // TODO can this be voided?
+          void handleUpload(
             uniqueRows.map((e) => ({
               fullName: e.full_name,
               institutionId: e.guid,

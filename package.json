@@ -15,6 +15,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "lint:errs": "eslint --quiet",
     "tc": "tsc",
     "test": "vitest",
     "postinstall": "prisma generate --no-hints",

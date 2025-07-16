@@ -1,6 +1,7 @@
 "use client";
+
 import { Stage } from "@prisma/client";
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
   MoreHorizontal as MoreIcon,
@@ -8,6 +9,10 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
+
+import { PAGES } from "@/config/pages";
+
+import { type StudentDTO } from "@/dto";
 
 import { AccessControl } from "@/components/access-control";
 import { useInstanceStage } from "@/components/params-context";
@@ -29,8 +34,6 @@ import {
   YesNoActionContainer,
   YesNoActionTrigger,
 } from "@/components/yes-no-action";
-import { StudentDTO } from "@/dto";
-import { PAGES } from "@/config/pages";
 
 export function useNewStudentColumns({
   removeStudent,
@@ -104,7 +107,7 @@ export function useNewStudentColumns({
       ),
       filterFn: (row, columnId, value) => {
         const selectedFilters = value as ("4" | "5")[];
-        const rowValue = row.getValue(columnId) as 4 | 5;
+        const rowValue = row.getValue(columnId);
         console.log({ selectedFilters });
         const studentLevel = rowValue.toString() as "4" | "5";
         return selectedFilters.includes(studentLevel);
