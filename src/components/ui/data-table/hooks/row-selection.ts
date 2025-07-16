@@ -1,6 +1,7 @@
-import { RowSelectionState, Updater } from "@tanstack/react-table";
-import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 import { useCallback } from "react";
+
+import { type RowSelectionState, type Updater } from "@tanstack/react-table";
+import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 
 export function useRowSelectionSearchParams() {
   const [selectedRows, setSelectedRows] = useQueryState(
@@ -14,15 +15,18 @@ export function useRowSelectionSearchParams() {
 
   const rowSelection = computeRowSelection(selectedRows);
 
-  const setRowSelection = useCallback((state: Updater<RowSelectionState>) => {
-    setSelectedRows((old) => {
-      if (typeof state === "function") {
-        state = state(computeRowSelection(old));
-      }
+  const setRowSelection = useCallback(
+    (state: Updater<RowSelectionState>) => {
+      void setSelectedRows((old) => {
+        if (typeof state === "function") {
+          state = state(computeRowSelection(old));
+        }
 
-      return Object.keys(state);
-    });
-  }, []);
+        return Object.keys(state);
+      });
+    },
+    [computeRowSelection, setSelectedRows],
+  );
 
   return [rowSelection, setRowSelection] as const;
 }

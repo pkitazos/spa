@@ -1,18 +1,19 @@
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { stageGte, stageIn } from "@/lib/utils/permissions/stage-check";
-import { projectPreferenceCardDtoSchema } from "@/lib/validations/board";
-import { studentPreferenceSchema } from "@/lib/validations/student-preference";
-
-import { procedure } from "@/server/middleware";
-import { createTRPCRouter } from "@/server/trpc";
+import { userDtoSchema } from "@/dto";
 
 import type { User, AllocationInstance } from "@/data-objects";
 
 import { Role } from "@/db/types";
 import { PreferenceType, Stage } from "@/db/types";
-import { userDtoSchema } from "@/dto";
-import { TRPCError } from "@trpc/server";
+
+import { procedure } from "@/server/middleware";
+import { createTRPCRouter } from "@/server/trpc";
+
+import { stageGte, stageIn } from "@/lib/utils/permissions/stage-check";
+import { projectPreferenceCardDtoSchema } from "@/lib/validations/board";
+import { studentPreferenceSchema } from "@/lib/validations/student-preference";
 
 export const preferenceRouter = createTRPCRouter({
   /**
@@ -25,7 +26,7 @@ export const preferenceRouter = createTRPCRouter({
         z.object({
           project: z.object({ id: z.string(), title: z.string() }),
           supervisor: userDtoSchema,
-          type: z.nativeEnum(PreferenceType),
+          type: z.enum(PreferenceType),
           rank: z.number().or(z.nan()),
         }),
       ),
@@ -331,7 +332,7 @@ async function accessControl({
 }: {
   user: User;
   instance: AllocationInstance;
-  allowedRoles: Role[keyof Role][];
+  allowedRoles: Role[];
   stageCheck: (s: Stage) => boolean;
 }) {
   const userRoles = await user.getRolesInInstance(instance.params);
@@ -340,7 +341,7 @@ async function accessControl({
   if (!roleOk) {
     return {
       ok: false,
-      message: `User ${user.id} does not have permission to access this resource, as ${Array.from(userRoles)} does not sufficiently overlap with ${allowedRoles}.`,
+      message: `User ${user.id} does not have permission to access this resource, as ${Array.from(userRoles).toString()} does not sufficiently overlap with ${allowedRoles.toString()}.`,
     };
   }
 

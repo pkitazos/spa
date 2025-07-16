@@ -1,17 +1,4 @@
-import {
-  AssessmentCriterionDTO,
-  MarkingSubmissionDTO,
-  ProjectDTO,
-  ReaderDTO,
-  StudentDTO,
-  UnitOfAssessmentDTO,
-} from "@/dto";
-import { Button, Hr, Section, Text, Heading } from "@react-email/components";
-import { Layout } from "../../components/layout";
-import { env } from "@/env";
 import { Marksheet } from "@/emails/components/marksheet";
-import { InstanceParams } from "@/lib/validations/params";
-import { format } from "@/lib/utils/date/format";
 import {
   fakeCriteria,
   fakeDeadline,
@@ -23,6 +10,22 @@ import {
   fakeSupervisorSubmission,
   fakeUnit,
 } from "@/emails/fake-data";
+import { env } from "@/env";
+import { Button, Hr, Section, Text, Heading } from "@react-email/components";
+
+import {
+  type AssessmentCriterionDTO,
+  type MarkingSubmissionDTO,
+  type ProjectDTO,
+  type ReaderDTO,
+  type StudentDTO,
+  type UnitOfAssessmentDTO,
+} from "@/dto";
+
+import { format } from "@/lib/utils/date/format";
+import { type InstanceParams } from "@/lib/validations/params";
+
+import { Layout } from "../../components/layout";
 
 interface Props {
   project: ProjectDTO;
@@ -53,8 +56,9 @@ export function SupervisorNegotiate1({
     <Layout previewText="Negotiation required">
       <Heading as="h2">{unit.title} Negotiation Required</Heading>
       <Text>
-        The grades submitted by the supervisor and reader for the project "
-        <i>{project.title}</i>" (student {student.name}, {student.id}){" "}
+        The grades submitted by the supervisor and reader for the project
+        &ldquo;
+        <i>{project.title}</i>&rdquo; (student {student.name}, {student.id}){" "}
         <strong>require negotiation</strong> between supervisor and reader.
       </Text>
       <Text>

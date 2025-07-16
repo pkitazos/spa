@@ -1,16 +1,25 @@
 "use client";
 
+import { Fragment, useCallback, useMemo, useState } from "react";
+
 import {
-  ColumnFiltersState,
+  type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ProjectMarkingOverview } from "./row";
-import { Fragment, useCallback, useMemo, useState } from "react";
-import { columns, StatusBox } from "./marking-overview-columns";
+import { ChevronDown, ChevronRight, Send } from "lucide-react";
+import { toast } from "sonner";
+
+import { CopyButton } from "@/components/copy-button";
+import { CopyEmailsButton } from "@/components/copy-emails-button";
+import { ExportCSVButton } from "@/components/export-csv";
+import { useInstanceParams } from "@/components/params-context";
+import { Button } from "@/components/ui/button";
+import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -19,18 +28,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, Send } from "lucide-react";
-import { CopyButton } from "@/components/copy-button";
-import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
-import { Input } from "@/components/ui/input";
-import { CopyEmailsButton } from "@/components/copy-emails-button";
 import { YesNoAction } from "@/components/yes-no-action";
+
 import { api } from "@/lib/trpc/client";
-import { useInstanceParams } from "@/components/params-context";
-import { toast } from "sonner";
-import { ExportCSVButton } from "@/components/export-csv";
+
+import { columns, StatusBox } from "./marking-overview-columns";
 import { prepCSV } from "./prep-csv";
+import { type ProjectMarkingOverview } from "./row";
 
 export function MarkingOverviewTable({
   data,
@@ -89,7 +93,7 @@ export function MarkingOverviewTable({
         error: `Failed to send emails`,
       },
     );
-  }, [overdueMarkerEmails, params, sendOverdueReminder]);
+  }, [params, requiresNegotiationEmails, sendNegotiationReminder]);
 
   return (
     <Fragment>
@@ -244,8 +248,8 @@ export function MarkingOverviewTable({
                   <TableCell colSpan={5}>
                     <Table className="">
                       {row.original.units.map((u) => (
-                        <Fragment>
-                          <TableRow key={u.unit.id}>
+                        <Fragment key={u.unit.id}>
+                          <TableRow>
                             <TableCell />
                             <TableCell>
                               {/* <Link
@@ -262,7 +266,7 @@ export function MarkingOverviewTable({
                             </TableCell>
                           </TableRow>
                           {u.markers.map((e) => (
-                            <TableRow>
+                            <TableRow key={e.marker.id}>
                               <TableCell />
                               <TableCell />
                               <TableCell>{e.markerType}</TableCell>
@@ -298,7 +302,8 @@ export function MarkingOverviewTable({
 }
 
 function getOverdueMarkerEmails(data: ProjectMarkingOverview[]) {
-  let log: any = [];
+  // TODO: @JakeTrevor are these meant to become real audit logs?
+  const log: any = [];
   const emailSet = new Set(
     data.flatMap(({ units, project }) =>
       units.flatMap(({ markers }) =>
@@ -322,7 +327,7 @@ function getOverdueMarkerEmails(data: ProjectMarkingOverview[]) {
 }
 
 function getRequiresNegotiationEmails(data: ProjectMarkingOverview[]) {
-  let log: any[] = [];
+  const log: any[] = [];
   const emailSet = new Set(
     data.flatMap(({ units, project }) =>
       units

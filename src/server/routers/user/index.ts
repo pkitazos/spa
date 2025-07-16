@@ -1,24 +1,27 @@
 import { z } from "zod";
 
-import { validatedSegmentsSchema } from "@/lib/validations/breadcrumbs";
+import { testUserEmails } from "@/config/testing-users";
+
+import {
+  adminPanelPathSchema,
+  instanceDisplayDataSchema,
+  type InstanceDTO,
+  userDtoSchema,
+} from "@/dto";
+
+import { User, AllocationInstance } from "@/data-objects";
+
+import { Role, roleSchema } from "@/db/types";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
+import { relativeComplement } from "@/lib/utils/general/set-difference";
+import { validatedSegmentsSchema } from "@/lib/validations/breadcrumbs";
+
+import { markerRouter } from "./marker";
 import { studentRouter } from "./student";
 import { supervisorRouter } from "./supervisor";
-
-import { Role, roleSchema } from "@/db/types";
-import {
-  adminPanelPathSchema,
-  instanceDisplayDataSchema,
-  InstanceDTO,
-  userDtoSchema,
-} from "@/dto";
-import { User, AllocationInstance } from "@/data-objects";
-import { markerRouter } from "./marker";
-import { testUserEmails } from "@/config/testing-users";
-import { relativeComplement } from "@/lib/utils/general/set-difference";
 
 export const userRouter = createTRPCRouter({
   student: studentRouter,
@@ -131,7 +134,7 @@ export const userRouter = createTRPCRouter({
 
         return {
           ...path,
-          roles: matchingInstanceRole?.roles.map((role) => role) || [],
+          roles: matchingInstanceRole?.roles.map((role) => role) ?? [],
         };
       });
     }),

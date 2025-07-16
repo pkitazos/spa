@@ -1,4 +1,5 @@
 "use client";
+
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   flexRender,
@@ -20,10 +21,12 @@ import {
 } from "@/components/ui/table";
 
 import { cn } from "@/lib/utils";
-import { SearchableColumn } from "@/lib/validations/table";
+import { type SearchableColumn } from "@/lib/validations/table";
+
+import { useRowSelectionSearchParams } from "./hooks/row-selection";
 
 import { DataTablePagination } from "./data-table-pagination";
-import { DataTableToolbar, TableFilter } from "./data-table-toolbar";
+import { DataTableToolbar, type TableFilter } from "./data-table-toolbar";
 import {
   usePaginationSearchParams,
   useVisibilitySearchParams,
@@ -31,7 +34,6 @@ import {
   useColumnFilterSearchParams,
   useGlobalFilterSearchParams,
 } from "./hooks";
-import { useRowSelectionSearchParams } from "./hooks/row-selection";
 
 interface DataTableProps<TData, TValue> {
   className?: string;

@@ -1,8 +1,16 @@
+import {
+  type SupervisorDTO,
+  type UserDTO,
+  type ProjectDTO,
+  type StudentDTO,
+} from "@/dto";
+
 import { Transformers as T } from "@/db/transformers";
-import { DB } from "@/db/types";
-import { SupervisorDTO, UserDTO, ProjectDTO, StudentDTO } from "@/dto";
+import { type DB } from "@/db/types";
+
 import { expand } from "@/lib/utils/general/instance-params";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
+
 import { Marker } from ".";
 
 export class Supervisor extends Marker {
@@ -16,7 +24,7 @@ export class Supervisor extends Marker {
         where: { userId: this.id, ...expand(this.instance.params) },
         include: { userInInstance: { include: { user: true } } },
       })
-      .then(T.toSupervisorDTO);
+      .then((x) => T.toSupervisorDTO(x));
   }
 
   public async get(): Promise<UserDTO> {

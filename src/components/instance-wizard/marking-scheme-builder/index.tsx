@@ -1,11 +1,12 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 
+import { type Classification, type State } from "./state/store";
+
 import { CentrePanel } from "./centre-panel";
 import { SidePanel } from "./side-panel";
 import { MarkingSchemeStoreProvider } from "./state";
-import { Classification, State } from "./state/store";
 
-type SearchParams = { [key: string]: string | undefined };
+type SearchParams = Record<string, string | undefined>;
 
 export async function MarkingSchemeBuilder({
   searchParams,

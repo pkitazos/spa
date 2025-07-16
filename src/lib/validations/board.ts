@@ -5,7 +5,7 @@ export type Id = string;
 
 export const projectPreferenceCardDtoSchema = z.object({
   id: z.string(),
-  columnId: z.nativeEnum(PreferenceType),
+  columnId: z.enum(PreferenceType),
   title: z.string(),
   rank: z.number(),
   supervisor: z.object({ id: z.string(), name: z.string() }),

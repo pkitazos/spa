@@ -1,8 +1,15 @@
 "use client";
-import { ReactNode } from "react";
+
+import { type ReactNode } from "react";
 import { useFormContext } from "react-hook-form";
+
+import { format, isAfter } from "date-fns";
 import { z } from "zod";
 
+import { spacesLabels } from "@/config/spaces";
+
+import { DateTimePicker } from "@/components/date-time-picker";
+import { Badge } from "@/components/ui/badge";
 import {
   FormControl,
   FormDescription,
@@ -13,14 +20,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { spacesLabels } from "@/config/spaces";
-import { format, isAfter } from "date-fns";
-import { DateTimePicker } from "@/components/date-time-picker";
-import { TimelineSequence } from "./timeline-sequence";
+
+import { FormWizard, type WizardStep } from "../wizard-form";
+
 import { UploadJsonArea } from "./flag-json-upload";
-import { Badge } from "@/components/ui/badge";
 import TagInput from "./tag-input";
-import { FormWizard, WizardStep } from "../wizard-form";
+import { TimelineSequence } from "./timeline-sequence";
 
 // TODO these need reset buttons
 
@@ -60,7 +65,7 @@ export const flagsAssessmentSchema = z
   )
   .min(1);
 
-function buildWizardSchema(takenNames: Set<string> = new Set()) {
+function buildWizardSchema(takenNames = new Set<string>()) {
   return z
     .object({
       // basic details

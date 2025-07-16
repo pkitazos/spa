@@ -1,7 +1,10 @@
-import { Dispatch, SetStateAction } from "react";
-import { ColumnDef } from "@tanstack/react-table";
+import { type Dispatch, type SetStateAction } from "react";
+
+import { type ColumnDef } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { type AlgorithmResultDTO } from "@/dto";
 
 import { useInstanceParams } from "@/components/params-context";
 import { Button } from "@/components/ui/button";
@@ -25,7 +28,6 @@ import {
 } from "@/lib/utils/algorithm/format";
 
 import { useAlgorithmUtils } from "./algorithm-context";
-import { AlgorithmResultDTO } from "@/dto";
 
 export function useAlgorithmResultColumns({
   selectedAlgName,
@@ -39,11 +41,11 @@ export function useAlgorithmResultColumns({
 
   const utils = useAlgorithmUtils();
 
-  function refetchResults() {
-    utils.getAll();
-    utils.allStudentResults();
-    utils.allSupervisorResults();
-    utils.getAllSummaryResults();
+  async function refetchResults() {
+    await utils.getAll();
+    await utils.allStudentResults();
+    await utils.allSupervisorResults();
+    await utils.getAllSummaryResults();
   }
 
   const { mutateAsync: selectMatchingAsync } =
@@ -51,9 +53,9 @@ export function useAlgorithmResultColumns({
 
   function handleSelection(algId: string) {
     void toast.promise(
-      selectMatchingAsync({ algId, params }).then(() => {
+      selectMatchingAsync({ algId, params }).then(async () => {
         setSelectedAlgName(algId);
-        refetchResults();
+        await refetchResults();
         router.refresh();
       }),
       {

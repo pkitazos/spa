@@ -1,6 +1,6 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
   LucideMoreHorizontal as MoreIcon,
@@ -8,6 +8,12 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
+
+import { PAGES } from "@/config/pages";
+
+import { type ProjectDTO, type StudentDTO } from "@/dto";
+
+import { Role, Stage } from "@/db/types";
 
 import { AccessControl } from "@/components/access-control";
 import { useInstanceStage } from "@/components/params-context";
@@ -36,10 +42,6 @@ import {
   stageGt,
   stageLte,
 } from "@/lib/utils/permissions/stage-check";
-
-import { Role, Stage } from "@/db/types";
-import { ProjectDTO, StudentDTO } from "@/dto";
-import { PAGES } from "@/config/pages";
 
 type StudentWithAllocation = { student: StudentDTO; allocation?: ProjectDTO };
 
@@ -119,7 +121,7 @@ export function useAllStudentsColumns({
       ),
       filterFn: (row, columnId, value) => {
         const selectedFilters = value as ("4" | "5")[];
-        const rowValue = row.getValue(columnId) as 4 | 5;
+        const rowValue = row.getValue(columnId);
         console.log({ selectedFilters });
         const studentLevel = rowValue.toString() as "4" | "5";
         return selectedFilters.includes(studentLevel);

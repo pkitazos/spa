@@ -1,11 +1,13 @@
 "use client";
+
 import { useState } from "react";
 import { createPortal } from "react-dom";
+
 import {
   DndContext,
-  DragEndEvent,
+  type DragEndEvent,
   DragOverlay,
-  DragStartEvent,
+  type DragStartEvent,
   PointerSensor,
   useSensor,
   useSensors,
@@ -16,7 +18,8 @@ import { z } from "zod";
 import {
   PREFERENCE_BOARD_COLUMNS,
   PROJECT_PREFERENCE_CARD,
-  ProjectPreferenceCardDto,
+  projectPreferenceCardDtoSchema,
+  type ProjectPreferenceCardDto,
 } from "@/lib/validations/board";
 
 import { ColumnContainer } from "./column-container";
@@ -54,7 +57,9 @@ export function KanbanBoard({
 
   function onDragStart({ active }: DragStartEvent) {
     if (active.data.current?.type === PROJECT_PREFERENCE_CARD) {
-      setActiveProject(active.data.current.project);
+      setActiveProject(
+        projectPreferenceCardDtoSchema.parse(active.data.current.project),
+      );
     }
   }
 
@@ -83,12 +88,12 @@ export function KanbanBoard({
 
     // find the columnId of the active and over items
     const activeColumnId = z
-      .nativeEnum(PreferenceType)
+      .enum(PreferenceType)
       .parse(active.data.current?.columnId);
 
     // if the over item is a column the over id will be the columnId
     const overColumnId = z
-      .nativeEnum(PreferenceType)
+      .enum(PreferenceType)
       .parse(isOverCard ? over.data.current?.columnId : over.id);
 
     const {

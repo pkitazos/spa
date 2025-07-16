@@ -1,12 +1,16 @@
+import { type ProjectDTO, type FlagDTO } from "@/dto";
+
 import { Transformers as T } from "@/db/transformers";
-import { DB } from "@/db/types";
-import { ProjectDTO, FlagDTO } from "@/dto";
+import { type DB } from "@/db/types";
+
 import { toPP2 } from "@/lib/utils/general/instance-params";
-import { ProjectParams } from "@/lib/validations/params";
-import { DataObject } from "./data-object";
+import { type ProjectParams } from "@/lib/validations/params";
+
 import { AllocationGroup } from "./space/group";
 import { AllocationInstance } from "./space/instance";
 import { AllocationSubGroup } from "./space/sub-group";
+
+import { DataObject } from "./data-object";
 
 export class Project extends DataObject {
   public params: ProjectParams;
@@ -32,23 +36,21 @@ export class Project extends DataObject {
           tagsOnProject: { include: { tag: true } },
         },
       })
-      .then(T.toProjectDTO);
+      .then((x) => T.toProjectDTO(x));
   }
 
   get group() {
-    if (!this._group) this._group = new AllocationGroup(this.db, this.params);
+    this._group ??= new AllocationGroup(this.db, this.params);
     return this._group;
   }
 
   get subGroup() {
-    if (!this._subgroup)
-      this._subgroup = new AllocationSubGroup(this.db, this.params);
+    this._subgroup ??= new AllocationSubGroup(this.db, this.params);
     return this._subgroup;
   }
 
   get instance() {
-    if (!this._instance)
-      this._instance = new AllocationInstance(this.db, this.params);
+    this._instance ??= new AllocationInstance(this.db, this.params);
     return this._instance;
   }
 

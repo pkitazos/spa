@@ -1,23 +1,26 @@
-import { Transformers as T } from "@/db/transformers";
-import { DB, New } from "@/db/types";
 import {
-  InstanceDTO,
-  FlagDTO,
-  NewUnitOfAssessmentDTO,
-  TagDTO,
+  type InstanceDTO,
+  type FlagDTO,
+  type NewUnitOfAssessmentDTO,
+  type TagDTO,
   builtInAlgorithms,
-  SubGroupDTO,
-  UserDTO,
+  type SubGroupDTO,
+  type UserDTO,
 } from "@/dto";
+
+import { Transformers as T } from "@/db/transformers";
+import { type DB, type New } from "@/db/types";
+
 import { toInstanceId, expand } from "@/lib/utils/general/instance-params";
 import { slugify } from "@/lib/utils/general/slugify";
 import { uniqueById } from "@/lib/utils/list-unique";
-import { SubGroupParams } from "@/lib/validations/params";
+import { type SubGroupParams } from "@/lib/validations/params";
 
 import { DataObject } from "../data-object";
+import { User } from "../user";
+
 import { AllocationGroup } from "./group";
 import { Institution } from "./institution";
-import { User } from "../user";
 
 function toSubgroupId(params: SubGroupParams) {
   return { allocationGroupId: params.group, id: params.subGroup };
@@ -41,7 +44,7 @@ export class AllocationSubGroup extends DataObject {
   }
 
   public async createInstance({
-    newInstance: { group, subGroup, ...newInstance },
+    newInstance: { group: _group, subGroup: _subGroup, ...newInstance },
     flags,
     tags,
   }: {
@@ -125,13 +128,13 @@ export class AllocationSubGroup extends DataObject {
   public async get(): Promise<SubGroupDTO> {
     return await this.db.allocationSubGroup
       .findFirstOrThrow({ where: toSubgroupId(this.params) })
-      .then(T.toAllocationSubGroupDTO);
+      .then((x) => T.toAllocationSubGroupDTO(x));
   }
 
   public async getInstances(): Promise<InstanceDTO[]> {
     return await this.db.allocationInstance
       .findMany({ where: subgroupExpand(this.params) })
-      .then((data) => data.map(T.toAllocationInstanceDTO));
+      .then((data) => data.map((x) => T.toAllocationInstanceDTO(x)));
   }
 
   public async isSubGroupAdmin(userId: string): Promise<boolean> {
@@ -170,16 +173,16 @@ export class AllocationSubGroup extends DataObject {
   public async delete(): Promise<SubGroupDTO> {
     return await this.db.allocationSubGroup
       .delete({ where: { subGroupId: toSubgroupId(this.params) } })
-      .then(T.toAllocationSubGroupDTO);
+      .then((x) => T.toAllocationSubGroupDTO(x));
   }
 
   get institution() {
-    if (!this._institution) this._institution = new Institution(this.db);
+    this._institution ??= new Institution(this.db);
     return this._institution;
   }
 
   get group() {
-    if (!this._group) this._group = new AllocationGroup(this.db, this.params);
+    this._group ??= new AllocationGroup(this.db, this.params);
     return this._group;
   }
 }

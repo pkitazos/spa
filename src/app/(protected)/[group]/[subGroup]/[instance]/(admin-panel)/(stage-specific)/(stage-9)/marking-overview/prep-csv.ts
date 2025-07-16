@@ -1,11 +1,15 @@
-import {
-  MarkerStatusSummary,
-  ProjectMarkingOverview,
-  UnitGradingStatus,
-  UnitMarkingSummary,
-} from "./row";
-import { MarkerType } from "@/db/types";
 import { Grade } from "@/config/grades";
+
+import { MarkerType } from "@/db/types";
+
+import {
+  type MarkerStatusSummary,
+  type ProjectMarkingOverview,
+  type UnitGradingStatus,
+  type UnitMarkingSummary,
+} from "./row";
+
+// TODO: this file needs jesus a little bit
 
 interface CSVRow {
   studentGUID: string;
@@ -14,7 +18,7 @@ interface CSVRow {
   studentEmail: string;
   projectTitle: string;
 
-  supervsorName: string;
+  supervisorName: string;
   supervisorEmail: string;
   readerName: string;
   readerEmail: string;
@@ -52,9 +56,9 @@ export function prepCSV(data: ProjectMarkingOverview[]): CSVRow[] {
       {} as Record<string, UnitMarkingSummary>,
     );
 
-    const dissertation = unitMap["Dissertation"];
-    const presentation = unitMap["Presentation"];
-    const conduct = unitMap["Conduct"];
+    const dissertation = unitMap.Dissertation;
+    const presentation = unitMap.Presentation;
+    const conduct = unitMap.Conduct;
 
     const markerMap = dissertation.markers.reduce(
       (acc, val) => ({ ...acc, [val.markerType]: val }),
@@ -91,9 +95,6 @@ export function prepCSV(data: ProjectMarkingOverview[]): CSVRow[] {
       (dissGrade &&
         Grade.checkExtremes(Grade.toLetter(dissGrade)).status === "MODERATE") ||
       false;
-
-    // @ts-ignore
-    console.log(presentation.markers[0].status.comment);
 
     return {
       studentGUID: student.id,

@@ -1,8 +1,19 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronsUpDown } from "lucide-react";
+import { toast } from "sonner";
+
+import {
+  projectForm,
+  type ProjectFormSubmissionDTO,
+  type ProjectFormInitialisationDTO,
+  type ProjectFormInternalStateDTO,
+} from "@/dto/project";
+
+import { Role } from "@/db/types";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -34,17 +45,9 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 
 import { cn } from "@/lib/utils";
-import { Role } from "@/db/types";
-import {
-  projectForm,
-  ProjectFormSubmissionDTO,
-  ProjectFormInitialisationDTO,
-  ProjectFormInternalStateDTO,
-} from "@/dto/project";
 
 import { MarkdownEditor } from "../markdown-editor";
 import { MultiSelect } from "../ui/multi-select";
-import { toast } from "sonner";
 
 interface ProjectFormProps {
   formInitialisationData: ProjectFormInitialisationDTO;
@@ -434,7 +437,7 @@ export function ProjectForm({
                           !field.value && "text-slate-400",
                         )}
                       >
-                        {!field.value ? "Enter Student GUID" : field.value}
+                        {field.value ?? "Enter Student GUID"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </FormControl>

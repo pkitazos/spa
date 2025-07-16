@@ -1,24 +1,27 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import { RotateCcw, Save } from "lucide-react";
+import Link from "next/link";
+import z from "zod";
 
+import { PAGES } from "@/config/pages";
+
+import { usePathInInstance } from "@/components/params-context";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
+import { cn } from "@/lib/utils";
+
+import {
+  type ManualAllocationStudent,
+  type ManualAllocationProject,
+  type ManualAllocationSupervisor,
+} from "./manual-allocation-types";
 import { ProjectCombobox } from "./project-combobox";
 import { SupervisorCombobox } from "./supervisor-combobox";
-import {
-  ManualAllocationStudent,
-  ManualAllocationProject,
-  ManualAllocationSupervisor,
-} from "./manual-allocation-types";
-import Link from "next/link";
-import { usePathInInstance } from "@/components/params-context";
-import { PAGES } from "@/config/pages";
-import { cn } from "@/lib/utils";
-import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 type ManualAllocationColumnsProps = {
   projects: ManualAllocationProject[];
@@ -36,7 +39,7 @@ export function useManualAllocationColumns({
   projects,
   supervisors,
   onUpdateAllocation,
-  onRemoveAllocation,
+  onRemoveAllocation: _,
   onSave,
   onReset,
 }: ManualAllocationColumnsProps): ColumnDef<ManualAllocationStudent>[] {
@@ -77,7 +80,7 @@ export function useManualAllocationColumns({
         );
       },
       filterFn: (row, _, value) => {
-        const searchValue = value.toLowerCase();
+        const searchValue = z.string().parse(value).toLowerCase();
         const student = row.original;
         return (
           student.name.toLowerCase().includes(searchValue) ||

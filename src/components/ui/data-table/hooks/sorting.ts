@@ -1,6 +1,8 @@
-import { Updater, SortingState } from "@tanstack/react-table";
-import { useQueryStates, parseAsBoolean, parseAsString } from "nuqs";
 import { useCallback } from "react";
+
+import { type Updater, type SortingState } from "@tanstack/react-table";
+import { useQueryStates, parseAsBoolean, parseAsString } from "nuqs";
+
 import { useProxyState } from "./use-proxy-state";
 
 export function useSortingSearchParams() {
@@ -22,7 +24,7 @@ export function useSortingSearchParams() {
 
   const setSorting = useCallback(
     (state: Updater<SortingState>) => {
-      setVals((s) => {
+      void setVals((s) => {
         if (typeof state === "function") {
           state = state(computeSorting(s));
         }

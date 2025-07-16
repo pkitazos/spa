@@ -1,4 +1,4 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
   MoreHorizontalIcon as MoreIcon,
@@ -6,9 +6,12 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
+import z from "zod";
+
+import { type ProjectDTO } from "@/dto";
 
 import { useInstancePath } from "@/components/params-context";
-import { TagType } from "@/components/tag/tag-input";
+import { tagTypeSchema } from "@/components/tag/tag-input";
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionColumnLabel } from "@/components/ui/data-table/action-column-label";
@@ -29,7 +32,6 @@ import {
 } from "@/components/yes-no-action";
 
 import { cn } from "@/lib/utils";
-import { ProjectDTO } from "@/dto";
 
 export function useLateProjectColumns({
   deleteProject,
@@ -100,7 +102,7 @@ export function useLateProjectColumns({
       header: () => <div className="text-center">Flags</div>,
       filterFn: (row, columnId, value) => {
         const ids = value as string[];
-        const rowFlags = row.getValue(columnId) as TagType[];
+        const rowFlags = z.array(tagTypeSchema).parse(row.getValue(columnId));
         return rowFlags.some((e) => ids.includes(e.id));
       },
       cell: ({

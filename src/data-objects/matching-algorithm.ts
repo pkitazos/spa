@@ -1,15 +1,19 @@
-import { Transformers } from "@/db/transformers";
-import { DB } from "@/db/types";
-import { AlgorithmDTO, InstanceDTO } from "@/dto";
+import { type AlgorithmDTO, type InstanceDTO } from "@/dto";
 import { AlgorithmRunResult } from "@/dto/result/algorithm-run-result";
+
+import { Transformers as T } from "@/db/transformers";
+import { type DB } from "@/db/types";
+
+import { executeMatchingAlgorithm } from "@/server/routers/institution/instance/algorithm/_utils/execute-matching-algorithm";
+
 import { expand, toAlgID } from "@/lib/utils/general/instance-params";
 import {
-  MatchingResultDTO,
-  MatchingDataDTO,
+  type MatchingResultDTO,
+  type MatchingDataDTO,
   blankResult,
 } from "@/lib/validations/matching";
-import { AlgorithmInstanceParams } from "@/lib/validations/params";
-import { executeMatchingAlgorithm } from "@/server/routers/institution/instance/algorithm/_utils/execute-matching-algorithm";
+import { type AlgorithmInstanceParams } from "@/lib/validations/params";
+
 import { DataObject } from "./data-object";
 
 export class MatchingAlgorithm extends DataObject {
@@ -25,20 +29,16 @@ export class MatchingAlgorithm extends DataObject {
   }
 
   public async get(): Promise<AlgorithmDTO> {
-    if (!this._config) {
-      this._config = await this.db.algorithm
-        .findFirstOrThrow({ where: { id: this.params.algConfigId } })
-        .then(Transformers.toAlgorithmDTO);
-    }
+    this._config ??= await this.db.algorithm
+      .findFirstOrThrow({ where: { id: this.params.algConfigId } })
+      .then((x) => T.toAlgorithmDTO(x));
     return this._config!;
   }
 
   public async getInstance(): Promise<InstanceDTO> {
-    if (!this._instance) {
-      this._instance = await this.db.allocationInstance
-        .findFirstOrThrow({ where: expand(this.params) })
-        .then(Transformers.toAllocationInstanceDTO);
-    }
+    this._instance ??= await this.db.allocationInstance
+      .findFirstOrThrow({ where: expand(this.params) })
+      .then((x) => T.toAllocationInstanceDTO(x));
     return this._instance!;
   }
 
@@ -102,28 +102,23 @@ export class MatchingAlgorithm extends DataObject {
    * @throws if the function is called before the results are computed
    */
   public async getResults(): Promise<MatchingResultDTO> {
-    if (!this._results) {
-      this._results = await this.db.matchingResult
-        .findFirstOrThrow({
-          where: {
-            algorithmId: this.params.algConfigId,
-            ...expand(this.params),
-          },
-          include: { matching: true },
-        })
-        .then((x) => ({
-          profile: x.profile,
-          degree: x.degree,
-          size: x.size,
-          weight: x.weight,
-          cost: x.cost,
-          costSq: x.costSq,
-          maxLecAbsDiff: x.maxLecAbsDiff,
-          sumLecAbsDiff: x.sumLecAbsDiff,
-          ranks: x.ranks,
-          matching: x.matching,
-        }));
-    }
+    this._results ??= await this.db.matchingResult
+      .findFirstOrThrow({
+        where: { algorithmId: this.params.algConfigId, ...expand(this.params) },
+        include: { matching: true },
+      })
+      .then((x) => ({
+        profile: x.profile,
+        degree: x.degree,
+        size: x.size,
+        weight: x.weight,
+        cost: x.cost,
+        costSq: x.costSq,
+        maxLecAbsDiff: x.maxLecAbsDiff,
+        sumLecAbsDiff: x.sumLecAbsDiff,
+        ranks: x.ranks,
+        matching: x.matching,
+      }));
     return this._results!;
   }
 
@@ -133,7 +128,7 @@ export class MatchingAlgorithm extends DataObject {
       include: { matching: true },
     });
 
-    return !res ? blankResult : res;
+    return res ?? blankResult;
   }
 
   public async delete(): Promise<void> {

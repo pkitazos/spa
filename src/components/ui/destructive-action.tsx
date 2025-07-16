@@ -1,13 +1,15 @@
 "use client";
+
 import React, {
   createContext,
-  Dispatch,
+  type Dispatch,
   forwardRef,
-  SetStateAction,
+  type SetStateAction,
   useContext,
   useEffect,
   useState,
 } from "react";
+
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 
 import {
@@ -22,7 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "./alert-dialog";
-import { Input, InputProps } from "./input";
+import { Input, type InputProps } from "./input";
 
 const DestructiveActionContext = createContext<{
   action: () => void;
@@ -30,10 +32,14 @@ const DestructiveActionContext = createContext<{
   verified: boolean;
   setVerified: Dispatch<SetStateAction<boolean>>;
 }>({
-  action: () => {},
+  action: () => {
+    return;
+  },
   requiresVerification: false,
   verified: false,
-  setVerified: () => {},
+  setVerified: () => {
+    return;
+  },
 });
 
 const DestructiveAction = ({

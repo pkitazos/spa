@@ -1,13 +1,17 @@
 "use client";
+
 import { useState } from "react";
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 import { useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlgorithmFlag } from "@prisma/client";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { z } from "zod";
+import { type z } from "zod";
+
+import { allAlgorithmFlags, buildNewAlgorithmSchema } from "@/dto";
 
 import { useInstanceParams } from "@/components/params-context";
 import { Badge } from "@/components/ui/badge";
@@ -50,7 +54,6 @@ import { api } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 
 import { useAlgorithmUtils } from "./algorithm-context";
-import { allAlgorithmFlags, buildNewAlgorithmSchema } from "@/dto";
 
 export function NewAlgorithmSection({
   takenNames,
@@ -91,11 +94,11 @@ function NewAlgorithmForm({
   const { mutateAsync: createAlgorithmAsync } =
     api.institution.instance.algorithm.create.useMutation();
 
-  function refetchAlgorithms() {
-    utils.getAll();
-    utils.allStudentResults();
-    utils.allSupervisorResults();
-    utils.getAllSummaryResults();
+  async function refetchAlgorithms() {
+    await utils.getAll();
+    await utils.allStudentResults();
+    await utils.allSupervisorResults();
+    await utils.getAllSummaryResults();
   }
 
   const formSchema = buildNewAlgorithmSchema(takenNames);
@@ -109,11 +112,13 @@ function NewAlgorithmForm({
     const newAlgorithmData = { ...data, createdAt: new Date(), builtIn: false };
 
     void toast.promise(
-      createAlgorithmAsync({ params, data: newAlgorithmData }).then(() => {
-        setShowForm(false);
-        refetchAlgorithms();
-        router.refresh();
-      }),
+      createAlgorithmAsync({ params, data: newAlgorithmData }).then(
+        async () => {
+          setShowForm(false);
+          await refetchAlgorithms();
+          router.refresh();
+        },
+      ),
       {
         loading: "Creating New Algorithm Configuration...",
         error: "Something went wrong",

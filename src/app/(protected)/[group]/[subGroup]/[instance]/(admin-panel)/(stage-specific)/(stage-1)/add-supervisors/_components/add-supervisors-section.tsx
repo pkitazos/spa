@@ -4,6 +4,11 @@ import { TRPCClientError } from "@trpc/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { spacesLabels } from "@/config/spaces";
+
+import { type SupervisorDTO } from "@/dto";
+import { type LinkUserResult } from "@/dto/result/link-user-result";
+
 import { useInstanceParams } from "@/components/params-context";
 import DataTable from "@/components/ui/data-table/data-table";
 import { LabelledSeparator } from "@/components/ui/labelled-separator";
@@ -12,15 +17,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { api } from "@/lib/trpc/client";
 import { addSupervisorsCsvHeaders } from "@/lib/validations/add-users/csv";
+import { type NewSupervisor } from "@/lib/validations/add-users/new-user";
 
 import { CSVUploadButton } from "./csv-upload-button";
 import { FormSection } from "./form-section";
 import { useNewSupervisorColumns } from "./new-supervisor-columns";
-
-import { spacesLabels } from "@/config/spaces";
-import { LinkUserResult } from "@/dto/result/link-user-result";
-import { NewSupervisor } from "@/lib/validations/add-users/new-user";
-import { SupervisorDTO } from "@/dto";
 
 export function AddSupervisorsSection() {
   const router = useRouter();
@@ -47,9 +48,9 @@ export function AddSupervisorsSection() {
     };
 
     void toast.promise(
-      addSupervisorAsync({ params, newSupervisor }).then(() => {
+      addSupervisorAsync({ params, newSupervisor }).then(async () => {
         router.refresh();
-        refetchData();
+        await refetchData();
       }),
       {
         loading: "Adding supervisor...",
@@ -76,10 +77,10 @@ export function AddSupervisorsSection() {
       allocationUpperBound: s.projectUpperQuota,
     }));
 
-    const res = await addSupervisorsAsync({ params, newSupervisors }).then(
-      (data) => {
+    const _res = await addSupervisorsAsync({ params, newSupervisors }).then(
+      async (data) => {
         router.refresh();
-        refetchData();
+        await refetchData();
         return data.reduce(
           (acc, val) => ({ ...acc, [val]: (acc[val] ?? 0) + 1 }),
           {} as Record<LinkUserResult, number>,
@@ -119,9 +120,9 @@ export function AddSupervisorsSection() {
 
   async function handleSupervisorRemoval(supervisorId: string) {
     void toast.promise(
-      removeSupervisorAsync({ params, supervisorId }).then(() => {
+      removeSupervisorAsync({ params, supervisorId }).then(async () => {
         router.refresh();
-        refetchData();
+        await refetchData();
       }),
       {
         loading: "Removing supervisor...",
@@ -136,9 +137,9 @@ export function AddSupervisorsSection() {
 
   async function handleSupervisorsRemoval(supervisorIds: string[]) {
     void toast.promise(
-      removeSupervisorsAsync({ params, supervisorIds }).then(() => {
+      removeSupervisorsAsync({ params, supervisorIds }).then(async () => {
         router.refresh();
-        refetchData();
+        await refetchData();
       }),
       {
         loading: "Removing supervisors...",

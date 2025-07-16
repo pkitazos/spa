@@ -1,6 +1,12 @@
-import { Updater, ColumnDef, ColumnFiltersState } from "@tanstack/react-table";
-import { useQueryStates, parseAsString } from "nuqs";
 import { useCallback } from "react";
+
+import {
+  type Updater,
+  type ColumnDef,
+  type ColumnFiltersState,
+} from "@tanstack/react-table";
+import { useQueryStates, parseAsString } from "nuqs";
+
 import { useProxyState } from "./use-proxy-state";
 
 export function useColumnFilterSearchParams<T, V>(cols: ColumnDef<T, V>[]) {
@@ -30,12 +36,10 @@ export function useColumnFilterSearchParams<T, V>(cols: ColumnDef<T, V>[]) {
 
   const setColFilters = useCallback(
     (state: Updater<ColumnFiltersState>) => {
-      setFilters((oldFilters) => {
+      void setFilters((oldFilters) => {
         if (typeof state === "function") {
           state = state(computeColFilters(oldFilters));
         }
-
-        state;
 
         const a = cols.reduce(
           (acc, { id }) => ({
@@ -51,7 +55,7 @@ export function useColumnFilterSearchParams<T, V>(cols: ColumnDef<T, V>[]) {
         return a;
       });
     },
-    [setFilters, computeColFilters],
+    [setFilters, cols, computeColFilters],
   );
 
   return useProxyState(colFilters, setColFilters, []);

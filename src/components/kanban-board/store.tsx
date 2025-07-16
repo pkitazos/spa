@@ -1,13 +1,16 @@
 "use client";
+
 import { createContext, useContext, useRef } from "react";
+
 import { createStore, useStore } from "zustand";
+
+import { PreferenceType } from "@/db/types";
 
 import { computeUpdatedRank } from "@/lib/utils/sorting/compute-updated-rank";
 import {
-  PreferenceBoard,
-  ProjectPreferenceCardDto,
+  type PreferenceBoard,
+  type ProjectPreferenceCardDto,
 } from "@/lib/validations/board";
-import { PreferenceType } from "@/db/types";
 
 interface KanbanBoardProps {
   projects: PreferenceBoard;
@@ -79,9 +82,7 @@ export function BoardDetailsProvider({
   ...props
 }: React.PropsWithChildren<KanbanBoardProps>) {
   const storeRef = useRef<BoardDetailsStore>();
-  if (!storeRef.current) {
-    storeRef.current = createBoardDetailsStore(props);
-  }
+  storeRef.current ??= createBoardDetailsStore(props);
 
   return (
     <KanbanBoardContext.Provider value={storeRef.current}>

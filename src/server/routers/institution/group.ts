@@ -1,13 +1,13 @@
 import { z } from "zod";
 
-import { procedure } from "@/server/middleware";
-import { createTRPCRouter } from "@/server/trpc";
-
 import { groupDtoSchema, subGroupDtoSchema, userDtoSchema } from "@/dto";
 import {
   LinkUserResult,
   LinkUserResultSchema,
 } from "@/dto/result/link-user-result";
+
+import { procedure } from "@/server/middleware";
+import { createTRPCRouter } from "@/server/trpc";
 
 export const groupRouter = createTRPCRouter({
   exists: procedure.group.user
@@ -76,7 +76,7 @@ export const groupRouter = createTRPCRouter({
         if (userIsGroupAdmin) return LinkUserResult.PRE_EXISTING;
 
         const userExists = await institution.userExists(id);
-        if (!userExists) institution.createUser(newAdmin);
+        if (!userExists) await institution.createUser(newAdmin);
 
         await group.linkAdmin(id);
 

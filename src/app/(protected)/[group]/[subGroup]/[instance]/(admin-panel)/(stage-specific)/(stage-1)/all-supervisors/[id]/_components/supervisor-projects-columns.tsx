@@ -1,4 +1,4 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
   LucideMoreHorizontal as MoreIcon,
@@ -6,11 +6,22 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
+import z from "zod";
+
+import { PAGES } from "@/config/pages";
+
+import {
+  ProjectAllocationStatus,
+  type ProjectDTO,
+  type StudentDTO,
+} from "@/dto";
+
+import { Stage } from "@/db/types";
 
 import { AccessControl } from "@/components/access-control";
 import { CircleCheckSolidIcon } from "@/components/icons/circle-check";
 import { useInstancePath, useInstanceStage } from "@/components/params-context";
-import { TagType } from "@/components/tag/tag-input";
+import { tagTypeSchema } from "@/components/tag/tag-input";
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionColumnLabel } from "@/components/ui/data-table/action-column-label";
@@ -31,17 +42,12 @@ import {
 } from "@/components/yes-no-action";
 
 import { cn } from "@/lib/utils";
+import { setIntersection } from "@/lib/utils/general/set-intersection";
 import {
   previousStages,
   stageGte,
   stageLt,
 } from "@/lib/utils/permissions/stage-check";
-
-import { Stage } from "@/db/types";
-import { PAGES } from "@/config/pages";
-import { setIntersection } from "@/lib/utils/general/set-intersection";
-import { ProjectAllocationStatus, ProjectDTO, StudentDTO } from "@/dto";
-import z from "zod";
 
 type ProjectWithAllocation = {
   project: ProjectDTO;
@@ -109,7 +115,8 @@ export function useSupervisorProjectsColumns({
       header: () => <div className="text-center">Flags</div>,
       filterFn: (row, columnId, value) => {
         const ids = value as string[];
-        const rowFlags = row.getValue(columnId) as TagType[];
+        // TODO: check if there's better way to do this
+        const rowFlags = z.array(tagTypeSchema).parse(row.getValue(columnId));
         return rowFlags.some((f) => ids.includes(f.id));
       },
       cell: ({
@@ -158,7 +165,7 @@ export function useSupervisorProjectsColumns({
       ),
       filterFn: (row, columnId, value) => {
         const ids = value as string[];
-        const rowTags = row.getValue(columnId) as TagType[];
+        const rowTags = z.array(tagTypeSchema).parse(row.getValue(columnId));
         return rowTags.some((t) => ids.includes(t.id));
       },
       cell: ({
@@ -247,7 +254,7 @@ export function useSupervisorProjectsColumns({
       filterFn: ({ original: { project, allocatedStudent } }, _, value) => {
         const filters = z.array(z.enum(ProjectAllocationStatus)).parse(value);
 
-        const allocationStatus: Set<ProjectAllocationStatus> = new Set(); // default to unallocated
+        const allocationStatus = new Set<ProjectAllocationStatus>(); // default to unallocated
 
         if (!project.preAllocatedStudentId && !allocatedStudent) {
           allocationStatus.add(ProjectAllocationStatus.UNALLOCATED);

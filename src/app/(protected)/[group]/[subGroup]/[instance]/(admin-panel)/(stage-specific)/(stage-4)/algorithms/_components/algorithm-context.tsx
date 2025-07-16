@@ -1,9 +1,10 @@
 "use client";
+
 import {
   createContext,
-  Dispatch,
-  ReactNode,
-  SetStateAction,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
   useContext,
   useState,
 } from "react";
@@ -16,28 +17,30 @@ export function useAlgorithmUtils() {
   const params = useInstanceParams();
   const utils = api.useUtils();
 
-  function getAll() {
-    utils.institution.instance.algorithm.getAll.refetch({ params });
+  async function getAll() {
+    await utils.institution.instance.algorithm.getAll.refetch({ params });
   }
 
-  function allStudentResults() {
-    utils.institution.instance.algorithm.allStudentResults.refetch({ params });
-  }
-
-  function allSupervisorResults() {
-    utils.institution.instance.algorithm.allSupervisorResults.refetch({
+  async function allStudentResults() {
+    await utils.institution.instance.algorithm.allStudentResults.refetch({
       params,
     });
   }
 
-  function getAllSummaryResults() {
-    utils.institution.instance.algorithm.getAllSummaryResults.refetch({
+  async function allSupervisorResults() {
+    await utils.institution.instance.algorithm.allSupervisorResults.refetch({
       params,
     });
   }
 
-  function singleResult(algId: string) {
-    utils.institution.instance.algorithm.singleResult.refetch({
+  async function getAllSummaryResults() {
+    await utils.institution.instance.algorithm.getAllSummaryResults.refetch({
+      params,
+    });
+  }
+
+  async function singleResult(algId: string) {
+    await utils.institution.instance.algorithm.singleResult.refetch({
       algId,
       params,
     });
@@ -59,7 +62,9 @@ type AlgorithmContextProps = {
 
 export const AlgorithmContext = createContext<AlgorithmContextProps>({
   selectedAlgName: undefined,
-  setSelectedAlgName: () => {},
+  setSelectedAlgName: () => {
+    return;
+  },
 });
 
 export function AlgorithmProvider({
