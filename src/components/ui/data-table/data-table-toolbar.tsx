@@ -1,6 +1,6 @@
 "use client";
 
-import { Table } from "@tanstack/react-table";
+import { type Table } from "@tanstack/react-table";
 import { XCircleIcon } from "lucide-react";
 
 import { Button } from "../button";
@@ -34,6 +34,7 @@ export function DataTableToolbar<TData>({
       <div className="flex flex-1 items-center space-x-2">
         <Input
           placeholder="Search whole table"
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           value={table.getState().globalFilter}
           onChange={(event) => table.setGlobalFilter(event.target.value)}
           className="h-8 max-w-[150px] lg:max-w-[250px]"
@@ -43,21 +44,21 @@ export function DataTableToolbar<TData>({
           const column = table.getColumn(filter.columnId);
           if (!column) return null; // Handle potential invalid columnId
 
-          const filterValues = filter.options
-            ? filter.options
-            : table
-                .getCoreRowModel()
-                .rows.map((row) => ({
-                  id: row.id,
-                  title: row.original[filter.columnId as keyof TData] as string,
-                }));
+          const filterValues =
+            filter.options ??
+            table
+              .getCoreRowModel()
+              .rows.map((row) => ({
+                id: row.id,
+                title: row.original[filter.columnId as keyof TData] as string,
+              }));
 
           return (
             <DataTableFacetedFilter
               className="flex-none"
               key={filter.columnId}
               column={column}
-              title={filter?.title ?? (column.columnDef.id as string)} // Assuming header is a string
+              title={filter?.title ?? column.columnDef.id!} // Assuming header is a string
               options={filterValues}
             />
           );

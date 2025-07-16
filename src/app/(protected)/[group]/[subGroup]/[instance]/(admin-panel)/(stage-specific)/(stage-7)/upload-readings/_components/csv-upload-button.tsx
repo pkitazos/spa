@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+
 import { parse } from "papaparse";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -10,7 +11,7 @@ import { Input } from "@/components/ui/input";
 
 import { parseForDuplicates } from "@/lib/utils/csv/parse-for-duplicates-readers";
 import { allocateReadersCsvRowSchema } from "@/lib/validations/allocate-readers/csv";
-import { NewReaderAllocation } from "@/lib/validations/allocate-readers/new-reader-allocation";
+import { type NewReaderAllocation } from "@/lib/validations/allocate-readers/new-reader-allocation";
 
 export function CSVUploadButton({
   handleUpload,
@@ -64,7 +65,8 @@ export function CSVUploadButton({
             toast.success(`${uniqueRows.length} rows parsed successfully!`);
           }
 
-          handleUpload(
+          // todo: check
+          void handleUpload(
             uniqueRows.map((e) => ({
               reader: {
                 id: e.reader_guid,

@@ -1,19 +1,23 @@
-import { Transformers as T } from "@/db/transformers";
-import { DB } from "@/db/types";
-import {
-  MarkingSubmissionDTO,
-  ProjectDTO,
-  StudentDTO,
-  UnitOfAssessmentDTO,
-  PartialMarkingSubmissionDTO,
-} from "@/dto";
-import { InstanceParams } from "@/lib/validations/params";
 import { MarkerType } from "@prisma/client";
 
-import { AllocationInstance } from "../space/instance";
-import { User } from ".";
-import { expand } from "@/lib/utils/general/instance-params";
+import {
+  type MarkingSubmissionDTO,
+  type ProjectDTO,
+  type StudentDTO,
+  type UnitOfAssessmentDTO,
+  type PartialMarkingSubmissionDTO,
+} from "@/dto";
 import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
+
+import { Transformers as T } from "@/db/transformers";
+import { type DB } from "@/db/types";
+
+import { expand } from "@/lib/utils/general/instance-params";
+import { type InstanceParams } from "@/lib/validations/params";
+
+import { AllocationInstance } from "../space/instance";
+
+import { User } from ".";
 
 export class Marker extends User {
   public static computeStatus(
@@ -273,8 +277,8 @@ export class Marker extends User {
             studentId,
             assessmentCriterionId,
             unitOfAssessmentId,
-            grade: m.mark || -1,
-            justification: m.justification || "",
+            grade: m.mark ?? -1,
+            justification: m.justification ?? "",
           },
           update: { grade: m.mark, justification: m.justification },
         }),

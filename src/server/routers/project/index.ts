@@ -1,32 +1,32 @@
 import { PreferenceType, Stage } from "@prisma/client";
 import { z } from "zod";
 
-import { expand, toPP2 } from "@/lib/utils/general/instance-params";
-
-import {
-  previousStages,
-  subsequentStages,
-} from "@/lib/utils/permissions/stage-check";
+import { flagDtoSchema, tagDtoSchema } from "@/dto";
+import { projectDtoSchema } from "@/dto";
+import { studentDtoSchema } from "@/dto";
+import { supervisorDtoSchema } from "@/dto";
 import { projectForm } from "@/dto/project";
-
-import { procedure } from "@/server/middleware";
-import { createTRPCRouter } from "@/server/trpc";
+import {
+  PermissionResult,
+  permissionResultSchema,
+} from "@/dto/result/permission-result";
 
 import {
   linkPreAllocatedStudent,
   linkProjectFlagIds,
   linkProjectTagIds,
 } from "@/db/transactions/project-flags";
-import { flagDtoSchema, tagDtoSchema } from "@/dto";
-import { projectDtoSchema } from "@/dto";
-import { studentDtoSchema } from "@/dto";
-import { supervisorDtoSchema } from "@/dto";
 import { Transformers as T } from "@/db/transformers";
 import { Role } from "@/db/types";
+
+import { procedure } from "@/server/middleware";
+import { createTRPCRouter } from "@/server/trpc";
+
+import { expand, toPP2 } from "@/lib/utils/general/instance-params";
 import {
-  PermissionResult,
-  permissionResultSchema,
-} from "@/dto/result/permission-result";
+  previousStages,
+  subsequentStages,
+} from "@/lib/utils/permissions/stage-check";
 
 export const projectRouter = createTRPCRouter({
   // ok
@@ -304,7 +304,7 @@ export const projectRouter = createTRPCRouter({
             type: x.type,
             rank:
               x.type === PreferenceType.PREFERENCE
-                ? studentPreferenceMap[x.student.userId]!.indexOf(projectId) + 1
+                ? studentPreferenceMap[x.student.userId].indexOf(projectId) + 1
                 : undefined,
           },
         };
@@ -442,7 +442,7 @@ export const projectRouter = createTRPCRouter({
       const allProjects = await instance.getProjectDetails();
       const takenTitles = new Set(allProjects.map(({ project: p }) => p.title));
 
-      let studentIds = await instance
+      const studentIds = await instance
         .getUnallocatedStudents()
         .then((students) => students.map((s) => s.id));
 

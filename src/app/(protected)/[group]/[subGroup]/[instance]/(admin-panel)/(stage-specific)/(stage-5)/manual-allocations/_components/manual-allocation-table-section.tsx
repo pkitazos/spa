@@ -1,19 +1,22 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { ProjectAllocationStatus } from "@/dto";
 
 import { useInstanceParams } from "@/components/params-context";
 
-import { ProjectAllocationStatus } from "@/dto";
 import { api } from "@/lib/trpc/client";
-import { useRouter } from "next/navigation";
+
 import { ManualAllocationDataTable } from "./manual-allocation-data-table";
 import {
-  ManualAllocationProject,
-  ManualAllocationStudent,
-  ManualAllocationSupervisor,
-  ValidationWarning,
+  type ManualAllocationProject,
+  type ManualAllocationStudent,
+  type ManualAllocationSupervisor,
+  type ValidationWarning,
   ValidationWarningSeverity,
   ValidationWarningType,
 } from "./manual-allocation-types";
@@ -38,12 +41,12 @@ export function ManualAllocationDataTableSection({
 
   const utils = api.useUtils();
 
-  function refetchData() {
-    utils.institution.instance.getAllocatedStudents.invalidate();
-    utils.institution.instance.getUnallocatedStudents.invalidate();
-    utils.institution.instance.getSupervisorsWithAllocations.invalidate();
-    utils.institution.instance.getProjectsWithAllocationStatus.invalidate();
-  }
+  const refetchData = useCallback(async () => {
+    await utils.institution.instance.getAllocatedStudents.invalidate();
+    await utils.institution.instance.getUnallocatedStudents.invalidate();
+    await utils.institution.instance.getSupervisorsWithAllocations.invalidate();
+    await utils.institution.instance.getProjectsWithAllocationStatus.invalidate();
+  }, [utils]);
 
   const { mutateAsync: api_saveAllocations } =
     api.institution.instance.saveManualStudentAllocations.useMutation({});
@@ -229,7 +232,7 @@ export function ManualAllocationDataTableSection({
         }),
       );
     },
-    [projects, calculateWarnings, students, setStudents],
+    [projects, calculateWarnings, setStudents],
   );
 
   const handleRemoveAllocation = useCallback((studentId: string) => {
@@ -259,9 +262,9 @@ export function ManualAllocationDataTableSection({
       ];
 
       toast.promise(
-        api_saveAllocations({ params, allocations }).then(() => {
+        api_saveAllocations({ params, allocations }).then(async () => {
           router.refresh();
-          refetchData();
+          await refetchData();
           setStudents((prev) =>
             prev.map((s) => {
               if (s.id !== studentId) return s;
@@ -283,7 +286,7 @@ export function ManualAllocationDataTableSection({
         },
       );
     },
-    [students],
+    [api_saveAllocations, params, refetchData, router, students],
   );
 
   const handleSaveAll = useCallback(async () => {
@@ -316,9 +319,9 @@ export function ManualAllocationDataTableSection({
     }
 
     toast.promise(
-      api_saveAllocations({ params, allocations }).then(() => {
+      api_saveAllocations({ params, allocations }).then(async () => {
         router.refresh();
-        refetchData();
+        await refetchData();
         setStudents((prev) =>
           prev.map((s) => {
             const dirtyStudent = dirtyStudents.find((ds) => ds.id === s.id);
@@ -340,7 +343,7 @@ export function ManualAllocationDataTableSection({
         error: "Failed to save allocations",
       },
     );
-  }, [students]);
+  }, [api_saveAllocations, params, refetchData, router, students]);
 
   const handleReset = useCallback((studentId: string) => {
     setStudents((prev) =>

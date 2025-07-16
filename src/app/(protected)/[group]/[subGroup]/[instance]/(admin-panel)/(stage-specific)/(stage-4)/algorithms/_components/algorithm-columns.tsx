@@ -1,7 +1,10 @@
 "use client";
-import { ColumnDef } from "@tanstack/react-table";
+
+import { type ColumnDef } from "@tanstack/react-table";
 import { MoreHorizontalIcon as MoreIcon, Trash2Icon } from "lucide-react";
 import { toast } from "sonner";
+
+import { type AlgorithmDTO } from "@/dto";
 
 import { useInstanceParams } from "@/components/params-context";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +24,6 @@ import {
 } from "@/components/yes-no-action";
 
 import { api } from "@/lib/trpc/client";
-import { AlgorithmDTO } from "@/dto";
 
 import { useAlgorithmUtils } from "./algorithm-context";
 import { RunAlgorithmButton } from "./run-algorithm-button";
@@ -30,11 +32,11 @@ export function useAlgorithmColumns() {
   const params = useInstanceParams();
   const utils = useAlgorithmUtils();
 
-  function refetchResults() {
-    utils.getAll();
-    utils.allStudentResults();
-    utils.allSupervisorResults();
-    utils.getAllSummaryResults();
+  async function refetchResults() {
+    await utils.getAll();
+    await utils.allStudentResults();
+    await utils.allSupervisorResults();
+    await utils.getAllSummaryResults();
   }
 
   const { mutateAsync: deleteAlgAsync } =

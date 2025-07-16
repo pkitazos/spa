@@ -1,15 +1,24 @@
+import { PreferenceType } from "@prisma/client";
+
+import {
+  type StudentDTO,
+  type ProjectDTO,
+  type SupervisorDTO,
+  type ReaderDTO,
+} from "@/dto";
+
 import { updateManyPreferenceTransaction } from "@/db/transactions/update-many-preferences";
 import { updatePreferenceTransaction } from "@/db/transactions/update-preference";
 import { Transformers as T } from "@/db/transformers";
-import { DB } from "@/db/types";
-import { StudentDTO, ProjectDTO, SupervisorDTO, ReaderDTO } from "@/dto";
+import { type DB } from "@/db/types";
+
 import { expand } from "@/lib/utils/general/instance-params";
 import { sortPreferenceType } from "@/lib/utils/sorting/by-preference-type";
-import { ProjectPreferenceCardDto } from "@/lib/validations/board";
-import { InstanceParams } from "@/lib/validations/params";
-import { PreferenceType } from "@prisma/client";
+import { type ProjectPreferenceCardDto } from "@/lib/validations/board";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import { AllocationInstance } from "../space/instance";
+
 import { User } from ".";
 
 export class Student extends User {
@@ -29,7 +38,7 @@ export class Student extends User {
           userInInstance: { include: { user: true } },
         },
       })
-      .then(T.toStudentDTO);
+      .then((x) => T.toStudentDTO(x));
   }
 
   public async hasSelfDefinedProject(): Promise<boolean> {
@@ -200,7 +209,7 @@ export class Student extends User {
           userInInstance: { include: { user: true } },
         },
       })
-      .then(T.toStudentDTO);
+      .then((x) => T.toStudentDTO(x));
   }
 
   public async updateDraftPreferenceType(

@@ -1,6 +1,6 @@
 "use client";
 
-import { PreferenceType } from "@prisma/client";
+import { type PreferenceType } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -39,9 +39,9 @@ export function KanbanBoardSection({ studentId }: { studentId: string }) {
         projectId,
         updatedRank,
         preferenceType,
-      }).then(() => {
+      }).then(async () => {
         router.refresh();
-        refetch();
+        await refetch();
       }),
       {
         loading: "Reordering...",
@@ -58,9 +58,9 @@ export function KanbanBoardSection({ studentId }: { studentId: string }) {
         studentId,
         projectId,
         preferenceType: "None",
-      }).then(() => {
+      }).then(async () => {
         router.refresh();
-        refetch();
+        await refetch();
         deleteProject(projectId);
       }),
       {

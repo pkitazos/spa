@@ -1,47 +1,46 @@
 // MOVE these to some other file
-
 import {
-  AssessmentCriterionDTO,
-  CriterionScoreDTO,
-  MarkingSubmissionDTO,
-  UnitOfAssessmentDTO,
-  UserDTO,
+  type AssessmentCriterionDTO,
+  type CriterionScoreDTO,
+  type MarkingSubmissionDTO,
+  type UnitOfAssessmentDTO,
+  type UserDTO,
 } from "@/dto";
 import {
-  DB_Algorithm,
-  DB_AllocationGroup,
-  DB_AllocationInstance,
-  DB_AllocationSubGroup,
-  DB_AssessmentCriterion,
-  DB_Flag,
-  DB_FlagOnProject,
-  DB_FlagOnStudent,
-  DB_UnitOfAssessment,
-  DB_Project,
-  DB_ReaderDetails,
-  DB_StudentDetails,
-  DB_SupervisorDetails,
-  DB_Tag,
-  DB_TagOnProject,
-  DB_User,
-  DB_UserInInstance,
-  DB_CriterionScore,
-  DB_MarkingSubmission,
+  type AlgorithmDTO,
+  type FlagDTO,
+  type GroupDTO,
+  type InstanceDTO,
+  type InstanceUserDTO,
+  type ProjectDTO,
+  type ReaderDTO,
+  type StudentDTO,
+  type SubGroupDTO,
+  type SupervisorDTO,
+  type TagDTO,
+} from "@/dto";
+
+import {
+  type DB_Algorithm,
+  type DB_AllocationGroup,
+  type DB_AllocationInstance,
+  type DB_AllocationSubGroup,
+  type DB_AssessmentCriterion,
+  type DB_Flag,
+  type DB_FlagOnProject,
+  type DB_FlagOnStudent,
+  type DB_UnitOfAssessment,
+  type DB_Project,
+  type DB_ReaderDetails,
+  type DB_StudentDetails,
+  type DB_SupervisorDetails,
+  type DB_Tag,
+  type DB_TagOnProject,
+  type DB_User,
+  type DB_UserInInstance,
+  type DB_CriterionScore,
+  type DB_MarkingSubmission,
 } from "./types";
-
-import {
-  AlgorithmDTO,
-  FlagDTO,
-  GroupDTO,
-  InstanceDTO,
-  InstanceUserDTO,
-  ProjectDTO,
-  ReaderDTO,
-  StudentDTO,
-  SubGroupDTO,
-  SupervisorDTO,
-  TagDTO,
-} from "@/dto";
 
 export class Transformers {
   static toUserDTO({
@@ -197,8 +196,8 @@ export class Transformers {
       capacityLowerBound: data.capacityLowerBound,
       capacityUpperBound: data.capacityUpperBound,
       supervisorId: data.supervisorId,
-      flags: data.flagsOnProject.map((f) => Transformers.toFlagDTO(f.flag)),
-      tags: data.tagsOnProject.map((t) => Transformers.toTagDTO(t.tag)),
+      flags: data.flagsOnProject.map((f) => this.toFlagDTO(f.flag)),
+      tags: data.tagsOnProject.map((t) => this.toTagDTO(t.tag)),
     };
   }
 
@@ -248,9 +247,9 @@ export class Transformers {
     return {
       id: data.id,
       title: data.title,
-      flag: Transformers.toFlagDTO(data.flag),
-      components: data.assessmentCriteria.map(
-        Transformers.toAssessmentCriterionDTO,
+      flag: this.toFlagDTO(data.flag),
+      components: data.assessmentCriteria.map((x) =>
+        this.toAssessmentCriterionDTO(x),
       ),
       studentSubmissionDeadline: data.studentSubmissionDeadline,
       markerSubmissionDeadline: data.markerSubmissionDeadline,

@@ -1,39 +1,44 @@
 import { PAGES } from "@/config/pages";
 import { ADMIN_TABS_BY_STAGE } from "@/config/side-panel-tabs/admin-tabs-by-stage";
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
+
+import {
+  type UnitOfAssessmentDTO,
+  type AssessmentCriterionDTO,
+  type FlagDTO,
+  type InstanceDTO,
+  type InstanceDisplayData,
+  type AlgorithmDTO,
+  type TagDTO,
+  type ProjectDTO,
+  type SupervisorDTO,
+  type UserDTO,
+  type StudentDTO,
+  type ReaderDTO,
+  type NewUnitOfAssessmentDTO,
+} from "@/dto";
+
 import { collectMatchingData } from "@/db/transactions/collect-matching-data";
 import { Transformers as T } from "@/db/transformers";
-import { DB, Stage, New, AllocationMethod } from "@/db/types";
-import {
-  UnitOfAssessmentDTO,
-  AssessmentCriterionDTO,
-  FlagDTO,
-  InstanceDTO,
-  InstanceDisplayData,
-  AlgorithmDTO,
-  TagDTO,
-  ProjectDTO,
-  SupervisorDTO,
-  UserDTO,
-  StudentDTO,
-  ReaderDTO,
-  NewUnitOfAssessmentDTO,
-} from "@/dto";
+import { type DB, Stage, type New, AllocationMethod } from "@/db/types";
+
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { setDiff } from "@/lib/utils/general/set-difference";
-import { InstanceParams } from "@/lib/validations/params";
-import { TabType } from "@/lib/validations/tabs";
+import { type InstanceParams } from "@/lib/validations/params";
+import { type TabType } from "@/lib/validations/tabs";
 
-import { MatchingAlgorithm } from "../matching-algorithm";
-import { Project } from "..";
 import { DataObject } from "../data-object";
-import { AllocationGroup } from "./group";
-import { AllocationSubGroup } from "./sub-group";
-import { User, Student, Supervisor } from "../user";
+import { MatchingAlgorithm } from "../matching-algorithm";
 import {
   StudentProjectAllocationData,
-  StudentProjectAllocationDTO,
+  type StudentProjectAllocationDTO,
 } from "../student-project-allocation-data";
+import { User, type Student, type Supervisor } from "../user";
+
+import { Project } from "..";
+
+import { AllocationGroup } from "./group";
+import { AllocationSubGroup } from "./sub-group";
 
 export const byTitle = <T extends { title: string }>({ title }: T) => title;
 
@@ -46,7 +51,7 @@ export class AllocationInstance extends DataObject {
         where: { id: unitOfAssessmentId },
         include: { flag: true, assessmentCriteria: true },
       })
-      .then(T.toUnitOfAssessmentDTO);
+      .then((x) => T.toUnitOfAssessmentDTO(x));
   }
 
   public async getCriteria(
@@ -57,7 +62,7 @@ export class AllocationInstance extends DataObject {
       orderBy: { layoutIndex: "asc" },
     });
 
-    return data.map(T.toAssessmentCriterionDTO);
+    return data.map((x) => T.toAssessmentCriterionDTO(x));
   }
 
   public async getFlagsWithAssessmentDetails(): Promise<
@@ -74,7 +79,9 @@ export class AllocationInstance extends DataObject {
 
     return flagData.map((f) => ({
       ...T.toFlagDTO(f),
-      unitsOfAssessment: f.unitsOfAssessment.map(T.toUnitOfAssessmentDTO),
+      unitsOfAssessment: f.unitsOfAssessment.map((x) =>
+        T.toUnitOfAssessmentDTO(x),
+      ),
     }));
   }
 
@@ -120,7 +127,7 @@ export class AllocationInstance extends DataObject {
     if (refetch || !this._data) {
       this._data = await this.db.allocationInstance
         .findFirstOrThrow({ where: toInstanceId(this.params) })
-        .then(T.toAllocationInstanceDTO);
+        .then((x) => T.toAllocationInstanceDTO(x));
     }
 
     return this._data!;
@@ -148,7 +155,7 @@ export class AllocationInstance extends DataObject {
           upperBoundModifier: data.upperBoundModifier,
         },
       })
-      .then(T.toAlgorithmDTO);
+      .then((x) => T.toAlgorithmDTO(x));
   }
 
   public async getMatchingData() {
@@ -162,7 +169,7 @@ export class AllocationInstance extends DataObject {
       orderBy: { createdAt: "asc" },
     });
 
-    return algs.map(T.toAlgorithmDTO);
+    return algs.map((x) => T.toAlgorithmDTO(x));
   }
 
   public getAlgorithm(algConfigId: string): MatchingAlgorithm {
@@ -313,7 +320,7 @@ export class AllocationInstance extends DataObject {
       include: { userInInstance: { include: { user: true } } },
     });
 
-    return supervisorData.map(T.toSupervisorDTO);
+    return supervisorData.map((x) => T.toSupervisorDTO(x));
   }
 
   public async getSupervisorProjectDetails(): Promise<
@@ -404,7 +411,7 @@ export class AllocationInstance extends DataObject {
       include: { userInInstance: { include: { user: true } } },
     });
 
-    return readers.map(T.toReaderDTO);
+    return readers.map((x) => T.toReaderDTO(x));
   }
 
   public async getStudentPreferenceDetails() {
@@ -630,13 +637,12 @@ export class AllocationInstance extends DataObject {
   }
 
   get group() {
-    if (!this._group) this._group = new AllocationGroup(this.db, this.params);
+    this._group ??= new AllocationGroup(this.db, this.params);
     return this._group;
   }
 
   get subGroup() {
-    if (!this._subgroup)
-      this._subgroup = new AllocationSubGroup(this.db, this.params);
+    this._subgroup ??= new AllocationSubGroup(this.db, this.params);
     return this._subgroup;
   }
 
@@ -910,7 +916,7 @@ export class AllocationInstance extends DataObject {
       },
     });
 
-    return projectData.map(T.toProjectDTO);
+    return projectData.map((x) => T.toProjectDTO(x));
   }
 
   public async edit({

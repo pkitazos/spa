@@ -1,5 +1,12 @@
 "use client";
+
 import { useState } from "react";
+
+import { Check, ChevronsUpDown } from "lucide-react";
+
+import { ProjectAllocationStatus } from "@/dto";
+
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -14,12 +21,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { fuzzyMatch } from "@/lib/utils/general/fuzzy-match";
-import { ProjectAllocationStatus } from "@/dto";
-import { Badge } from "@/components/ui/badge";
-import { ManualAllocationProject } from "./manual-allocation-types";
+
+import { type ManualAllocationProject } from "./manual-allocation-types";
 
 interface ProjectComboboxProps {
   projects: ManualAllocationProject[];
@@ -130,8 +136,6 @@ function ProjectCell({
         return "text-orange-600 bg-orange-100 border-orange-200";
       case ProjectAllocationStatus.PRE_ALLOCATED:
         return "text-red-600 bg-red-100 border-red-200";
-      default:
-        throw new Error(`Unknown status: ${status}`);
     }
   };
 
@@ -147,8 +151,6 @@ function ProjectCell({
         return "Algorithmically Allocated";
       case ProjectAllocationStatus.MANUAL:
         return "Manually Allocated";
-      default:
-        throw new Error(`Unknown status: ${status}`);
     }
   };
 

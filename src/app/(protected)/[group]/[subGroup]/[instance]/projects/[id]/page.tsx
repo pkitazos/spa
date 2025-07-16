@@ -2,6 +2,13 @@ import { FlagIcon, TagIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
+import { type ProjectDTO, type StudentDTO, type SupervisorDTO } from "@/dto";
+
+import { type PreferenceType, Role, Stage } from "@/db/types";
+
 import { AccessControl } from "@/components/access-control";
 import { Heading, SubHeading } from "@/components/heading";
 import { MarkdownRenderer } from "@/components/markdown-editor";
@@ -15,19 +22,14 @@ import { Unauthorised } from "@/components/unauthorised";
 import { api } from "@/lib/trpc/server";
 import { cn } from "@/lib/utils";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
+import { toPP1 } from "@/lib/utils/general/instance-params";
 import { toPositional } from "@/lib/utils/general/to-positional";
 import { previousStages } from "@/lib/utils/permissions/stage-check";
-import { InstanceParams } from "@/lib/validations/params";
-import { StudentPreferenceType } from "@/lib/validations/student-preference";
+import { type InstanceParams } from "@/lib/validations/params";
+import { type StudentPreferenceType } from "@/lib/validations/student-preference";
 
 import { StudentPreferenceButton } from "./_components/student-preference-button";
 import { StudentPreferenceDataTable } from "./_components/student-preference-data-table";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
-import { PreferenceType, Role, Stage } from "@/db/types";
-import { toPP1 } from "@/lib/utils/general/instance-params";
-import { ProjectDTO, StudentDTO, SupervisorDTO } from "@/dto";
 
 type PageParams = InstanceParams & { id: string };
 
@@ -46,6 +48,8 @@ export async function generateMetadata({ params }: { params: PageParams }) {
     ]),
   };
 }
+
+// TODO: this is super messy and should be reviewed and fixed a lil
 
 export default async function Project({ params }: { params: PageParams }) {
   const projectId = params.id;
@@ -161,7 +165,7 @@ export default async function Project({ params }: { params: PageParams }) {
           <section className={cn("mt-16 flex flex-col gap-8")}>
             <SubHeading>Allocation</SubHeading>
             <AllocatedStudentCard
-              studentAllocation={allocatedStudent!}
+              studentAllocation={allocatedStudent}
               preAllocated={!!project.preAllocatedStudentId}
             />
           </section>

@@ -1,20 +1,7 @@
 import { z } from "zod";
 
-import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
-import { instanceParamsSchema } from "@/lib/validations/params";
-import { tabGroupSchema } from "@/lib/validations/tabs";
-
-import { procedure } from "@/server/middleware";
-import { createTRPCRouter } from "@/server/trpc";
-
-import { algorithmRouter } from "./algorithm";
-import { matchingRouter } from "./matching";
-import { preferenceRouter } from "./preference";
-
+import { Grade } from "@/config/grades";
 import { PAGES } from "@/config/pages";
-import { AllocationInstance } from "@/data-objects";
-import { AllocationMethod, Role, Stage } from "@/db/types";
-import { stageSchema } from "@/db/types";
 
 import {
   flagDtoSchema,
@@ -23,10 +10,10 @@ import {
   ProjectAllocationStatus,
   projectDtoSchema,
   projectStatusRank as statusRank,
-  ReaderDTO,
+  type ReaderDTO,
   readerDtoSchema,
   studentDtoSchema,
-  SupervisorDTO,
+  type SupervisorDTO,
   supervisorDtoSchema,
   tagDtoSchema,
   unitOfAssessmentDtoSchema,
@@ -35,14 +22,29 @@ import {
   LinkUserResult,
   LinkUserResultSchema,
 } from "@/dto/result/link-user-result";
-import { newReaderAllocationSchema } from "@/lib/validations/allocate-readers/new-reader-allocation";
-import { expand } from "@/lib/utils/general/instance-params";
-import { Transformers as T } from "@/db/transformers";
-import { Grade } from "@/config/grades";
 import {
   ReaderAssignmentResult,
   readerAssignmentResultSchema,
 } from "@/dto/result/reader-allocation-result";
+
+import { AllocationInstance } from "@/data-objects";
+
+import { Transformers as T } from "@/db/transformers";
+import { AllocationMethod, Role, Stage } from "@/db/types";
+import { stageSchema } from "@/db/types";
+
+import { procedure } from "@/server/middleware";
+import { createTRPCRouter } from "@/server/trpc";
+
+import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
+import { expand } from "@/lib/utils/general/instance-params";
+import { newReaderAllocationSchema } from "@/lib/validations/allocate-readers/new-reader-allocation";
+import { instanceParamsSchema } from "@/lib/validations/params";
+import { tabGroupSchema } from "@/lib/validations/tabs";
+
+import { algorithmRouter } from "./algorithm";
+import { matchingRouter } from "./matching";
+import { preferenceRouter } from "./preference";
 
 const tgc = z.object({
   id: z.string(),
@@ -904,6 +906,8 @@ export const instanceRouter = createTRPCRouter({
         });
 
         const studentProjectMap = projectAllocationData.reduce(
+          // TODO: fix
+          // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
           (acc, val) => ({ ...acc, [val.student.id]: val.allocation?.id! }),
           {} as Record<string, string>,
         );
@@ -915,7 +919,7 @@ export const instanceRouter = createTRPCRouter({
               ...expand(instance.params),
               readerId: reader.id,
               studentId,
-              projectId: studentProjectMap[studentId]!,
+              projectId: studentProjectMap[studentId],
               thirdMarker: false, // TODO needs to come from somewhere
             })),
         });
@@ -948,7 +952,7 @@ export const instanceRouter = createTRPCRouter({
 
       return flags.map((f) => ({
         flag: T.toFlagDTO(f),
-        units: f.unitsOfAssessment.map(T.toUnitOfAssessmentDTO),
+        units: f.unitsOfAssessment.map((x) => T.toUnitOfAssessmentDTO(x)),
       }));
     }),
 

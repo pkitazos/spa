@@ -1,17 +1,27 @@
 "use client";
 
 import type { ColumnDef } from "@tanstack/react-table";
+import Link from "next/link";
+
+import { PAGES } from "@/config/pages";
+
+import {
+  type ProjectDTO,
+  type ReaderDTO,
+  type StudentDTO,
+  type SupervisorDTO,
+} from "@/dto";
+import { type GradingResult } from "@/dto/result/grading-result";
+
 import { Button, buttonVariants } from "@/components/ui/button";
-import { StatusIcon } from "./grades-table";
-import { ProjectDTO, ReaderDTO, StudentDTO, SupervisorDTO } from "@/dto";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
-import { PAGES } from "@/config/pages";
-import { GradingResult } from "@/dto/result/grading-result";
 
-// @JakeTrevor cook
+import { cn } from "@/lib/utils";
+
+import { StatusIcon } from "./grades-table";
+
+// TODO: did we say we're gonna kill this?
 
 export const columns: ColumnDef<{
   project: ProjectDTO;
@@ -123,6 +133,7 @@ export const columns: ColumnDef<{
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => {
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       const action = row.getValue("action") as string;
       if (!action) return null;
       // Take to page to override grade

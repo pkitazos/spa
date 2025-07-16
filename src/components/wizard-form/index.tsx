@@ -1,12 +1,15 @@
-import { zodResolver } from "@hookform/resolvers/zod";
 import React, { useState } from "react";
-import { FormProvider, Path, useForm } from "react-hook-form";
-import { z } from "zod";
-import { Form } from "@/components/ui/form";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { StepIndicator } from "./step-indicator";
+import { FormProvider, type Path, useForm } from "react-hook-form";
+
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { type z } from "zod";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
+
+import { StepIndicator } from "./step-indicator";
 
 export type WizardStep<T> = {
   id: string;

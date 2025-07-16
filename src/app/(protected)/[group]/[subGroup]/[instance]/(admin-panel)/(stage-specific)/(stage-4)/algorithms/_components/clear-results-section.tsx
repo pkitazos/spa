@@ -1,4 +1,5 @@
 "use client";
+
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { BookmarkXIcon, DatabaseZapIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -36,11 +37,11 @@ export function ClearResultsSection({
   const router = useRouter();
   const utils = useAlgorithmUtils();
 
-  function refetchResults() {
-    utils.getAll();
-    utils.allStudentResults();
-    utils.allSupervisorResults();
-    utils.getAllSummaryResults();
+  async function refetchResults() {
+    await utils.getAll();
+    await utils.allStudentResults();
+    await utils.allSupervisorResults();
+    await utils.getAllSummaryResults();
   }
 
   const { mutateAsync: clearResults } =
@@ -51,8 +52,8 @@ export function ClearResultsSection({
 
   function handleClearResults() {
     void toast.promise(
-      clearResults({ params }).then(() => {
-        refetchResults();
+      clearResults({ params }).then(async () => {
+        await refetchResults();
         setSelectedAlgName(undefined);
         router.refresh();
       }),
@@ -66,8 +67,8 @@ export function ClearResultsSection({
 
   function handleClearSelectedAlg() {
     void toast.promise(
-      clearSelectedAlg({ params }).then(() => {
-        refetchResults();
+      clearSelectedAlg({ params }).then(async () => {
+        await refetchResults();
         setSelectedAlgName(undefined);
         router.refresh();
       }),

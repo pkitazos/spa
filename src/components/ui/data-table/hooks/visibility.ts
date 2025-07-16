@@ -1,6 +1,11 @@
-import { Updater, ColumnDef, VisibilityState } from "@tanstack/react-table";
-import { useQueryState, parseAsArrayOf, parseAsString } from "nuqs";
 import { useCallback } from "react";
+
+import {
+  type Updater,
+  type ColumnDef,
+  type VisibilityState,
+} from "@tanstack/react-table";
+import { useQueryState, parseAsArrayOf, parseAsString } from "nuqs";
 
 export function useVisibilitySearchParams<T, V>(cols: ColumnDef<T, V>[]) {
   const [hidden, setHidden] = useQueryState(
@@ -21,7 +26,7 @@ export function useVisibilitySearchParams<T, V>(cols: ColumnDef<T, V>[]) {
 
   const setVisibilityState = useCallback(
     (state: Updater<VisibilityState>) => {
-      setHidden((oldHidden) => {
+      void setHidden((oldHidden) => {
         if (typeof state === "function") {
           state = state(computeVisible(oldHidden));
         }

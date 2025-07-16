@@ -6,18 +6,17 @@
  * TL;DR - This is where all the tRPC server stuff is created and plugged in. The pieces you will
  * need to use are documented accordingly near the end.
  */
-
+import { sendMail } from "@/emails";
+import { Mailer } from "@/emails/mailer";
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { auth } from "@/lib/auth";
-import { Session } from "@/lib/validations/auth";
-
 import { db } from "@/db";
-import { sendMail } from "@/emails";
-import { Mailer } from "@/emails/mailer";
+
+import { auth } from "@/lib/auth";
 import { logger, LogLevels } from "@/lib/logging/logger";
+import { type Session } from "@/lib/validations/auth";
 
 const trpcLogger = logger.child({ service: "trpc" });
 
@@ -45,6 +44,7 @@ export const createTRPCContext = async (opts: {
   trpcLogger.log(LogLevels.TRIVIAL, "tRPC Request", { source });
 
   function audit(message: string, ...meta: any[]) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-return
     const data = meta.reduce((acc, val) => ({ ...acc, ...val }), {
       authorizer: user,
     });

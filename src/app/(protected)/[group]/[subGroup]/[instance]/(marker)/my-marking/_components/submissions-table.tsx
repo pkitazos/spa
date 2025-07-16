@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+
+import { MarkerType } from "@prisma/client";
 import {
   type ColumnFiltersState,
-  ExpandedState,
-  Row,
+  type ExpandedState,
+  type Row,
   type SortingState,
   getCoreRowModel,
   getFilteredRowModel,
@@ -12,7 +14,14 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import Link from "next/link";
 
+import { PAGES } from "@/config/pages";
+
+import { type UnitOfAssessmentDTO } from "@/dto";
+import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
+
+import { CopyButton } from "@/components/copy-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,14 +32,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { columns, SubmissionTableRow } from "./columns";
-import Link from "next/link";
-import { PAGES } from "@/config/pages";
-import { MarkerType } from "@prisma/client";
-import { UnitOfAssessmentDTO } from "@/dto";
+
 import { format } from "@/lib/utils/date/format";
-import { CopyButton } from "@/components/copy-button";
-import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
+
+import { columns, type SubmissionTableRow } from "./columns";
 
 export function SubmissionsTable({ data }: { data: SubmissionTableRow[] }) {
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -131,7 +136,11 @@ function ProjectRow({ row }: { row: Row<SubmissionTableRow> }) {
       </TableRow>
       {isExpanded &&
         row.original.unitsOfAssessment.map((data) => (
-          <AssessmentUnitRow data={data} studentId={row.original.student.id} />
+          <AssessmentUnitRow
+            key={data.unit.id}
+            data={data}
+            studentId={row.original.student.id}
+          />
         ))}
     </>
   );

@@ -1,12 +1,16 @@
+import { type SubGroupDTO, type GroupDTO, type UserDTO } from "@/dto";
+
 import { Transformers as T } from "@/db/transformers";
-import { DB } from "@/db/types";
-import { SubGroupDTO, GroupDTO, UserDTO } from "@/dto";
+import { type DB } from "@/db/types";
+
 import { slugify } from "@/lib/utils/general/slugify";
 import { uniqueById } from "@/lib/utils/list-unique";
-import { GroupParams } from "@/lib/validations/params";
+import { type GroupParams } from "@/lib/validations/params";
+
 import { DataObject } from "../data-object";
-import { Institution } from "./institution";
 import { User } from "../user";
+
+import { Institution } from "./institution";
 
 export class AllocationGroup extends DataObject {
   public params: GroupParams;
@@ -48,7 +52,7 @@ export class AllocationGroup extends DataObject {
           allocationGroupId: this.params.group,
         },
       })
-      .then(T.toAllocationSubGroupDTO);
+      .then((x) => T.toAllocationSubGroupDTO(x));
   }
 
   public async exists(): Promise<boolean> {
@@ -60,7 +64,7 @@ export class AllocationGroup extends DataObject {
   public async get(): Promise<GroupDTO> {
     return await this.db.allocationGroup
       .findFirstOrThrow({ where: { id: this.params.group } })
-      .then(T.toAllocationGroupDTO);
+      .then((x) => T.toAllocationGroupDTO(x));
   }
 
   public async getSubGroups(): Promise<SubGroupDTO[]> {
@@ -68,7 +72,7 @@ export class AllocationGroup extends DataObject {
       where: { allocationGroupId: this.params.group },
     });
 
-    return subgroups.map(T.toAllocationSubGroupDTO);
+    return subgroups.map((x) => T.toAllocationSubGroupDTO(x));
   }
 
   public async getAdmins(): Promise<UserDTO[]> {
@@ -95,11 +99,11 @@ export class AllocationGroup extends DataObject {
   public async delete(): Promise<GroupDTO> {
     return await this.db.allocationGroup
       .delete({ where: { id: this.params.group } })
-      .then(T.toAllocationGroupDTO);
+      .then((x) => T.toAllocationGroupDTO(x));
   }
 
   get institution() {
-    if (!this._institution) this._institution = new Institution(this.db);
+    this._institution ??= new Institution(this.db);
     return this._institution;
   }
 }

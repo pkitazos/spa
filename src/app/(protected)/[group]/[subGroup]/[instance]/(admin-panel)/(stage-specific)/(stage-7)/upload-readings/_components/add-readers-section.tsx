@@ -2,14 +2,16 @@
 
 import { useRouter } from "next/navigation";
 
+import { type ReaderAssignmentResult } from "@/dto/result/reader-allocation-result";
+
 import { useInstanceParams } from "@/components/params-context";
 
 import { api } from "@/lib/trpc/client";
 import { allocateReadersCsvHeaders } from "@/lib/validations/allocate-readers/csv";
-import { NewReaderAllocation } from "@/lib/validations/allocate-readers/new-reader-allocation";
+import { type NewReaderAllocation } from "@/lib/validations/allocate-readers/new-reader-allocation";
 
 import { CSVUploadButton } from "./csv-upload-button";
-import { ReaderAssignmentResult } from "@/dto/result/reader-allocation-result";
+
 //import { FormSection } from "./form-section";
 //import { useNewSupervisorColumns } from "./new-supervisor-columns";
 
@@ -18,9 +20,9 @@ export function AddReadersSection() {
   const params = useInstanceParams();
   const utils = api.useUtils();
 
-  const { data, isLoading } = api.institution.instance.getSupervisors.useQuery({
-    params,
-  });
+  // const { data, isLoading } = api.institution.instance.getSupervisors.useQuery({
+  //   params,
+  // });
 
   const refetchData = () => utils.institution.instance.getSupervisors.refetch();
 
@@ -47,17 +49,18 @@ export function AddReadersSection() {
   async function handleAssignReaders(
     newReaderAllocations: NewReaderAllocation[],
   ) {
-    const res = await assignReadersAsync({ params, newReaderAllocations }).then(
-      (data) => {
-        router.refresh();
-        refetchData();
+    const _res = await assignReadersAsync({
+      params,
+      newReaderAllocations,
+    }).then(async (data) => {
+      router.refresh();
+      await refetchData();
 
-        return data.reduce(
-          (acc, val) => ({ ...acc, [val]: (acc[val] ?? 0) + 1 }),
-          {} as Record<ReaderAssignmentResult, number>,
-        );
-      },
-    );
+      return data.reduce(
+        (acc, val) => ({ ...acc, [val]: (acc[val] ?? 0) + 1 }),
+        {} as Record<ReaderAssignmentResult, number>,
+      );
+    });
 
     // TODO: report status of csv upload
 

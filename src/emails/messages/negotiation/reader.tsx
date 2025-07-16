@@ -1,15 +1,4 @@
-import {
-  AssessmentCriterionDTO,
-  MarkingSubmissionDTO,
-  ProjectDTO,
-  StudentDTO,
-  SupervisorDTO,
-  UnitOfAssessmentDTO,
-} from "@/dto";
-import { Heading, Hr, Text } from "@react-email/components";
-import { Layout } from "../../components/layout";
 import { Marksheet } from "@/emails/components/marksheet";
-import { format } from "@/lib/utils/date/format";
 import {
   fakeCriteria,
   fakeDeadline,
@@ -20,6 +9,20 @@ import {
   fakeSupervisorSubmission,
   fakeUnit,
 } from "@/emails/fake-data";
+import { Heading, Hr, Text } from "@react-email/components";
+
+import {
+  type AssessmentCriterionDTO,
+  type MarkingSubmissionDTO,
+  type ProjectDTO,
+  type StudentDTO,
+  type SupervisorDTO,
+  type UnitOfAssessmentDTO,
+} from "@/dto";
+
+import { format } from "@/lib/utils/date/format";
+
+import { Layout } from "../../components/layout";
 
 interface Props {
   project: ProjectDTO;
@@ -46,8 +49,9 @@ export function ReaderNegotiate1({
     <Layout previewText="Negotiation required">
       <Heading as="h2">{unit.title} Negotiation Required</Heading>
       <Text>
-        The grades submitted by the supervisor and reader for the project "
-        <i>{project.title}</i>" (student {student.name}, {student.id}){" "}
+        The grades submitted by the supervisor and reader for the project
+        &ldquo;
+        <i>{project.title}</i>&rdquo; (student {student.name}, {student.id}){" "}
         <strong>require negotiation</strong> between supervisor and reader.
       </Text>
       <Text>

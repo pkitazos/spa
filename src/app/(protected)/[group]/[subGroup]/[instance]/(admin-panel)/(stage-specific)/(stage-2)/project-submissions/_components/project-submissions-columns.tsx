@@ -1,4 +1,4 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CopyIcon,
   CornerDownRightIcon,
@@ -8,9 +8,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { PAGES } from "@/config/pages";
+
+import { type SupervisorDTO } from "@/dto";
+
 import { ExportCSVButton } from "@/components/export-csv";
 import { CircleCheckSolidIcon } from "@/components/icons/circle-check";
 import { CircleXIcon } from "@/components/icons/circle-x";
+import { usePathInInstance } from "@/components/params-context";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionColumnLabel } from "@/components/ui/data-table/action-column-label";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
@@ -26,10 +31,6 @@ import {
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
-
-import { PAGES } from "@/config/pages";
-import { SupervisorDTO } from "@/dto";
-import { usePathInInstance } from "@/components/params-context";
 
 type ProjectSubmissionDto = {
   supervisor: SupervisorDTO;
@@ -177,7 +178,7 @@ export function useProjectSubmissionColumns(): ColumnDef<ProjectSubmissionDto>[]
       ),
       filterFn: (row, columnId, value) => {
         const selectedFilters = value as ("yes" | "no")[];
-        const rowValue = row.getValue(columnId) as boolean;
+        const rowValue = row.getValue(columnId);
         const targetMet = rowValue ? "yes" : "no";
         return selectedFilters.includes(targetMet);
       },

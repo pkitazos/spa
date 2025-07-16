@@ -1,7 +1,9 @@
+import { TRPCError } from "@trpc/server";
+import { addWeeks } from "date-fns";
+import { z } from "zod";
+
 import { Grade } from "@/config/grades";
-import { Marker } from "@/data-objects";
-import { Transformers as T } from "@/db/transformers";
-import { markerTypeSchema, Stage } from "@/db/types";
+
 import {
   partialMarkingSubmissionDtoSchema,
   projectDtoSchema,
@@ -9,17 +11,21 @@ import {
   markingSubmissionDtoSchema,
   unitOfAssessmentDtoSchema,
   assessmentCriterionDtoSchema,
-  ReaderDTO,
-  MarkingSubmissionDTO,
+  type ReaderDTO,
+  type MarkingSubmissionDTO,
 } from "@/dto";
 import { GradingResult } from "@/dto/result/grading-result";
 import { markingSubmissionStatusSchema } from "@/dto/result/marking-submission-status";
-import { subsequentStages } from "@/lib/utils/permissions/stage-check";
+
+import { Marker } from "@/data-objects";
+
+import { Transformers as T } from "@/db/transformers";
+import { markerTypeSchema, Stage } from "@/db/types";
+
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
-import { TRPCError } from "@trpc/server";
-import { addWeeks } from "date-fns";
-import { z } from "zod";
+
+import { subsequentStages } from "@/lib/utils/permissions/stage-check";
 
 export const markerRouter = createTRPCRouter({
   getUnitById: procedure.instance
@@ -154,7 +160,7 @@ export const markerRouter = createTRPCRouter({
           );
 
           // should notify coordinator e.g.:
-          mailer.notifyModeration({
+          await mailer.notifyModeration({
             criteria: unit.components,
             deadline,
             project,
@@ -214,7 +220,7 @@ export const markerRouter = createTRPCRouter({
         const student = await studentDO.get();
         const { supervisor, project } = await studentDO.getAllocation();
 
-        mailer.notifyMarkingSubmitted({
+        await mailer.notifyMarkingSubmitted({
           project,
           student,
           unit,
@@ -341,7 +347,7 @@ export const markerRouter = createTRPCRouter({
     .marker.input(partialMarkingSubmissionDtoSchema)
     .mutation(
       async ({
-        ctx: { instance, user, db },
+        ctx: { instance, user },
         input: {
           unitOfAssessmentId,
           studentId,

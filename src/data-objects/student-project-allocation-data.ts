@@ -1,9 +1,12 @@
 import { guidToMatric } from "@/config/guid-to-matric";
+
+import { type StudentDTO, type SupervisorDTO, type ProjectDTO } from "@/dto";
+
 import { Transformers as T } from "@/db/transformers";
-import { AllocationMethod, DB } from "@/db/types";
+import { type AllocationMethod, type DB } from "@/db/types";
+
 import { expand } from "@/lib/utils/general/instance-params";
-import { InstanceParams } from "@/lib/validations/params";
-import { StudentDTO, SupervisorDTO, ProjectDTO } from "@/dto";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import { DataObject } from "./data-object";
 
@@ -110,8 +113,8 @@ export class StudentProjectAllocationData extends DataObject {
         project: { id: allocation.project.id, title: allocation.project.title },
         supervisor: {
           id: allocation.supervisor.id,
-          name: allocation.supervisor.name!,
-          email: allocation.supervisor.email!,
+          name: allocation.supervisor.name,
+          email: allocation.supervisor.email,
           allocationLowerBound: allocation.supervisor.allocationLowerBound,
           allocationTarget: allocation.supervisor.allocationTarget,
           allocationUpperBound: allocation.supervisor.allocationUpperBound,

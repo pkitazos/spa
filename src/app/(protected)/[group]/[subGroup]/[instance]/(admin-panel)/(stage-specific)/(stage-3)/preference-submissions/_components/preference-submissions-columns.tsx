@@ -1,4 +1,4 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CopyIcon,
   CornerDownRightIcon,
@@ -6,6 +6,8 @@ import {
   PenIcon,
 } from "lucide-react";
 import Link from "next/link";
+
+import { PAGES } from "@/config/pages";
 
 import { ExportCSVButton } from "@/components/export-csv";
 import { CircleCheckSolidIcon } from "@/components/icons/circle-check";
@@ -27,8 +29,7 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { cn } from "@/lib/utils";
 import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
-import { StudentPreferenceSubmissionDto } from "@/lib/validations/dto/preference";
-import { PAGES } from "@/config/pages";
+import { type StudentPreferenceSubmissionDto } from "@/lib/validations/dto/preference";
 
 export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSubmissionDto>[] {
   const selectCol = getSelectColumn<StudentPreferenceSubmissionDto>();
@@ -89,6 +90,8 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
       ),
       filterFn: (row, columnId, value) => {
         const selectedFilters = value as ("4" | "5")[];
+        // TODO: fix this
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         const rowValue = row.getValue(columnId) as 4 | 5;
         console.log({ selectedFilters });
         const studentLevel = rowValue.toString() as "4" | "5";

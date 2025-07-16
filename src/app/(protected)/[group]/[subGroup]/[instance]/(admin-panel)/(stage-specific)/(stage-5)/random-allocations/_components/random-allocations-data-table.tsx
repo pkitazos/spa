@@ -1,7 +1,11 @@
 "use client";
 
+import { useCallback } from "react";
+
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { type ProjectDTO, type StudentDTO } from "@/dto";
 
 import { useInstanceParams } from "@/components/params-context";
 import DataTable from "@/components/ui/data-table/data-table";
@@ -9,7 +13,6 @@ import DataTable from "@/components/ui/data-table/data-table";
 import { api } from "@/lib/trpc/client";
 
 import { useRandomAllocationColumns } from "./random-allocation-column";
-import { ProjectDTO, StudentDTO } from "@/dto";
 
 export function RandomAllocationsDataTable({
   studentData,
@@ -30,15 +33,34 @@ export function RandomAllocationsDataTable({
 
   const utils = api.useUtils();
 
-  function refetchData() {
-    utils.institution.instance.getRandomlyAllocatedStudents.refetch({ params });
-    utils.institution.instance.getUnallocatedStudents.refetch({ params });
-  }
+  const refetchData = useCallback(async () => {
+    await utils.institution.instance.getRandomlyAllocatedStudents.refetch({
+      params,
+    });
+    await utils.institution.instance.getUnallocatedStudents.refetch({ params });
+  }, [params, utils]);
 
-  async function handleRandomAllocation(studentId: string) {
+  const getRandomAllocation = useCallback(
+    async (studentId: string) => {
+      void toast.promise(
+        getRandomAllocAsync({ params, studentId }).then(async () => {
+          await refetchData();
+          router.refresh();
+        }),
+        {
+          loading: "Allocating Random project...",
+          success: "Successfully allocated random project",
+          error: "Failed to allocate project",
+        },
+      );
+    },
+    [getRandomAllocAsync, params, refetchData, router],
+  );
+
+  const getRandomAllocationForAll = useCallback(async () => {
     void toast.promise(
-      getRandomAllocAsync({ params, studentId }).then(() => {
-        refetchData();
+      getRandomAllocForAllAsync({ params }).then(async () => {
+        await refetchData();
         router.refresh();
       }),
       {
@@ -47,40 +69,29 @@ export function RandomAllocationsDataTable({
         error: "Failed to allocate project",
       },
     );
-  }
+  }, [getRandomAllocForAllAsync, params, refetchData, router]);
 
-  async function handleRandomAllocationForAll() {
-    void toast.promise(
-      getRandomAllocForAllAsync({ params }).then(() => {
-        refetchData();
-        router.refresh();
-      }),
-      {
-        loading: "Allocating Random project...",
-        success: "Successfully allocated random project",
-        error: "Failed to allocate project",
-      },
-    );
-  }
-
-  async function handleRemoveAllocation(studentId: string) {
-    void toast.promise(
-      removeAllocAsync({ params, studentId }).then(() => {
-        refetchData();
-        router.refresh();
-      }),
-      {
-        loading: "Removing project allocation...",
-        success: "Successfully removed project allocation",
-        error: "Failed to remove project",
-      },
-    );
-  }
+  const removeAllocation = useCallback(
+    async (studentId: string) => {
+      void toast.promise(
+        removeAllocAsync({ params, studentId }).then(async () => {
+          await refetchData();
+          router.refresh();
+        }),
+        {
+          loading: "Removing project allocation...",
+          success: "Successfully removed project allocation",
+          error: "Failed to remove project",
+        },
+      );
+    },
+    [params, refetchData, removeAllocAsync, router],
+  );
 
   const columns = useRandomAllocationColumns({
-    getRandomAllocation: handleRandomAllocation,
-    getRandomAllocationForAll: handleRandomAllocationForAll,
-    removeAllocation: handleRemoveAllocation,
+    getRandomAllocation,
+    getRandomAllocationForAll,
+    removeAllocation,
   });
 
   return (

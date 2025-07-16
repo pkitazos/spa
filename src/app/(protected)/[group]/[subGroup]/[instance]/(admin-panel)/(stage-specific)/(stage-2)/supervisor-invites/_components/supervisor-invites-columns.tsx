@@ -1,4 +1,4 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CopyIcon,
   CornerDownRightIcon,
@@ -6,6 +6,10 @@ import {
   PenIcon,
 } from "lucide-react";
 import Link from "next/link";
+
+import { PAGES } from "@/config/pages";
+
+import { type InstanceUserDTO } from "@/dto";
 
 import { ExportCSVButton } from "@/components/export-csv";
 import { Badge } from "@/components/ui/badge";
@@ -24,13 +28,11 @@ import {
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
-import { SupervisorInviteDto } from "@/lib/validations/dto/supervisor";
-import { PAGES } from "@/config/pages";
 
-export function useSupervisorInvitesColumns(): ColumnDef<SupervisorInviteDto>[] {
-  const selectCol = getSelectColumn<SupervisorInviteDto>();
+export function useSupervisorInvitesColumns(): ColumnDef<InstanceUserDTO>[] {
+  const selectCol = getSelectColumn<InstanceUserDTO>();
 
-  const baseCols: ColumnDef<SupervisorInviteDto>[] = [
+  const baseCols: ColumnDef<InstanceUserDTO>[] = [
     {
       id: "Name",
       accessorFn: (s) => s.name,
@@ -70,7 +72,7 @@ export function useSupervisorInvitesColumns(): ColumnDef<SupervisorInviteDto>[] 
         ),
       filterFn: (row, columnId, value) => {
         const selectedFilters = value as ("joined" | "invited")[];
-        const rowValue = row.getValue(columnId) as boolean;
+        const rowValue = row.getValue(columnId);
         const joined = rowValue ? "joined" : "invited";
         return selectedFilters.includes(joined);
       },

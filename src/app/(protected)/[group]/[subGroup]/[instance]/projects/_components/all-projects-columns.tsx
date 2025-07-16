@@ -8,6 +8,14 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
+import z from "zod";
+
+import { PAGES } from "@/config/pages";
+import { spacesLabels } from "@/config/spaces";
+
+import { type ProjectDTO, type SupervisorDTO } from "@/dto";
+
+import { type PreferenceType, Role, Stage } from "@/db/types";
 
 import { AccessControl } from "@/components/access-control";
 import { ExportCSVButton } from "@/components/export-csv";
@@ -16,7 +24,7 @@ import {
   usePathInInstance,
 } from "@/components/params-context";
 import { StudentPreferenceActionSubMenu } from "@/components/student-preference-action-menu";
-import { TagType } from "@/components/tag/tag-input";
+import { tagTypeSchema } from "@/components/tag/tag-input";
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionColumnLabel } from "@/components/ui/data-table/action-column-label";
@@ -38,13 +46,8 @@ import {
 
 import { cn } from "@/lib/utils";
 import { stageIn } from "@/lib/utils/permissions/stage-check";
-import { User } from "@/lib/validations/auth";
-import { StudentPreferenceType } from "@/lib/validations/student-preference";
-
-import { spacesLabels } from "@/config/spaces";
-import { PreferenceType, Role, Stage } from "@/db/types";
-import { PAGES } from "@/config/pages";
-import { ProjectDTO, SupervisorDTO } from "@/dto";
+import { type User } from "@/lib/validations/auth";
+import { type StudentPreferenceType } from "@/lib/validations/student-preference";
 
 type ProjectData = { project: ProjectDTO; supervisor: SupervisorDTO };
 
@@ -129,7 +132,7 @@ export function useAllProjectsColumns({
       header: () => <div className="text-center">Flags</div>,
       filterFn: (row, columnId, value) => {
         const ids = value as string[];
-        const rowFlags = row.getValue(columnId) as TagType[];
+        const rowFlags = z.array(tagTypeSchema).parse(row.getValue(columnId));
         return rowFlags.some((e) => ids.includes(e.id));
       },
       cell: ({
@@ -140,8 +143,8 @@ export function useAllProjectsColumns({
         <div className="flex flex-col gap-2">
           {project.flags.length > 2 ? (
             <>
-              <Badge className="w-fit" key={project.flags[0]!.id}>
-                {project.flags[0]!.title}
+              <Badge className="w-fit" key={project.flags[0].id}>
+                {project.flags[0].title}
               </Badge>
               <WithTooltip
                 side="right"
@@ -178,7 +181,7 @@ export function useAllProjectsColumns({
       ),
       filterFn: (row, columnId, value) => {
         const ids = value as string[];
-        const rowTags = row.getValue(columnId) as TagType[];
+        const rowTags = z.array(tagTypeSchema).parse(row.getValue(columnId));
         return rowTags.some((e) => ids.includes(e.id));
       },
       cell: ({
@@ -192,9 +195,9 @@ export function useAllProjectsColumns({
               <Badge
                 variant="outline"
                 className="w-fit"
-                key={project.tags[0]!.id}
+                key={project.tags[0].id}
               >
-                {project.tags[0]!.title}
+                {project.tags[0].title}
               </Badge>
               <WithTooltip
                 side="right"

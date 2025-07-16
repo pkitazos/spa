@@ -1,21 +1,27 @@
-import { Transformers as T } from "@/db/transformers";
-import { DB, Role } from "@/db/types";
+import { PAGES } from "@/config/pages";
+
 import {
-  UserDTO,
-  InstanceDTO,
-  InstanceUserDTO,
-  GroupDTO,
-  SubGroupDTO,
+  type UserDTO,
+  type InstanceDTO,
+  type InstanceUserDTO,
+  type GroupDTO,
+  type SubGroupDTO,
 } from "@/dto";
+
+import { Transformers as T } from "@/db/transformers";
+import { type DB, Role } from "@/db/types";
+
 import { expand } from "@/lib/utils/general/instance-params";
-import { ValidatedSegments } from "@/lib/validations/breadcrumbs";
+import { type ValidatedSegments } from "@/lib/validations/breadcrumbs";
 import {
-  GroupParams,
-  SubGroupParams,
-  InstanceParams,
+  type GroupParams,
+  type SubGroupParams,
+  type InstanceParams,
 } from "@/lib/validations/params";
+
 import { DataObject } from "../data-object";
 import { Institution } from "../space/institution";
+
 import {
   GroupAdmin,
   Marker,
@@ -25,7 +31,6 @@ import {
   SuperAdmin,
   Supervisor,
 } from ".";
-import { PAGES } from "@/config/pages";
 
 export class User extends DataObject {
   id: string;
@@ -37,11 +42,9 @@ export class User extends DataObject {
   }
 
   public async toDTO(): Promise<UserDTO> {
-    if (!this._data) {
-      this._data = await this.db.user.findFirstOrThrow({
-        where: { id: this.id },
-      });
-    }
+    this._data ??= await this.db.user.findFirstOrThrow({
+      where: { id: this.id },
+    });
     return this._data;
   }
 
@@ -214,7 +217,7 @@ export class User extends DataObject {
       where: { groupAdmins: { some: { userId: this.id } } },
     });
 
-    return groups.map(T.toGroupDTO);
+    return groups.map((x) => T.toGroupDTO(x));
   }
 
   public async getManagedSubGroups(): Promise<SubGroupDTO[]> {
@@ -227,7 +230,7 @@ export class User extends DataObject {
       },
     });
 
-    return subGroups.map(T.toSubGroupDTO);
+    return subGroups.map((x) => T.toSubGroupDTO(x));
   }
 
   public async getManagedSubGroupsWithGroups(): Promise<
@@ -272,7 +275,7 @@ export class User extends DataObject {
       },
     });
 
-    return instanceData.map(T.toAllocationInstanceDTO);
+    return instanceData.map((x) => T.toAllocationInstanceDTO(x));
   }
 
   public async authoriseBreadcrumbs(segments: string[]) {
@@ -407,6 +410,6 @@ export class User extends DataObject {
         data: { joined: true },
         include: { user: true },
       })
-      .then(T.toInstanceUserDTO);
+      .then((x) => T.toInstanceUserDTO(x));
   }
 }

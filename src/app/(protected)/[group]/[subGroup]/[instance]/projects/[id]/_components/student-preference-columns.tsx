@@ -1,11 +1,14 @@
 "use client";
+
 import { PreferenceType } from "@prisma/client";
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
   MoreHorizontalIcon as MoreIcon,
 } from "lucide-react";
 import Link from "next/link";
+
+import { PAGES } from "@/config/pages";
 
 import { useInstancePath } from "@/components/params-context";
 import { Badge } from "@/components/ui/badge";
@@ -22,8 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
-import { ProjectStudentDto } from "@/lib/validations/dto/preference";
-import { PAGES } from "@/config/pages";
+import { type ProjectStudentDto } from "@/lib/validations/dto/preference";
 
 export function useStudentPreferenceColumns(): ColumnDef<ProjectStudentDto>[] {
   const instancePath = useInstancePath();
@@ -80,6 +82,7 @@ export function useStudentPreferenceColumns(): ColumnDef<ProjectStudentDto>[] {
       ),
       filterFn: (row, columnId, value) => {
         const selectedFilters = value as ("4" | "5")[];
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         const rowValue = row.getValue(columnId) as 4 | 5;
         console.log({ selectedFilters });
         const studentLevel = rowValue.toString() as "4" | "5";

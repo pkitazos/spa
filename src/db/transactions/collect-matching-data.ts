@@ -1,12 +1,14 @@
-import { expand } from "@/lib/utils/general/instance-params";
+import { type InstanceDTO } from "@/dto";
 
-import { Transformers as T } from "../transformers";
-import { DB } from "@/db/types";
-import { InstanceDTO } from "@/dto";
+import { type DB } from "@/db/types";
+
 import {
   adjustTarget,
   adjustUpperBound,
 } from "@/lib/utils/algorithm/modifiers";
+import { expand } from "@/lib/utils/general/instance-params";
+
+import { Transformers as T } from "../transformers";
 
 export async function collectMatchingData(db: DB, instanceData: InstanceDTO) {
   if (!instanceData.selectedAlgConfigId) {
@@ -15,7 +17,7 @@ export async function collectMatchingData(db: DB, instanceData: InstanceDTO) {
 
   const { maxRank, targetModifier, upperBoundModifier } = await db.algorithm
     .findFirstOrThrow({ where: { id: instanceData.selectedAlgConfigId } })
-    .then(T.toAlgorithmDTO);
+    .then((x) => T.toAlgorithmDTO(x));
 
   const preAllocations = await db.project
     .findMany({
