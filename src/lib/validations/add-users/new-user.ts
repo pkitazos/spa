@@ -11,7 +11,7 @@ export const newStudentSchema = z.object({
     .email("Please enter a valid email address")
     .min(1, "Please enter a valid email address"),
   level: z.coerce
-    .number("Please enter a valid integer for the level")
+    .number<number>("Please enter a valid integer for the level")
     .int("Please enter a valid integer for the level")
     .refine((level) => level === 4 || level === 5, {
       error: "Level must be 4 or 5",
@@ -30,14 +30,14 @@ export const newSupervisorSchema = z
       .email("Please enter a valid email address")
       .min(1, "Please enter a valid email address"),
     projectTarget: z.coerce
-      .number({
+      .number<number>({
         error: (issue) =>
           issue.input === undefined ? "Required" : "Invalid integer",
       })
       .int("Please enter an integer for the project target")
       .nonnegative("Project target must be a non-negative integer"),
     projectUpperQuota: z.coerce
-      .number({
+      .number<number>({
         error: (issue) =>
           issue.input === undefined ? "Required" : "Invalid integer",
       })

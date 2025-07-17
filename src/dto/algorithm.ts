@@ -59,9 +59,9 @@ export function buildNewAlgorithmSchema(takenNames: Set<string>) {
     flag1: algorithmFlagSchema,
     flag2: algorithmFlagSchema.optional(),
     flag3: algorithmFlagSchema.optional(),
-    targetModifier: z.coerce.number().int().nonnegative(),
-    upperBoundModifier: z.coerce.number().int().nonnegative(),
-    maxRank: z.coerce.number().int().positive().or(z.literal(-1)),
+    targetModifier: z.coerce.number<number>().int().nonnegative(),
+    upperBoundModifier: z.coerce.number<number>().int().nonnegative(),
+    maxRank: z.coerce.number<number>().int().positive().or(z.literal(-1)),
   });
 }
 

@@ -55,19 +55,19 @@ const formInternalStateSchema = z
     tags: z
       .array(z.object({ id: z.string(), title: z.string() }))
       .min(1, "You must select at least one tag"),
-    capacityUpperBound: z.coerce.number().int().positive().default(1),
+    capacityUpperBound: z.coerce.number<number>().int().positive().default(1),
     isPreAllocated: z.boolean().default(false),
     preAllocatedStudentId: z.string().optional(),
     supervisorId: z.string().optional(),
   })
   .refine((data) => !data.isPreAllocated || !!data.preAllocatedStudentId, {
-    message: "A student ID must be provided", // TODO wording @pkitazos
+    error: "A student ID must be provided", // TODO wording @pkitazos
     path: ["preAllocatedStudentId"],
   });
 
 const buildInternalStateSchema = (takenTitles: Set<string>) =>
   formInternalStateSchema.refine((data) => !takenTitles.has(data.title), {
-    message: "A project with this title already exists",
+    error: "A project with this title already exists",
     path: ["title"],
   });
 
