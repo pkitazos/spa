@@ -14,7 +14,7 @@ export const newStudentSchema = z.object({
     .number("Please enter a valid integer for the level")
     .int("Please enter a valid integer for the level")
     .refine((level) => level === 4 || level === 5, {
-      message: "Level must be 4 or 5",
+      error: "Level must be 4 or 5",
     }),
 });
 

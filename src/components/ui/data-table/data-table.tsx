@@ -72,6 +72,7 @@ export default function DataTable<TData, TValue>({
 
     // Pagination [x]
     getPaginationRowModel: getPaginationRowModel(),
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     onPaginationChange: setPagination,
 
     // Col Visibility [x]
@@ -87,6 +88,7 @@ export default function DataTable<TData, TValue>({
     onColumnFiltersChange: setColumnFilters,
 
     // Global filtering [x]
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     onGlobalFilterChange: setGlobalFilter,
 
     // Row selection [ ]

@@ -732,7 +732,7 @@ export const instanceRouter = createTRPCRouter({
           await instance.createManualAllocation(studentId, projectId);
 
           results.push({ studentId, success: true });
-        } catch (error) {
+        } catch (_err) {
           results.push({ studentId, success: false });
         }
       }

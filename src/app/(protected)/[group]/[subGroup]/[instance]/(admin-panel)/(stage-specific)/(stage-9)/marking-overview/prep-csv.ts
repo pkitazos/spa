@@ -70,8 +70,6 @@ export function prepCSV(data: ProjectMarkingOverview[]): CSVRow[] {
     const supervisorDissertationGrade = statusToString(supervisor.status);
     const readerDissertationGrade = statusToString(reader.status);
 
-    // console.log(supervisor.status);
-
     const supervisorDissertationComments =
       supervisor.status.status === "MARKED" ? supervisor.status.comment : "";
     const readerDissertationComments =
@@ -92,9 +90,9 @@ export function prepCSV(data: ProjectMarkingOverview[]): CSVRow[] {
 
     const requiredModeration =
       dissStatus.status === "MODERATE" ||
-      (dissGrade &&
-        Grade.checkExtremes(Grade.toLetter(dissGrade)).status === "MODERATE") ||
-      false;
+      ((!!dissGrade &&
+        Grade.checkExtremes(Grade.toLetter(dissGrade)).status === "MODERATE") ??
+        false);
 
     return {
       studentGUID: student.id,
@@ -103,7 +101,7 @@ export function prepCSV(data: ProjectMarkingOverview[]): CSVRow[] {
       studentEmail: student.email,
       projectTitle: project.title,
 
-      supervsorName: supervisor.marker.name,
+      supervisorName: supervisor.marker.name,
       supervisorEmail: supervisor.marker.email,
       readerName: reader.marker.name,
       readerEmail: reader.marker.email,

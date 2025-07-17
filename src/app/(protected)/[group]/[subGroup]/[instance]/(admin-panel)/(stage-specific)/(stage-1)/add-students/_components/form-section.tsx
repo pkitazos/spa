@@ -22,7 +22,7 @@ const blankStudentForm = {
   fullName: "",
   institutionId: "",
   email: "",
-  level: "" as unknown as 4 | 5,
+  level: NaN,
 };
 
 export function FormSection({

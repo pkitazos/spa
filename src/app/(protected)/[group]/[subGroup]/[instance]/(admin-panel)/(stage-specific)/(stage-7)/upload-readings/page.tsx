@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
   };
 }
 
-export default async function Page({ params }: { params: InstanceParams }) {
+export default async function Page() {
   return (
     <PanelWrapper className="mt-10">
       <SubHeading className="mb-4">{PAGES.uploadReadings.title}</SubHeading>
