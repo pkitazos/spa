@@ -1,11 +1,11 @@
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
+
+import { Role } from "@/db/types";
 
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
-
-import { Role } from "@/db/types";
+import { type InstanceParams } from "@/lib/validations/params";
 
 export default async function Layout({
   params,

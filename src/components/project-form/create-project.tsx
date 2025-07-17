@@ -3,20 +3,24 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
+import { PAGES } from "@/config/pages";
 
-import { api } from "@/lib/trpc/client";
-import { Role } from "@/db/types";
 import {
-  ProjectFormInitialisationDTO,
-  ProjectFormSubmissionDTO,
+  type ProjectFormInitialisationDTO,
+  type ProjectFormSubmissionDTO,
   formToApiTransformations,
 } from "@/dto/project";
 
-import { ProjectForm } from ".";
-import { useInstanceParams } from "../params-context";
-import { PAGES } from "@/config/pages";
+import { Role } from "@/db/types";
+
+import { Button } from "@/components/ui/button";
+
+import { api } from "@/lib/trpc/client";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
+
+import { useInstanceParams } from "../params-context";
+
+import { ProjectForm } from ".";
 
 interface CreateProjectFormProps {
   formInitialisationData: ProjectFormInitialisationDTO;

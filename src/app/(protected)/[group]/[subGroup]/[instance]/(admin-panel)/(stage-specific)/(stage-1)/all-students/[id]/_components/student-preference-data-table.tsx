@@ -1,4 +1,5 @@
 "use client";
+
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -6,10 +7,10 @@ import { useInstanceParams } from "@/components/params-context";
 import DataTable from "@/components/ui/data-table/data-table";
 
 import { api } from "@/lib/trpc/client";
-import { StudentPreferenceType } from "@/lib/validations/student-preference";
+import { type StudentPreferenceType } from "@/lib/validations/student-preference";
 
 import {
-  PreferenceData,
+  type PreferenceData,
   useStudentPreferencesColumns,
 } from "./student-preference-columns";
 

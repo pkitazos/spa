@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { flagDtoSchema } from "./flag-tag";
 
 export const userDtoSchema = z.object({

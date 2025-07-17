@@ -1,4 +1,5 @@
 "use client";
+
 import { HashIcon, MailIcon, User2Icon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";

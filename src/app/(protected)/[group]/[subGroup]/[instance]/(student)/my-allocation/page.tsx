@@ -1,5 +1,8 @@
 import { AwardIcon, MailIcon, User2Icon } from "lucide-react";
 
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
 import { CopyEmailLink } from "@/components/copy-email-link";
 import { Heading, SectionHeading, SubHeading } from "@/components/heading";
 import { MarkdownRenderer } from "@/components/markdown-editor";
@@ -11,10 +14,7 @@ import { Unauthorised } from "@/components/unauthorised";
 import { auth } from "@/lib/auth";
 import { api } from "@/lib/trpc/server";
 import { toPositional } from "@/lib/utils/general/to-positional";
-import { InstanceParams } from "@/lib/validations/params";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
+import { type InstanceParams } from "@/lib/validations/params";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
@@ -25,9 +25,7 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 }
 
 export default async function Page({ params }: { params: InstanceParams }) {
-  const allocationAccess = await api.user.student.allocationAccess({
-    params,
-  });
+  const allocationAccess = await api.user.student.allocationAccess({ params });
 
   if (!allocationAccess) {
     return (

@@ -1,4 +1,4 @@
-import { PreferenceType, PrismaClient, Stage } from "@prisma/client";
+import { PreferenceType, type PrismaClient, Stage } from "@prisma/client";
 import { z } from "zod";
 
 type PrismaTransactionClient = Omit<

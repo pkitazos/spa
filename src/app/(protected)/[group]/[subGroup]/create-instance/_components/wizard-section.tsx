@@ -1,17 +1,28 @@
 "use client";
-import { api } from "@/lib/trpc/client";
+
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
+import { spacesLabels } from "@/config/spaces";
+
+import {
+  type FlagDTO,
+  type InstanceDTO,
+  type NewUnitOfAssessmentDTO,
+  type TagDTO,
+} from "@/dto";
+
+import { MarkerType, type New, Stage } from "@/db/types";
+
 import {
   InstanceWizard,
-  WizardFormData,
+  type WizardFormData,
 } from "@/components/instance-wizard/instance-wizard";
-import { toast } from "sonner";
-import { spacesLabels } from "@/config/spaces";
-import { SubGroupParams } from "@/lib/validations/params";
-import { MarkerType, New, Stage } from "@/db/types";
-import { FlagDTO, InstanceDTO, NewUnitOfAssessmentDTO, TagDTO } from "@/dto";
-import { useRouter } from "next/navigation";
-import { slugify } from "@/lib/utils/general/slugify";
+
+import { api } from "@/lib/trpc/client";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
+import { slugify } from "@/lib/utils/general/slugify";
+import { type SubGroupParams } from "@/lib/validations/params";
 
 export function WizardSection({
   takenNames,

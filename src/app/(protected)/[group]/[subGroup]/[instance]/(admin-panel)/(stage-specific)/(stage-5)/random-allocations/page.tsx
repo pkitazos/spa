@@ -1,13 +1,14 @@
 import { ListIcon } from "lucide-react";
 
+import { PAGES } from "@/config/pages";
+
 import { SectionHeading, SubHeading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 
-import { RandomAllocationsDataTable } from "./_components/random-allocations-data-table";
-
-import { PAGES } from "@/config/pages";
-import { InstanceParams } from "@/lib/validations/params";
 import { api } from "@/lib/trpc/server";
+import { type InstanceParams } from "@/lib/validations/params";
+
+import { RandomAllocationsDataTable } from "./_components/random-allocations-data-table";
 
 export default async function Page({ params }: { params: InstanceParams }) {
   const unallocatedStudents =

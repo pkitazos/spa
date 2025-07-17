@@ -1,5 +1,5 @@
-import { Column } from "@tanstack/react-table";
-import { ClassValue } from "clsx";
+import { type Column } from "@tanstack/react-table";
+import { type ClassValue } from "clsx";
 import { CheckIcon, PlusCircleIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -18,7 +18,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "../popover";
 import { Separator } from "../separator";
 
-import { TableFilterOption } from "./data-table-toolbar";
+import { type TableFilterOption } from "./data-table-toolbar";
 
 interface DataTableFacetedFilterProps<TData, TValue> {
   column?: Column<TData, TValue>;

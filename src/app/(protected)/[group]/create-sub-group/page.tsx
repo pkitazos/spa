@@ -1,14 +1,14 @@
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+import { spacesLabels } from "@/config/spaces";
+
 import { Heading } from "@/components/heading";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
-import { GroupParams } from "@/lib/validations/params";
+import { type GroupParams } from "@/lib/validations/params";
 
 import { FormSection } from "./_components/form-section";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
-import { spacesLabels } from "@/config/spaces";
 
 export async function generateMetadata({ params }: { params: GroupParams }) {
   const { displayName } = await api.institution.group.get({ params });

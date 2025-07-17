@@ -1,4 +1,4 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
   MoreHorizontal as MoreIcon,
@@ -6,6 +6,8 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
+
+import { Stage } from "@/db/types";
 
 import { useInstancePath, useInstanceStage } from "@/components/params-context";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -28,8 +30,6 @@ import {
 
 import { cn } from "@/lib/utils";
 import { stageGt } from "@/lib/utils/permissions/stage-check";
-
-import { Stage } from "@/db/types";
 
 export type SupervisorProjectDataDto = {
   id: string;

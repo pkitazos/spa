@@ -1,5 +1,6 @@
-import { MarkingSubmissionDTO } from "@/dto";
 import { addWeeks } from "date-fns";
+
+import { type MarkingSubmissionDTO } from "@/dto";
 
 export const fakeProject = {
   id: "",

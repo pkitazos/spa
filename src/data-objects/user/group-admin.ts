@@ -1,5 +1,7 @@
-import { DB } from "@/db/types";
-import { GroupParams } from "@/lib/validations/params";
+import { type DB } from "@/db/types";
+
+import { type GroupParams } from "@/lib/validations/params";
+
 import { AllocationGroup } from "../space/group";
 
 import { User } from ".";

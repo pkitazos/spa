@@ -1,8 +1,9 @@
 "use client";
+
 import { useParams } from "next/navigation";
 
 import { api } from "@/lib/trpc/client";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import { InstanceLink } from "./instance-link";
 

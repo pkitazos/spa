@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+
+import { ScrollArea } from "@radix-ui/react-scroll-area";
 import {
   type ColumnFiltersState,
   type SortingState,
@@ -12,6 +14,18 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+
+import {
+  type ProjectDTO,
+  type ReaderDTO,
+  type StudentDTO,
+  type SupervisorDTO,
+} from "@/dto";
+import { GradingResult } from "@/dto/result/grading-result";
+
+import { CircleCheckIcon } from "@/components/icons/circle-check";
+import { CircleXIcon } from "@/components/icons/circle-x";
+import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -21,13 +35,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+
 import { columns } from "./grades-columns";
-import { ProjectDTO, ReaderDTO, StudentDTO, SupervisorDTO } from "@/dto";
-import { CircleCheckIcon } from "@/components/icons/circle-check";
-import { CircleXIcon } from "@/components/icons/circle-x";
-import { GradingResult } from "@/dto/result/grading-result";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
-import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
 
 // @JakeTrevor cook
 export function GradesTable({

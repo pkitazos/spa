@@ -1,7 +1,9 @@
-import { PageParams } from "@/lib/validations/params";
-import { GradesTable } from "./_components/grades-table";
-import { api } from "@/lib/trpc/server";
 import { Grade } from "@/config/grades";
+
+import { api } from "@/lib/trpc/server";
+import { type PageParams } from "@/lib/validations/params";
+
+import { GradesTable } from "./_components/grades-table";
 
 export default async function Page({ params }: { params: PageParams }) {
   const data = await api.institution.instance.getMarkerSubmissions({

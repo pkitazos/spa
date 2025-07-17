@@ -1,7 +1,12 @@
 "use client";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { type ProjectDTO, type SupervisorDTO } from "@/dto";
+
+import { type PreferenceType, type Role } from "@/db/types";
 
 import {
   useInstanceParams,
@@ -14,14 +19,11 @@ import { useDataTableProjectFilters } from "@/components/ui/data-table/data-tabl
 
 import { api } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { User } from "@/lib/validations/auth";
-import { StudentPreferenceType } from "@/lib/validations/student-preference";
+import { toPP3 } from "@/lib/utils/general/instance-params";
+import { type User } from "@/lib/validations/auth";
+import { type StudentPreferenceType } from "@/lib/validations/student-preference";
 
 import { useAllProjectsColumns } from "./all-projects-columns";
-
-import { PreferenceType, Role } from "@/db/types";
-import { toPP3 } from "@/lib/utils/general/instance-params";
-import { ProjectDTO, SupervisorDTO } from "@/dto";
 
 export function AllProjectsDataTable({
   data,

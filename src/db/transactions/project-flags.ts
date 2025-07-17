@@ -1,7 +1,7 @@
-import { ProjectParams } from "@/lib/validations/params";
+import { AllocationMethod, type TX } from "@/db/types";
 
-import { AllocationMethod, TX } from "@/db/types";
 import { expand } from "@/lib/utils/general/instance-params";
+import { type ProjectParams } from "@/lib/validations/params";
 
 // move
 export async function linkProjectFlags(

@@ -1,4 +1,5 @@
 "use client";
+
 import { useInstanceParams } from "@/components/params-context";
 import DataTable from "@/components/ui/data-table/data-table";
 import { Skeleton } from "@/components/ui/skeleton";

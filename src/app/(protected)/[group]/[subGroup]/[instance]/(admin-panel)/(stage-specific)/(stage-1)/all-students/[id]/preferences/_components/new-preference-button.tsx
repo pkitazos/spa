@@ -1,12 +1,16 @@
 "use client";
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PreferenceType } from "@prisma/client";
-import { ClassValue } from "clsx";
+import { type ClassValue } from "clsx";
 import { Check, ChevronsUpDown, PlusIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { type ProjectDTO } from "@/dto";
 
 import { useBoardDetails } from "@/components/kanban-board/store";
 import { Button } from "@/components/ui/button";
@@ -44,11 +48,10 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { api } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import {
-  NewProjectPreferenceDto,
+  type NewProjectPreferenceDto,
   newProjectPreferenceDtoSchema,
 } from "@/lib/validations/dto/preference";
-import { PageParams } from "@/lib/validations/params";
-import { ProjectDTO } from "@/dto";
+import { type PageParams } from "@/lib/validations/params";
 
 export function NewPreferenceButton({
   availableProjects,

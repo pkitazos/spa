@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_HOST_AUTH_METHOD: "md5"
-      
+
     restart: always
     healthcheck:
       test: ["CMD", "pg_isready", "-d", "${DB_NAME}"]

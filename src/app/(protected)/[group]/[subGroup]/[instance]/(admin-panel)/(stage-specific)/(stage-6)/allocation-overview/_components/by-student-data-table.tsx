@@ -1,7 +1,8 @@
 "use client";
+
 import DataTable from "@/components/ui/data-table/data-table";
 
-import { AllocationByStudentDto } from "@/lib/validations/allocation/data-table-dto";
+import { type AllocationByStudentDto } from "@/lib/validations/allocation/data-table-dto";
 
 import { byStudentColumns } from "./by-student-columns";
 

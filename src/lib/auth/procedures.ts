@@ -1,11 +1,12 @@
+import { env } from "@/env";
 import { headers } from "next/headers";
 import { z } from "zod";
 
-import { ShibUser } from "@/lib/validations/auth";
-import { getCurrentDevUser } from "./actions";
-
 import { db } from "@/db";
-import { env } from "@/env";
+
+import { type ShibUser } from "@/lib/validations/auth";
+
+import { getCurrentDevUser } from "./actions";
 
 export async function getShibUserFromHeaders() {
   let shib_guid: string | null = null;

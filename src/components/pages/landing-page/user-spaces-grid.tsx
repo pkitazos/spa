@@ -1,8 +1,11 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Settings, Users, ChevronRight } from "lucide-react";
-import { api } from "@/lib/trpc/server";
 import Link from "next/link";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { api } from "@/lib/trpc/server";
+
 import { InstanceCard } from "./instance-card";
 
 export default async function UserSpacesGrid() {

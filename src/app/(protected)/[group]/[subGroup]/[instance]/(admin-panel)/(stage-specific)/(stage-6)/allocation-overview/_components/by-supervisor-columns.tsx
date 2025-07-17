@@ -1,14 +1,16 @@
 "use client";
-import { ColumnDef } from "@tanstack/react-table";
+
+import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
+
+import { PAGES } from "@/config/pages";
 
 import { buttonVariants } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { cn } from "@/lib/utils";
-import { AllocationBySupervisorDto } from "@/lib/validations/allocation/data-table-dto";
-import { PAGES } from "@/config/pages";
+import { type AllocationBySupervisorDto } from "@/lib/validations/allocation/data-table-dto";
 
 export const bySupervisorColumns: ColumnDef<AllocationBySupervisorDto>[] = [
   {

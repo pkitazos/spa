@@ -1,5 +1,7 @@
 "use client";
+
 import { useState } from "react";
+
 import { PreferenceType } from "@prisma/client";
 import { BookmarkIcon } from "lucide-react";
 
@@ -14,7 +16,7 @@ import {
 
 import {
   studentPreferenceSchema,
-  StudentPreferenceType,
+  type StudentPreferenceType,
 } from "@/lib/validations/student-preference";
 
 export function StudentPreferenceActionSubMenu({

@@ -1,7 +1,7 @@
 // MOVE somewhere else
 import {
-  ProjectInfo,
-  StudentRow,
+  type ProjectInfo,
+  type StudentRow,
 } from "@/lib/validations/allocation-adjustment";
 
 import { getStudent } from "./student";

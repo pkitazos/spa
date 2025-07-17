@@ -1,14 +1,15 @@
+import { app, metadataTitle } from "@/config/meta";
+
+import { Role } from "@/db/types";
+
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import AdminPanel from "./(admin-panel)/admin-panel";
 import { StudentOverview } from "./(student)/student-overview";
 import { SupervisorOverview } from "./(supervisor)/supervisor-overview";
-
-import { app, metadataTitle } from "@/config/meta";
-import { Role } from "@/db/types";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });

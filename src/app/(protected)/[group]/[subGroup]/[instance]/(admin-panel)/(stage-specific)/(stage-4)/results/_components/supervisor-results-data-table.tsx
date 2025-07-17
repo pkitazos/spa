@@ -1,10 +1,12 @@
 "use client";
+
+import { type UserDTO } from "@/dto";
+
 import DataTable from "@/components/ui/data-table/data-table";
 
-import { SupervisorMatchingDetailsDto } from "@/lib/validations/matching";
+import { type SupervisorMatchingDetailsDto } from "@/lib/validations/matching";
 
 import { useSupervisorResultsColumns } from "./supervisor-results-columns";
-import { UserDTO } from "@/dto";
 
 export function SupervisorResultsDataTable({
   data,

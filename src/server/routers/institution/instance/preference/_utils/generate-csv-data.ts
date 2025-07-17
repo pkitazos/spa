@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 import {
-  StudentPreferenceDto,
-  SupervisorCentricPreferenceDto,
-  TagCentricPreferenceDto,
+  type StudentPreferenceDto,
+  type SupervisorCentricPreferenceDto,
+  type TagCentricPreferenceDto,
 } from "@/lib/validations/dto/preference";
 
 export const csvDataSchema = z.object({

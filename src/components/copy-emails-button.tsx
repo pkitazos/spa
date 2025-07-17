@@ -1,5 +1,6 @@
 "use client";
-import { ClassValue } from "clsx";
+
+import { type ClassValue } from "clsx";
 import { CopyIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";

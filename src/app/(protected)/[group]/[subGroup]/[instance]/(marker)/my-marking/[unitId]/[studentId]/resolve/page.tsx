@@ -1,13 +1,12 @@
 import { Heading, SubHeading } from "@/components/heading";
 import { PageWrapper } from "@/components/page-wrapper";
 
-import { cn } from "@/lib/utils";
-
-import { InstanceParams } from "@/lib/validations/params";
-
 import { auth } from "@/lib/auth";
-import { ResolutionForm } from "./_components/resolution-form";
 import { api } from "@/lib/trpc/server";
+import { cn } from "@/lib/utils";
+import { type InstanceParams } from "@/lib/validations/params";
+
+import { ResolutionForm } from "./_components/resolution-form";
 
 type PageParams = InstanceParams & { unitId: string; studentId: string };
 

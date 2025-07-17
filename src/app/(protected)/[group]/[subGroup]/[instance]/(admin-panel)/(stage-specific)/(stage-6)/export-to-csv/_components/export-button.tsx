@@ -1,8 +1,9 @@
 "use client";
+
 import { ExportCSVButton } from "@/components/export-csv";
 import { Button } from "@/components/ui/button";
 
-import { AllocationCsvData } from "@/lib/validations/allocation-csv-data";
+import { type AllocationCsvData } from "@/lib/validations/allocation-csv-data";
 
 export function ExportDataButton({ data }: { data: AllocationCsvData[] }) {
   const header = [

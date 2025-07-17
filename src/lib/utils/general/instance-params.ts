@@ -1,8 +1,8 @@
 import {
-  AlgorithmInstanceParams,
-  InstanceParams,
-  PageParams,
-  ProjectParams,
+  type AlgorithmInstanceParams,
+  type InstanceParams,
+  type PageParams,
+  type ProjectParams,
 } from "@/lib/validations/params";
 
 // TODO Both of these should probably be on the instance DO

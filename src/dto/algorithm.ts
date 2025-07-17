@@ -1,12 +1,15 @@
-import { New } from "@/db/types";
 import { AlgorithmFlag } from "@prisma/client";
 import { z } from "zod";
+
 import {
   GenerousAlgorithm,
   GreedyAlgorithm,
   GreedyGenAlgorithm,
   MinCostAlgorithm,
 } from "@/config/algorithms";
+
+import { type New } from "@/db/types";
+
 import { matchingResultDtoSchema } from "@/lib/validations/matching";
 
 export const algorithmFlagSchema = z.enum(AlgorithmFlag);

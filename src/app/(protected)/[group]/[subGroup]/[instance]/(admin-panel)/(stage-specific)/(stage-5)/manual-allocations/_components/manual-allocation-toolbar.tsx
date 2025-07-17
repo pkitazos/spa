@@ -1,14 +1,15 @@
 "use client";
 
-import { Table } from "@tanstack/react-table";
-import { XCircleIcon } from "lucide-react";
 import { useMemo } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
+import { type Table } from "@tanstack/react-table";
+import { XCircleIcon } from "lucide-react";
 
-import { ManualAllocationStudent } from "./manual-allocation-types";
+import { Button } from "@/components/ui/button";
+import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
+import { Input } from "@/components/ui/input";
+
+import { type ManualAllocationStudent } from "./manual-allocation-types";
 
 interface ManualAllocationToolbarProps {
   table: Table<ManualAllocationStudent>;

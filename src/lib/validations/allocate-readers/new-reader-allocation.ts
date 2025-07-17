@@ -1,5 +1,6 @@
-import { userDtoSchema } from "@/dto";
 import { z } from "zod";
+
+import { userDtoSchema } from "@/dto";
 
 export const newReaderAllocationSchema = z.object({
   studentId: z.string(),

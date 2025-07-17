@@ -1,5 +1,6 @@
 "use client";
-import { ClassValue } from "clsx";
+
+import { type ClassValue } from "clsx";
 
 import { cn } from "@/lib/utils";
 import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";

@@ -1,11 +1,15 @@
 "use client";
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TRPCClientError } from "@trpc/client";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { spacesLabels } from "@/config/spaces";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -30,12 +34,10 @@ import { Separator } from "@/components/ui/separator";
 
 import { api } from "@/lib/trpc/client";
 import {
-  NewAdmin,
+  type NewAdmin,
   newAdminSchema,
 } from "@/lib/validations/add-admins/new-admin";
-import { SubGroupParams } from "@/lib/validations/params";
-
-import { spacesLabels } from "@/config/spaces";
+import { type SubGroupParams } from "@/lib/validations/params";
 
 export function FormButton({ params }: { params: SubGroupParams }) {
   const [open, setOpen] = useState(false);

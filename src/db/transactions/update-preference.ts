@@ -1,7 +1,7 @@
-import { expand } from "@/lib/utils/general/instance-params";
-import { InstanceParams } from "@/lib/validations/params";
+import { type DB, type PreferenceType } from "@/db/types";
 
-import { DB, PreferenceType } from "@/db/types";
+import { expand } from "@/lib/utils/general/instance-params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 export async function updatePreferenceTransaction(
   db: DB,

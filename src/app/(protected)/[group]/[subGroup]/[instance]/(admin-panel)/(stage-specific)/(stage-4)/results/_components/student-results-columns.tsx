@@ -1,13 +1,15 @@
 "use client";
-import { ColumnDef } from "@tanstack/react-table";
+
+import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
+
+import { PAGES } from "@/config/pages";
+
+import { type ProjectDTO, type StudentDTO } from "@/dto";
 
 import { buttonVariants } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
-
-import { ProjectDTO, StudentDTO } from "@/dto";
-import { PAGES } from "@/config/pages";
 
 export const studentResultsColumns: ColumnDef<{
   student: StudentDTO;

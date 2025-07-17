@@ -1,6 +1,8 @@
 import { z } from "zod";
-import { flagDtoSchema, tagDtoSchema } from "./flag-tag";
+
 import { AllocationMethod } from "@/db/types";
+
+import { flagDtoSchema, tagDtoSchema } from "./flag-tag";
 
 export const projectDtoSchema = z.object({
   id: z.string(),

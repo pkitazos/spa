@@ -1,8 +1,9 @@
 "use client";
+
 import DataTable from "@/components/ui/data-table/data-table";
 import { studentLevelFilter } from "@/components/ui/data-table/data-table-context";
 
-import { StudentInviteDto } from "@/lib/validations/dto/student";
+import { type StudentInviteDto } from "@/lib/validations/dto/student";
 
 import { useStudentInvitesColumns } from "./student-invites-columns";
 

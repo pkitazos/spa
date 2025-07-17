@@ -1,6 +1,6 @@
 import {
-  ProjectInfo,
-  StudentRow,
+  type ProjectInfo,
+  type StudentRow,
 } from "@/lib/validations/allocation-adjustment";
 
 import { getAsProjects } from "./project";

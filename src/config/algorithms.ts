@@ -1,6 +1,6 @@
-import { AlgorithmDTO } from "@/dto";
+import { type AlgorithmDTO } from "@/dto";
 
-import { AlgorithmFlag, New } from "@/db/types";
+import { AlgorithmFlag, type New } from "@/db/types";
 
 export const GenerousAlgorithm = {
   displayName: "Generous",

@@ -21,7 +21,7 @@ export class Institution extends DataObject {
   public async createGroup(displayName: string): Promise<GroupDTO> {
     return await this.db.allocationGroup
       .create({ data: { id: slugify(displayName), displayName } })
-      .then((x) => T.toAllocationGroupDTO(x));
+      .then(T.toAllocationGroupDTO);
   }
 
   public async getAdmins(): Promise<SuperAdminDTO[]> {
@@ -35,12 +35,12 @@ export class Institution extends DataObject {
   public async getGroups(): Promise<GroupDTO[]> {
     const groups = await this.db.allocationGroup.findMany();
 
-    return groups.map((x) => T.toAllocationGroupDTO(x));
+    return groups.map(T.toAllocationGroupDTO);
   }
 
   public async getInstances(): Promise<InstanceDTO[]> {
     const instances = await this.db.allocationInstance.findMany();
-    return instances.map((x) => T.toAllocationInstanceDTO(x));
+    return instances.map(T.toAllocationInstanceDTO);
   }
 
   public async createUser({ id, name, email }: UserDTO): Promise<void> {

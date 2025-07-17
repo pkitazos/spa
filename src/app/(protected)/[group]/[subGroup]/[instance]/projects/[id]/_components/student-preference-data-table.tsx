@@ -1,8 +1,9 @@
 "use client";
+
 import DataTable from "@/components/ui/data-table/data-table";
 import { studentLevelFilter } from "@/components/ui/data-table/data-table-context";
 
-import { ProjectStudentDto } from "@/lib/validations/dto/preference";
+import { type ProjectStudentDto } from "@/lib/validations/dto/preference";
 
 import { useStudentPreferenceColumns } from "./student-preference-columns";
 

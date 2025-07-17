@@ -1,17 +1,19 @@
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
+import { type ProjectFormInitialisationDTO } from "@/dto/project";
+
+import { Role, Stage } from "@/db/types";
+
 import { Heading } from "@/components/heading";
 import { PageWrapper } from "@/components/page-wrapper";
+import { EditProjectForm } from "@/components/project-form/edit-project";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
 import { toPP1 } from "@/lib/utils/general/instance-params";
 import { stageGte } from "@/lib/utils/permissions/stage-check";
-import { InstanceParams } from "@/lib/validations/params";
-
-import { Role, Stage } from "@/db/types";
-import { EditProjectForm } from "@/components/project-form/edit-project";
-import { ProjectFormInitialisationDTO } from "@/dto/project";
-import { PAGES } from "@/config/pages";
-import { app, metadataTitle } from "@/config/meta";
+import { type InstanceParams } from "@/lib/validations/params";
 
 type PageParams = InstanceParams & { id: string };
 

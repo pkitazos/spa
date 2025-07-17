@@ -8,7 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 
 import { cn } from "@/lib/utils";
 import { stripTrailingSlash } from "@/lib/utils/general/trim";
-import { TabGroup, TabType } from "@/lib/validations/tabs";
+import { type TabGroup, type TabType } from "@/lib/validations/tabs";
 
 import { Icon } from "./side-panel/icons";
 import {
@@ -26,14 +26,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./ui/sidebar";
+
 import { useInstancePath } from "./params-context";
 
 export default function InstanceSidebar({
   tabGroups,
   ...props
-}: {
-  tabGroups: TabGroup[];
-} & React.ComponentProps<typeof Sidebar>) {
+}: { tabGroups: TabGroup[] } & React.ComponentProps<typeof Sidebar>) {
   const instancePath = useInstancePath();
   const path = usePathname();
 

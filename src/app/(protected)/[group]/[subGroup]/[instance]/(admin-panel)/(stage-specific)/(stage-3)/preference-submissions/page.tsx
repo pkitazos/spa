@@ -5,6 +5,9 @@ import {
   ZapIcon,
 } from "lucide-react";
 
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
 import { CopyEmailsButton } from "@/components/copy-emails-button";
 import { SectionHeading, SubHeading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
@@ -20,13 +23,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import { PreferenceSubmissionsDataTable } from "./_components/preference-submissions-data-table";
 import { SummarySection } from "./_components/summary-section";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });

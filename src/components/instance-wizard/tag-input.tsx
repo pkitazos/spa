@@ -1,21 +1,25 @@
 "use client";
 
 import { useState, type KeyboardEvent } from "react";
+import { useFormContext } from "react-hook-form";
+
 import { X, Plus, Tag } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   FormField,
   FormItem,
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { useFormContext } from "react-hook-form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { cn } from "@/lib/utils";
-import { WizardFormData } from "./instance-wizard";
+
+import { type WizardFormData } from "./instance-wizard";
 
 interface TagInputProps {
   label?: string;

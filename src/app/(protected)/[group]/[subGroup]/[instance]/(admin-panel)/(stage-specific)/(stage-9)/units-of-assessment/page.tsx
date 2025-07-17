@@ -1,14 +1,18 @@
+import React from "react";
+
 import { ClipboardPenIcon } from "lucide-react";
 import Link from "next/link";
+
+import { PAGES } from "@/config/pages";
 
 import { SectionHeading } from "@/components/heading";
 import { buttonVariants } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { PAGES } from "@/config/pages";
+
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
+
 import { UnitOpenToggle } from "./_components/unit-open-toggle";
-import React from "react";
 
 export default async function Page({ params }: { params: InstanceParams }) {
   const data = await api.institution.instance.getAllUnitsOfAssessment({

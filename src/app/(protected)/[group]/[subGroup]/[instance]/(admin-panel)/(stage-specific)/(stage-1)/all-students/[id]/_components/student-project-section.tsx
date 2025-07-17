@@ -5,7 +5,7 @@ import { buttonVariants } from "@/components/ui/button";
 
 import { api } from "@/lib/trpc/server";
 import { cn } from "@/lib/utils";
-import { PageParams } from "@/lib/validations/params";
+import { type PageParams } from "@/lib/validations/params";
 
 export async function StudentProjectSection({
   params,

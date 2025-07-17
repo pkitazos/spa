@@ -1,6 +1,8 @@
 "use client";
-import type { Updater } from "@tanstack/react-table";
+
 import { useState, useEffect, useCallback } from "react";
+
+import type { Updater } from "@tanstack/react-table";
 
 export function useProxyState<TState>(
   state: TState,

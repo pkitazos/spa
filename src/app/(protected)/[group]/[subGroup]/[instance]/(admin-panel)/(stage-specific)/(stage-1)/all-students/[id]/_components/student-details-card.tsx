@@ -1,11 +1,15 @@
 "use client";
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ClassValue } from "clsx";
+import { type ClassValue } from "clsx";
 import { GraduationCapIcon, HashIcon, PenIcon, UserIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+
+import { spacesLabels } from "@/config/spaces";
 
 import { useInstanceParams } from "@/components/params-context";
 import { Button } from "@/components/ui/button";
@@ -22,14 +26,12 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { api } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { User } from "@/lib/validations/auth";
+import { type User } from "@/lib/validations/auth";
 import {
-  StudentInstanceDetails,
+  type StudentInstanceDetails,
   studentInstanceDetailsSchema,
 } from "@/lib/validations/dto/student";
 import { studentLevelSchema } from "@/lib/validations/student-level";
-
-import { spacesLabels } from "@/config/spaces";
 
 export function StudentDetailsCard({
   student,

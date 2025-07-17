@@ -1,11 +1,14 @@
 "use client";
-import { createContext, ReactNode, useContext } from "react";
+
+import { createContext, type ReactNode, useContext } from "react";
+
 import { ArrowUpLeft } from "lucide-react";
 import Link from "next/link";
 
+import { type Role, type Stage } from "@/db/types";
+
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
-import { InstanceParams } from "@/lib/validations/params";
-import { Role, Stage } from "@/db/types";
+import { type InstanceParams } from "@/lib/validations/params";
 
 type InstanceData = { params: InstanceParams; stage: Stage; roles: Set<Role> };
 

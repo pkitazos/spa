@@ -1,5 +1,6 @@
 "use client";
-import { ClassValue } from "clsx";
+
+import { type ClassValue } from "clsx";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 

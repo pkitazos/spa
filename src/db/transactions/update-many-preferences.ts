@@ -1,9 +1,9 @@
 // TODO move to dal
+import { type DB, PreferenceType } from "@/db/types";
+
 import { expand } from "@/lib/utils/general/instance-params";
 import { relativeComplement } from "@/lib/utils/general/set-difference";
-import { InstanceParams } from "@/lib/validations/params";
-
-import { DB, PreferenceType } from "@/db/types";
+import { type InstanceParams } from "@/lib/validations/params";
 
 export async function updateManyPreferenceTransaction(
   db: DB,

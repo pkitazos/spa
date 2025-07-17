@@ -1,11 +1,12 @@
 "use client";
+
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { DangerZone } from "@/components/danger-zone";
 
 import { api } from "@/lib/trpc/client";
-import { GroupParams } from "@/lib/validations/params";
+import { type GroupParams } from "@/lib/validations/params";
 
 export function DeleteConfirmation({
   spaceLabel,

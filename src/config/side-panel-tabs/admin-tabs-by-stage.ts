@@ -1,7 +1,8 @@
-import { TabType } from "@/lib/validations/tabs";
-
 import { PAGES } from "@/config/pages";
+
 import { Stage } from "@/db/types";
+
+import { type TabType } from "@/lib/validations/tabs";
 
 export const ADMIN_TABS_BY_STAGE: Record<Stage, TabType[]> = {
   [Stage.SETUP]: [PAGES.addStudents, PAGES.addSupervisors],

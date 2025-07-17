@@ -1,4 +1,5 @@
 "use client";
+
 import React, {
   useCallback,
   useEffect,
@@ -6,6 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+
 import { Check, Pen } from "lucide-react";
 
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";

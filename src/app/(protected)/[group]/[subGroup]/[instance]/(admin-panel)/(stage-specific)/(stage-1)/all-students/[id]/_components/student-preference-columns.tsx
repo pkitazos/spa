@@ -1,11 +1,15 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
   MoreHorizontalIcon as MoreIcon,
 } from "lucide-react";
 import Link from "next/link";
+
+import { PAGES } from "@/config/pages";
+
+import { PreferenceType, Stage } from "@/db/types";
 
 import { AccessControl } from "@/components/access-control";
 import { useInstanceStage } from "@/components/params-context";
@@ -26,10 +30,7 @@ import {
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { previousStages, stageLt } from "@/lib/utils/permissions/stage-check";
-import { StudentPreferenceType } from "@/lib/validations/student-preference";
-
-import { PreferenceType, Stage } from "@/db/types";
-import { PAGES } from "@/config/pages";
+import { type StudentPreferenceType } from "@/lib/validations/student-preference";
 
 export type PreferenceData = {
   project: { id: string; title: string };

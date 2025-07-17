@@ -1,5 +1,9 @@
 "use client";
+
 import { User2, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+
+import { type UserDTO } from "@/dto";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -10,10 +14,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { UserDTO } from "@/dto";
-import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
+
 import { switchDevUser } from "@/lib/auth/actions";
+import { cn } from "@/lib/utils";
 
 function getInitials(name: string) {
   const nameParts = name.trim().split(" ");

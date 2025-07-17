@@ -2,10 +2,7 @@ import { Stage } from "@prisma/client";
 
 export const CHAPTER = {
   ALLOCATION: {
-    SETUP: {
-      id: Stage.SETUP,
-      displayName: "Setup",
-    },
+    SETUP: { id: Stage.SETUP, displayName: "Setup" },
     PROJECT_SUBMISSION: {
       id: Stage.PROJECT_SUBMISSION,
       displayName: "Project Submission",
@@ -28,10 +25,7 @@ export const CHAPTER = {
     },
   },
   MARKING: {
-    READER_BIDDING: {
-      id: Stage.READER_BIDDING,
-      displayName: "Reader Bidding",
-    },
+    READER_BIDDING: { id: Stage.READER_BIDDING, displayName: "Reader Bidding" },
     READER_ALLOCATION: {
       id: Stage.READER_ALLOCATION,
       displayName: "Reader Allocation",

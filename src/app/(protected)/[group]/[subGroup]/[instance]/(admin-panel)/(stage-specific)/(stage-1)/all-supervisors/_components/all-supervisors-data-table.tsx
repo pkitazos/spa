@@ -1,6 +1,13 @@
 "use client";
+
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { spacesLabels } from "@/config/spaces";
+
+import { type SupervisorDTO } from "@/dto";
+
+import { type Role } from "@/db/types";
 
 import { useInstanceParams } from "@/components/params-context";
 import DataTable from "@/components/ui/data-table/data-table";
@@ -8,10 +15,6 @@ import DataTable from "@/components/ui/data-table/data-table";
 import { api } from "@/lib/trpc/client";
 
 import { useAllSupervisorsColumns } from "./all-supervisors-columns";
-
-import { spacesLabels } from "@/config/spaces";
-import { Role } from "@/db/types";
-import { SupervisorDTO } from "@/dto";
 
 export function SupervisorsDataTable({
   roles,

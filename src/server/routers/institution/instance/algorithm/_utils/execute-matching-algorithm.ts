@@ -1,16 +1,16 @@
+import { env } from "@/env";
 import axios from "axios";
 
-import { AlgorithmDTO, builtInAlgorithms } from "@/dto";
+import { type AlgorithmDTO, builtInAlgorithms } from "@/dto";
+import { AlgorithmRunResult } from "@/dto/result/algorithm-run-result";
+
+import { type AlgorithmFlag } from "@/db/types";
+
 import {
-  MatchingDataDTO,
-  MatchingDataWithArgs,
+  type MatchingDataDTO,
+  type MatchingDataWithArgs,
   matchingServiceResponseSchema,
 } from "@/lib/validations/matching";
-
-import { AlgorithmFlag } from "@/db/types";
-
-import { env } from "@/env";
-import { AlgorithmRunResult } from "@/dto/result/algorithm-run-result";
 
 // ? where should this live
 

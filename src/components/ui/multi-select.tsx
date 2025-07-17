@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+
+import { Command as CommandPrimitive } from "cmdk";
 import { X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +12,6 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { Command as CommandPrimitive } from "cmdk";
 
 type Option = { id: string; title: string };
 

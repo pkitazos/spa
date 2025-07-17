@@ -2,7 +2,7 @@
 
 import DataTable from "@/components/ui/data-table/data-table";
 
-import { SavedPreferenceDto } from "@/lib/validations/dto/preference";
+import { type SavedPreferenceDto } from "@/lib/validations/dto/preference";
 
 import { useSavedPreferencesColumns } from "./columns";
 

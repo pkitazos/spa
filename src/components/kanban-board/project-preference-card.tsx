@@ -1,9 +1,13 @@
 "use client";
+
 import { Fragment } from "react";
+
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon, XIcon } from "lucide-react";
 import Link from "next/link";
+
+import { PreferenceType, Stage } from "@/db/types";
 
 import { AccessControl } from "@/components/access-control";
 import { useInstancePath, useInstanceStage } from "@/components/params-context";
@@ -14,13 +18,11 @@ import { cn } from "@/lib/utils";
 import { stageGte } from "@/lib/utils/permissions/stage-check";
 import {
   PROJECT_PREFERENCE_CARD,
-  ProjectPreferenceCardDto,
+  type ProjectPreferenceCardDto,
 } from "@/lib/validations/board";
 
 import { Badge } from "../ui/badge";
 import { WithTooltip } from "../ui/tooltip-wrapper";
-
-import { PreferenceType, Stage } from "@/db/types";
 
 export function ProjectPreferenceCard({
   project,

@@ -1,7 +1,7 @@
-import { InstanceParams } from "@/lib/validations/params";
+import { api } from "@/lib/trpc/server";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import Layout from "./layout";
-import { api } from "@/lib/trpc/server";
 
 export default async function AdminPanel({
   params,

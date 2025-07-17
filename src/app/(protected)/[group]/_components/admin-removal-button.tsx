@@ -1,15 +1,16 @@
 "use client";
+
 import { Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { spacesLabels } from "@/config/spaces";
 
 import { Button } from "@/components/ui/button";
 import { YesNoAction } from "@/components/yes-no-action";
 
 import { api } from "@/lib/trpc/client";
-import { GroupParams } from "@/lib/validations/params";
-
-import { spacesLabels } from "@/config/spaces";
+import { type GroupParams } from "@/lib/validations/params";
 
 export function AdminRemovalButton({
   params,

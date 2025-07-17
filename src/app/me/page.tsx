@@ -1,11 +1,11 @@
-import { Metadata } from "next";
+import { type Metadata } from "next";
+
+import { app, metadataTitle } from "@/config/meta";
 
 import { PageWrapper } from "@/components/page-wrapper";
 import { UserDetailsCard } from "@/components/user-details-card";
 
 import { auth } from "@/lib/auth";
-
-import { app, metadataTitle } from "@/config/meta";
 
 export const dynamic = "force-dynamic";
 

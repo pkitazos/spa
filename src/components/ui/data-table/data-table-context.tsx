@@ -1,6 +1,8 @@
 "use client";
-import { createContext, ReactNode, useContext } from "react";
-import { Flag, Tag } from "@prisma/client";
+
+import { createContext, type ReactNode, useContext } from "react";
+
+import { type Flag, type Tag } from "@prisma/client";
 
 const DataTableCtx = createContext<Details | undefined>(undefined);
 

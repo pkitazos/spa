@@ -1,16 +1,17 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
+
+import { PAGES } from "@/config/pages";
+
+import { Role } from "@/db/types";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
-import { SavedPreferenceDto } from "@/lib/validations/dto/preference";
+import { type SavedPreferenceDto } from "@/lib/validations/dto/preference";
 
 import { useInstanceRoles } from "../params-context";
-
-import { Role } from "@/db/types";
-import { PAGES } from "@/config/pages";
 
 export function useSavedPreferencesColumns(): ColumnDef<SavedPreferenceDto>[] {
   const roles = useInstanceRoles();

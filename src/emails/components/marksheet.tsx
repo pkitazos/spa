@@ -1,7 +1,10 @@
-import { Grade } from "@/config/grades";
-import { AssessmentCriterionDTO, MarkingSubmissionDTO } from "@/dto";
-import { FormatPercent } from "@/lib/utils/format-percent";
 import { Text, Section, Row, Heading } from "@react-email/components";
+
+import { Grade } from "@/config/grades";
+
+import { type AssessmentCriterionDTO, type MarkingSubmissionDTO } from "@/dto";
+
+import { FormatPercent } from "@/lib/utils/format-percent";
 
 export function Marksheet({
   submission,
