@@ -8,7 +8,7 @@ import {
 import { Transformers as T } from "@/db/transformers";
 import { type DB } from "@/db/types";
 
-import { expand } from "@/lib/utils/general/instance-params";
+import { toInstanceId } from "@/lib/utils/general/instance-params";
 import { slugify } from "@/lib/utils/general/slugify";
 import { type InstanceParams } from "@/lib/validations/params";
 
@@ -47,7 +47,7 @@ export class Institution extends DataObject {
 
   public async instanceExists(params: InstanceParams): Promise<boolean> {
     return !!(await this.db.allocationInstance.findFirst({
-      where: expand(params),
+      where: toInstanceId(params),
     }));
   }
 

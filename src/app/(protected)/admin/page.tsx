@@ -24,7 +24,7 @@ export default async function Page() {
 
   return (
     <div className="mt-6 flex h-max w-full max-w-5xl flex-col gap-10 px-6 pb-20">
-      <Heading>University of Glasgow</Heading>
+      <Heading>{app.institution.name}</Heading>
       <Card className="my-10 flex flex-col gap-2 ">
         <CardHeader className="-mb-3 mt-3">
           <CardTitle>Super-Admins</CardTitle>

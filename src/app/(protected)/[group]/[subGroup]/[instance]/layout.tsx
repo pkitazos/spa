@@ -2,14 +2,15 @@ import { type ReactNode } from "react";
 
 import { notFound } from "next/navigation";
 
-import InstanceSidebar from "@/components/instance-sidebar";
 import { InstanceParamsProvider } from "@/components/params-context";
 import { DataTableProvider } from "@/components/ui/data-table/data-table-context";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarInset } from "@/components/ui/sidebar";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
 import { type InstanceParams } from "@/lib/validations/params";
+
+import { AppSidebar } from "./_components/app-sidebar";
 
 export default async function Layout({
   children,
@@ -46,7 +47,8 @@ export default async function Layout({
     );
   }
 
-  const stage = await api.institution.instance.currentStage({ params });
+  const { displayName, stage } = await api.institution.instance.get({ params });
+
   const roles = await api.user.roles({ params });
 
   const { flags, tags } = await api.project.details({ params });
@@ -54,17 +56,18 @@ export default async function Layout({
   const tabGroups = await api.institution.instance.getSidePanelTabs({ params });
 
   return (
-    <SidebarProvider>
-      <InstanceParamsProvider instance={{ params, stage, roles }}>
-        {/* this is really stupid actually, I should just be able to pass tha flags and tags directly to data tables */}
-        <DataTableProvider details={{ flags, tags }}>
-          <InstanceSidebar className="mt-[8dvh]" tabGroups={tabGroups} />
-          <header className="sticky top-0 flex h-[5.5rem] w-[5.5rem] flex-1 shrink items-center justify-center gap-2 rounded-md bg-background px-4">
-            <SidebarTrigger className="-ml-1" />
-          </header>
-          {children}
-        </DataTableProvider>
-      </InstanceParamsProvider>
-    </SidebarProvider>
+    <InstanceParamsProvider instance={{ params, stage, roles }}>
+      {/* this is really stupid actually, I should just be able to pass tha flags and tags directly to data tables */}
+      <DataTableProvider details={{ flags, tags }}>
+        <div className="flex flex-1">
+          <AppSidebar tabGroups={tabGroups} instanceName={displayName} />
+          <SidebarInset>
+            <div className="absolute flex flex-1 w-full flex-col gap-4 p-4">
+              {children}
+            </div>
+          </SidebarInset>
+        </div>
+      </DataTableProvider>
+    </InstanceParamsProvider>
   );
 }

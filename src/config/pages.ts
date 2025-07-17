@@ -2,7 +2,7 @@ import { Role } from "@/db/types";
 
 type PageLevel = 1 | 2 | 3 | 4 | 5;
 
-interface PageConfig {
+export interface PageConfig {
   title: string;
   href: string; //todo add mkURL Function
   icon?: string;
@@ -12,6 +12,13 @@ interface PageConfig {
 }
 
 export const PAGES = {
+  home: {
+    title: "Home",
+    href: "",
+    level: 1,
+    allowedRoles: [Role.ADMIN, Role.READER, Role.STUDENT, Role.SUPERVISOR],
+    hasSubRoute: false,
+  },
   me: {
     title: "Me",
     href: "me",
@@ -236,7 +243,7 @@ export const PAGES = {
   },
   nonAdminSupervisorTasks: {
     title: "Tasks",
-    href: "",
+    href: "supervisor-tasks",
     icon: "list-checks",
     level: 3,
     allowedRoles: [Role.SUPERVISOR],

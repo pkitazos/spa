@@ -1,6 +1,5 @@
 import { type ReactNode } from "react";
 
-import { Heading } from "@/components/heading";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
@@ -21,12 +20,5 @@ export default async function Layout({
     );
   }
 
-  const instance = await api.institution.instance.get({ params });
-
-  return (
-    <section className="mr-12 w-full">
-      <Heading>{instance.displayName}</Heading>
-      {children}
-    </section>
-  );
+  return <>{children};</>;
 }

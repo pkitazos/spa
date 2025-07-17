@@ -11,14 +11,14 @@ import { ToggleSidebarButton } from "@/components/ui/sidebar";
 import { api } from "@/lib/trpc/server";
 
 import { Breadcrumbs } from "./breadcrumbs";
-import { PageTitle } from "./page-title";
 import { RolePicker } from "./role-picker";
 import { UserButton } from "./user-button";
 
 export async function SiteHeader() {
   const headersList = headers();
 
-  const path = headersList.get("x-url") ?? "";
+  const path = headersList.get("referer") ?? "";
+  console.log("test", path);
   const inInstance = await api.institution.safeInInstance({ path });
 
   return (
@@ -29,8 +29,8 @@ export async function SiteHeader() {
           <p className="text-2xl">{app.name}</p>
         </Link>
         {inInstance ? <ToggleSidebarButton /> : <div className="h-8 w-8" />}
-        <Separator orientation="vertical" className="mr-2 h-4" />
-        <PageTitle />
+        {/* <Separator orientation="vertical" className="mr-2 h-4" />
+        <PageTitle /> */}
         <Separator orientation="vertical" className="mr-2 h-4" />
         <Breadcrumbs />
         <div className="ml-auto flex basis-1/4 items-center justify-end gap-4">

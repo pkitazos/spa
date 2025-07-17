@@ -1,3 +1,6 @@
+import { PAGES } from "@/config/pages";
+
+import { Heading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
@@ -10,6 +13,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
 
   return (
     <PanelWrapper>
+      <Heading>{PAGES.stageControl.title}</Heading>
       <StageControl stage={stage} />
     </PanelWrapper>
   );
