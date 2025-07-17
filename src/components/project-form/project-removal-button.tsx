@@ -1,7 +1,10 @@
 "use client";
+
 import { Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { PAGES } from "@/config/pages";
 
 import {
   useInstanceParams,
@@ -11,7 +14,6 @@ import { Button } from "@/components/ui/button";
 
 import { api } from "@/lib/trpc/client";
 import { toPP3 } from "@/lib/utils/general/instance-params";
-import { PAGES } from "@/config/pages";
 
 export function ProjectRemovalButton({
   projectId,

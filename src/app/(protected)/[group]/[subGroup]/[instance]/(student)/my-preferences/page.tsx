@@ -1,3 +1,8 @@
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
+import { Role, Stage } from "@/db/types";
+
 import { AccessControl } from "@/components/access-control";
 import { Heading } from "@/components/heading";
 import { BoardDetailsProvider } from "@/components/kanban-board/store";
@@ -10,13 +15,9 @@ import { Unauthorised } from "@/components/unauthorised";
 
 import { auth } from "@/lib/auth";
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import { KanbanBoardSection } from "./_components/kanban-board-section";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
-import { Role, Stage } from "@/db/types";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });

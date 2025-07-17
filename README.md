@@ -1,4 +1,4 @@
-# Student-Project Allocation (SPA) 
+# Student-Project Allocation (SPA)
 
 ### Tech stack
 

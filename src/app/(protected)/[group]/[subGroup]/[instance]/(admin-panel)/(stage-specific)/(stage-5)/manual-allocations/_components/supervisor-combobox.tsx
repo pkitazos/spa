@@ -1,5 +1,9 @@
 "use client";
+
 import { useState } from "react";
+
+import { Check, ChevronsUpDown } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -14,10 +18,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, ChevronsUpDown } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { fuzzyMatch } from "@/lib/utils/general/fuzzy-match";
-import { ManualAllocationSupervisor } from "./manual-allocation-types";
+
+import { type ManualAllocationSupervisor } from "./manual-allocation-types";
 
 interface SupervisorComboboxProps {
   supervisors: ManualAllocationSupervisor[];

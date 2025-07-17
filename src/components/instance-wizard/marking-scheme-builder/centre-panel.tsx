@@ -1,14 +1,15 @@
 "use client";
 
+import { MarkerType } from "@/db/types";
+
 import { SubHeading } from "@/components/heading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 
 import { DeadlinesSection } from "./deadlines-section";
 import { EditableFlag, EditableSubmission } from "./editable-text";
 import { SortableForm } from "./sortable";
 import { useMarkingSchemeStore } from "./state";
-import { Textarea } from "@/components/ui/textarea";
-import { MarkerType } from "@/db/types";
 
 export function CentrePanel() {
   const { flags, selectedFlagIndex, selectedSubmissionIndex } =

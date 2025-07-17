@@ -1,6 +1,7 @@
-import { ReactNode } from "react";
-import { ClassValue } from "clsx";
-import Link, { LinkProps } from "next/link";
+import { type ReactNode } from "react";
+
+import { type ClassValue } from "clsx";
+import Link, { type LinkProps } from "next/link";
 
 import { Button } from "@/components/ui/button";
 

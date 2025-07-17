@@ -1,6 +1,6 @@
 import {
-  ProjectInfo,
-  SupervisorDetails,
+  type ProjectInfo,
+  type SupervisorDetails,
 } from "@/lib/validations/allocation-adjustment";
 
 import { getProjectInfo } from "./project";

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 import { cn } from "@/lib/utils";
 
-import { TagInputProps, type TagType } from "./tag-input";
+import { type TagInputProps, type TagType } from "./tag-input";
 
 export const tagVariants = cva(
   "transition-all border inline-flex items-center text-sm pl-2 rounded-md",
@@ -30,10 +30,7 @@ export const tagVariants = cva(
         square: "rounded-none",
         pill: "rounded-full",
       },
-      borderStyle: {
-        default: "border-solid",
-        none: "border-none",
-      },
+      borderStyle: { default: "border-solid", none: "border-none" },
       textCase: {
         uppercase: "uppercase",
         lowercase: "lowercase",
@@ -112,9 +109,7 @@ export const Tag: React.FC<TagProps> = ({
           animation,
           textStyle,
         }),
-        {
-          "justify-between": direction === "column",
-        },
+        { "justify-between": direction === "column" },
       )}
       onClick={() => onTagClick?.(tagObj)}
     >

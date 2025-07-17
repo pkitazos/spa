@@ -4,10 +4,7 @@ import { z } from "zod";
 export const savedPreferenceDto = z.object({
   id: z.string(),
   title: z.string(),
-  supervisor: z.object({
-    id: z.string(),
-    name: z.string(),
-  }),
+  supervisor: z.object({ id: z.string(), name: z.string() }),
   rank: z.number(),
 });
 
@@ -56,6 +53,4 @@ export type SupervisorCentricPreferenceDto = StudentPreferenceDto & {
   supervisorId: string;
 };
 
-export type TagCentricPreferenceDto = StudentPreferenceDto & {
-  tag: string;
-};
+export type TagCentricPreferenceDto = StudentPreferenceDto & { tag: string };

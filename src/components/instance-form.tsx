@@ -1,6 +1,8 @@
 "use client";
-import { ReactNode } from "react";
+
+import { type ReactNode } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   addDays,
@@ -17,6 +19,10 @@ import {
 import { toZonedTime } from "date-fns-tz";
 import { CalendarIcon, Plus, X } from "lucide-react";
 import { z } from "zod";
+
+import { spacesLabels } from "@/config/spaces";
+
+import { type FlagDTO, type InstanceDTO, type TagDTO } from "@/dto";
 
 import { cn } from "@/lib/utils";
 
@@ -36,10 +42,8 @@ import { NoteCard } from "./ui/note-card";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Separator } from "./ui/separator";
 import { TimePicker } from "./ui/time-picker";
-import { SubHeading } from "./heading";
 
-import { spacesLabels } from "@/config/spaces";
-import { FlagDTO, InstanceDTO, TagDTO } from "@/dto";
+import { SubHeading } from "./heading";
 
 const baseSchema = z.object({
   displayName: z.string().min(1, "Please enter a name"),

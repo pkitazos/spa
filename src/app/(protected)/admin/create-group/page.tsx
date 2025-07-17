@@ -1,14 +1,14 @@
-import { Metadata } from "next";
+import { type Metadata } from "next";
+
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+import { spacesLabels } from "@/config/spaces";
 
 import { Heading } from "@/components/heading";
 
 import { api } from "@/lib/trpc/server";
 
 import { FormSection } from "./_components/form-section";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
-import { spacesLabels } from "@/config/spaces";
 
 export const dynamic = "force-dynamic";
 

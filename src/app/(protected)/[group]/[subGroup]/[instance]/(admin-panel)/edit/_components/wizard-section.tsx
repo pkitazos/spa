@@ -1,18 +1,27 @@
 "use client";
+
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { api } from "@/lib/trpc/client";
-import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
-
 import { spacesLabels } from "@/config/spaces";
-import { FlagDTO, InstanceDTO, TagDTO, UnitOfAssessmentDTO } from "@/dto";
+
+import {
+  type FlagDTO,
+  type InstanceDTO,
+  type TagDTO,
+  type UnitOfAssessmentDTO,
+} from "@/dto";
+
+import { MarkerType } from "@/db/types";
+
 import {
   InstanceWizard,
-  WizardFormData,
+  type WizardFormData,
 } from "@/components/instance-wizard/instance-wizard";
 import { useInstanceParams } from "@/components/params-context";
-import { MarkerType } from "@/db/types";
+
+import { api } from "@/lib/trpc/client";
+import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 
 // TODO consider how this should change in a forked instance?
 

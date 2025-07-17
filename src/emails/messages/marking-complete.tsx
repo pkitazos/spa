@@ -1,6 +1,12 @@
 import { Column, Row, Heading, Section, Text } from "@react-email/components";
+
+import {
+  type ProjectDTO,
+  type StudentDTO,
+  type UnitOfAssessmentDTO,
+} from "@/dto";
+
 import { Layout } from "../components/layout";
-import { ProjectDTO, StudentDTO, UnitOfAssessmentDTO } from "@/dto";
 import { fakeProject, fakeStudent, fakeUnit } from "../fake-data";
 
 interface Props {

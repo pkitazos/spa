@@ -1,5 +1,6 @@
-import { projectDtoSchema } from "@/dto";
 import { z } from "zod";
+
+import { projectDtoSchema } from "@/dto";
 
 export const allocationByStudentDtoSchema = z.object({
   student: z.object({

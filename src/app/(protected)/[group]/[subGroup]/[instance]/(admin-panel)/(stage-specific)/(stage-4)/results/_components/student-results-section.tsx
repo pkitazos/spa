@@ -1,4 +1,5 @@
 "use client";
+
 import { useInstanceParams } from "@/components/params-context";
 import {
   Carousel,

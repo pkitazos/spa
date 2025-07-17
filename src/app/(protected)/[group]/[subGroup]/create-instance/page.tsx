@@ -1,10 +1,11 @@
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
-import { SubGroupParams } from "@/lib/validations/params";
+import { type SubGroupParams } from "@/lib/validations/params";
 
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
 import { WizardSection } from "./_components/wizard-section";
 
 export async function generateMetadata({ params }: { params: SubGroupParams }) {

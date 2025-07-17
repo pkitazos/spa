@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -13,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-import { AssessmentCriterion } from "../state/store";
+import { type AssessmentCriterion } from "../state/store";
 
 const MySchema = z.object({
   name: z.string(),

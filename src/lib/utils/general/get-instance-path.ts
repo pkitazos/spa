@@ -1,4 +1,4 @@
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 // TODO Should live on DTO
 export function formatParamsAsPath(instanceParams: InstanceParams) {

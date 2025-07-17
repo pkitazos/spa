@@ -1,6 +1,8 @@
 import { Heading, Section, Text } from "@react-email/components";
+
+import { type ProjectDTO, type ReaderDTO, type StudentDTO } from "@/dto";
+
 import { Layout } from "../../components/layout";
-import { ProjectDTO, ReaderDTO, StudentDTO } from "@/dto";
 import { fakeProject, fakeReader, fakeStudent } from "../../fake-data";
 
 interface Props {

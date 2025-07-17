@@ -1,7 +1,8 @@
 "use client";
+
 import DataTable from "@/components/ui/data-table/data-table";
 
-import { AllocationBySupervisorDto } from "@/lib/validations/allocation/data-table-dto";
+import { type AllocationBySupervisorDto } from "@/lib/validations/allocation/data-table-dto";
 
 import { bySupervisorColumns } from "./by-supervisor-columns";
 

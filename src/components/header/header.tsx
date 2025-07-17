@@ -1,9 +1,9 @@
+import { env } from "@/env";
 import Image from "next/image";
 import Link from "next/link";
 
 import { InstanceHeader } from "./instance-header";
 import { RolePicker } from "./role-picker";
-import { env } from "@/env";
 import { UserButton } from "./user-button";
 
 export async function Header() {

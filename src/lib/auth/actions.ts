@@ -1,9 +1,10 @@
 "use server";
 
+import { env } from "@/env";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+
 import { db } from "@/db";
-import { env } from "@/env";
 
 const DEV_USER_COOKIE_KEY = "dev-selected-user-id";
 

@@ -1,12 +1,12 @@
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
 import { JoinInstance } from "@/components/join-instance";
 import { SupervisorInstanceHome } from "@/components/pages/supervisor-instance-home";
 import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
+import { type InstanceParams } from "@/lib/validations/params";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });

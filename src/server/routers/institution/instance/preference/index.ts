@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-import { studentPreferenceSubmissionDto } from "@/lib/validations/dto/preference";
-import { instanceParamsSchema } from "@/lib/validations/params";
-
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
+
+import { studentPreferenceSubmissionDto } from "@/lib/validations/dto/preference";
+import { instanceParamsSchema } from "@/lib/validations/params";
 
 import {
   csvDataSchema,

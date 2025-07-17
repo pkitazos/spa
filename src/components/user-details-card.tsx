@@ -1,9 +1,10 @@
-import { ReactNode } from "react";
-import { ClassValue } from "clsx";
+import { type ReactNode } from "react";
+
+import { type ClassValue } from "clsx";
 import { HashIcon, UserIcon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { User } from "@/lib/validations/auth";
+import { type User } from "@/lib/validations/auth";
 
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";

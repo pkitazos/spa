@@ -1,4 +1,5 @@
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
+
 import { notFound } from "next/navigation";
 
 import InstanceSidebar from "@/components/instance-sidebar";
@@ -8,7 +9,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 export default async function Layout({
   children,

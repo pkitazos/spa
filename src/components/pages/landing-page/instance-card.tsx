@@ -1,9 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Users, ChevronRight } from "lucide-react";
-import { InstanceDisplayData } from "@/dto";
+
+import { type InstanceDisplayData } from "@/dto";
+
 import { Role } from "@/db/types";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type InstanceWithRoles = InstanceDisplayData & { roles: Role[] };
 

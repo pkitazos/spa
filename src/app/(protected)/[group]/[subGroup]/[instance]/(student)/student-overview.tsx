@@ -1,6 +1,9 @@
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
+
 import { format } from "date-fns";
 import Link from "next/link";
+
+import { Stage } from "@/db/types";
 
 import { Heading, SubHeading } from "@/components/heading";
 import { JoinInstance } from "@/components/join-instance";
@@ -12,11 +15,9 @@ import { Unauthorised } from "@/components/unauthorised";
 import { api } from "@/lib/trpc/server";
 import { cn } from "@/lib/utils";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import Layout from "./layout";
-
-import { Stage } from "@/db/types";
 
 export async function StudentOverview({ params }: { params: InstanceParams }) {
   const stage = await api.institution.instance.currentStage({ params });

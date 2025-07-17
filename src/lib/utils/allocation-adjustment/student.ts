@@ -1,7 +1,7 @@
 import { removedItem } from "@/lib/utils/general/removed-item";
 import {
-  ProjectInfo,
-  StudentRow,
+  type ProjectInfo,
+  type StudentRow,
 } from "@/lib/validations/allocation-adjustment";
 
 import { getProjectInfo } from "./project";

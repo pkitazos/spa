@@ -1,10 +1,11 @@
 "use client";
-import { ReactNode } from "react";
+
+import { type ReactNode } from "react";
+
+import { Role, type Stage, stageSchema } from "@/db/types";
 
 import { RBAC } from "./rbac";
 import { SBAC } from "./sbac";
-
-import { Role, Stage, stageSchema } from "@/db/types";
 
 export function AccessControl({
   children,

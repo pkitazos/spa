@@ -1,13 +1,13 @@
 import { z } from "zod";
 
+import { groupDtoSchema, userDtoSchema } from "@/dto";
+
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
 import { groupRouter } from "./group";
 import { instanceRouter } from "./instance";
 import { subGroupRouter } from "./sub-group";
-
-import { groupDtoSchema, userDtoSchema } from "@/dto";
 
 export const institutionRouter = createTRPCRouter({
   group: groupRouter,

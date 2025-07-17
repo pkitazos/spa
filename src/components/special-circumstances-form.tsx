@@ -1,5 +1,7 @@
 "use client";
+
 import { useForm } from "react-hook-form";
+
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -14,9 +16,9 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 import {
-  CurrentSpecialCircumstances,
-  specialCircumstances,
-  UpdatedSpecialCircumstances,
+  type CurrentSpecialCircumstances,
+  type specialCircumstances,
+  type UpdatedSpecialCircumstances,
 } from "@/lib/validations/special-circumstances-form";
 
 import { useInstancePath } from "./params-context";
@@ -38,9 +40,7 @@ export function SpecialCircumstancesForm({
   };
 
   const form = useForm<specialCircumstances>({
-    defaultValues: {
-      specialCircumstances: formProject.specialCircumstances,
-    },
+    defaultValues: { specialCircumstances: formProject.specialCircumstances },
   });
 
   return (

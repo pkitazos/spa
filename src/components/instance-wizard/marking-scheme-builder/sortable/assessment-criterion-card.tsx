@@ -1,4 +1,5 @@
 "use client";
+
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVerticalIcon } from "lucide-react";
@@ -8,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 import { cn } from "@/lib/utils";
 
-import { AssessmentCriterion } from "../state/store";
+import { type AssessmentCriterion } from "../state/store";
 
 import { AssessmentCriterionForm } from "./assessment-criterion-form";
 import { FormDivider } from "./form-divider";

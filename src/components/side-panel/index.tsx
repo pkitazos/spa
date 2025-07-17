@@ -1,4 +1,5 @@
 "use client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -6,7 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 
 import { cn } from "@/lib/utils";
 import { stripTrailingSlash } from "@/lib/utils/general/trim";
-import { TabGroup, TabType } from "@/lib/validations/tabs";
+import { type TabGroup, type TabType } from "@/lib/validations/tabs";
 
 import { useInstancePath } from "../params-context";
 

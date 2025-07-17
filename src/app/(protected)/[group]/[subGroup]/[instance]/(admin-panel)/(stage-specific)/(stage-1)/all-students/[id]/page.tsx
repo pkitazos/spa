@@ -1,16 +1,16 @@
 import { notFound } from "next/navigation";
 
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
 import { Heading, SubHeading } from "@/components/heading";
 import { PageWrapper } from "@/components/page-wrapper";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
-import { StudentDetailsCard } from "./_components/student-details-card";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
 import { StudentAllocation } from "./_components/student-allocation";
+import { StudentDetailsCard } from "./_components/student-details-card";
 import { StudentPreferencesSection } from "./_components/student-preferences-section";
 import { StudentProjectSection } from "./_components/student-project-section";
 

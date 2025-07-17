@@ -1,12 +1,13 @@
 "use client";
-import { ReactNode } from "react";
+
+import { type ReactNode } from "react";
+
+import { type Role } from "@/db/types";
 
 import { api } from "@/lib/trpc/client";
+import { setIntersection } from "@/lib/utils/general/set-intersection";
 
 import { useInstanceParams } from "../params-context";
-
-import { Role } from "@/db/types";
-import { setIntersection } from "@/lib/utils/general/set-intersection";
 
 export function RBAC({
   children,

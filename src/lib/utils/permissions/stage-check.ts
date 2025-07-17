@@ -1,4 +1,4 @@
-import { Stage, stageOrd } from "@/db/types";
+import { type Stage, stageOrd } from "@/db/types";
 import { stageSchema } from "@/db/types";
 
 /**

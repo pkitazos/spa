@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 
+import { Stage } from "@/db/types";
+
 import { AccessControl } from "@/components/access-control";
 import { Heading } from "@/components/heading";
 import { PageWrapper } from "@/components/page-wrapper";
@@ -10,11 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
-import { PageParams } from "@/lib/validations/params";
+import { type PageParams } from "@/lib/validations/params";
 
 import { CurrentBoardState } from "./_components/current-board-state";
-
-import { Stage } from "@/db/types";
 
 export default async function Page({ params }: { params: PageParams }) {
   const studentId = params.id;

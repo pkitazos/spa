@@ -1,7 +1,12 @@
 "use client";
-import { ColumnDef } from "@tanstack/react-table";
+
+import { type ColumnDef } from "@tanstack/react-table";
 import { ShuffleIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
+
+import { PAGES } from "@/config/pages";
+
+import { type ProjectDTO, type StudentDTO } from "@/dto";
 
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -9,8 +14,6 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-col
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { cn } from "@/lib/utils";
-import { PAGES } from "@/config/pages";
-import { ProjectDTO, StudentDTO } from "@/dto";
 
 type RandomAllocationDTO = { student: StudentDTO; project?: ProjectDTO };
 

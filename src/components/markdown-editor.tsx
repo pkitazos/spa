@@ -1,6 +1,8 @@
 "use client";
-import { JSX } from "react";
-import MDEditor, { MDEditorProps } from "@uiw/react-md-editor";
+
+import { type JSX } from "react";
+
+import MDEditor, { type MDEditorProps } from "@uiw/react-md-editor";
 import rehypeKatex from "rehype-katex";
 import rehypeSanitize from "rehype-sanitize";
 import remarkMath from "remark-math";

@@ -1,6 +1,6 @@
 import {
-  ProjectInfo,
-  RowProject,
+  type ProjectInfo,
+  type RowProject,
 } from "@/lib/validations/allocation-adjustment";
 
 export function withinBounds(project: ProjectInfo) {

@@ -1,8 +1,8 @@
 import {
-  StudentDTO,
-  ProjectDTO,
-  SupervisorDTO,
-  ProjectAllocationStatus,
+  type StudentDTO,
+  type ProjectDTO,
+  type SupervisorDTO,
+  type ProjectAllocationStatus,
 } from "@/dto";
 
 export const ValidationWarningType = {

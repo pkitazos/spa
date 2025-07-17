@@ -1,11 +1,12 @@
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+import { spacesLabels } from "@/config/spaces";
+
 import { SubHeading } from "@/components/heading";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
-import { app, metadataTitle } from "@/config/meta";
-import { spacesLabels } from "@/config/spaces";
-import { PAGES } from "@/config/pages";
 import { WizardSection } from "./_components/wizard-section";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {

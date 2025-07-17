@@ -1,10 +1,10 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 
 import { buttonVariants } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
-import { AllocationCsvData } from "@/lib/validations/allocation-csv-data";
+import { type AllocationCsvData } from "@/lib/validations/allocation-csv-data";
 
 export const columns: ColumnDef<AllocationCsvData>[] = [
   {

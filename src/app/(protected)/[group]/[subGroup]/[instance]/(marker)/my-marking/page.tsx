@@ -1,11 +1,12 @@
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
 import { Heading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
 import { SubmissionsTable } from "./_components/submissions-table";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
@@ -21,7 +22,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
 
   return (
     <>
-      <Heading>My Marking</Heading>
+      <Heading>{PAGES.myMarking.title}</Heading>
       <PanelWrapper className="pt-6">
         <SubmissionsTable data={data} />
       </PanelWrapper>

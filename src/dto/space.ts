@@ -1,5 +1,6 @@
-import { stageSchema } from "@/db/types";
 import { z } from "zod";
+
+import { stageSchema } from "@/db/types";
 
 export const groupDtoSchema = z.object({
   group: z.string(),

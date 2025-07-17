@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
 
@@ -13,7 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 
 import {
-  NewStudent,
+  type NewStudent,
   newStudentSchema,
 } from "@/lib/validations/add-users/new-user";
 

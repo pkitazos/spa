@@ -1,5 +1,6 @@
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
+
 import { MarkingOverviewTable } from "./marking-overview-table";
 
 export default async function Page({ params }: { params: InstanceParams }) {

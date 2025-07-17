@@ -1,3 +1,8 @@
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
+import { Role, Stage } from "@/db/types";
+
 import { Heading } from "@/components/heading";
 import { PageWrapper } from "@/components/page-wrapper";
 import { CreateProjectForm } from "@/components/project-form/create-project";
@@ -5,11 +10,7 @@ import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
 import { stageGt } from "@/lib/utils/permissions/stage-check";
-import { InstanceParams } from "@/lib/validations/params";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
-import { Role, Stage } from "@/db/types";
+import { type InstanceParams } from "@/lib/validations/params";
 
 type PageParams = InstanceParams & { id: string };
 

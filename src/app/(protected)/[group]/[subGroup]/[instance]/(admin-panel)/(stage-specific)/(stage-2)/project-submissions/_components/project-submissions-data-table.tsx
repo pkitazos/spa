@@ -1,9 +1,10 @@
 "use client";
 
+import { type SupervisorDTO } from "@/dto";
+
 import DataTable from "@/components/ui/data-table/data-table";
 
 import { useProjectSubmissionColumns } from "./project-submissions-columns";
-import { SupervisorDTO } from "@/dto";
 
 export function ProjectSubmissionsDataTable({
   data,

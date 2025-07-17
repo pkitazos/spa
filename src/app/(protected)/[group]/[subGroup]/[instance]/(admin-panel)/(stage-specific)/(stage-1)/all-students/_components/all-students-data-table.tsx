@@ -3,6 +3,12 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { spacesLabels } from "@/config/spaces";
+
+import { type ProjectDTO, type StudentDTO } from "@/dto";
+
+import { type Role } from "@/db/types";
+
 import { useInstanceParams } from "@/components/params-context";
 import DataTable from "@/components/ui/data-table/data-table";
 import { studentLevelFilter } from "@/components/ui/data-table/data-table-context";
@@ -10,10 +16,6 @@ import { studentLevelFilter } from "@/components/ui/data-table/data-table-contex
 import { api } from "@/lib/trpc/client";
 
 import { useAllStudentsColumns } from "./all-students-columns";
-
-import { spacesLabels } from "@/config/spaces";
-import { Role } from "@/db/types";
-import { ProjectDTO, StudentDTO } from "@/dto";
 
 export function StudentsDataTable({
   roles,

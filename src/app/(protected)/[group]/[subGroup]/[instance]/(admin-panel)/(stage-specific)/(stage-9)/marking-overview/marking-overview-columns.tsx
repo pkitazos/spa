@@ -1,9 +1,12 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
-import { ProjectMarkingOverview, UnitGradingStatus } from "./row";
-import { cn } from "@/lib/utils";
+import { type ColumnDef } from "@tanstack/react-table";
+
 import { Grade } from "@/config/grades";
+
+import { cn } from "@/lib/utils";
+
+import { type ProjectMarkingOverview, type UnitGradingStatus } from "./row";
 
 export const columns: ColumnDef<ProjectMarkingOverview>[] = [
   { id: "chevron" },

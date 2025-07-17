@@ -1,20 +1,4 @@
-import {
-  AssessmentCriterionDTO,
-  MarkingSubmissionDTO,
-  ProjectDTO,
-  ReaderDTO,
-  StudentDTO,
-  SupervisorDTO,
-} from "@/dto";
-import {
-  Column,
-  Heading,
-  Row,
-  Section,
-  Text,
-  Hr,
-} from "@react-email/components";
-import { PDFLayout } from "../../components/pdf/layout";
+import { Marksheet } from "@/emails/components/marksheet";
 import {
   fakeCriteria,
   fakeProject,
@@ -29,8 +13,27 @@ import {
   fakeDissertationCriteria,
   fakeConductCriteria,
 } from "@/emails/fake-data";
+import {
+  Column,
+  Heading,
+  Row,
+  Section,
+  Text,
+  Hr,
+} from "@react-email/components";
+
 import { Grade } from "@/config/grades";
-import { Marksheet } from "@/emails/components/marksheet";
+
+import {
+  type AssessmentCriterionDTO,
+  type MarkingSubmissionDTO,
+  type ProjectDTO,
+  type ReaderDTO,
+  type StudentDTO,
+  type SupervisorDTO,
+} from "@/dto";
+
+import { PDFLayout } from "../../components/pdf/layout";
 
 export interface ModeratedSummaryProps {
   student: StudentDTO;

@@ -1,5 +1,5 @@
-import { CheckedState } from "@radix-ui/react-checkbox";
-import { ColumnDef } from "@tanstack/react-table";
+import { type CheckedState } from "@radix-ui/react-checkbox";
+import { type ColumnDef } from "@tanstack/react-table";
 
 import { Checkbox } from "@/components/ui/checkbox";
 

@@ -1,6 +1,8 @@
 import { PenIcon } from "lucide-react";
 import Link from "next/link";
 
+import { Stage } from "@/db/types";
+
 import { AccessControl } from "@/components/access-control";
 import { SubHeading } from "@/components/heading";
 import { StudentSavedPreferenceDataTable } from "@/components/student-saved-preferences/data-table";
@@ -10,11 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { api } from "@/lib/trpc/server";
 import { cn } from "@/lib/utils";
-import { PageParams } from "@/lib/validations/params";
+import { type PageParams } from "@/lib/validations/params";
 
 import { StudentPreferenceDataTable } from "./student-preference-data-table";
-
-import { Stage } from "@/db/types";
 
 export async function StudentPreferencesSection({
   params,

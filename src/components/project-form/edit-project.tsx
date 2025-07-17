@@ -3,21 +3,24 @@
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
-
-import { api } from "@/lib/trpc/client";
-import { Role } from "@/db/types";
 import {
-  ProjectFormInitialisationDTO,
-  ProjectFormSubmissionDTO,
+  type ProjectFormInitialisationDTO,
+  type ProjectFormSubmissionDTO,
   formToApiTransformations,
 } from "@/dto/project";
 
-import { PageParams } from "@/lib/validations/params";
-import { toPP1 } from "@/lib/utils/general/instance-params";
+import { Role } from "@/db/types";
+
+import { Button } from "@/components/ui/button";
+
+import { api } from "@/lib/trpc/client";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
-import { ProjectForm } from ".";
+import { toPP1 } from "@/lib/utils/general/instance-params";
+import { type PageParams } from "@/lib/validations/params";
+
 import { ProjectRemovalButton } from "./project-removal-button";
+
+import { ProjectForm } from ".";
 
 interface EditProjectFormProps {
   formInitialisationData: ProjectFormInitialisationDTO;

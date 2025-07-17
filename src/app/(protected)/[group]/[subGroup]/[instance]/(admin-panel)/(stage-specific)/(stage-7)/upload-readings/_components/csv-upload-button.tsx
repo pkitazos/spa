@@ -54,6 +54,7 @@ export function CSVUploadButton({
           }
 
           const { uniqueRows, duplicateRowGuids } = parseForDuplicates(
+            // @ts-expect-error known issue TODO
             result.data,
           );
 

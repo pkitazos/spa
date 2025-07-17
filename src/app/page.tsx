@@ -1,10 +1,11 @@
-import { Metadata } from "next";
-
-import { Separator } from "@/components/ui/separator";
+import { type Metadata } from "next";
 
 import { app, metadataTitle } from "@/config/meta";
-import { api } from "@/lib/trpc/server";
+
 import UserSpacesGrid from "@/components/pages/landing-page/user-spaces-grid";
+import { Separator } from "@/components/ui/separator";
+
+import { api } from "@/lib/trpc/server";
 
 export const dynamic = "force-dynamic";
 

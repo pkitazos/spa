@@ -23,7 +23,7 @@ services:
       VALIDATE_ENV_VARS: "true"
 
       # TODO
-      # Long term, these should be nuked and 
+      # Long term, these should be nuked and
       # replaced with the fancy role picker
       DEV_ID: ${DEV_ID}
       DEV_NAME: ${DEV_NAME}

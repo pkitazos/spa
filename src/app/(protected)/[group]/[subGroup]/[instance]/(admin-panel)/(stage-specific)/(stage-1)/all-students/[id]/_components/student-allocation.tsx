@@ -1,13 +1,15 @@
-import { ClassValue } from "clsx";
+import { type ClassValue } from "clsx";
 import { AwardIcon, BookOpenIcon, HashIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
+
+import { PAGES } from "@/config/pages";
+
+import { type ProjectDTO, type SupervisorDTO } from "@/dto";
 
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { cn } from "@/lib/utils";
-import { ProjectDTO, SupervisorDTO } from "@/dto";
-import { PAGES } from "@/config/pages";
 
 export function StudentAllocation({
   allocation: { project, supervisor, studentRanking },

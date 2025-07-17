@@ -1,24 +1,3 @@
-import {
-  AssessmentCriterionDTO,
-  CriterionScoreDTO,
-  MarkingSubmissionDTO,
-  ProjectDTO,
-  ReaderDTO,
-  StudentDTO,
-  SupervisorDTO,
-  UnitOfAssessmentDTO,
-} from "@/dto";
-import {
-  Column,
-  Heading,
-  Row,
-  Section,
-  Text,
-  Hr,
-} from "@react-email/components";
-import { Layout } from "../../components/layout";
-import { format } from "@/lib/utils/date/format";
-import { Grade } from "@/config/grades";
 import { Marksheet } from "@/emails/components/marksheet";
 import {
   fakeCriteria,
@@ -31,6 +10,31 @@ import {
   fakeSupervisorSubmission,
   fakeUnit,
 } from "@/emails/fake-data";
+import {
+  Column,
+  Heading,
+  Row,
+  Section,
+  Text,
+  Hr,
+} from "@react-email/components";
+
+import { Grade } from "@/config/grades";
+
+import {
+  type AssessmentCriterionDTO,
+  type CriterionScoreDTO,
+  type MarkingSubmissionDTO,
+  type ProjectDTO,
+  type ReaderDTO,
+  type StudentDTO,
+  type SupervisorDTO,
+  type UnitOfAssessmentDTO,
+} from "@/dto";
+
+import { format } from "@/lib/utils/date/format";
+
+import { Layout } from "../../components/layout";
 
 interface Props {
   project: ProjectDTO;

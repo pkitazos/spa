@@ -52,7 +52,7 @@ export class AllocationGroup extends DataObject {
           allocationGroupId: this.params.group,
         },
       })
-      .then((x) => T.toAllocationSubGroupDTO(x));
+      .then(T.toAllocationSubGroupDTO);
   }
 
   public async exists(): Promise<boolean> {
@@ -64,7 +64,7 @@ export class AllocationGroup extends DataObject {
   public async get(): Promise<GroupDTO> {
     return await this.db.allocationGroup
       .findFirstOrThrow({ where: { id: this.params.group } })
-      .then((x) => T.toAllocationGroupDTO(x));
+      .then(T.toAllocationGroupDTO);
   }
 
   public async getSubGroups(): Promise<SubGroupDTO[]> {
@@ -72,7 +72,7 @@ export class AllocationGroup extends DataObject {
       where: { allocationGroupId: this.params.group },
     });
 
-    return subgroups.map((x) => T.toAllocationSubGroupDTO(x));
+    return subgroups.map(T.toAllocationSubGroupDTO);
   }
 
   public async getAdmins(): Promise<UserDTO[]> {
@@ -99,7 +99,7 @@ export class AllocationGroup extends DataObject {
   public async delete(): Promise<GroupDTO> {
     return await this.db.allocationGroup
       .delete({ where: { id: this.params.group } })
-      .then((x) => T.toAllocationGroupDTO(x));
+      .then(T.toAllocationGroupDTO);
   }
 
   get institution() {

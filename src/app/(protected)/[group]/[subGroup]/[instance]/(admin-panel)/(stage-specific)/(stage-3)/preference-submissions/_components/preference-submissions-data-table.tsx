@@ -3,7 +3,7 @@
 import DataTable from "@/components/ui/data-table/data-table";
 import { studentLevelFilter } from "@/components/ui/data-table/data-table-context";
 
-import { StudentPreferenceSubmissionDto } from "@/lib/validations/dto/preference";
+import { type StudentPreferenceSubmissionDto } from "@/lib/validations/dto/preference";
 
 import { usePreferenceSubmissionColumns } from "./preference-submissions-columns";
 

@@ -1,8 +1,12 @@
 "use client";
+
 import { useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { spacesLabels } from "@/config/spaces";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,10 +25,8 @@ import { api } from "@/lib/trpc/client";
 import { slugify } from "@/lib/utils/general/slugify";
 import {
   buildNewAllocationGroupFormSchema,
-  NewAllocationGroupForm,
+  type NewAllocationGroupForm,
 } from "@/lib/validations/spaces/allocation-group";
-
-import { spacesLabels } from "@/config/spaces";
 
 export function FormSection({
   takenGroupNames,

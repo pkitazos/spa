@@ -6,8 +6,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
 import { stageGte } from "@/lib/utils/permissions/stage-check";
+import { type InstanceParams } from "@/lib/validations/params";
 
 export async function SupervisorInstanceHome({
   params,

@@ -2,18 +2,19 @@
 
 import { useParams } from "next/navigation";
 
+import { type ProjectDTO } from "@/dto";
+
+import { Stage } from "@/db/types";
+
 import { AccessControl } from "@/components/access-control";
 import { BoardDetailsProvider } from "@/components/kanban-board/store";
 import { Card, CardContent } from "@/components/ui/card";
 
-import { PreferenceBoard } from "@/lib/validations/board";
-import { PageParams } from "@/lib/validations/params";
+import { type PreferenceBoard } from "@/lib/validations/board";
+import { type PageParams } from "@/lib/validations/params";
 
 import { KanbanBoardSection } from "./kanban-board-section";
 import { NewPreferenceButton } from "./new-preference-button";
-
-import { Stage } from "@/db/types";
-import { ProjectDTO } from "@/dto";
 
 export function CurrentBoardState({
   availableProjects,

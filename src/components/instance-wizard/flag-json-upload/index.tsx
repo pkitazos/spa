@@ -1,14 +1,17 @@
-import { Input } from "@/components/ui/input";
-import { ChangeEvent } from "react";
+import { type ChangeEvent } from "react";
 import { useFormContext } from "react-hook-form";
-import { flagsAssessmentSchema, WizardFormData } from "../instance-wizard";
+
+import { toast } from "sonner";
+
 import {
   FormControl,
   FormField,
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+
+import { flagsAssessmentSchema, type WizardFormData } from "../instance-wizard";
 
 export function UploadJsonArea() {
   const form = useFormContext<WizardFormData>();

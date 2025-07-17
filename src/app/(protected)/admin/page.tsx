@@ -1,6 +1,9 @@
 import { Plus } from "lucide-react";
-import { Metadata } from "next";
+import { type Metadata } from "next";
 import Link from "next/link";
+
+import { app, metadataTitle } from "@/config/meta";
+import { spacesLabels } from "@/config/spaces";
 
 import { Heading, SubHeading } from "@/components/heading";
 import { Button } from "@/components/ui/button";
@@ -8,9 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 
 import { api } from "@/lib/trpc/server";
-
-import { app, metadataTitle } from "@/config/meta";
-import { spacesLabels } from "@/config/spaces";
 
 export const dynamic = "force-dynamic";
 

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 export async function DownloadPreferenceDataSection({
   params,
@@ -23,9 +23,7 @@ export async function DownloadPreferenceDataSection({
   });
 
   const supervisorData =
-    await api.institution.instance.preference.statsBySupervisor({
-      params,
-    });
+    await api.institution.instance.preference.statsBySupervisor({ params });
 
   const tagData = await api.institution.instance.preference.statsByTag({
     params,

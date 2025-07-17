@@ -1,16 +1,17 @@
 import { z } from "zod";
 
-import {
-  instanceParamsSchema,
-  refinedSpaceParamsSchema,
-} from "@/lib/validations/params";
+import { readerStages, studentStages, supervisorStages } from "@/config/stages";
+
+import { AdminLevel } from "@/db/types";
+import { adminLevelSchema } from "@/db/types";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
-import { AdminLevel } from "@/db/types";
-import { adminLevelSchema } from "@/db/types";
-import { readerStages, studentStages, supervisorStages } from "@/config/stages";
+import {
+  instanceParamsSchema,
+  refinedSpaceParamsSchema,
+} from "@/lib/validations/params";
 
 export const accessControlRouter = createTRPCRouter({
   adminInInstance: procedure.instance.user

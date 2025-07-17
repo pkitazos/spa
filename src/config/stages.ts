@@ -1,4 +1,5 @@
 import { Stage } from "@/db/types";
+
 import { subsequentStages } from "@/lib/utils/permissions/stage-check";
 
 export const supervisorStages: Stage[] = [Stage.SETUP];

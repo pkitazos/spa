@@ -1,6 +1,16 @@
+import { env } from "@/env";
 import { Button, Heading, Section, Text } from "@react-email/components";
+
+import {
+  type ProjectDTO,
+  type StudentDTO,
+  type UnitOfAssessmentDTO,
+  type UserDTO,
+} from "@/dto";
+
+import { type InstanceParams } from "@/lib/validations/params";
+
 import { Layout } from "../components/layout";
-import { ProjectDTO, StudentDTO, UnitOfAssessmentDTO, UserDTO } from "@/dto";
 import {
   fakeParams,
   fakeProject,
@@ -8,8 +18,6 @@ import {
   fakeSupervisor,
   fakeUnit,
 } from "../fake-data";
-import { env } from "@/env";
-import { InstanceParams } from "@/lib/validations/params";
 
 interface Props {
   student: StudentDTO;

@@ -1,16 +1,22 @@
 "use client";
+
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import {
+  ProjectAllocationStatus,
+  type ProjectDTO,
+  type StudentDTO,
+} from "@/dto";
 
 import { useInstanceParams } from "@/components/params-context";
 import DataTable from "@/components/ui/data-table/data-table";
 import { useDataTableProjectFilters } from "@/components/ui/data-table/data-table-context";
 
 import { api } from "@/lib/trpc/client";
+import { toPP3 } from "@/lib/utils/general/instance-params";
 
 import { useSupervisorProjectsColumns } from "./supervisor-projects-columns";
-import { toPP3 } from "@/lib/utils/general/instance-params";
-import { ProjectAllocationStatus, ProjectDTO, StudentDTO } from "@/dto";
 
 export function SupervisorProjectsDataTable({
   data,

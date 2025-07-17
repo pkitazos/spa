@@ -1,15 +1,16 @@
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
+import { type PreferenceType, Role } from "@/db/types";
+
 import { Heading } from "@/components/heading";
 import { PageWrapper } from "@/components/page-wrapper";
 
 import { auth } from "@/lib/auth";
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import { AllProjectsDataTable } from "./_components/all-projects-data-table";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
-import { PreferenceType, Role } from "@/db/types";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });

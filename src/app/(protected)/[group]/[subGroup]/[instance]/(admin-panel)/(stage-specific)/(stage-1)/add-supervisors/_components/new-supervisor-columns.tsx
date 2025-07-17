@@ -1,6 +1,7 @@
 "use client";
+
 import { Stage } from "@prisma/client";
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
   MoreHorizontal as MoreIcon,
@@ -8,6 +9,10 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
+
+import { PAGES } from "@/config/pages";
+
+import { type SupervisorDTO } from "@/dto";
 
 import { AccessControl } from "@/components/access-control";
 import { useInstanceStage } from "@/components/params-context";
@@ -28,9 +33,6 @@ import {
   YesNoActionContainer,
   YesNoActionTrigger,
 } from "@/components/yes-no-action";
-
-import { SupervisorDTO } from "@/dto";
-import { PAGES } from "@/config/pages";
 
 export function useNewSupervisorColumns({
   removeSupervisor,

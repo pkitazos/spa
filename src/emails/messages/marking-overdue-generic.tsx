@@ -1,9 +1,11 @@
 // TODO kill this file, replace with other stuff.
+import { env } from "@/env";
 import { Button, Heading, Section, Text } from "@react-email/components";
+
+import { type InstanceParams } from "@/lib/validations/params";
+
 import { Layout } from "../components/layout";
 import { fakeParams } from "../fake-data";
-import { env } from "@/env";
-import { InstanceParams } from "@/lib/validations/params";
 
 interface Props {
   params: InstanceParams;

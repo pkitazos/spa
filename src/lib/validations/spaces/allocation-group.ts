@@ -12,10 +12,7 @@ export function buildNewAllocationGroupFormSchema(
       const nameAllowed = !takenGroupNames.has(groupName);
       return nameAllowed;
     },
-    {
-      message: "This name is already taken",
-      path: ["groupName"],
-    },
+    { message: "This name is already taken", path: ["groupName"] },
   );
 }
 

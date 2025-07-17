@@ -1,5 +1,6 @@
 "use client";
-import { Dispatch, SetStateAction } from "react";
+
+import { type Dispatch, type SetStateAction } from "react";
 
 import { cn } from "@/lib/utils";
 
