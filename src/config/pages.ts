@@ -87,6 +87,15 @@ export const PAGES = {
     allowedRoles: [Role.ADMIN],
     hasSubRoute: true,
   },
+  newSupervisorProject: {
+    title: "New Project",
+    href: "new-project",
+    icon: "file-plus-2",
+    level: 5,
+    allowedRoles: [Role.ADMIN],
+    hasSubRoute: false,
+  },
+
   // pin
   allReaders: {
     title: "All Readers",
@@ -96,6 +105,7 @@ export const PAGES = {
     allowedRoles: [Role.ADMIN],
     hasSubRoute: true,
   },
+
   allStudents: {
     title: "All Students",
     href: "all-students",
@@ -103,6 +113,14 @@ export const PAGES = {
     level: 4,
     allowedRoles: [Role.ADMIN],
     hasSubRoute: true,
+  },
+  studentPreferences: {
+    title: "Preferences",
+    href: "preferences",
+    icon: "folder",
+    level: 5,
+    allowedRoles: [Role.ADMIN],
+    hasSubRoute: false,
   },
   addSupervisors: {
     title: "Add Supervisors",
@@ -294,7 +312,7 @@ export const PAGES = {
     hasSubRoute: true,
   },
 
-  myProjects: {
+  myProposedProjects: {
     title: "My Proposed Projects",
     href: "my-proposed-projects",
     icon: "folder",
@@ -320,7 +338,7 @@ export const PAGES = {
     allowedRoles: [Role.ADMIN, Role.SUPERVISOR],
     hasSubRoute: false,
   },
-  myAllocations: {
+  mySupervisions: {
     title: "My Supervisions",
     href: "my-supervisions",
     icon: "folder-check",

@@ -33,7 +33,7 @@ export function ProjectRemovalButton({
       deleteAsync({ params: toPP3(params, projectId) }).then(() => {
         const redirectPath = isAdmin
           ? `${instancePath}/${PAGES.allProjects.href}`
-          : `${instancePath}/${PAGES.myProjects.href}`;
+          : `${instancePath}/${PAGES.myProposedProjects.href}`;
         router.push(redirectPath);
         router.refresh();
       }),

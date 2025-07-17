@@ -336,7 +336,7 @@ async function accessControl({
   stageCheck: (s: Stage) => boolean;
 }) {
   const userRoles = await user.getRolesInInstance(instance.params);
-  const roleOk = userRoles.isSubsetOf(new Set(allowedRoles));
+  const roleOk = allowedRoles.some((role) => userRoles.has(role));
 
   if (!roleOk) {
     return {

@@ -4,7 +4,7 @@ import { PAGES } from "@/config/pages";
 import { Role, Stage } from "@/db/types";
 
 import { Heading } from "@/components/heading";
-import { PageWrapper } from "@/components/page-wrapper";
+import { PanelWrapper } from "@/components/panel-wrapper";
 import { CreateProjectForm } from "@/components/project-form/create-project";
 import { Unauthorised } from "@/components/unauthorised";
 
@@ -34,7 +34,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
   const formInitData = await api.project.getFormInitialisationData({ params });
 
   return (
-    <PageWrapper>
+    <PanelWrapper className="gap-10">
       <Heading>{PAGES.newProject.title}</Heading>
       <CreateProjectForm
         formInitialisationData={formInitData}
@@ -42,6 +42,6 @@ export default async function Page({ params }: { params: InstanceParams }) {
         currentUserId={supervisor.id}
         onBehalfOf={supervisor.id}
       />
-    </PageWrapper>
+    </PanelWrapper>
   );
 }

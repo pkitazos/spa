@@ -1,14 +1,27 @@
 import { ListIcon } from "lucide-react";
 
+import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
-import { SectionHeading, SubHeading } from "@/components/heading";
+import { SectionHeading, Heading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
 import { type InstanceParams } from "@/lib/validations/params";
 
 import { RandomAllocationsDataTable } from "./_components/random-allocations-data-table";
+
+export async function generateMetadata({ params }: { params: InstanceParams }) {
+  const { displayName } = await api.institution.instance.get({ params });
+
+  return {
+    title: metadataTitle([
+      PAGES.randomAllocations.title,
+      displayName,
+      app.name,
+    ]),
+  };
+}
 
 export default async function Page({ params }: { params: InstanceParams }) {
   const unallocatedStudents =
@@ -28,9 +41,9 @@ export default async function Page({ params }: { params: InstanceParams }) {
   ];
 
   return (
-    <PanelWrapper className="mt-10 flex flex-col items-start gap-16 px-12">
-      <SubHeading className="mb-4">{PAGES.randomAllocations.title}</SubHeading>
-      <section className="mt-10 flex w-full flex-col">
+    <PanelWrapper className="gap-10">
+      <Heading className="mb-4">{PAGES.randomAllocations.title}</Heading>
+      <section className="flex w-full flex-col">
         <SectionHeading className="mb-2 flex items-center">
           <ListIcon className="mr-2 h-6 w-6 text-indigo-500" />
           <span>All Unmatched Students</span>

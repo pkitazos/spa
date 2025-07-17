@@ -60,6 +60,14 @@ import { MultiSelect } from "../ui/multi-select";
 
 // @ts-nocheck
 
+// TODO: jump through typescript hoops
+
+// @ts-nocheck
+
+// TODO: jump through typescript hoops
+
+// @ts-nocheck
+
 interface ProjectFormProps {
   formInitialisationData: ProjectFormInitialisationDTO;
   defaultValues?: Partial<ProjectFormInternalStateDTO>;
@@ -146,7 +154,7 @@ export function ProjectForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleFormSubmit)}
-        className="mt-10 flex w-full max-w-5xl flex-col gap-6"
+        className="flex w-full max-w-5xl flex-col gap-6"
       >
         {/* Supervisor Selection (Admin only) */}
         {isAdmin && (

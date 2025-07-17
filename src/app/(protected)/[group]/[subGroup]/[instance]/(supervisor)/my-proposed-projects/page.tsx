@@ -17,7 +17,11 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([PAGES.myProjects.title, displayName, app.name]),
+    title: metadataTitle([
+      PAGES.myProposedProjects.title,
+      displayName,
+      app.name,
+    ]),
   };
 }
 
@@ -30,28 +34,27 @@ export default async function Page({ params }: { params: InstanceParams }) {
   const uniqueProjectIds = new Set(rowProjects.map((p) => p.project.id));
 
   return (
-    <>
-      <Heading>My Projects</Heading>
-      <PanelWrapper className="pt-6">
-        <AccessControl
-          allowedStages={[Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING]}
-        >
-          <TaskCompletionCard
-            title="Submission Target"
-            completed={uniqueProjectIds.size}
-            total={submissionTarget}
-          />
-        </AccessControl>
-        <MyProjectsDataTable
-          projects={rowProjects.map((r) => ({
-            id: r.project.id,
-            title: r.project.title,
-            capacityUpperBound: r.project.capacityUpperBound,
-            allocatedStudentId: r.student?.id,
-            allocatedStudentName: r.student?.name,
-          }))}
+    <PanelWrapper className="gap-10">
+      <Heading>{PAGES.myProposedProjects.title}</Heading>
+      <AccessControl
+        allowedStages={[Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING]}
+      >
+        {/* // TODO: this looks a bit silly now after a supervisor has reached their target */}
+        <TaskCompletionCard
+          title="Submission Target"
+          completed={uniqueProjectIds.size}
+          total={submissionTarget}
         />
-      </PanelWrapper>
-    </>
+      </AccessControl>
+      <MyProjectsDataTable
+        projects={rowProjects.map((r) => ({
+          id: r.project.id,
+          title: r.project.title,
+          capacityUpperBound: r.project.capacityUpperBound,
+          allocatedStudentId: r.student?.id,
+          allocatedStudentName: r.student?.name,
+        }))}
+      />
+    </PanelWrapper>
   );
 }

@@ -4,7 +4,7 @@ import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
 import { Heading, SubHeading } from "@/components/heading";
-import { PageWrapper } from "@/components/page-wrapper";
+import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
 import { type InstanceParams } from "@/lib/validations/params";
@@ -38,10 +38,8 @@ export default async function Page({ params }: { params: PageParams }) {
   const { student, selfDefinedProjectId, allocation } =
     await api.user.student.getById({ params, studentId });
 
-  console.log("Student Page", { selfDefinedProjectId, allocation });
-
   return (
-    <PageWrapper>
+    <PanelWrapper>
       <Heading>{student.name}</Heading>
       <SubHeading>Details</SubHeading>
       <section className="flex gap-10">
@@ -55,6 +53,6 @@ export default async function Page({ params }: { params: PageParams }) {
       ) : (
         <StudentProjectSection params={params} />
       )}
-    </PageWrapper>
+    </PanelWrapper>
   );
 }

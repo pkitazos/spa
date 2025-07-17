@@ -5,9 +5,9 @@ import { PAGES } from "@/config/pages";
  */
 export const SUPERVISOR_TABS = [
   PAGES.allProjects,
-  PAGES.myProjects,
+  PAGES.myProposedProjects,
   PAGES.newProject,
-  PAGES.myAllocations,
+  PAGES.mySupervisions,
 ];
 
 /**

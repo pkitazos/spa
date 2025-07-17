@@ -14,7 +14,7 @@ import {
   HomeIcon,
   LayersIcon,
   ListChecksIcon,
-  MousePointerSquareIcon,
+  MousePointerSquareDashedIcon,
   School2Icon,
   ServerIcon,
   SettingsIcon,
@@ -73,7 +73,7 @@ export function Icon({ type }: { type: string }) {
       return <ListChecksIcon className="mr-2 h-4 w-4" />;
 
     case "mouse-pointer":
-      return <MousePointerSquareIcon className="mr-2 h-4 w-4" />;
+      return <MousePointerSquareDashedIcon className="mr-2 h-4 w-4" />;
 
     case "server":
       return <ServerIcon className="mr-2 h-4 w-4" />;
