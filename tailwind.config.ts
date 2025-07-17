@@ -1,4 +1,3 @@
-import tailwindScrollbar from "tailwind-scrollbar";
 import tailwindAnimate from "tailwindcss-animate";
 import plugin from "tailwindcss/plugin";
 
@@ -97,7 +96,8 @@ const config: Config = {
     },
   },
   plugins: [
-    tailwindScrollbar({ nocompatible: true }),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-require-imports
+    require("tailwind-scrollbar")({ nocompatible: true }),
     tailwindAnimate,
     plugin(function (opts) {
       opts.addUtilities({

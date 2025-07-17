@@ -8,7 +8,9 @@ import {
 import { Transformers as T } from "@/db/transformers";
 import { type DB } from "@/db/types";
 
+import { expand } from "@/lib/utils/general/instance-params";
 import { slugify } from "@/lib/utils/general/slugify";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import { DataObject } from "../data-object";
 
@@ -41,6 +43,12 @@ export class Institution extends DataObject {
   public async getInstances(): Promise<InstanceDTO[]> {
     const instances = await this.db.allocationInstance.findMany();
     return instances.map(T.toAllocationInstanceDTO);
+  }
+
+  public async instanceExists(params: InstanceParams): Promise<boolean> {
+    return !!(await this.db.allocationInstance.findFirst({
+      where: expand(params),
+    }));
   }
 
   public async createUser({ id, name, email }: UserDTO): Promise<void> {

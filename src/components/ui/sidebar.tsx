@@ -5,6 +5,7 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { PanelLeft } from "lucide-react";
+import { SidebarIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -734,7 +735,23 @@ const SidebarMenuSubButton = React.forwardRef<
 });
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton";
 
+function ToggleSidebarButton() {
+  const { toggleSidebar } = useSidebar();
+
+  return (
+    <Button
+      className="h-8 w-8"
+      variant="ghost"
+      size="icon"
+      onClick={toggleSidebar}
+    >
+      <SidebarIcon />
+    </Button>
+  );
+}
+
 export {
+  ToggleSidebarButton,
   Sidebar,
   SidebarContent,
   SidebarFooter,
