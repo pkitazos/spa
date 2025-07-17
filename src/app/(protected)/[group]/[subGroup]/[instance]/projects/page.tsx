@@ -4,7 +4,7 @@ import { PAGES } from "@/config/pages";
 import { type PreferenceType, Role } from "@/db/types";
 
 import { Heading } from "@/components/heading";
-import { PageWrapper } from "@/components/page-wrapper";
+import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { auth } from "@/lib/auth";
 import { api } from "@/lib/trpc/server";
@@ -39,7 +39,7 @@ export default async function Projects({ params }: { params: InstanceParams }) {
   });
 
   return (
-    <PageWrapper>
+    <PanelWrapper>
       <Heading>{PAGES.allProjects.title}</Heading>
       <AllProjectsDataTable
         user={user}
@@ -48,6 +48,6 @@ export default async function Projects({ params }: { params: InstanceParams }) {
         projectPreferences={projectPreferences}
         hasSelfDefinedProject={hasSelfDefinedProject}
       />
-    </PageWrapper>
+    </PanelWrapper>
   );
 }

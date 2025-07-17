@@ -6,7 +6,7 @@ import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
 import { Heading, SubHeading } from "@/components/heading";
-import { PageWrapper } from "@/components/page-wrapper";
+import { PanelWrapper } from "@/components/panel-wrapper";
 import { buttonVariants } from "@/components/ui/button";
 import { UserDetailsCard } from "@/components/user-details-card";
 
@@ -48,7 +48,7 @@ export default async function Page({ params }: { params: PageParams }) {
   });
 
   return (
-    <PageWrapper>
+    <PanelWrapper>
       <Heading
         className={cn(
           "flex items-center justify-between gap-2",
@@ -68,13 +68,13 @@ export default async function Page({ params }: { params: PageParams }) {
             buttonVariants({ variant: "secondary" }),
             "flex items-center justify-center gap-2 text-nowrap",
           )}
-          href={`../${PAGES.allSupervisors.href}/${supervisorId}/new-project`}
+          href={`../${PAGES.allSupervisors.href}/${supervisorId}/${PAGES.newSupervisorProject.href}`}
         >
           <FilePlus2Icon className="h-4 w-4" />
-          <p>New Project</p>
+          <p>{PAGES.newSupervisorProject.title}</p>
         </Link>
       </div>
       <SupervisorProjectsDataTable data={projects} />
-    </PageWrapper>
+    </PanelWrapper>
   );
 }

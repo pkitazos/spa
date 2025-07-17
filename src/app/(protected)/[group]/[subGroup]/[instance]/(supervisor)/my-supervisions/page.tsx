@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
 
   return {
-    title: metadataTitle([PAGES.myAllocations.title, displayName, app.name]),
+    title: metadataTitle([PAGES.mySupervisions.title, displayName, app.name]),
   };
 }
 
@@ -29,36 +29,34 @@ export default async function Page({ params }: { params: InstanceParams }) {
     );
   }
 
-  // pin output type is not standard
+  // pin: output type is not standard
   const allocations = await api.user.supervisor.allocations({ params });
 
   return (
-    <>
-      <Heading>My Allocations</Heading>
-      <PanelWrapper>
-        {allocations.length === 0 ? (
-          <div className="mt-9 flex flex-col gap-4">
-            <SubHeading>Allocations</SubHeading>
-            <p>You have not been allocated any students</p>
-          </div>
-        ) : (
-          <div className="ml-10 mt-16 flex flex-col gap-6">
-            {allocations.map(({ project, student, rank }, i) => (
-              <AllocationCard
-                key={i}
-                title={project.title}
-                student={{
-                  id: student.id,
-                  name: student.name,
-                  email: student.email,
-                  level: student.level,
-                  rank: rank,
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </PanelWrapper>
-    </>
+    <PanelWrapper className="gap-10">
+      <Heading>{PAGES.mySupervisions.title}</Heading>
+      {allocations.length === 0 ? (
+        <div className="mt-9 flex flex-col gap-4">
+          <SubHeading>Allocations</SubHeading>
+          <p>You have not been allocated any students</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-6">
+          {allocations.map(({ project, student, rank }, i) => (
+            <AllocationCard
+              key={i}
+              title={project.title}
+              student={{
+                id: student.id,
+                name: student.name,
+                email: student.email,
+                level: student.level,
+                rank: rank,
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </PanelWrapper>
   );
 }

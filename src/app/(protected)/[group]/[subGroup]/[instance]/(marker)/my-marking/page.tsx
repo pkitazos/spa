@@ -21,11 +21,9 @@ export default async function Page({ params }: { params: InstanceParams }) {
   const data = await api.user.marker.getProjectsToMark({ params });
 
   return (
-    <>
+    <PanelWrapper className="gap-10">
       <Heading>{PAGES.myMarking.title}</Heading>
-      <PanelWrapper className="pt-6">
-        <SubmissionsTable data={data} />
-      </PanelWrapper>
-    </>
+      <SubmissionsTable data={data} />
+    </PanelWrapper>
   );
 }

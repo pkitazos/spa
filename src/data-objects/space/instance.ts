@@ -749,37 +749,36 @@ export class AllocationInstance extends DataObject {
     const { stage, supervisorAllocationAccess } = await this.get();
 
     const allocationsTab = supervisorAllocationAccess
-      ? [PAGES.myAllocations]
+      ? [PAGES.mySupervisions]
       : [];
 
     const tabs = {
       [Stage.SETUP]: [],
-      [Stage.PROJECT_SUBMISSION]: [PAGES.myProjects, PAGES.newProject],
-      [Stage.STUDENT_BIDDING]: [PAGES.myProjects, PAGES.newProject],
-      [Stage.PROJECT_ALLOCATION]: [PAGES.myProjects],
-      [Stage.ALLOCATION_ADJUSTMENT]: [PAGES.myProjects],
+      [Stage.PROJECT_SUBMISSION]: [PAGES.myProposedProjects, PAGES.newProject],
+      [Stage.STUDENT_BIDDING]: [PAGES.myProposedProjects, PAGES.newProject],
+      [Stage.PROJECT_ALLOCATION]: [PAGES.myProposedProjects],
+      [Stage.ALLOCATION_ADJUSTMENT]: [PAGES.myProposedProjects],
       [Stage.ALLOCATION_PUBLICATION]: [
-        PAGES.myProjects,
-        PAGES.myMarking,
+        PAGES.myProposedProjects,
         ...allocationsTab,
       ],
       [Stage.READER_BIDDING]: [
-        PAGES.myProjects,
+        PAGES.myProposedProjects,
         ...allocationsTab,
         PAGES.myMarking,
       ],
       [Stage.READER_ALLOCATION]: [
-        PAGES.myProjects,
+        PAGES.myProposedProjects,
         ...allocationsTab,
         PAGES.myMarking,
       ],
       [Stage.MARK_SUBMISSION]: [
-        PAGES.myProjects,
+        PAGES.myProposedProjects,
         ...allocationsTab,
         PAGES.myMarking,
       ],
       [Stage.GRADE_PUBLICATION]: [
-        PAGES.myProjects,
+        PAGES.myProposedProjects,
         ...allocationsTab,
         PAGES.myMarking,
       ],

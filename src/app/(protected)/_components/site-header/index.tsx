@@ -18,7 +18,7 @@ export async function SiteHeader() {
   const headersList = headers();
 
   const path = headersList.get("referer") ?? "";
-  console.log("test", path);
+
   const inInstance = await api.institution.safeInInstance({ path });
 
   return (

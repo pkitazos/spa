@@ -61,46 +61,44 @@ export default async function Page({ params }: { params: InstanceParams }) {
   });
 
   return (
-    <>
+    <PanelWrapper className="gap-10">
       <Heading>{PAGES.myPreferences.title}</Heading>
-      <PanelWrapper className="mt-10 h-full">
-        <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
-          <SubmissionArea
-            title="Submit your preference list"
-            studentId={user.id}
-            initialProjects={initialProjects}
-            latestSubmissionDateTime={latestSubmissionDateTime}
-            restrictions={restrictions}
-          />
-        </AccessControl>
-        <Tabs defaultValue="current-board-state" className="w-full">
-          <TabsList className="w-full">
-            <TabsTrigger
-              className="w-full data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground"
-              value="current-board-state"
-            >
-              Working Board
-            </TabsTrigger>
-            <TabsTrigger
-              className="w-full data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground"
-              value="last-submission"
-            >
-              Latest Submission
-            </TabsTrigger>
-          </TabsList>
-          <Separator className="my-4" />
-          <TabsContent value="current-board-state">
-            <div className="flex w-full max-w-7xl flex-col">
-              <BoardDetailsProvider projects={initialProjects}>
-                <KanbanBoardSection />
-              </BoardDetailsProvider>
-            </div>
-          </TabsContent>
-          <TabsContent value="last-submission">
-            <LatestSubmissionDataTable studentId={user.id} />
-          </TabsContent>
-        </Tabs>
-      </PanelWrapper>
-    </>
+      <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
+        <SubmissionArea
+          title="Submit your preference list"
+          studentId={user.id}
+          initialProjects={initialProjects}
+          latestSubmissionDateTime={latestSubmissionDateTime}
+          restrictions={restrictions}
+        />
+      </AccessControl>
+      <Tabs defaultValue="current-board-state" className="w-full">
+        <TabsList className="w-full">
+          <TabsTrigger
+            className="w-full data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground"
+            value="current-board-state"
+          >
+            Working Board
+          </TabsTrigger>
+          <TabsTrigger
+            className="w-full data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground"
+            value="last-submission"
+          >
+            Latest Submission
+          </TabsTrigger>
+        </TabsList>
+        <Separator className="my-4" />
+        <TabsContent value="current-board-state">
+          <div className="flex w-full max-w-7xl flex-col">
+            <BoardDetailsProvider projects={initialProjects}>
+              <KanbanBoardSection />
+            </BoardDetailsProvider>
+          </div>
+        </TabsContent>
+        <TabsContent value="last-submission">
+          <LatestSubmissionDataTable studentId={user.id} />
+        </TabsContent>
+      </Tabs>
+    </PanelWrapper>
   );
 }

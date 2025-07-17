@@ -1,7 +1,7 @@
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
-import { SubHeading } from "@/components/heading";
+import { Heading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
@@ -19,8 +19,8 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 
 export default async function Page() {
   return (
-    <PanelWrapper className="mt-10">
-      <SubHeading className="mb-4">{PAGES.uploadReadings.title}</SubHeading>
+    <PanelWrapper className="gap-10">
+      <Heading className="mb-4">{PAGES.uploadReadings.title}</Heading>
       <AddReadersSection />
     </PanelWrapper>
   );

@@ -41,55 +41,53 @@ export default async function Page({ params }: { params: InstanceParams }) {
   });
 
   return (
-    <>
+    <PanelWrapper className="gap-10">
       <Heading>{PAGES.myAllocation.title}</Heading>
-      <PanelWrapper className="px-16">
-        {!allocatedProject ? (
-          <div className="mt-9 flex flex-col gap-4">
-            <SubHeading>Allocation</SubHeading>
-            <p>You have not been allocated a project</p>
-          </div>
-        ) : (
-          <div className="mt-16 flex flex-col gap-8">
-            <Card className="mb-8">
-              <CardContent className="pt-6">
-                <SectionHeading className="flex items-center text-2xl no-underline">
-                  <AwardIcon className="mr-2 h-6 w-6 text-indigo-500" />
-                  <span>
-                    You got your{" "}
-                    <span className="font-semibold text-indigo-600">
-                      {toPositional(allocatedProject.studentRanking)}
-                    </span>{" "}
-                    choice
-                  </span>
-                </SectionHeading>
-              </CardContent>
-            </Card>
-            <SectionHeading>{allocatedProject.title}</SectionHeading>
-            <div className="flex flex-col items-start">
-              <div className="flex items-center gap-2 text-lg">
-                <div className="text-muted-foreground">
-                  <User2Icon className="h-6 w-6" />
-                </div>
-                <p className="text-xl font-medium">
-                  {allocatedProject.supervisor.name}
-                </p>
+      {!allocatedProject ? (
+        <div className="mt-9 flex flex-col gap-4">
+          <SubHeading>Allocation</SubHeading>
+          <p>You have not been allocated a project</p>
+        </div>
+      ) : (
+        <div className="mt-16 flex flex-col gap-8">
+          <Card className="mb-8">
+            <CardContent className="pt-6">
+              <SectionHeading className="flex items-center text-2xl no-underline">
+                <AwardIcon className="mr-2 h-6 w-6 text-indigo-500" />
+                <span>
+                  You got your{" "}
+                  <span className="font-semibold text-indigo-600">
+                    {toPositional(allocatedProject.studentRanking)}
+                  </span>{" "}
+                  choice
+                </span>
+              </SectionHeading>
+            </CardContent>
+          </Card>
+          <SectionHeading>{allocatedProject.title}</SectionHeading>
+          <div className="flex flex-col items-start">
+            <div className="flex items-center gap-2 text-lg">
+              <div className="text-muted-foreground">
+                <User2Icon className="h-6 w-6" />
               </div>
-              <div className="flex items-center gap-2 text-lg">
-                <div className="text-muted-foreground">
-                  <MailIcon className="h-6 w-6" />
-                </div>
-                <CopyEmailLink
-                  className="text-base font-medium"
-                  email={allocatedProject.supervisor.email}
-                />
-              </div>
-              <Separator className="my-6" />
-              <MarkdownRenderer source={allocatedProject.description} />
+              <p className="text-xl font-medium">
+                {allocatedProject.supervisor.name}
+              </p>
             </div>
+            <div className="flex items-center gap-2 text-lg">
+              <div className="text-muted-foreground">
+                <MailIcon className="h-6 w-6" />
+              </div>
+              <CopyEmailLink
+                className="text-base font-medium"
+                email={allocatedProject.supervisor.email}
+              />
+            </div>
+            <Separator className="my-6" />
+            <MarkdownRenderer source={allocatedProject.description} />
           </div>
-        )}
-      </PanelWrapper>
-    </>
+        </div>
+      )}
+    </PanelWrapper>
   );
 }

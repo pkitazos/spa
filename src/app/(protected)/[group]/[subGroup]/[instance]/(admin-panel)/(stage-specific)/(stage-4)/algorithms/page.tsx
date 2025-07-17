@@ -3,7 +3,7 @@ import { ListTodoIcon, ListVideoIcon, Trash2Icon } from "lucide-react";
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
-import { SectionHeading, SubHeading } from "@/components/heading";
+import { SectionHeading, Heading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
@@ -32,8 +32,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
   });
 
   return (
-    <PanelWrapper className="mt-10 flex flex-col items-start gap-16 px-12">
-      <SubHeading className="mb-4">{PAGES.algorithms.title}</SubHeading>
+    <PanelWrapper className="gap-16">
+      <Heading className="mb-4">{PAGES.algorithms.title}</Heading>
       <AlgorithmProvider selectedAlgName={algorithm?.id}>
         <section className="flex w-full flex-col">
           <SectionHeading className="mb-2 flex items-center">

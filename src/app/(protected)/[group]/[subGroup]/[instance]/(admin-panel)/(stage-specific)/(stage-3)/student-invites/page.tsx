@@ -4,7 +4,7 @@ import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
 import { CopyEmailsButton } from "@/components/copy-emails-button";
-import { SectionHeading, SubHeading } from "@/components/heading";
+import { Heading, SectionHeading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,8 +34,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
   const students = await api.institution.instance.invitedStudents({ params });
 
   return (
-    <PanelWrapper className="mt-10 flex flex-col items-start gap-16 px-12">
-      <SubHeading className="mb-4">{PAGES.studentInvites.title}</SubHeading>
+    <PanelWrapper className="gap-16">
+      <Heading className="mb-4">{PAGES.studentInvites.title}</Heading>
       <section className="flex flex-col gap-5">
         <SectionHeading className="flex items-center">
           <ZapIcon className="mr-2 h-6 w-6 text-indigo-500" />

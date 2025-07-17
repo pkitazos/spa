@@ -1,7 +1,7 @@
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
-import { SubHeading } from "@/components/heading";
+import { Heading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
@@ -65,8 +65,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
   }));
 
   return (
-    <PanelWrapper className="mt-10 flex h-full">
-      <SubHeading className="mb-4">{PAGES.manualAllocations.title}</SubHeading>
+    <PanelWrapper className="gap-10">
+      <Heading className="mb-4">{PAGES.manualAllocations.title}</Heading>
       <ManualAllocationDataTableSection
         initialStudents={students}
         initialProjects={projects}

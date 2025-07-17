@@ -66,7 +66,7 @@ export function CreateProjectForm({
 
   const handleCancel = () => {
     const redirectPath =
-      userRole === Role.ADMIN ? "." : `./${PAGES.myProjects.href}`;
+      userRole === Role.ADMIN ? "." : `./${PAGES.myProposedProjects.href}`;
     router.push(redirectPath);
   };
 

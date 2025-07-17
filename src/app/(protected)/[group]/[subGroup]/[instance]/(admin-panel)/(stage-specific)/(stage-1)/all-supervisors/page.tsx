@@ -1,8 +1,8 @@
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
-import { SubHeading } from "@/components/heading";
-import { PageWrapper } from "@/components/page-wrapper";
+import { Heading } from "@/components/heading";
+import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
 import { type InstanceParams } from "@/lib/validations/params";
@@ -22,9 +22,9 @@ export default async function Page({ params }: { params: InstanceParams }) {
   const data = await api.institution.instance.supervisors({ params });
 
   return (
-    <PageWrapper>
-      <SubHeading>{PAGES.allSupervisors.title}</SubHeading>
+    <PanelWrapper>
+      <Heading>{PAGES.allSupervisors.title}</Heading>
       <SupervisorsDataTable roles={roles} data={data} />
-    </PageWrapper>
+    </PanelWrapper>
   );
 }

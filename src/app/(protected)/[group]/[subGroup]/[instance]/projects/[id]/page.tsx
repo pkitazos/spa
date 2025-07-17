@@ -12,7 +12,7 @@ import { type PreferenceType, Role, Stage } from "@/db/types";
 import { AccessControl } from "@/components/access-control";
 import { Heading, SubHeading } from "@/components/heading";
 import { MarkdownRenderer } from "@/components/markdown-editor";
-import { PageWrapper } from "@/components/page-wrapper";
+import { PanelWrapper } from "@/components/panel-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -94,7 +94,7 @@ export default async function Project({ params }: { params: PageParams }) {
   });
 
   return (
-    <PageWrapper>
+    <PanelWrapper>
       <Heading
         className={cn(
           "flex items-center justify-between gap-2 text-4xl",
@@ -206,7 +206,7 @@ export default async function Project({ params }: { params: PageParams }) {
           />
         </section>
       </AccessControl>
-    </PageWrapper>
+    </PanelWrapper>
   );
 }
 

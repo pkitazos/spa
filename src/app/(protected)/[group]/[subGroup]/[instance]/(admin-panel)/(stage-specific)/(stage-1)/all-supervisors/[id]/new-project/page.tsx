@@ -4,7 +4,7 @@ import { PAGES } from "@/config/pages";
 import { Role, Stage } from "@/db/types";
 
 import { Heading } from "@/components/heading";
-import { PageWrapper } from "@/components/page-wrapper";
+import { PanelWrapper } from "@/components/panel-wrapper";
 import { CreateProjectForm } from "@/components/project-form/create-project";
 import { Unauthorised } from "@/components/unauthorised";
 
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: { params: PageParams }) {
 
   return {
     title: metadataTitle([
-      PAGES.newProject.title,
+      PAGES.newSupervisorProject.title,
       name,
       PAGES.allSupervisors.title,
       displayName,
@@ -42,9 +42,9 @@ export default async function Page({ params }: { params: PageParams }) {
   const formInitData = await api.project.getFormInitialisationData({ params });
 
   return (
-    <PageWrapper>
+    <PanelWrapper>
       <Heading className="flex items-baseline gap-6">
-        <p>{PAGES.newProject.title}</p>
+        <p>{PAGES.newSupervisorProject.title}</p>
         <p className="text-3xl text-muted-foreground">for {supervisor.name}</p>
       </Heading>
       <CreateProjectForm
@@ -53,6 +53,6 @@ export default async function Page({ params }: { params: PageParams }) {
         currentUserId={user.id}
         onBehalfOf={supervisor.id}
       />
-    </PageWrapper>
+    </PanelWrapper>
   );
 }

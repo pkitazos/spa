@@ -1,7 +1,7 @@
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
-import { SubHeading } from "@/components/heading";
+import { Heading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -29,8 +29,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
     await api.institution.instance.projectAllocations({ params });
 
   return (
-    <PanelWrapper className="mt-10 flex w-full flex-col items-start gap-3 px-12">
-      <SubHeading className="mb-6">{PAGES.allocationOverview.title}</SubHeading>
+    <PanelWrapper className="gap-10">
+      <Heading className="mb-6">{PAGES.allocationOverview.title}</Heading>
       <Tabs defaultValue="student" className="w-full">
         <TabsList className="w-full">
           <TabsTrigger

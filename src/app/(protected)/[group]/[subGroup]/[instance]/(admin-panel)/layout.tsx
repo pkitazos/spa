@@ -20,5 +20,5 @@ export default async function Layout({
     );
   }
 
-  return <>{children};</>;
+  return <>{children}</>;
 }

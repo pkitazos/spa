@@ -18,6 +18,7 @@ import {
   DialogTrigger,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import {
   Sidebar,
   SidebarFooter,
@@ -68,6 +69,7 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarTabs tabGroups={tabGroups} />
+      <Separator className="w-5/6 mx-auto" />
       <SidebarFooter className="mt-auto">
         <SidebarMenu>
           <Dialog>
