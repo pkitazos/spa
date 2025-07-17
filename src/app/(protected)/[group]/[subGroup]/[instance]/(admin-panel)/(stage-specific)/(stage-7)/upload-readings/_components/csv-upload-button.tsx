@@ -9,7 +9,7 @@ import { z } from "zod";
 import { CSVParsingErrorCard } from "@/components/toast-card/csv-parsing-error";
 import { Input } from "@/components/ui/input";
 
-import { parseForDuplicates } from "@/lib/utils/csv/parse-for-duplicates-readers";
+import { parseForDuplicateReaders } from "@/lib/utils/csv/parse-for-duplicates-readers";
 import { allocateReadersCsvRowSchema } from "@/lib/validations/allocate-readers/csv";
 import { type NewReaderAllocation } from "@/lib/validations/allocate-readers/new-reader-allocation";
 
@@ -53,12 +53,10 @@ export function CSVUploadButton({
             return;
           }
 
-          const { uniqueRows, duplicateRowGuids } = parseForDuplicates(
-            // @ts-expect-error known issue TODO
-            result.data,
-          );
+          const { uniqueRows, duplicateStudentGUIDs } =
+            parseForDuplicateReaders(result.data);
 
-          if (duplicateRowGuids.size === 0) {
+          if (duplicateStudentGUIDs.size === 0) {
             toast.success("CSV parsed successfully!");
           } else if (uniqueRows.length === 0) {
             toast.error("All rows seem to contain duplicates");

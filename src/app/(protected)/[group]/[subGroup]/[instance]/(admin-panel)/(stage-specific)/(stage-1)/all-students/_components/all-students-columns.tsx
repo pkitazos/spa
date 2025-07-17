@@ -121,9 +121,9 @@ export function useAllStudentsColumns({
       ),
       filterFn: (row, columnId, value) => {
         const selectedFilters = value as ("4" | "5")[];
-        const rowValue = row.getValue(columnId);
+        const rowValue = row.getValue<string>(columnId);
         console.log({ selectedFilters });
-        const studentLevel = rowValue.toString() as "4" | "5";
+        const studentLevel = rowValue.toString();
         return selectedFilters.includes(studentLevel);
       },
     },

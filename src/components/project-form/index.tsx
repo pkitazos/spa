@@ -157,7 +157,7 @@ export function ProjectForm({
                           !field.value && "text-muted-foreground",
                         )}
                       >
-                        {field.value || "Select supervisor..."}
+                        {field.value ?? "Select supervisor..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </FormControl>
@@ -338,7 +338,7 @@ export function ProjectForm({
                 <FormControl className="w-full">
                   <MultiSelect
                     options={tags}
-                    selected={field.value || []}
+                    selected={field.value ?? []}
                     onSelectionChange={field.onChange}
                     placeholder="Select tags..."
                     className="sm:min-w-[450px]"

@@ -13,6 +13,7 @@ export function useProxyState<TState>(
 
   useEffect(() => {
     setShadowState(state);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const realSetter = useCallback(

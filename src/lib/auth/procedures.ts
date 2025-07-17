@@ -49,7 +49,7 @@ export async function retrieveUser(user: ShibUser) {
       data: { id: user.guid, name: user.displayName, email: user.email },
     });
     return newUser;
-  } catch (_) {
+  } catch (_err) {
     throw new Error("No valid invite found for this user");
   }
 }

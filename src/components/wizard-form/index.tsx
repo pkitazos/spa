@@ -39,7 +39,7 @@ export function FormWizard<
   async function handleNext() {
     if (currentStep === steps.length - 1) {
       await form.trigger();
-      form.handleSubmit(onSubmit)();
+      await form.handleSubmit(onSubmit)();
       return;
     }
 

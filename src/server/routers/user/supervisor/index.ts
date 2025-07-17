@@ -98,9 +98,7 @@ export const supervisorRouter = createTRPCRouter({
         submissionTarget: z.number(),
       }),
     )
-    .query(async ({ ctx: { instance, user } }) => {
-      // TODO: this call returns allocated students and it does not have to
-      // so the name is lying here
+    .query(async ({ ctx: { user } }) => {
       const allProjects = await user.getProjects();
       const { projectTarget: target } = await user.getCapacityDetails();
 

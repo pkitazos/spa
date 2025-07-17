@@ -302,34 +302,22 @@ export function MarkingOverviewTable({
 }
 
 function getOverdueMarkerEmails(data: ProjectMarkingOverview[]) {
-  // TODO: @JakeTrevor are these meant to become real audit logs?
-  const log: any = [];
   const emailSet = new Set(
-    data.flatMap(({ units, project }) =>
+    data.flatMap(({ units }) =>
       units.flatMap(({ markers }) =>
         markers
           .filter((m) => m.status.status === "PENDING")
-          .map((m) => {
-            log.push({
-              projectTitle: project.title,
-              markerName: m.marker.name,
-              type: m.markerType,
-            });
-            return m.marker.email;
-          }),
+          .map((m) => m.marker.email),
       ),
     ),
   );
-
-  console.log("overdue submissions:", log);
 
   return Array.from(emailSet).map((email) => ({ email }));
 }
 
 function getRequiresNegotiationEmails(data: ProjectMarkingOverview[]) {
-  const log: any[] = [];
   const emailSet = new Set(
-    data.flatMap(({ units, project }) =>
+    data.flatMap(({ units }) =>
       units
         .filter(
           (unit) =>
@@ -337,17 +325,9 @@ function getRequiresNegotiationEmails(data: ProjectMarkingOverview[]) {
             unit.status.status === "PENDING" &&
             unit.markers.length === 2,
         )
-        .flatMap((unit) => {
-          log.push({
-            title: project.title,
-            markers: unit.markers.map((m) => m.marker.name),
-          });
-          return unit.markers.map((m) => m.marker.email);
-        }),
+        .flatMap((unit) => unit.markers.map((m) => m.marker.email)),
     ),
   );
-
-  console.log("pending negotiation:", log);
 
   return Array.from(emailSet).map((email) => ({ email }));
 }

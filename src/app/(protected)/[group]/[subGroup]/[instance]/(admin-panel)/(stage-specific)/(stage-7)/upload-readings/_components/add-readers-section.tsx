@@ -12,9 +12,6 @@ import { type NewReaderAllocation } from "@/lib/validations/allocate-readers/new
 
 import { CSVUploadButton } from "./csv-upload-button";
 
-//import { FormSection } from "./form-section";
-//import { useNewSupervisorColumns } from "./new-supervisor-columns";
-
 export function AddReadersSection() {
   const router = useRouter();
   const params = useInstanceParams();
