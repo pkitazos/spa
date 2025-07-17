@@ -47,4 +47,13 @@ export const institutionRouter = createTRPCRouter({
       audit("deleted group", group.params);
       await group.delete();
     }),
+
+  safeInInstance: procedure.user
+    .input(z.object({ path: z.string() }))
+    .output(z.boolean())
+    .query(async ({ ctx: { institution }, input: { path } }) => {
+      const [group, subGroup, instance] = path.split("/");
+
+      return await institution.instanceExists({ group, subGroup, instance });
+    }),
 });
