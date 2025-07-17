@@ -79,23 +79,23 @@ export function buildInstanceFormSchema(takenNames: Set<string>) {
     })
     .extend({
       minStudentPreferences: z.coerce
-        .number("Please enter an integer")
+        .number<number>("Please enter an integer")
         .int("Number must be an integer")
         .positive(),
       maxStudentPreferences: z.coerce
-        .number("Please enter an integer")
+        .number<number>("Please enter an integer")
         .int("Number must be an integer")
         .positive(),
       maxStudentPreferencesPerSupervisor: z.coerce
-        .number("Please enter an integer")
+        .number<number>("Please enter an integer")
         .int("Number must be an integer")
         .positive(),
       minReaderPreferences: z.coerce
-        .number("Please enter an integer")
+        .number<number>("Please enter an integer")
         .int("Number must be an integer")
         .positive(),
       maxReaderPreferences: z.coerce
-        .number("Please enter an integer")
+        .number<number>("Please enter an integer")
         .int("Number must be an integer")
         .positive(),
     })

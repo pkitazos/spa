@@ -52,7 +52,6 @@ export function InstanceDetailsCard({
 
   const form = useForm<SupervisorInstanceCapacities>({
     resolver: zodResolver(supervisorCapacitiesSchema),
-    defaultValues: capacities,
   });
 
   function changeEditMode(newMode: boolean) {

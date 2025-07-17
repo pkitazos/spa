@@ -17,14 +17,14 @@ export type SupervisorProjectSubmissionDetails = z.infer<
 export const supervisorCapacitiesSchema = z
   .object({
     projectTarget: z.coerce
-      .number({
+      .number<number>({
         error: (issue) =>
           issue.input === undefined ? "Required" : "Invalid integer",
       })
       .int("Please enter an integer for the project target")
       .nonnegative("Project target must be a non-negative integer"),
     projectUpperQuota: z.coerce
-      .number({
+      .number<number>({
         error: (issue) =>
           issue.input === undefined ? "Required" : "Invalid integer",
       })
