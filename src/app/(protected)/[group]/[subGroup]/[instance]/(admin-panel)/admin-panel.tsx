@@ -1,3 +1,5 @@
+import { Heading } from "@/components/heading";
+
 import { api } from "@/lib/trpc/server";
 import { type InstanceParams } from "@/lib/validations/params";
 
@@ -12,6 +14,7 @@ export default async function AdminPanel({
   // TODO use parallel routes for home page
   return (
     <Layout params={params}>
+      <Heading>{instance.displayName}</Heading>
       <div className="grid h-full w-full place-items-center">
         <p>
           This instance is in stage:{" "}

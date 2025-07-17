@@ -2,24 +2,14 @@
 
 import * as React from "react";
 
-import {
-  BookMarkedIcon,
-  BookOpen,
-  Bot,
-  Frame,
-  HomeIcon,
-  LifeBuoyIcon,
-  PieChart,
-  SendIcon,
-  Settings2,
-  SquareTerminal,
-} from "lucide-react";
+import { BookMarkedIcon, HomeIcon, LifeBuoyIcon } from "lucide-react";
 import Link from "next/link";
 
 import { app } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
 import { CopyButton } from "@/components/copy-button";
+import { usePathInInstance } from "@/components/params-context";
 import {
   Dialog,
   DialogHeader,
@@ -30,7 +20,6 @@ import {
 } from "@/components/ui/dialog";
 import {
   Sidebar,
-  SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
@@ -38,72 +27,22 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-import { NavMain } from "./nav/main";
+import SidebarTabs from "./sidebar-tabs";
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
-    {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
-      isActive: true,
-      items: [
-        { title: "History", url: "#" },
-        { title: "Starred", url: "#" },
-        { title: "Settings", url: "#" },
-      ],
-    },
-    {
-      title: "Models",
-      url: "#",
-      icon: Bot,
-      items: [
-        { title: "Genesis", url: "#" },
-        { title: "Explorer", url: "#" },
-        { title: "Quantum", url: "#" },
-      ],
-    },
-    {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
-      items: [
-        { title: "Introduction", url: "#" },
-        { title: "Get Started", url: "#" },
-        { title: "Tutorials", url: "#" },
-        { title: "Changelog", url: "#" },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-      items: [
-        { title: "General", url: "#" },
-        { title: "Team", url: "#" },
-        { title: "Billing", url: "#" },
-        { title: "Limits", url: "#" },
-      ],
-    },
-  ],
-  navSecondary: [
-    { title: "Support", url: "#", icon: LifeBuoyIcon },
-    { title: "Feedback", url: "#", icon: SendIcon },
-    { title: "Docs", url: "/docs", icon: BookMarkedIcon },
-  ],
-  projects: [
-    { name: "Design Engineering", url: "#", icon: Frame },
-    { name: "Sales & Marketing", url: "#", icon: PieChart },
-    { name: "Travel", url: "#", icon: Map },
-  ],
-};
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  instanceName: string;
+  tabGroups: {
+    title: string;
+    tabs: { title: string; href: string; icon?: string | undefined }[];
+  }[];
+}
 
-export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({
+  instanceName,
+  tabGroups,
+  ...props
+}: AppSidebarProps) {
+  const { basePath } = usePathInInstance();
   return (
     <Sidebar
       className="top-[calc(var(--header-height)-1px)] !h-[calc(100svh-var(--header-height))] fixed"
@@ -113,7 +52,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="#">
+              <Link href={basePath}>
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <HomeIcon className="size-4" />
                 </div>
@@ -121,16 +60,14 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                   <span className="truncate font-semibold">
                     {PAGES.instanceHome.title}
                   </span>
-                  <span className="truncate text-xs">2025-2026</span>
+                  <span className="truncate text-xs">{instanceName}</span>
                 </div>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
-        <NavMain items={data.navMain} />
-      </SidebarContent>
+      <SidebarTabs tabGroups={tabGroups} />
       <SidebarFooter className="mt-auto">
         <SidebarMenu>
           <Dialog>

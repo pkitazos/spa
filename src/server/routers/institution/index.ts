@@ -52,7 +52,7 @@ export const institutionRouter = createTRPCRouter({
     .input(z.object({ path: z.string() }))
     .output(z.boolean())
     .query(async ({ ctx: { institution }, input: { path } }) => {
-      const [group, subGroup, instance] = path.split("/");
+      const [group, subGroup, instance] = path.split("/").toSpliced(0, 3);
 
       return await institution.instanceExists({ group, subGroup, instance });
     }),
