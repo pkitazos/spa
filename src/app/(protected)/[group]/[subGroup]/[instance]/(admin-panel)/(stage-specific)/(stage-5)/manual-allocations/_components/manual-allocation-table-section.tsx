@@ -51,6 +51,9 @@ export function ManualAllocationDataTableSection({
   const { mutateAsync: api_saveAllocations } =
     api.institution.instance.saveManualStudentAllocations.useMutation({});
 
+  const { mutateAsync: api_removeAllocations } =
+    api.institution.instance.matching.removeAllocation.useMutation({});
+
   // compute supervisors pending allocations
   const supervisors = useMemo(() => {
     const pendingCounts = students.reduce<Record<string, number>>(
@@ -235,10 +238,36 @@ export function ManualAllocationDataTableSection({
     [projects, calculateWarnings, setStudents],
   );
 
-  const handleRemoveAllocation = useCallback((studentId: string) => {
-    // todo: implement removal logic (+ UI)
-    toast.info(`Remove allocation for student ${studentId} (not implemented)`);
-  }, []);
+  const handleRemoveAllocation = useCallback(
+    async (studentId: string) => {
+      toast.promise(
+        api_removeAllocations({ params, studentId }).then(async () => {
+          await refetchData();
+          setStudents((prev) =>
+            prev.map((s) => {
+              if (s.id !== studentId) return s;
+
+              return {
+                ...s,
+                originalProjectId: undefined,
+                originalSupervisorId: undefined,
+                selectedProjectId: undefined,
+                selectedSupervisorId: undefined,
+                isDirty: false,
+                warnings: [],
+              };
+            }),
+          );
+        }),
+        {
+          loading: "Removing allocation...",
+          success: "Successfully removed allocation",
+          error: "Failed to remove allocation",
+        },
+      );
+    },
+    [api_removeAllocations, params, refetchData],
+  );
 
   const handleSave = useCallback(
     async (studentId: string) => {

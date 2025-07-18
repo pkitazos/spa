@@ -551,7 +551,7 @@ export class AllocationInstance extends DataObject {
 
   public async getStudentSuitableProjects(
     userId: string,
-  ): Promise<{ id: string; title: string; flag: FlagDTO[] }[]> {
+  ): Promise<ProjectDTO[]> {
     const { studentFlags } = await this.db.studentDetails.findFirstOrThrow({
       where: { ...expand(this.params), userId },
       include: { studentFlags: true },
@@ -565,18 +565,15 @@ export class AllocationInstance extends DataObject {
         },
       },
       include: {
-        flagsOnProject: { select: { flag: true } },
+        flagsOnProject: { include: { flag: true } },
+        tagsOnProject: { include: { tag: true } },
         studentAllocations: true,
       },
     });
 
     return suitableProjects
       .filter((p) => p.studentAllocations.length === 0)
-      .map((p) => ({
-        id: p.id,
-        title: p.title,
-        flag: p.flagsOnProject.map((f) => T.toFlagDTO(f.flag)),
-      }));
+      .map((x) => T.toProjectDTO(x));
   }
 
   public async getSubmittedPreferences() {

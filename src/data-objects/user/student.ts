@@ -1,5 +1,3 @@
-import { PreferenceType } from "@prisma/client";
-
 import {
   type StudentDTO,
   type ProjectDTO,
@@ -10,6 +8,7 @@ import {
 import { updateManyPreferenceTransaction } from "@/db/transactions/update-many-preferences";
 import { updatePreferenceTransaction } from "@/db/transactions/update-preference";
 import { Transformers as T } from "@/db/transformers";
+import { AllocationMethod, PreferenceType } from "@/db/types";
 import { type DB } from "@/db/types";
 
 import { expand } from "@/lib/utils/general/instance-params";
@@ -310,6 +309,29 @@ export class Student extends User {
     });
 
     return newSubmissionDateTime;
+  }
+
+  public async allocateRandomProject(projectId: string): Promise<void> {
+    await this.db.studentProjectAllocation.upsert({
+      where: {
+        studentProjectAllocationId: {
+          ...expand(this.instance.params),
+          userId: this.id,
+        },
+      },
+      create: {
+        ...expand(this.instance.params),
+        projectId,
+        userId: this.id,
+        studentRanking: 1,
+        allocationMethod: AllocationMethod.RANDOM,
+      },
+      update: {
+        projectId,
+        studentRanking: 1,
+        allocationMethod: AllocationMethod.RANDOM,
+      },
+    });
   }
 
   public async getReader(): Promise<ReaderDTO> {

@@ -23,10 +23,10 @@ export function RandomAllocationsDataTable({
   const router = useRouter();
 
   const { mutateAsync: getRandomAllocAsync } =
-    api.institution.instance.matching.getRandomAllocation.useMutation();
+    api.institution.instance.matching.allocateRandomProjectToStudent.useMutation();
 
   const { mutateAsync: getRandomAllocForAllAsync } =
-    api.institution.instance.matching.getRandomAllocationForAll.useMutation();
+    api.institution.instance.matching.allocateRandomProjectsToAll.useMutation();
 
   const { mutateAsync: removeAllocAsync } =
     api.institution.instance.matching.removeAllocation.useMutation();
