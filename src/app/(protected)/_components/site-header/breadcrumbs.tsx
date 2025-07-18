@@ -27,7 +27,7 @@ export function Breadcrumbs() {
 
   if (status !== "success") {
     return (
-      <Breadcrumb>
+      <Breadcrumb className="w-full flex-nowrap">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
@@ -56,7 +56,7 @@ export function Breadcrumbs() {
   }
 
   return (
-    <Breadcrumb>
+    <Breadcrumb className="w-full flex-nowrap">
       <BreadcrumbList>
         <BreadcrumbItem>
           <BreadcrumbLink asChild>

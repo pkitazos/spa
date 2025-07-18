@@ -289,6 +289,7 @@ export const PAGES = {
   allProjects: {
     title: "All Projects",
     href: "projects",
+    icon: "folder",
     level: 4,
     allowedRoles: [Role.ADMIN, Role.READER, Role.STUDENT, Role.SUPERVISOR],
     hasSubRoute: true,
