@@ -6,7 +6,7 @@ import { type ProjectFormInitialisationDTO } from "@/dto/project";
 import { Role, Stage } from "@/db/types";
 
 import { Heading } from "@/components/heading";
-import { PageWrapper } from "@/components/page-wrapper";
+import { PanelWrapper } from "@/components/panel-wrapper";
 import { EditProjectForm } from "@/components/project-form/edit-project";
 import { Unauthorised } from "@/components/unauthorised";
 
@@ -68,7 +68,7 @@ export default async function Page({ params }: { params: PageParams }) {
   };
 
   return (
-    <PageWrapper>
+    <PanelWrapper>
       <Heading>{PAGES.editProject.title}</Heading>
       <EditProjectForm
         formInitialisationData={formInitialisationData}
@@ -76,6 +76,6 @@ export default async function Page({ params }: { params: PageParams }) {
         currentUserId={user.id}
         projectId={projectId}
       />
-    </PageWrapper>
+    </PanelWrapper>
   );
 }

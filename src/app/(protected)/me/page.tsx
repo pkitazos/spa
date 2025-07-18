@@ -2,7 +2,8 @@ import { type Metadata } from "next";
 
 import { app, metadataTitle } from "@/config/meta";
 
-import { PageWrapper } from "@/components/page-wrapper";
+import { Heading } from "@/components/heading";
+import { PanelWrapper } from "@/components/panel-wrapper";
 import { UserDetailsCard } from "@/components/user-details-card";
 
 import { auth } from "@/lib/auth";
@@ -16,8 +17,9 @@ export const metadata: Metadata = {
 export default async function Page() {
   const user = await auth();
   return (
-    <PageWrapper className="grid place-items-center">
-      {user ? <UserDetailsCard user={user} full /> : <p>not authenticated</p>}
-    </PageWrapper>
+    <PanelWrapper className="gap-10">
+      <Heading>me</Heading>
+      <UserDetailsCard user={user} full />
+    </PanelWrapper>
   );
 }
