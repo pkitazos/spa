@@ -25,20 +25,17 @@ fi
 
 echo "Starting database restore process..."
 
-# 1. Copy the SQL dump into the Docker container
 echo "   - Copying '$DUMP_FILE' to the container..."
 docker cp "$DUMP_FILE" "$DB_CONTAINER:/tmp/$DUMP_FILE"
 
-# 2. Drop the existing database
 echo "   - Dropping the existing database '$DB_NAME'..."
-docker exec -it "$DB_CONTAINER" psql -U "$DB_USER" -d postgres -c "DROP DATABASE IF EXISTS \"$DB_NAME\";"
+docker exec "$DB_CONTAINER" psql -U "$DB_USER" -d postgres -c "DROP DATABASE IF EXISTS \"$DB_NAME\";"
 
-# 3. Create a new, empty database
 echo "   - Creating a new empty database '$DB_NAME'..."
-docker exec -it "$DB_CONTAINER" psql -U "$DB_USER" -d postgres -c "CREATE DATABASE \"$DB_NAME\" WITH OWNER = $DB_USER;"
+docker exec "$DB_CONTAINER" psql -U "$DB_USER" -d postgres -c "CREATE DATABASE \"$DB_NAME\" WITH OWNER = $DB_USER TEMPLATE = template0;"
 
-# 4. Import the SQL dump into the new database
 echo "   - Importing data from '$DUMP_FILE'..."
-docker exec -it "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -f "/tmp/$DUMP_FILE"
+docker exec "$DB_CONTAINER" psql -U "$DB_USER" -d "$DB_NAME" -f "/tmp/$DUMP_FILE"
+
 
 echo "Success! Database '$DB_NAME' has been restored from '$DUMP_FILE'."
