@@ -3,6 +3,7 @@ import { PAGES } from "@/config/pages";
 import { spacesLabels } from "@/config/spaces";
 
 import { Heading } from "@/components/heading";
+import { PanelWrapper } from "@/components/panel-wrapper";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
@@ -30,11 +31,11 @@ export default async function Page({ params }: { params: GroupParams }) {
   const takenNames = await api.institution.group.takenSubGroupNames({ params });
 
   return (
-    <div className="mb-40 mt-6 flex h-max w-full max-w-5xl flex-col gap-10 px-6 pb-20">
+    <PanelWrapper className="gap-10">
       <Heading className="text-4xl">
         Create new {spacesLabels.subGroup.full}
       </Heading>
       <FormSection takenNames={takenNames} params={params} />
-    </div>
+    </PanelWrapper>
   );
 }

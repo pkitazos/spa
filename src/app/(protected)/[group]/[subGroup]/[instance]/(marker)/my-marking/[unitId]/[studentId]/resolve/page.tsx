@@ -1,5 +1,5 @@
 import { Heading, SubHeading } from "@/components/heading";
-import { PageWrapper } from "@/components/page-wrapper";
+import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { auth } from "@/lib/auth";
 import { api } from "@/lib/trpc/server";
@@ -56,7 +56,7 @@ export default async function ResolvePage({
   }
 
   return (
-    <PageWrapper>
+    <PanelWrapper className="gap-10">
       <Heading
         className={cn(
           "flex items-center justify-between gap-2 text-4xl",
@@ -75,6 +75,6 @@ export default async function ResolvePage({
           unitOfAssessmentId={unitOfAssessmentId}
         />
       </div>
-    </PageWrapper>
+    </PanelWrapper>
   );
 }

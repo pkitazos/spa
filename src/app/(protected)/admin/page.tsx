@@ -6,6 +6,7 @@ import { app, metadataTitle } from "@/config/meta";
 import { spacesLabels } from "@/config/spaces";
 
 import { Heading, SubHeading } from "@/components/heading";
+import { PanelWrapper } from "@/components/panel-wrapper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
@@ -23,7 +24,7 @@ export default async function Page() {
   const groups = await api.institution.groups();
 
   return (
-    <div className="mt-6 flex h-max w-full max-w-5xl flex-col gap-10 px-6 pb-20">
+    <PanelWrapper className="gap-10">
       <Heading>{app.institution.name}</Heading>
       <Card className="my-10 flex flex-col gap-2 ">
         <CardHeader className="-mb-3 mt-3">
@@ -72,6 +73,6 @@ export default async function Page() {
           ))}
         </div>
       </div>
-    </div>
+    </PanelWrapper>
   );
 }
