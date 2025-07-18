@@ -1,12 +1,13 @@
 import { type ReactNode } from "react";
 
 import { type ClassValue } from "clsx";
-import { HashIcon, UserIcon } from "lucide-react";
+import { HashIcon, User2Icon } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { getColorFromName, getInitials } from "@/lib/utils/avatar-icon-helpers";
 import { type User } from "@/lib/validations/auth";
 
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 
 export function UserDetailsCard({
@@ -26,9 +27,13 @@ export function UserDetailsCard({
         {full ? (
           <div className="flex items-center space-x-4">
             <Avatar className="h-16 w-16">
-              <AvatarImage src="" />
-              <AvatarFallback>
-                <UserIcon className="h-8 w-8 text-muted-foreground" />
+              <AvatarFallback
+                className={cn(
+                  "bg-gray-100 text-gray-600 text-xl",
+                  getColorFromName(user.name),
+                )}
+              >
+                {user?.name ? getInitials(user.name) : <User2Icon />}
               </AvatarFallback>
             </Avatar>
             <div>
@@ -43,7 +48,7 @@ export function UserDetailsCard({
       <CardContent>
         <div className="flex flex-col justify-evenly gap-4">
           <div className="flex items-center">
-            <UserIcon className="mr-2 h-4 w-4 opacity-70" />
+            <User2Icon className="mr-2 h-4 w-4 opacity-70" />
             <span className="mr-2 font-semibold">ID:</span>
             {user.id}
           </div>

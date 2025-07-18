@@ -17,7 +17,6 @@ import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
 import { relativeComplement } from "@/lib/utils/general/set-difference";
-import { validatedSegmentsSchema } from "@/lib/validations/breadcrumbs";
 
 import { markerRouter } from "./marker";
 import { studentRouter } from "./student";
@@ -142,7 +141,7 @@ export const userRouter = createTRPCRouter({
   // TODO: rename
   breadcrumbs: procedure.user
     .input(z.object({ segments: z.array(z.string()) }))
-    .output(z.array(validatedSegmentsSchema))
+    .output(z.array(z.object({ segment: z.string(), access: z.boolean() })))
     .query(
       async ({ ctx: { user }, input: { segments } }) =>
         await user.authoriseBreadcrumbs(segments),

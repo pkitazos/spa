@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export default async function Page() {
   const user = await auth();
   return (
-    <PanelWrapper className="gap-10">
+    <PanelWrapper className="pt-4 gap-10">
       <Heading>me</Heading>
       <UserDetailsCard user={user} full />
     </PanelWrapper>
