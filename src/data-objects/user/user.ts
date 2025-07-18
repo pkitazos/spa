@@ -12,7 +12,6 @@ import { Transformers as T } from "@/db/transformers";
 import { type DB, Role } from "@/db/types";
 
 import { expand } from "@/lib/utils/general/instance-params";
-import { type ValidatedSegments } from "@/lib/validations/breadcrumbs";
 import {
   type GroupParams,
   type SubGroupParams,
@@ -21,6 +20,8 @@ import {
 
 import { DataObject } from "../data-object";
 import { Institution } from "../space/institution";
+
+import { UrlSegment } from "..";
 
 import {
   GroupAdmin,
@@ -279,9 +280,8 @@ export class User extends DataObject {
   }
 
   public async authoriseBreadcrumbs(segments: string[]) {
-    const [group, subGroup, instance, staticSegment, id, projectEdit] =
-      segments;
-    const res: ValidatedSegments[] = [];
+    const [group, subGroup, instance, staticSegment, id, modifier] = segments;
+    const res: { segment: string; access: boolean }[] = [];
 
     if (group === PAGES.me.href) {
       res.push({ segment: group, access: true });
@@ -341,31 +341,6 @@ export class User extends DataObject {
       });
     }
 
-    class UrlSegment {
-      public static isStaticValid(segment: string): boolean {
-        const validStaticSegment = new Set(
-          Object.values(PAGES)
-            .filter((page) => page.level === 4)
-            .map((page) => page.href),
-        );
-        return validStaticSegment.has(segment);
-      }
-
-      public static getSegmentRoles(segment: string): Set<Role> {
-        return new Set(
-          Object.values(PAGES).find((page) => page.href === segment)
-            ?.allowedRoles ?? [],
-        );
-      }
-
-      public static hasSubRoute(segment: string): boolean {
-        return (
-          Object.values(PAGES).find((page) => page.href === segment)
-            ?.hasSubRoute ?? false
-        );
-      }
-    }
-
     if (staticSegment) {
       if (!UrlSegment.isStaticValid(staticSegment)) {
         res.push({ segment: staticSegment, access: false });
@@ -380,7 +355,7 @@ export class User extends DataObject {
         instance,
       });
 
-      const staticSegmentAccess = segmentRoles.isSupersetOf(userRoles);
+      const staticSegmentAccess = userRoles.intersection(segmentRoles).size > 0;
 
       res.push({ segment: staticSegment, access: staticSegmentAccess });
 
@@ -389,13 +364,15 @@ export class User extends DataObject {
       } else if (id && !UrlSegment.hasSubRoute(staticSegment)) {
         throw new Error("Unknown Segment");
       }
+      const allowedModifiers: Record<string, string> = {
+        [PAGES.allSupervisors.href]: PAGES.newSupervisorProject.href,
+        [PAGES.allStudents.href]: PAGES.studentPreferences.href,
+        [PAGES.allProjects.href]: PAGES.editProject.href,
+      };
 
-      if (
-        projectEdit === PAGES.editProject.href &&
-        staticSegment === PAGES.allProjects.href
-      ) {
-        res.push({ segment: projectEdit, access: staticSegmentAccess });
-      } else if (projectEdit) {
+      if (allowedModifiers[staticSegment] === modifier) {
+        res.push({ segment: modifier, access: staticSegmentAccess });
+      } else if (modifier) {
         throw new Error("Unknown Segment");
       }
     }

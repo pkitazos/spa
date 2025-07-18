@@ -16,8 +16,12 @@ import { getCurrentDevUser } from "@/lib/auth/actions";
 import { api } from "@/lib/trpc/server";
 import { cn } from "@/lib/utils";
 
+import {
+  getColorFromName,
+  getInitials,
+} from "../../../../../lib/utils/avatar-icon-helpers";
+
 import { UserSwitcher } from "./user-switcher";
-import { getColorFromName, getInitials } from "./utils";
 
 export async function UserButton() {
   const testUsers = await api.user.getTestUsers();
