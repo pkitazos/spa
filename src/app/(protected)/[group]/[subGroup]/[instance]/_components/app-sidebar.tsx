@@ -68,6 +68,7 @@ export function AppSidebar({
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+      <Separator className="w-5/6 mx-auto" />
       <SidebarTabs tabGroups={tabGroups} />
       <Separator className="w-5/6 mx-auto" />
       <SidebarFooter className="mt-auto">

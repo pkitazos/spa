@@ -499,6 +499,7 @@ export const instanceRouter = createTRPCRouter({
             PAGES.settings,
             PAGES.allSupervisors,
             PAGES.allStudents,
+            PAGES.allProjects,
           ],
         });
 
@@ -513,6 +514,7 @@ export const instanceRouter = createTRPCRouter({
         const supervisorTabs = await instance.getSupervisorTabs();
 
         if (!isSecondRole) {
+          tabGroups.push({ title: "General", tabs: [PAGES.allProjects] });
           supervisorTabs.unshift(PAGES.instanceTasks);
         } else if (stage !== Stage.SETUP) {
           supervisorTabs.unshift(PAGES.nonAdminSupervisorTasks);
@@ -525,6 +527,7 @@ export const instanceRouter = createTRPCRouter({
         const isSecondRole = roles.size > 1;
         const studentTabs = await instance.getStudentTabs(!preAllocatedProject);
 
+        tabGroups.push({ title: "General", tabs: [PAGES.allProjects] });
         tabGroups.push({
           title: "Student",
           tabs: isSecondRole
