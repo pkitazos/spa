@@ -6,6 +6,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { PanelLeft } from "lucide-react";
 import { SidebarIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import {
 } from "@/components/ui/tooltip";
 
 import { useIsMobile } from "@/lib/hooks/use-mobile";
+import { api } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state";
@@ -737,6 +739,12 @@ SidebarMenuSubButton.displayName = "SidebarMenuSubButton";
 
 function ToggleSidebarButton() {
   const { toggleSidebar } = useSidebar();
+
+  const path = usePathname();
+
+  const { data } = api.institution.safeInInstance.useQuery({ path });
+
+  if (!data) return <div className="h-8 w-8" />;
 
   return (
     <Button
