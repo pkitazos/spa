@@ -1,7 +1,7 @@
 "use client";
 
 import { type ColumnDef } from "@tanstack/react-table";
-import { RotateCcw, Save } from "lucide-react";
+import { RotateCcwIcon, SaveIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import z from "zod";
 
@@ -39,7 +39,7 @@ export function useManualAllocationColumns({
   projects,
   supervisors,
   onUpdateAllocation,
-  onRemoveAllocation: _,
+  onRemoveAllocation,
   onSave,
   onReset,
 }: ManualAllocationColumnsProps): ColumnDef<ManualAllocationStudent>[] {
@@ -148,7 +148,7 @@ export function useManualAllocationColumns({
                 disabled={!student.isDirty}
                 className="h-8 w-8 p-0 "
               >
-                <RotateCcw className="h-3 w-3" />
+                <RotateCcwIcon className="h-3 w-3" />
               </Button>
             </WithTooltip>
             <WithTooltip tip="Save">
@@ -161,7 +161,26 @@ export function useManualAllocationColumns({
                   student.isDirty && "bg-primary text-primary-foreground",
                 )}
               >
-                <Save className="h-3 w-3" />
+                <SaveIcon className="h-3 w-3" />
+              </Button>
+            </WithTooltip>
+            <WithTooltip tip="Remove Allocation">
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => onRemoveAllocation(student.id)}
+                disabled={
+                  student.originalProjectId === undefined ||
+                  student.originalSupervisorId === undefined
+                }
+                className={cn(
+                  "h-8 w-8 p-0",
+                  (student.originalProjectId === undefined ||
+                    student.originalSupervisorId === undefined) &&
+                    "bg-muted  text-muted-foreground",
+                )}
+              >
+                <Trash2Icon className="h-3 w-3" />
               </Button>
             </WithTooltip>
           </div>
