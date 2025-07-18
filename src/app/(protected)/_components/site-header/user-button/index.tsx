@@ -1,0 +1,87 @@
+import { env } from "@/env";
+import { User2 } from "lucide-react";
+
+import { type UserDTO } from "@/dto";
+
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import { auth } from "@/lib/auth";
+import { getCurrentDevUser } from "@/lib/auth/actions";
+import { api } from "@/lib/trpc/server";
+import { cn } from "@/lib/utils";
+
+import { UserSwitcher } from "./user-switcher";
+import { getColorFromName, getInitials } from "./utils";
+
+export async function UserButton() {
+  const testUsers = await api.user.getTestUsers();
+
+  let user: UserDTO;
+
+  if (env.DEV_ENV === "PROD") {
+    user = await auth();
+  } else {
+    user = (await getCurrentDevUser()) ?? testUsers[0];
+  }
+
+  // ? @JakeTrevor I think the above reads nicer, what do you think?
+
+  // const user2 =
+  //   env.DEV_ENV === "PROD"
+  //     ? await auth()
+  //     : ((await getCurrentDevUser()) ?? testUsers[0]);
+
+  return (
+    <div className="relative">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Avatar className="cursor-pointer">
+            <AvatarFallback
+              className={cn(
+                "bg-gray-100 text-gray-600",
+                getColorFromName(user.name),
+              )}
+            >
+              {user?.name ? getInitials(user.name) : <User2 />}
+            </AvatarFallback>
+          </Avatar>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="mr-4 mt-3 w-fit min-w-40 max-w-80">
+          {user && (
+            <>
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-1">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium leading-none">
+                      {user.name}
+                    </p>
+                    {env.DEV_ENV !== "PROD" && (
+                      <span className="rounded bg-orange-100 px-1.5 py-0.5 text-xs text-orange-700">
+                        DEV
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user.id}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              {env.DEV_ENV !== "PROD" && (
+                <UserSwitcher users={testUsers} currentUserId={user.id} />
+              )}
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
