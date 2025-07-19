@@ -1,6 +1,5 @@
 "use client";
 
-import { type MarkerType } from "@prisma/client";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import {
@@ -9,6 +8,8 @@ import {
   type UnitOfAssessmentDTO,
 } from "@/dto";
 import { type MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
+
+import { type MarkerType } from "@/db/types";
 
 export type SubmissionTableRow = {
   project: ProjectDTO;

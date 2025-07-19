@@ -1,7 +1,7 @@
-import { Stage } from "@prisma/client";
-
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
+
+import { Stage } from "@/db/types";
 
 import { AccessControl } from "@/components/access-control";
 import { Heading } from "@/components/heading";

@@ -1,10 +1,11 @@
-import { Stage } from "@prisma/client";
 import { z } from "zod";
 
 import { studentDtoSchema } from "@/dto";
 import { projectDtoSchema, supervisorDtoSchema } from "@/dto";
 
 import { Supervisor } from "@/data-objects";
+
+import { Stage } from "@/db/types";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";

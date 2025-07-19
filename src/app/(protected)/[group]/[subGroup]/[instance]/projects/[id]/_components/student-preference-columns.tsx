@@ -1,6 +1,5 @@
 "use client";
 
-import { PreferenceType } from "@prisma/client";
 import { type ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
@@ -9,6 +8,8 @@ import {
 import Link from "next/link";
 
 import { PAGES } from "@/config/pages";
+
+import { PreferenceType } from "@/db/types";
 
 import { useInstancePath } from "@/components/params-context";
 import { Badge } from "@/components/ui/badge";

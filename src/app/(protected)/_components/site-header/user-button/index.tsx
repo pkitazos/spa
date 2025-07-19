@@ -15,11 +15,7 @@ import { auth } from "@/lib/auth";
 import { getCurrentDevUser } from "@/lib/auth/actions";
 import { api } from "@/lib/trpc/server";
 import { cn } from "@/lib/utils";
-
-import {
-  getColorFromName,
-  getInitials,
-} from "@/lib/utils/avatar-icon-helpers";
+import { getColorFromName, getInitials } from "@/lib/utils/avatar-icon-helpers";
 
 import { UserSwitcher } from "./user-switcher";
 
@@ -33,13 +29,6 @@ export async function UserButton() {
   } else {
     user = (await getCurrentDevUser()) ?? testUsers[0];
   }
-
-  // ? @JakeTrevor I think the above reads nicer, what do you think?
-
-  // const user2 =
-  //   env.DEV_ENV === "PROD"
-  //     ? await auth()
-  //     : ((await getCurrentDevUser()) ?? testUsers[0]);
 
   return (
     <div className="relative">

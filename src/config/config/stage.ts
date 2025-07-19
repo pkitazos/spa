@@ -1,4 +1,6 @@
-import { Stage } from "@prisma/client";
+import { Stage } from "@/db/types";
+
+// TODO: merge this with the stages.ts file in src/config
 
 export const CHAPTER = {
   ALLOCATION: {

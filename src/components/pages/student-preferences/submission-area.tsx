@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 
-import { PreferenceType } from "@prisma/client";
 import { format } from "date-fns";
 import { AlertCircleIcon, ClockIcon } from "lucide-react";
 import { toast } from "sonner";
+
+import { PreferenceType } from "@/db/types";
 
 import { getSubmissionErrors } from "@/components/pages/student-preferences/get-submission-errors";
 import { useInstanceParams } from "@/components/params-context";

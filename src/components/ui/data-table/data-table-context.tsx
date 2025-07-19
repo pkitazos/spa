@@ -2,13 +2,13 @@
 
 import { createContext, type ReactNode, useContext } from "react";
 
-import { type Flag, type Tag } from "@prisma/client";
+import { type DB_Flag, type DB_Tag } from "@/db/types";
 
 const DataTableCtx = createContext<Details | undefined>(undefined);
 
 type Details = {
-  flags: Pick<Flag, "id" | "title">[];
-  tags: Pick<Tag, "id" | "title">[];
+  flags: Pick<DB_Flag, "id" | "title">[];
+  tags: Pick<DB_Tag, "id" | "title">[];
 };
 
 export function DataTableProvider({

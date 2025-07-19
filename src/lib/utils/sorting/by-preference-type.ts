@@ -1,4 +1,4 @@
-import { PreferenceType } from "@prisma/client";
+import { PreferenceType } from "@/db/types";
 
 export function sortPreferenceType<T extends { type: PreferenceType }>(
   a: T,

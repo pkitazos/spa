@@ -1,5 +1,6 @@
-import { PreferenceType } from "@prisma/client";
 import { z } from "zod";
+
+import { PreferenceType } from "@/db/types";
 
 export const savedPreferenceDto = z.object({
   id: z.string(),
