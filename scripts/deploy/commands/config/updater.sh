@@ -17,7 +17,7 @@ auto_updater_choice=${auto_updater_choice:-$default_updater}
 
 if [[ $auto_updater_choice == "1" ]]; then
     # For prod, add pull to crontab
-    cron_job="0 3 * * * amps pull"
+    cron_job="0 3 * * * /usr/local/bin/amps pull"
     prev_cron=$(sudo crontab -u root -l | grep -v "amps pull")
     (
         echo "$cron_job"
