@@ -43,7 +43,7 @@ sudo git clone $remoteUrl .
 ) |
     sudo tee /etc/environment >/dev/null
 
-cronJob="0 * * * * amps logs backup -g"
+cronJob="0 * * * * /usr/local/bin/amps logs backup -g"
 prevCron=$(sudo crontab -u root -l | grep -v "amps logs backup -g")
 (
     echo "$cronJob"
