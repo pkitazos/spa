@@ -48,7 +48,7 @@ export const institutionRouter = createTRPCRouter({
       await group.delete();
     }),
 
-  safeInInstance: procedure.user
+  inInstance_safe: procedure.user
     .input(z.object({ path: z.string() }))
     .output(z.boolean())
     .query(async ({ ctx: { institution }, input: { path } }) => {

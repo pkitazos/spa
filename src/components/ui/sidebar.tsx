@@ -742,7 +742,7 @@ function ToggleSidebarButton() {
 
   const path = usePathname();
 
-  const { data } = api.institution.safeInInstance.useQuery({ path });
+  const { data } = api.institution.inInstance_safe.useQuery({ path });
 
   if (!data) return <div className="h-8 w-8" />;
 
