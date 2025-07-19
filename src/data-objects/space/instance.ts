@@ -573,7 +573,7 @@ export class AllocationInstance extends DataObject {
 
     return suitableProjects
       .filter((p) => p.studentAllocations.length === 0)
-      .map((x) => T.toProjectDTO(x));
+      .map(T.toProjectDTO);
   }
 
   public async getSubmittedPreferences() {
