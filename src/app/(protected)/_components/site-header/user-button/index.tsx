@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import {
   getColorFromName,
   getInitials,
-} from "../../../../../lib/utils/avatar-icon-helpers";
+} from "@/lib/utils/avatar-icon-helpers";
 
 import { UserSwitcher } from "./user-switcher";
 
