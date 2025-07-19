@@ -45,7 +45,7 @@ sudo git clone $remoteUrl .
 ) |
     sudo tee /etc/environment >/dev/null
 
-cronJob="0 * * * * amps db backup -g"
+cronJob="0 * * * * /usr/local/bin/amps db backup -g"
 prevCron=$(sudo crontab -u root -l | grep -v "amps db backup -g")
 (
     echo "$cronJob"
