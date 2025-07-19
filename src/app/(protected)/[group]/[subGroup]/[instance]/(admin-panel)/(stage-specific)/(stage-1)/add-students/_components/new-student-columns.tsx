@@ -1,6 +1,5 @@
 "use client";
 
-import { Stage } from "@prisma/client";
 import { type ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
@@ -13,6 +12,8 @@ import Link from "next/link";
 import { PAGES } from "@/config/pages";
 
 import { type StudentDTO } from "@/dto";
+
+import { Stage } from "@/db/types";
 
 import { AccessControl } from "@/components/access-control";
 import { useInstanceStage } from "@/components/params-context";

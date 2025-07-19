@@ -1,5 +1,3 @@
-import { MarkerType } from "@prisma/client";
-
 import {
   type MarkingSubmissionDTO,
   type ProjectDTO,
@@ -10,6 +8,7 @@ import {
 import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
 
 import { Transformers as T } from "@/db/transformers";
+import { MarkerType } from "@/db/types";
 import { type DB } from "@/db/types";
 
 import { expand } from "@/lib/utils/general/instance-params";

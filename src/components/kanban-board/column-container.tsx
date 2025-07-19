@@ -4,8 +4,9 @@ import { useMemo } from "react";
 
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext } from "@dnd-kit/sortable";
-import { PreferenceType, Stage } from "@prisma/client";
 import { ListIcon, ListOrderedIcon } from "lucide-react";
+
+import { PreferenceType, Stage } from "@/db/types";
 
 import { useInstanceStage } from "@/components/params-context";
 

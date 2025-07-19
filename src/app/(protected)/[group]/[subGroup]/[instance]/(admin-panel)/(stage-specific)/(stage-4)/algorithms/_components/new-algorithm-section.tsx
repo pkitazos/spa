@@ -5,13 +5,14 @@ import { type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlgorithmFlag } from "@prisma/client";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { type z } from "zod";
 
 import { allAlgorithmFlags, buildNewAlgorithmSchema } from "@/dto";
+
+import { AlgorithmFlag } from "@/db/types";
 
 import { useInstanceParams } from "@/components/params-context";
 import { Badge } from "@/components/ui/badge";

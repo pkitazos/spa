@@ -1,8 +1,9 @@
 "use client";
 
-import { type PreferenceType } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { type PreferenceType } from "@/db/types";
 
 import { KanbanBoard } from "@/components/kanban-board";
 import { useBoardDetails } from "@/components/kanban-board/store";

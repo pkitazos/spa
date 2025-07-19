@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 
-import { PreferenceType } from "@prisma/client";
 import { BookmarkIcon } from "lucide-react";
+
+import { PreferenceType } from "@/db/types";
 
 import {
   DropdownMenuPortal,

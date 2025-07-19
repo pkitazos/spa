@@ -1,4 +1,3 @@
-import { PreferenceType, Stage } from "@prisma/client";
 import { z } from "zod";
 
 import { flagDtoSchema, tagDtoSchema } from "@/dto";
@@ -17,6 +16,7 @@ import {
   linkProjectTagIds,
 } from "@/db/transactions/project-flags";
 import { Transformers as T } from "@/db/transformers";
+import { PreferenceType, Stage } from "@/db/types";
 import { Role } from "@/db/types";
 
 import { procedure } from "@/server/middleware";

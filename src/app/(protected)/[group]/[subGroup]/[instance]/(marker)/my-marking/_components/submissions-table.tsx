@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { MarkerType } from "@prisma/client";
 import {
   type ColumnFiltersState,
   type ExpandedState,
@@ -20,6 +19,8 @@ import { PAGES } from "@/config/pages";
 
 import { type UnitOfAssessmentDTO } from "@/dto";
 import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
+
+import { MarkerType } from "@/db/types";
 
 import { CopyButton } from "@/components/copy-button";
 import { Button } from "@/components/ui/button";

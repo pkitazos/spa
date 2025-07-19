@@ -12,8 +12,9 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { PreferenceType } from "@prisma/client";
 import { z } from "zod";
+
+import { PreferenceType } from "@/db/types";
 
 import {
   PREFERENCE_BOARD_COLUMNS,

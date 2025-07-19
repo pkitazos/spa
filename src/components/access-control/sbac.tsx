@@ -2,7 +2,7 @@
 
 import { type ReactNode } from "react";
 
-import { type Stage } from "@prisma/client";
+import { type Stage } from "@/db/types";
 
 import { api } from "@/lib/trpc/client";
 

@@ -14,7 +14,8 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { type MarkerType } from "@prisma/client";
+
+import { type MarkerType } from "@/db/types";
 
 import { computeUpdatedRank } from "@/lib/utils/sorting/compute-updated-rank";
 

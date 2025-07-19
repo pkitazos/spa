@@ -1,4 +1,3 @@
-import { AlgorithmFlag } from "@prisma/client";
 import { z } from "zod";
 
 import {
@@ -8,6 +7,7 @@ import {
   MinCostAlgorithm,
 } from "@/config/algorithms";
 
+import { AlgorithmFlag } from "@/db/types";
 import { type New } from "@/db/types";
 
 import { matchingResultDtoSchema } from "@/lib/validations/matching";

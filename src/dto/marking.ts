@@ -1,5 +1,6 @@
-import { MarkerType } from "@prisma/client";
 import { z } from "zod";
+
+import { MarkerType } from "@/db/types";
 
 import { flagDtoSchema } from "./flag-tag";
 

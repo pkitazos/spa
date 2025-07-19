@@ -1,5 +1,6 @@
-import { Stage } from "@prisma/client";
 import { format } from "date-fns";
+
+import { Stage } from "@/db/types";
 
 import { SubHeading } from "@/components/heading";
 import { Calendar } from "@/components/ui/calendar";

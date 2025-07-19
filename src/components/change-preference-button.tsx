@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 
-import { PreferenceType } from "@prisma/client";
 import { type ClassValue } from "clsx";
 import { BookmarkIcon } from "lucide-react";
+
+import { PreferenceType } from "@/db/types";
 
 import { Button } from "@/components/ui/button";
 import {

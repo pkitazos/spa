@@ -4,13 +4,14 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PreferenceType } from "@prisma/client";
 import { type ClassValue } from "clsx";
 import { Check, ChevronsUpDown, PlusIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { type ProjectDTO } from "@/dto";
+
+import { PreferenceType } from "@/db/types";
 
 import { useBoardDetails } from "@/components/kanban-board/store";
 import { Button } from "@/components/ui/button";
