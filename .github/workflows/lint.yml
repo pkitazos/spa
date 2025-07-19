@@ -1,4 +1,4 @@
-name: Test
+name: Lint
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,8 +22,8 @@ jobs:
           node-version: 22
           cache: "pnpm"
 
-      - name: Run tests
+      - name: Run Linter
 
         run: |
           pnpm install --frozen-lockfile
-          pnpm test
+          pnpm lint
