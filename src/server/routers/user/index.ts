@@ -138,15 +138,6 @@ export const userRouter = createTRPCRouter({
       });
     }),
 
-  // TODO: rename
-  breadcrumbs: procedure.user
-    .input(z.object({ segments: z.array(z.string()) }))
-    .output(z.array(z.object({ segment: z.string(), access: z.boolean() })))
-    .query(
-      async ({ ctx: { user }, input: { segments } }) =>
-        await user.authoriseBreadcrumbs(segments),
-    ),
-
   joinInstance: procedure.instance.user.mutation(
     async ({ ctx: { user, instance, audit } }) => {
       audit("joining instance", { instance: instance.params });
