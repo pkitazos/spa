@@ -21,7 +21,7 @@ export function Breadcrumbs() {
   const pathname = usePathname();
   const segments = pathname.split("/").filter((segment) => segment !== "");
 
-  const { status, data } = api.user.breadcrumbs.useQuery({ segments });
+  const { status, data } = api.ac.breadcrumbs.useQuery({ segments });
 
   if (segments.length === 0) return <></>;
 

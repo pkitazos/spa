@@ -79,4 +79,12 @@ export const accessControlRouter = createTRPCRouter({
 
       return false;
     }),
+
+  breadcrumbs: procedure.user
+    .input(z.object({ segments: z.array(z.string()) }))
+    .output(z.array(z.object({ segment: z.string(), access: z.boolean() })))
+    .query(
+      async ({ ctx: { user }, input: { segments } }) =>
+        await user.authoriseBreadcrumbs(segments),
+    ),
 });
