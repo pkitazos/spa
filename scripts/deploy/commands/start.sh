@@ -2,7 +2,7 @@
 
 pushd $AMPS_LOC >/dev/null
 
-docker compose --env-file=./.env -f "./docker/docker-compose.$AMPS_DEPLOYMENT_MODE.yml" up -d
+sudo docker compose --env-file=./.env -f "./docker/docker-compose.$AMPS_DEPLOYMENT_MODE.yml" up -d
 
 if [ ! -z $AMPS_CLI_EMAIL ]; then
     if [ -z $AMPS_DEV_EMAILS ]; then
