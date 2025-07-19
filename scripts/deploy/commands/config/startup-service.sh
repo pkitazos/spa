@@ -11,8 +11,10 @@ if [[ $startupEnable == [nN] ]]; then
     sudo rm -f /etc/systemd/system/amps-startup.service
 else
     # Link the service description file
-    sudo ln -sf ~/spa/scripts/deploy/amps-startup.service \
+    sudo ln -sf $AMPS_LOC/scripts/deploy/amps-startup.service \
         /etc/systemd/system/amps-startup.service
+
+    sudo chmod 644 /etc/systemd/system/amps-startup.service
 
     # And start the service
     sudo systemctl enable amps-startup.service
