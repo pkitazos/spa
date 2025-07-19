@@ -1,5 +1,6 @@
 export const app = {
   name: "AMPS",
+  fullName: "Allocation & Marking Project System",
   institution: { name: "UofG" },
   metadata: { separator: " - " },
   descriptor: "SoCS allocation & marking project system",
