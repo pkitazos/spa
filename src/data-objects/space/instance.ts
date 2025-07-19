@@ -1160,12 +1160,9 @@ export class AllocationInstance extends DataObject {
   }
 
   public async deleteStudentAllocation(userId: string): Promise<void> {
-    const spaId = { ...expand(this.params), userId };
-
-    await this.db.$transaction([
-      this.db.studentProjectAllocation.deleteMany({ where: spaId }),
-      // this.db.studentSubmittedPreference.deleteMany({ where: spaId }), @JakeTrevor is this needed?
-    ]);
+    await this.db.studentProjectAllocation.deleteMany({
+      where: { ...expand(this.params), userId },
+    });
   }
 
   public async deleteProjects(projectIds: string[]) {
