@@ -37,7 +37,7 @@ pushd ../../.. >/dev/null
 popd >/dev/null
 
 # Link the amps CLI
-sudo ln -sf ~/spa/scripts/deploy/amps \
+sudo ln -sf $AMPS_LOC/scripts/deploy/amps \
     /usr/local/bin/amps
 
 # Automatic restart service
