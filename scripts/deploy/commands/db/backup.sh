@@ -5,7 +5,7 @@ pushd $AMPS_DB_BACKUP_DIR >/dev/null
 timestamp=$(date --iso-8601=seconds)
 outfile=db-image-$timestamp.sql
 
-docker exec amps-db-1 pg_dump -d 'amps-db' >$outfile
+sudo docker exec amps-db-1 pg_dump -d 'amps-db' >$outfile
 
 gzip $outfile
 

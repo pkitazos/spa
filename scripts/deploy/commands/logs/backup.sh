@@ -7,7 +7,7 @@ outfile=all-logs-$timestamp.tgz
 
 mkdir -p temp
 
-docker cp amps-app-1:/app/logs/. temp
+sudo docker cp amps-app-1:/app/logs/. temp
 
 tar -ca -f "$outfile" --force-local -- ./temp/*
 
