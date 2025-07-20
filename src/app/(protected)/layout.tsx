@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { SidebarProvider } from "@/components/ui/sidebar";
 
 import { auth } from "@/lib/auth";
+import { api } from "@/lib/trpc/server";
 
 import { SiteHeader } from "./_components/site-header";
 
@@ -12,8 +13,14 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   const user = await auth();
-  // add whitelist of users
+
   if (!user) redirect("/");
+
+  // Currently we're doing a platform-wide testing block
+  // If the user is not whitelisted, redirect them to the test message page
+  // would be better to have a more granular control in the future, i.e. per group, sub-group, or instance
+  const whitelisted = await api.ac.whitelisted();
+  if (!whitelisted) redirect("/unauthorised");
 
   return (
     <div className="[--header-height:calc(theme(spacing.14))]">

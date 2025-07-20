@@ -12,6 +12,17 @@
     "body": ["/**", "* @deprecated $0", "*/"],
     "description": "Log output to console",
   },
+
+  "Page": {
+		"prefix": "pasy",
+		"body": [
+			"export default async function Page() {",
+			"  return (<>${0}</>);",
+			"}"
+		],
+		"description": "Creates a page server component with no params",
+	},
+
   "Instance Page": {
     "prefix": "inpag",
     "body": [
