@@ -20,14 +20,10 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD}
 
       DEV_ENV: "staging"
+      AMPS_MODE: ${AMPS_MODE}
+      AMPS_ACCESS_CONTROL: ${AMPS_ACCESS_CONTROL}
+      AMPS_WHITELISTED_USERS: ${AMPS_WHITELISTED_USERS}
       VALIDATE_ENV_VARS: "true"
-
-      # TODO
-      # Long term, these should be nuked and
-      # replaced with the fancy role picker
-      DEV_ID: ${DEV_ID}
-      DEV_NAME: ${DEV_NAME}
-      DEV_EMAIL: ${DEV_EMAIL}
 
     volumes:
       - amps-app-logs:/app/logs/

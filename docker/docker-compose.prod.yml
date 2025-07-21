@@ -2,7 +2,7 @@ name: amps
 
 services:
   app:
-    image: "ghcr.io/pkitazos/amps-app:staging-latest"
+    image: "ghcr.io/pkitazos/amps-app:main-latest"
     depends_on:
       - db
     ports:
@@ -18,6 +18,9 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD}
 
       DEV_ENV: "PROD"
+      AMPS_MODE: ${AMPS_MODE}
+      AMPS_ACCESS_CONTROL: ${AMPS_ACCESS_CONTROL}
+      AMPS_WHITELISTED_USERS: ${AMPS_WHITELISTED_USERS}
       VALIDATE_ENV_VARS: "true"
 
     volumes:
