@@ -19,7 +19,8 @@ export const env = createEnv({
     MAIL_USER: z.string(),
     MAIL_PASSWORD: z.string().optional(),
 
-    AMPS_WHITELIST_ENABLED: z.coerce.boolean().default(false),
+    AMPS_MODE: z.enum(["prod", "testing", "dev"]).default("prod"),
+    AMPS_ACCESS_CONTROL: z.enum(["open", "whitelist"]).default("open"),
     AMPS_WHITELISTED_USERS: z.string().default(""),
   },
   runtimeEnv: process.env,

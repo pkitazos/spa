@@ -20,7 +20,10 @@ export default async function Layout({
   // Currently we're doing a platform-wide testing block
   // If the user is not whitelisted, redirect them to the test message page
   // would be better to have a more granular control in the future, i.e. per group, sub-group, or instance
-  if (env.AMPS_WHITELIST_ENABLED && !(await api.ac.whitelisted())) {
+  if (
+    env.AMPS_ACCESS_CONTROL === "whitelist" &&
+    !(await api.ac.whitelisted())
+  ) {
     redirect("/unauthorised");
   }
 

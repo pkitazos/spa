@@ -54,9 +54,14 @@ export async function UserButton() {
                     <p className="text-sm font-medium leading-none">
                       {user.name}
                     </p>
-                    {env.DEV_ENV !== "PROD" && (
+                    {env.AMPS_MODE === "dev" && (
                       <span className="rounded bg-orange-100 px-1.5 py-0.5 text-xs text-orange-700">
                         DEV
+                      </span>
+                    )}
+                    {env.AMPS_MODE === "testing" && (
+                      <span className="rounded bg-lime-100 px-1.5 py-0.5 text-xs text-lime-700">
+                        TESTING
                       </span>
                     )}
                   </div>
@@ -68,7 +73,7 @@ export async function UserButton() {
                   </p>
                 </div>
               </DropdownMenuLabel>
-              {env.DEV_ENV !== "PROD" && (
+              {(env.AMPS_MODE === "dev" || env.AMPS_MODE === "testing") && (
                 <UserSwitcher users={testUsers} currentUserId={user.id} />
               )}
             </>
