@@ -93,7 +93,12 @@ export const accessControlRouter = createTRPCRouter({
     .output(z.boolean())
     .query(async ({ ctx: { user } }) => {
       const { email } = await user.toDTO();
-      const whitelist = env.WHITELISTED_USERS?.toLowerCase().split(";") ?? [];
+
+      if (!env.AMPS_WHITELIST_ENABLED) return true;
+
+      const whitelist =
+        env.AMPS_WHITELISTED_USERS?.toLowerCase().split(";") ?? [];
+
       return whitelist.includes(email);
     }),
 });

@@ -4,7 +4,7 @@ export const app = {
   institution: { name: "UofG" },
   metadata: { separator: " - " },
   descriptor: "SoCS allocation & marking project system",
-  supportMail: "compsci-spa-support@glasgow.ac.uk",
+  supportEmail: "compsci-spa-support@glasgow.ac.uk",
 };
 
 export function metadataTitle(segments: string[]) {

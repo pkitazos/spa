@@ -88,9 +88,9 @@ export function AppSidebar({
                 <DialogDescription>
                   Send us an email at:{" "}
                   <code className="flex items-center gap-1.5">
-                    {app.supportMail}
+                    {app.supportEmail}
                     <CopyButton
-                      data={app.supportMail}
+                      data={app.supportEmail}
                       message="support email"
                     />
                   </code>

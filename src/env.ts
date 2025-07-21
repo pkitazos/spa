@@ -19,7 +19,8 @@ export const env = createEnv({
     MAIL_USER: z.string(),
     MAIL_PASSWORD: z.string().optional(),
 
-    WHITELISTED_USERS: z.string().optional(),
+    AMPS_WHITELIST_ENABLED: z.coerce.boolean().default(false),
+    AMPS_WHITELISTED_USERS: z.string().optional(),
   },
   runtimeEnv: process.env,
 });
