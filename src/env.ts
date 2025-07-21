@@ -20,7 +20,7 @@ export const env = createEnv({
     MAIL_PASSWORD: z.string().optional(),
 
     AMPS_WHITELIST_ENABLED: z.coerce.boolean().default(false),
-    AMPS_WHITELISTED_USERS: z.string().optional(),
+    AMPS_WHITELISTED_USERS: z.string().default(""),
   },
   runtimeEnv: process.env,
 });

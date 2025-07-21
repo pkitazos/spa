@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { redirect } from "next/navigation";
 
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -19,8 +20,9 @@ export default async function Layout({
   // Currently we're doing a platform-wide testing block
   // If the user is not whitelisted, redirect them to the test message page
   // would be better to have a more granular control in the future, i.e. per group, sub-group, or instance
-  const whitelisted = await api.ac.whitelisted();
-  if (!whitelisted) redirect("/unauthorised");
+  if (env.AMPS_WHITELIST_ENABLED && !(await api.ac.whitelisted())) {
+    redirect("/unauthorised");
+  }
 
   return (
     <div className="[--header-height:calc(theme(spacing.14))]">
