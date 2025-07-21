@@ -279,7 +279,9 @@ export class User extends DataObject {
     return instanceData.map((x) => T.toAllocationInstanceDTO(x));
   }
 
-  public async authoriseBreadcrumbs(segments: string[]) {
+  public async authoriseBreadcrumbs(
+    segments: string[],
+  ): Promise<{ segment: string; access: boolean }[]> {
     const [group, subGroup, instance, staticSegment, id, modifier] = segments;
     const res: { segment: string; access: boolean }[] = [];
 
