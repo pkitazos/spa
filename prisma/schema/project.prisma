@@ -23,15 +23,15 @@ model Project {
   capacityLowerBound            Int                          @map("capacity_lower_bound")
   capacityUpperBound            Int                          @map("capacity_upper_bound")
   preAllocatedStudentId         String?                      @map("pre_allocated_student_id")
-  preAllocatedStudent           StudentDetails?              @relation(fields: [preAllocatedStudentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  preAllocatedStudent           StudentDetails?              @relation(fields: [preAllocatedStudentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, map: "project_preallocated_student")
   // ---
   allocationGroupId             String                       @map("allocation_group_id")
   allocationSubGroupId          String                       @map("allocation_sub_group_id")
   allocationInstanceId          String                       @map("allocation_instance_id")
-  allocationInstance            AllocationInstance           @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+  allocationInstance            AllocationInstance           @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "project_instance")
   // ---
   supervisorId                  String                       @map("supervisor_id")
-  supervisor                    SupervisorDetails            @relation(fields: [supervisorId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  supervisor                    SupervisorDetails            @relation(fields: [supervisorId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, map: "project_supervisor")
   // ---
   inStudentDraftPreferences     StudentDraftPreference[]
   inStudentSubmittedPreferences StudentSubmittedPreference[]
@@ -57,8 +57,8 @@ model StudentDraftPreference {
   allocationSubGroupId String         @map("allocation_sub_group_id")
   allocationInstanceId String         @map("allocation_instance_id")
   // ---
-  project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  student              StudentDetails @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade, map: "student_draft_preference_project")
+  student              StudentDetails @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, map: "student_draft_preference_student")
 
   @@id([projectId, userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], name: "draftPreferenceId")
   @@map("student_draft_preference")
@@ -73,8 +73,8 @@ model StudentSubmittedPreference {
   allocationSubGroupId String         @map("allocation_sub_group_id")
   allocationInstanceId String         @map("allocation_instance_id")
   // ---
-  project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  student              StudentDetails @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade, map: "student_preference_project")
+  student              StudentDetails @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, map: "student_preference_student")
 
   @@id([projectId, userId], name: "studentSubmittedPreferenceId", map: "student_submitted_preference_id")
   @@map("submitted_preference")
@@ -91,8 +91,8 @@ model StudentProjectAllocation {
   allocationSubGroupId String           @map("allocation_sub_group_id")
   allocationInstanceId String           @map("allocation_instance_id")
   // ---
-  project              Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  student              StudentDetails   @relation("project_allocation", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  project              Project          @relation(fields: [projectId], references: [id], onDelete: Cascade, map: "spa_project")
+  student              StudentDetails   @relation("project_allocation", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, map: "spa_student")
   finalGrade           FinalGrade?
 
   @@id([userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], name: "studentProjectAllocationId", map: "student_project_allocation_id")
@@ -109,8 +109,8 @@ model ReaderDraftPreference {
   allocationSubGroupId String         @map("allocation_sub_group_id")
   allocationInstanceId String         @map("allocation_instance_id")
   // ---
-  project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  reader               ReaderDetails  @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  project              Project        @relation(fields: [projectId], references: [id], onDelete: Cascade, map: "reader_draft_preference_project")
+  reader               ReaderDetails  @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, map: "reader_draft_preference_reader")
 
   @@id([projectId, userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], name: "readerDraftPreferenceId")
   @@map("reader_draft_preference")
@@ -124,8 +124,8 @@ model ReaderSubmittedPreference {
   allocationSubGroupId String        @map("allocation_sub_group_id")
   allocationInstanceId String        @map("allocation_instance_id")
   // ---
-  project              Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  reader               ReaderDetails @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  project              Project       @relation(fields: [projectId], references: [id], onDelete: Cascade, map: "reader_preference_project")
+  reader               ReaderDetails @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, map: "reader_preference_reader")
 
   @@id([projectId, userId], name: "readerSubmittedPreferenceId", map: "reader_submitted_preference_id")
   @@map("reader_submitted_preference")
@@ -133,11 +133,11 @@ model ReaderSubmittedPreference {
 
 model ReaderProjectAllocation {
   readerId             String         @map("reader_id")
-  reader               ReaderDetails  @relation("reader_project_allocation", fields: [readerId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  reader               ReaderDetails  @relation("reader_project_allocation", fields: [readerId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, map: "rpa_reader")
   projectId            String         @map("project_id")
-  project              Project        @relation("project_reader", fields: [projectId], references: [id], onDelete: Cascade)
+  project              Project        @relation("project_reader", fields: [projectId], references: [id], onDelete: Cascade, map: "rpa_project")
   studentId            String         @map("user_id")
-  student              StudentDetails @relation("student_reader", fields: [studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
+  student              StudentDetails @relation("student_reader", fields: [studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, map: "rpa_student")
   thirdMarker          Boolean        @default(false) @map("third_marker")
   // ---
   allocationGroupId    String         @map("allocation_group_id")
@@ -150,9 +150,9 @@ model ReaderProjectAllocation {
 }
 
 model FlagOnProject {
-  flag      Flag    @relation(fields: [flagId], references: [id], onDelete: Cascade)
+  flag      Flag    @relation(fields: [flagId], references: [id], onDelete: Cascade, map: "flag_project_flag")
   flagId    String  @map("flag_id")
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade, map: "flag_project_project")
   projectId String  @map("project_id")
 
   @@id([flagId, projectId], name: "flagOnProjectId", map: "flag_on_project_id")
@@ -160,9 +160,9 @@ model FlagOnProject {
 }
 
 model TagOnProject {
-  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tag       Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade, map: "tag_project_tag")
   tagId     String  @map("tag_id")
-  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade, map: "tag_project_project")
   projectId String  @map("project_id")
 
   @@id([tagId, projectId], name: "tagOnProjectId", map: "tag_on_project_id")
