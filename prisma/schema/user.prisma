@@ -28,7 +28,6 @@ model FlagOnStudent {
 }
 
 model StudentDetails {
-  studentLevel             Int                          @map("student_level")
   latestSubmissionDateTime DateTime?                    @map("latest_submission_date_time")
   projectAllocation        StudentProjectAllocation?    @relation("project_allocation")
   // ---
