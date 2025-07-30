@@ -42,6 +42,16 @@ export class User extends DataObject {
     this.id = id;
   }
 
+  public async create(user: UserDTO): Promise<UserDTO> {
+    return await this.db.user.create({ data: T.toUserDTO(user) });
+  }
+
+  public async toMaybeDTO(): Promise<UserDTO | undefined> {
+    this._data ??=
+      (await this.db.user.findFirst({ where: { id: this.id } })) ?? undefined;
+    return this._data;
+  }
+
   public async toDTO(): Promise<UserDTO> {
     this._data ??= await this.db.user.findFirstOrThrow({
       where: { id: this.id },

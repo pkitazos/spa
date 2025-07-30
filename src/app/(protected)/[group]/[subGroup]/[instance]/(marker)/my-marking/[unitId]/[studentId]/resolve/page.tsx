@@ -50,7 +50,7 @@ export default async function ResolvePage({
 
   if (!project) return <div>unknown student</div>;
 
-  const user = await auth();
+  const { mask: user } = await auth();
   if (project.supervisor.id !== user.id) {
     return <div>Only the project supervisor can resolve marks</div>;
   }

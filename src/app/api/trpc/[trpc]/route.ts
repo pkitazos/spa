@@ -24,7 +24,7 @@ export function OPTIONS() {
 }
 
 const handler = async (req: NextRequest) => {
-  const user = await auth();
+  const { mask: user } = await auth();
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
     router: appRouter,

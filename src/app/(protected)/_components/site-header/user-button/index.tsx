@@ -1,8 +1,6 @@
 import { env } from "@/env";
 import { User2 } from "lucide-react";
 
-import { type UserDTO } from "@/dto";
-
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -12,7 +10,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { auth } from "@/lib/auth";
-import { getCurrentDevUser } from "@/lib/auth/actions";
 import { api } from "@/lib/trpc/server";
 import { cn } from "@/lib/utils";
 import { getColorFromName, getInitials } from "@/lib/utils/avatar-icon-helpers";
@@ -22,13 +19,7 @@ import { UserSwitcher } from "./user-switcher";
 export async function UserButton() {
   const testUsers = await api.user.getTestUsers();
 
-  let user: UserDTO;
-
-  if (env.DEV_ENV === "PROD") {
-    user = await auth();
-  } else {
-    user = (await getCurrentDevUser()) ?? testUsers[0];
-  }
+  const { mask: user } = await auth();
 
   return (
     <div className="relative">
@@ -73,7 +64,7 @@ export async function UserButton() {
                   </p>
                 </div>
               </DropdownMenuLabel>
-              {(env.AMPS_MODE === "dev" || env.AMPS_MODE === "testing") && (
+              {env.AUTH_MASKING === "ON" && (
                 <UserSwitcher users={testUsers} currentUserId={user.id} />
               )}
             </>
