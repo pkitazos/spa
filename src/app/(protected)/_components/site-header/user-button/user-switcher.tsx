@@ -12,7 +12,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
-import { AuthMask } from "@/lib/auth/mask";
+import { switchDevUser } from "@/lib/auth/switcher-actions";
 import { cn } from "@/lib/utils";
 import { getColorFromName, getInitials } from "@/lib/utils/avatar-icon-helpers";
 
@@ -32,7 +32,7 @@ export function UserSwitcher({ users, currentUserId }: UserSwitcherProps) {
   const handleUserChange = async (newUserId: string) => {
     if (newUserId === currentUserId) return;
 
-    await AuthMask.setMask(newUserId);
+    await switchDevUser(newUserId);
     router.refresh();
   };
 

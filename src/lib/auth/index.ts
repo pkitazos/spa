@@ -3,8 +3,8 @@ import { headers } from "next/headers";
 
 import { userDtoSchema, type UserDTO } from "@/dto";
 
-import { AuthMask } from "./mask";
 import { retrieveUser } from "./procedures";
+import { getCurrentDevUser } from "./switcher-actions";
 
 /**
  * Get the authentication state of the app.
@@ -27,7 +27,7 @@ async function getRealUser(): Promise<UserDTO> {
   let name;
   let email;
 
-  if (env.AUTH_FROM_HEADERS) {
+  if (env.AUTH_FROM_HEADERS === "ON") {
     if (
       !env.HEADERS_SHIB_GUID ||
       !env.HEADERS_SHIB_DISPLAY_NAME ||
@@ -56,7 +56,7 @@ async function getRealUser(): Promise<UserDTO> {
  *  */
 async function getMaskUser() {
   if (env.AUTH_MASKING === "OFF") return await getRealUser();
-  return (await AuthMask.getMask()) ?? (await getRealUser());
+  return (await getCurrentDevUser()) ?? (await getRealUser());
 }
 
 /**

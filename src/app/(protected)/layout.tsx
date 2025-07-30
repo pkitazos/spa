@@ -19,7 +19,7 @@ export default async function Layout({
   // Currently we're doing a platform-wide testing block
   // If the user is not whitelisted, redirect them to the test message page
   // would be better to have a more granular control in the future, i.e. per group, sub-group, or instance
-  if (env.AUTH_WHITELIST === "ON" && !whitelisted(user)) {
+  if (env.AUTH_WHITELIST_ENABLED === "ON" && !whitelisted(user)) {
     redirect("/unauthorised");
   }
 
