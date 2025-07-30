@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 
 import { type UserDTO } from "@/dto";
 
+import { User } from "@/data-objects";
+
 import { db } from "@/db";
 
 const DEV_USER_COOKIE_KEY = "dev-selected-user-id";
@@ -49,8 +51,8 @@ export async function getCurrentDevUser(): Promise<UserDTO | undefined> {
     return undefined;
   }
 
-  const user = await db.user.findUnique({ where: { id: devUserId } });
-  return user ?? undefined;
+  const user = await new User(db, devUserId).toMaybeDTO();
+  return user;
 }
 
 /**

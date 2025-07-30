@@ -14,8 +14,8 @@ import { getCurrentDevUser } from "./switcher-actions";
  * `mask` - When masking is on, the current mask. Otherwise just a copy of real
  */
 export async function auth(): Promise<{ real: UserDTO; mask: UserDTO }> {
-  const real = await retrieveUser(await getRealUser());
-  const mask = await retrieveUser(await getMaskUser());
+  const real = await getRealUser();
+  const mask = await getMaskUser();
   return { real, mask };
 }
 
@@ -47,7 +47,8 @@ async function getRealUser(): Promise<UserDTO> {
     email = env.DEV_EMAIL;
   }
 
-  return userDtoSchema.parse({ id, name, email });
+  const user = await retrieveUser(userDtoSchema.parse({ id, name, email }));
+  return user;
 }
 
 /**
