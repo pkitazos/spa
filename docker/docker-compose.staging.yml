@@ -20,14 +20,13 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD}
 
       DEV_ENV: "staging"
+      AMPS_MODE: "staging"
       VALIDATE_ENV_VARS: "true"
+      AUTH_FROM_HEADERS: "ON"
 
-      # TODO
-      # Long term, these should be nuked and
-      # replaced with the fancy role picker
-      DEV_ID: ${DEV_ID}
-      DEV_NAME: ${DEV_NAME}
-      DEV_EMAIL: ${DEV_EMAIL}
+      HEADERS_SHIB_GUID: ${HEADERS_SHIB_GUID}
+      HEADERS_SHIB_DISPLAY_NAME: ${HEADERS_SHIB_DISPLAY_NAME}
+      HEADERS_SHIB_EMAIL: ${HEADERS_SHIB_EMAIL}
 
     volumes:
       - amps-app-logs:/app/logs/
