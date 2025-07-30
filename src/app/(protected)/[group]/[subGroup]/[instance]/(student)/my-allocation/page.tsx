@@ -33,7 +33,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
     );
   }
 
-  const user = await auth();
+  const { mask: user } = await auth();
 
   const allocatedProject = await api.user.student.getAllocatedProject({
     params,

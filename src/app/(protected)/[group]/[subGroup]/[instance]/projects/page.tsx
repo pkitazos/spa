@@ -21,7 +21,8 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 }
 
 export default async function Projects({ params }: { params: InstanceParams }) {
-  const user = await auth();
+  const { mask: user } = await auth();
+
   const roles = await api.user.roles({ params });
   const projectData = await api.project.getAllForUser({ params });
 
