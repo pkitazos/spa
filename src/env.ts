@@ -40,7 +40,7 @@ export const env = createEnv({
     /** Extract authentication information from headers. */
     AUTH_FROM_HEADERS: switchSchema.default("OFF"),
     /** Enable whitelist - only specified users will be able to access the site */
-    AUTH_WHITELIST: switchSchema.default("OFF"),
+    AUTH_WHITELIST_ENABLED: switchSchema.default("OFF"),
     /** comma-separated list of whitelisted user emails */
     AUTH_WHITELIST_EMAILS: z
       .string()
