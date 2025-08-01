@@ -36,7 +36,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
     );
   }
 
-  const user = await auth();
+  const { mask: user } = await auth();
 
   const preAllocatedTitle = await api.user.student.isPreAllocated({ params });
   if (preAllocatedTitle !== null) {

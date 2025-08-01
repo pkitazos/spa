@@ -12,13 +12,9 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
-import { switchDevUser } from "@/lib/auth/actions";
+import { switchDevUser } from "@/lib/auth/switcher-actions";
 import { cn } from "@/lib/utils";
-
-import {
-  getColorFromName,
-  getInitials,
-} from "@/lib/utils/avatar-icon-helpers";
+import { getColorFromName, getInitials } from "@/lib/utils/avatar-icon-helpers";
 
 interface UserSwitcherProps {
   users: UserDTO[];

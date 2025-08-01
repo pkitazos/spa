@@ -14,7 +14,7 @@ import { auth } from "@/lib/auth";
 const createContext = cache(async () => {
   const heads = new Headers(headers());
   heads.set("x-trpc-source", "rsc");
-  const user = await auth();
+  const { mask: user } = await auth();
   return createTRPCContext({ session: { user }, headers: heads });
 });
 

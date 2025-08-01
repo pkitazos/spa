@@ -1,4 +1,3 @@
-import { env } from "@/env";
 import { z } from "zod";
 
 import { readerStages, studentStages, supervisorStages } from "@/config/stages";
@@ -88,14 +87,4 @@ export const accessControlRouter = createTRPCRouter({
       async ({ ctx: { user }, input: { segments } }) =>
         await user.authoriseBreadcrumbs(segments),
     ),
-
-  whitelisted: procedure.user
-    .output(z.boolean())
-    .query(async ({ ctx: { user } }) => {
-      const { email } = await user.toDTO();
-
-      return env.AMPS_WHITELISTED_USERS.toLowerCase()
-        .split(";")
-        .includes(email);
-    }),
 });

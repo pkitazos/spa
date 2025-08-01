@@ -4,12 +4,16 @@ import { env } from "@/env";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { type UserDTO } from "@/dto";
+
+import { User } from "@/data-objects";
+
 import { db } from "@/db";
 
 const DEV_USER_COOKIE_KEY = "dev-selected-user-id";
 
-export async function switchDevUser(userId: string) {
-  if (env.DEV_ENV === "PROD") {
+export async function switchDevUser(userId: string): Promise<void> {
+  if (env.AUTH_MASKING === "OFF") {
     throw new Error("User switching is only available in development");
   }
 
@@ -31,25 +35,31 @@ export async function switchDevUser(userId: string) {
   redirect("/");
 }
 
-export async function getCurrentDevUser() {
-  if (env.DEV_ENV === "PROD") {
-    return null;
+/**
+ * Get the current authentication mask, if enabled
+ * @returns Current mask (if one exists)
+ */
+export async function getCurrentDevUser(): Promise<UserDTO | undefined> {
+  if (env.AUTH_MASKING === "OFF") {
+    return undefined;
   }
 
   const cookieStore = cookies();
   const devUserId = cookieStore.get(DEV_USER_COOKIE_KEY)?.value;
 
   if (!devUserId) {
-    return null;
+    return undefined;
   }
 
-  const user = await db.user.findUnique({ where: { id: devUserId } });
+  const user = await new User(db, devUserId).toMaybeDTO();
   return user;
 }
 
-// for logging out the dev user
+/**
+ * Log out the dev user
+ * */
 export async function clearDevUser() {
-  if (env.DEV_ENV === "PROD") {
+  if (env.AUTH_MASKING === "OFF") {
     throw new Error("User switching is only available in development");
   }
 

@@ -36,7 +36,8 @@ export const createTRPCContext = async (opts: {
   headers: Headers;
   session: Session | null;
 }) => {
-  const user = await auth();
+  const { mask: user } = await auth();
+
   if (!user) console.error("Failed to get user from auth()");
   const session = opts.session ?? { user };
 
