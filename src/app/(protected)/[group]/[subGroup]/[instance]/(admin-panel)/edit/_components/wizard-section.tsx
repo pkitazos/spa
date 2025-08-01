@@ -12,8 +12,6 @@ import {
   type UnitOfAssessmentDTO,
 } from "@/dto";
 
-import { MarkerType } from "@/db/types";
-
 import {
   InstanceWizard,
   type WizardFormData,
@@ -47,24 +45,9 @@ export function WizardSection({
     ...instance
   }: WizardFormData) {
     const flags = flagData.map((f) => ({
-      title: f.flag,
+      id: f.id,
+      displayName: f.displayName,
       description: f.description,
-      unitsOfAssessment: f.units_of_assessment.map((u) => ({
-        title: u.title,
-        weight: u.weight,
-        studentSubmissionDeadline: u.student_submission_deadline,
-        markerSubmissionDeadline: u.marker_submission_deadline,
-        allowedMarkerTypes: u.allowed_marker_types.map((t) =>
-          t === "supervisor" ? MarkerType.SUPERVISOR : MarkerType.READER,
-        ),
-        components: u.assessment_criteria.flatMap((c, i) => ({
-          title: c.title,
-          description: c.description,
-          weight: c.weight,
-          layoutIndex: i,
-        })),
-        isOpen: false,
-      })),
     }));
 
     const updatedInstance = { ...params, ...instance };
@@ -87,22 +70,9 @@ export function WizardSection({
       defaultValues={{
         tags: formDetails.tags,
         flags: formDetails.flags.map((f) => ({
-          flag: f.title,
+          id: f.id,
+          displayName: f.displayName,
           description: f.description,
-          units_of_assessment: f.unitsOfAssessment.map((a) => ({
-            title: a.title,
-            weight: a.weight,
-            student_submission_deadline: a.studentSubmissionDeadline,
-            marker_submission_deadline: a.markerSubmissionDeadline,
-            allowed_marker_types: a.allowedMarkerTypes.map((t) =>
-              t === "SUPERVISOR" ? "supervisor" : "reader",
-            ),
-            assessment_criteria: a.components.map((c) => ({
-              description: c.description,
-              title: c.title,
-              weight: c.weight,
-            })),
-          })),
         })),
         ...formDetails.instance,
       }}

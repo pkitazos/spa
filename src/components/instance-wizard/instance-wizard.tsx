@@ -10,6 +10,7 @@ import { spacesLabels } from "@/config/spaces";
 
 import { DateTimePicker } from "@/components/date-time-picker";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   FormControl,
   FormDescription,
@@ -25,7 +26,6 @@ import { FormWizard, type WizardStep } from "../wizard-form";
 
 import { UploadJsonArea } from "./flag-json-upload";
 import TagInput from "./tag-input";
-import { TimelineSequence } from "./timeline-sequence";
 
 // TODO these need reset buttons
 
@@ -76,7 +76,7 @@ function buildWizardSchema(takenNames = new Set<string>()) {
       minStudentPreferences: z.coerce
         .number("Please enter an integer")
         .int("Number must be an integer")
-        .positive(),
+        .nonnegative(),
 
       maxStudentPreferences: z.coerce
         .number("Please enter an integer")
@@ -92,7 +92,7 @@ function buildWizardSchema(takenNames = new Set<string>()) {
       minReaderPreferences: z.coerce
         .number("Please enter an integer")
         .int("Number must be an integer")
-        .positive(),
+        .nonnegative(),
 
       maxReaderPreferences: z.coerce
         .number("Please enter an integer")
@@ -362,7 +362,7 @@ function DeadlinesPage() {
             </FormItem>
           )}
         />
-        <TimelineSequence />
+        {/* <TimelineSequence /> */}
       </div>
     </WizardPage>
   );
@@ -528,71 +528,164 @@ function ReviewPage() {
       title="Review & Submit"
       description="Review your settings and create your allocation instance."
     >
-      <div className="flex flex-col items-start justify-start gap-4">
-        <div>
-          <p className="text-sm text-muted-foreground">Display Name</p>
-          <p>{formData.displayName}</p>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">Flags</p>
-          <p>
-            {formData.flags.map((f) => (
-              <div key={f.id}>
-                <p className="font-semibold">{f.id}</p>
-                <p>{f.displayName}</p>
-                <p>{f.description}</p>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Basic Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div>
+                <span className="text-sm font-medium text-muted-foreground">
+                  Display Name
+                </span>
+                <p className="text-base font-semibold">
+                  {formData.displayName}
+                </p>
               </div>
-            ))}
-          </p>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">Tags</p>
-          <div className="flex flex-wrap gap-2">
-            {formData.tags.map((t, i) => (
-              <Badge variant="accent" key={i}>
-                {t.title}
-              </Badge>
-            ))}
-          </div>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">Deadlines</p>
-          <p>
-            Project Submission:
-            {format(formData.projectSubmissionDeadline, "dd MMM yyyy - HH:mm")}
-          </p>
-          <p>
-            Student Preference Submission:
-            {format(
-              formData.studentPreferenceSubmissionDeadline,
-              "dd MMM yyyy - HH:mm ",
-            )}
-          </p>
-          <p>
-            Reader Preference Submission:
-            {format(
-              formData.readerPreferenceSubmissionDeadline,
-              "dd MMM yyyy - HH:mm ",
-            )}
-          </p>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">
-            Student Preference Restrictions
-          </p>
-          <p>min: {formData.minStudentPreferences}</p>
-          <p>max: {formData.maxStudentPreferences}</p>
-          <p>
-            max per supervisor: {formData.maxStudentPreferencesPerSupervisor}
-          </p>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">
-            Reader Preference Restrictions
-          </p>
-          <p>min: {formData.minReaderPreferences}</p>
-          <p>max: {formData.maxReaderPreferences}</p>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Student Flags</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {formData.flags.map((flag) => (
+                <div key={flag.id} className="rounded-md border p-3">
+                  <div className="mb-1 flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {flag.id}
+                    </Badge>
+                    <span className="font-medium">{flag.displayName}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {flag.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Project Keywords</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {formData.tags.map((tag, i) => (
+                <Badge variant="outline" key={i} className="px-3 py-1">
+                  {tag.title}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Deadlines</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Project Submission:</span>
+                <span className="text-sm">
+                  {format(
+                    formData.projectSubmissionDeadline,
+                    "dd MMM yyyy - HH:mm",
+                  )}
+                </span>
+              </div>
+              <Separator />
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">
+                  Student Preferences:
+                </span>
+                <span className="text-sm">
+                  {format(
+                    formData.studentPreferenceSubmissionDeadline,
+                    "dd MMM yyyy - HH:mm",
+                  )}
+                </span>
+              </div>
+              <Separator />
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Reader Preferences:</span>
+                <span className="text-sm">
+                  {format(
+                    formData.readerPreferenceSubmissionDeadline,
+                    "dd MMM yyyy - HH:mm",
+                  )}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Student Preference Rules</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">
+                  Minimum preferences:
+                </span>
+                <span className="text-sm font-mono">
+                  {formData.minStudentPreferences}
+                </span>
+              </div>
+              <Separator />
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">
+                  Maximum preferences:
+                </span>
+                <span className="text-sm font-mono">
+                  {formData.maxStudentPreferences}
+                </span>
+              </div>
+              <Separator />
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Max per supervisor:</span>
+                <span className="text-sm font-mono">
+                  {formData.maxStudentPreferencesPerSupervisor}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Reader Preference Rules</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">
+                  Minimum preferences:
+                </span>
+                <span className="text-sm font-mono">
+                  {formData.minReaderPreferences}
+                </span>
+              </div>
+              <Separator />
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">
+                  Maximum preferences:
+                </span>
+                <span className="text-sm font-mono">
+                  {formData.maxReaderPreferences}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </WizardPage>
   );
