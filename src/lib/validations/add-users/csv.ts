@@ -1,29 +1,25 @@
 import { z } from "zod";
 
 export const addStudentsCsvHeaders = [
-  "full_name",
-  "guid",
+  "fullName",
+  "institutionId",
   "email",
-  "student_level",
+  "flagId",
 ];
 
 export const addSupervisorsCsvHeaders = [
-  "full_name",
-  "guid",
+  "fullName",
+  "institutionId",
   "email",
-  "project_target",
-  "project_upper_quota",
+  "projectTarget",
+  "projectUpperQuota",
 ];
 
 export const addStudentsCsvRowSchema = z.object({
-  full_name: z.string("a valid Full Name"),
-  guid: z.string("a valid GUID"),
+  fullName: z.string("a valid Full Name"),
+  institutionId: z.string("a valid Institution ID"),
   email: z.email("a valid Email"),
-  student_level: z
-    .number("a valid Student Level")
-    .int("an integer Student Level")
-    .positive("a positive Student Level")
-    .refine((level) => level === 4 || level === 5, "a valid Student Level"),
+  flagId: z.string("a valid Flag ID"),
 });
 
 export const addSupervisorsCsvRowSchema = z

@@ -737,13 +737,9 @@ export const instanceRouter = createTRPCRouter({
       return results;
     }),
 
-  // TODO rename? e.g. getFlagTitles
   getFlags: procedure.instance.user
-    .output(z.array(z.string()))
-    .query(async ({ ctx: { instance } }) => {
-      const flags = await instance.getFlags();
-      return flags.map((f) => f.displayName);
-    }),
+    .output(z.array(flagDtoSchema))
+    .query(async ({ ctx: { instance } }) => await instance.getFlags()),
 
   getMarkerSubmissions: procedure.instance.subGroupAdmin
     .input(z.object({ unitOfAssessmentId: z.string() }))

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { INSTITUTION } from "@/config/institution";
 import { PAGES } from "@/config/pages";
 
 import { type StudentDTO } from "@/dto";
@@ -65,10 +66,14 @@ export function useNewStudentColumns({
       ),
     },
     {
-      id: "GUID",
+      id: INSTITUTION.ID_NAME,
       accessorFn: ({ id }) => id,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="GUID" canFilter />
+        <DataTableColumnHeader
+          column={column}
+          title={INSTITUTION.ID_NAME}
+          canFilter
+        />
       ),
       cell: ({
         row: {
@@ -88,30 +93,24 @@ export function useNewStudentColumns({
       ),
     },
     {
-      id: "Student Level",
-      accessorFn: ({ level }) => level,
+      id: "Flag",
+      accessorFn: ({ flag }) => flag.displayName,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          className="w-24"
-          column={column}
-          title="Student Level"
-        />
+        <DataTableColumnHeader className="w-28" column={column} title="Flag" />
       ),
       cell: ({
         row: {
-          original: { level },
+          original: { flag },
         },
       }) => (
-        <div className="grid w-24 place-items-center">
-          <Badge variant="accent">{level}</Badge>
+        <div className="grid w-28 place-items-center">
+          <Badge variant="accent">{flag.displayName}</Badge>
         </div>
       ),
       filterFn: (row, columnId, value) => {
-        const selectedFilters = value as ("4" | "5")[];
+        const selectedFilters = value as string[];
         const rowValue = row.getValue<string>(columnId);
-        console.log({ selectedFilters });
-        const studentLevel = rowValue.toString();
-        return selectedFilters.includes(studentLevel);
+        return selectedFilters.includes(rowValue);
       },
     },
     {

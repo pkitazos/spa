@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
 
+import { type FlagDTO } from "@/dto";
+
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -12,26 +14,35 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import {
   type NewStudent,
-  newStudentSchema,
+  buildNewStudentSchema,
 } from "@/lib/validations/add-users/new-user";
 
 const blankStudentForm = {
   fullName: "",
   institutionId: "",
   email: "",
-  level: NaN,
+  flagId: "",
 };
 
 export function FormSection({
   handleAddStudent,
+  flags,
 }: {
   handleAddStudent: (newStudent: NewStudent) => Promise<void>;
+  flags: FlagDTO[];
 }) {
   const form = useForm<NewStudent>({
-    resolver: zodResolver(newStudentSchema),
+    resolver: zodResolver(buildNewStudentSchema(flags)),
     defaultValues: blankStudentForm,
   });
 
@@ -67,7 +78,7 @@ export function FormSection({
             render={({ field }) => (
               <FormItem className="w-1/6">
                 <FormControl>
-                  <Input placeholder="GUID" {...field} />
+                  <Input placeholder="Institution ID" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -87,12 +98,26 @@ export function FormSection({
           />
           <FormField
             control={form.control}
-            name="level"
+            name="flagId"
             render={({ field }) => (
-              <FormItem className="w-1/6">
-                <FormControl>
-                  <Input placeholder="Student Level" {...field} />
-                </FormControl>
+              <FormItem className="w-1/4">
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select flag" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {flags.map((flag) => (
+                      <SelectItem key={flag.id} value={flag.id}>
+                        {flag.displayName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

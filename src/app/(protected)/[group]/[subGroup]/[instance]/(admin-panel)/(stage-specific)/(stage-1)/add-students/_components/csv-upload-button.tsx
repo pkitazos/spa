@@ -51,11 +51,11 @@ export function CSVUploadButton({
             return;
           }
 
-          const { uniqueRows, duplicateRowGuids } = parseForDuplicates(
+          const { uniqueRows, duplicateRowInstitutionIds } = parseForDuplicates(
             result.data,
           );
 
-          if (duplicateRowGuids.size === 0) {
+          if (duplicateRowInstitutionIds.length === 0) {
             toast.success("CSV parsed successfully!");
           } else if (uniqueRows.length === 0) {
             toast.error("All rows seem to contain duplicates");
@@ -63,21 +63,13 @@ export function CSVUploadButton({
             toast.success(`${uniqueRows.length} rows parsed successfully!`);
             toast.error(
               <UserCreationErrorCard
-                error={`${duplicateRowGuids.size} duplicate rows found`}
-                affectedUsers={Array.from(duplicateRowGuids)}
+                error={`${duplicateRowInstitutionIds.length} duplicate rows found`}
+                affectedUsers={duplicateRowInstitutionIds}
               />,
             );
           }
 
-          // TODO can this be voided?
-          void handleUpload(
-            uniqueRows.map((e) => ({
-              fullName: e.full_name,
-              institutionId: e.guid,
-              email: e.email,
-              level: e.student_level,
-            })),
-          );
+          void handleUpload(uniqueRows);
         },
         header: true,
         skipEmptyLines: true,

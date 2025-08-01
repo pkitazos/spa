@@ -5,19 +5,20 @@ type Row = {
   reader_email: string;
 };
 
+function isDuplicate(row: Row, index: number, arr: Row[]) {
+  return arr.some(
+    (x, idx) => idx !== index && x.student_guid === row.student_guid,
+  );
+}
+
+function isNotDuplicate(row: Row, index: number, arr: Row[]) {
+  return !isDuplicate(row, index, arr);
+}
+
 export function parseForDuplicateReaders(data: Row[]): {
   uniqueRows: Row[];
   duplicateStudentGUIDs: Set<string>;
 } {
-  function isDuplicate(row: Row, index: number, arr: Row[]) {
-    return arr.some(
-      (x, idx) => idx !== index && x.student_guid === row.student_guid,
-    );
-  }
-
-  function isNotDuplicate(row: Row, index: number, arr: Row[]) {
-    return !isDuplicate(row, index, arr);
-  }
   const duplicateRows = data.filter(isDuplicate);
 
   return {

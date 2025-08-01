@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-export const newStudentSchema = z.object({
+import { type FlagDTO } from "@/dto";
+
+export const baseNewStudentSchema = z.object({
   fullName: z
     .string("Please enter a valid name")
     .min(1, "Please enter a valid name"),
@@ -10,13 +12,24 @@ export const newStudentSchema = z.object({
   email: z
     .email("Please enter a valid email address")
     .min(1, "Please enter a valid email address"),
-  level: z.coerce
-    .number<number>("Please enter a valid integer for the level")
-    .int("Please enter a valid integer for the level")
-    .refine((level) => level === 4 || level === 5, {
-      error: "Level must be 4 or 5",
-    }),
+  flagId: z
+    .string("Please select a valid flag")
+    .min(1, "Please select a valid flag"),
 });
+
+// for CSV parsing - validates the raw flag ID string
+export const csvStudentSchema = baseNewStudentSchema;
+
+// for form validation - validates flag ID exists in available flags
+export function buildNewStudentSchema(flags: FlagDTO[]) {
+  return baseNewStudentSchema.extend({
+    flagId: z
+      .string("Please select a valid flag")
+      .refine((id) => flags.some((flag) => flag.id === id), {
+        message: "Provided flag does not exist",
+      }),
+  });
+}
 
 export const newSupervisorSchema = z
   .object({
@@ -53,6 +66,6 @@ export const newSupervisorSchema = z
     },
   );
 
-export type NewStudent = z.infer<typeof newStudentSchema>;
+export type NewStudent = z.infer<ReturnType<typeof buildNewStudentSchema>>;
 
 export type NewSupervisor = z.infer<typeof newSupervisorSchema>;

@@ -17,11 +17,12 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
   };
 }
 
-export default function Page() {
+export default async function Page({ params }: { params: InstanceParams }) {
+  const flags = await api.institution.instance.getFlags({ params });
   return (
     <PanelWrapper>
       <Heading>{PAGES.addStudents.title}</Heading>
-      <AddStudentsSection />
+      <AddStudentsSection flags={flags} />
     </PanelWrapper>
   );
 }
