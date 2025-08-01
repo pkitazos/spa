@@ -2,7 +2,7 @@ name: amps
 
 services:
   app:
-    image: "ghcr.io/pkitazos/amps-app:main-latest"
+    image: "ghcr.io/pkitazos/amps-app:staging-latest"
     depends_on:
       - db
     ports:
@@ -18,10 +18,16 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD}
 
       DEV_ENV: "PROD"
-      AMPS_MODE: ${AMPS_MODE}
-      AMPS_ACCESS_CONTROL: ${AMPS_ACCESS_CONTROL}
-      AMPS_WHITELISTED_USERS: ${AMPS_WHITELISTED_USERS}
+      AMPS_MODE: "PROD"
       VALIDATE_ENV_VARS: "true"
+      AUTH_FROM_HEADERS: "ON"
+
+      HEADERS_SHIB_GUID: ${HEADERS_SHIB_GUID}
+      HEADERS_SHIB_DISPLAY_NAME: ${HEADERS_SHIB_DISPLAY_NAME}
+      HEADERS_SHIB_EMAIL: ${HEADERS_SHIB_EMAIL}
+
+      AUTH_WHITELIST_ENABLED: ${AUTH_WHITELIST_ENABLED}
+      AUTH_WHITELIST_EMAILS: ${AUTH_WHITELIST_EMAILS}
 
     volumes:
       - amps-app-logs:/app/logs/
