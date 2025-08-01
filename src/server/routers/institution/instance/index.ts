@@ -6,7 +6,6 @@ import { PAGES } from "@/config/pages";
 import {
   flagDtoSchema,
   instanceDtoSchema,
-  newUnitOfAssessmentSchema,
   ProjectAllocationStatus,
   projectDtoSchema,
   projectStatusRank as statusRank,
@@ -46,12 +45,12 @@ import { algorithmRouter } from "./algorithm";
 import { matchingRouter } from "./matching";
 import { preferenceRouter } from "./preference";
 
+// TODO: inline
 const tgc = z.object({
   id: z.string(),
   name: z.string(),
   email: z.string(),
   joined: z.boolean(),
-  level: z.number(),
   preAllocated: z.boolean(),
 });
 
@@ -416,7 +415,6 @@ export const instanceRouter = createTRPCRouter({
         name: u.name,
         email: u.email,
         joined: u.joined,
-        level: u.level,
         preAllocated: preAllocatedStudents.has(u.id),
       }));
 
@@ -435,11 +433,7 @@ export const instanceRouter = createTRPCRouter({
           supervisorAllocationAccess: true,
           studentAllocationAccess: true,
         }),
-        flags: z.array(
-          flagDtoSchema
-            .omit({ id: true })
-            .extend({ unitsOfAssessment: z.array(newUnitOfAssessmentSchema) }),
-        ),
+        flags: z.array(flagDtoSchema),
         tags: z.array(tagDtoSchema.omit({ id: true })),
       }),
     )
@@ -730,7 +724,7 @@ export const instanceRouter = createTRPCRouter({
 
           const student = await instance.getStudent(studentId);
           const studentData = await student.get();
-          await project.addFlags(studentData.flags);
+          await project.addFlags([studentData.flag]);
 
           await instance.createManualAllocation(studentId, projectId);
 
@@ -748,7 +742,7 @@ export const instanceRouter = createTRPCRouter({
     .output(z.array(z.string()))
     .query(async ({ ctx: { instance } }) => {
       const flags = await instance.getFlags();
-      return flags.map((f) => f.title);
+      return flags.map((f) => f.displayName);
     }),
 
   getMarkerSubmissions: procedure.instance.subGroupAdmin
@@ -790,7 +784,7 @@ export const instanceRouter = createTRPCRouter({
         include: {
           student: {
             include: {
-              studentFlags: { include: { flag: true } },
+              studentFlag: true,
               userInInstance: { include: { user: true } },
             },
           },
@@ -950,7 +944,7 @@ export const instanceRouter = createTRPCRouter({
             orderBy: [{ markerSubmissionDeadline: "asc" }],
           },
         },
-        orderBy: [{ title: "asc" }],
+        orderBy: [{ displayName: "asc" }],
       });
 
       return flags.map((f) => ({

@@ -28,7 +28,6 @@ import {
   type DB_AssessmentCriterion,
   type DB_Flag,
   type DB_FlagOnProject,
-  type DB_FlagOnStudent,
   type DB_UnitOfAssessment,
   type DB_Project,
   type DB_ReaderDetails,
@@ -141,7 +140,7 @@ export class Transformers {
     this: void,
     data: DB_StudentDetails & {
       userInInstance: DB_UserInInstance & { user: DB_User };
-      studentFlags: (DB_FlagOnStudent & { flag: DB_Flag })[];
+      studentFlag: DB_Flag;
     },
   ): StudentDTO {
     return {
@@ -149,9 +148,8 @@ export class Transformers {
       name: data.userInInstance.user.name,
       email: data.userInInstance.user.email,
       joined: data.userInInstance.joined,
-      level: data.studentLevel,
       latestSubmission: data.latestSubmissionDateTime ?? undefined,
-      flags: data.studentFlags.map((f) => f.flag),
+      flag: data.studentFlag,
     };
   }
 
@@ -217,7 +215,11 @@ export class Transformers {
   }
 
   public static toFlagDTO(this: void, data: DB_Flag): FlagDTO {
-    return { id: data.id, title: data.title, description: data.description };
+    return {
+      id: data.id,
+      displayName: data.displayName,
+      description: data.description,
+    };
   }
 
   public static toAlgorithmDTO(this: void, a: DB_Algorithm): AlgorithmDTO {

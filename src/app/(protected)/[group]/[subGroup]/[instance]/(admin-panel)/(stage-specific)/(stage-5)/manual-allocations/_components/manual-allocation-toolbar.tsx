@@ -27,7 +27,7 @@ export function ManualAllocationToolbar({
 
     students.forEach((student) => {
       student.flags.forEach((flag) => {
-        flagMap.set(flag.id, flag.title);
+        flagMap.set(flag.id, flag.displayName);
       });
     });
 

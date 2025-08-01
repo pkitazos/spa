@@ -32,35 +32,9 @@ import { TimelineSequence } from "./timeline-sequence";
 export const flagsAssessmentSchema = z
   .array(
     z.object({
-      flag: z.string(),
+      id: z.string(),
+      displayName: z.string(),
       description: z.string(),
-      units_of_assessment: z.array(
-        z.object({
-          title: z.string(),
-          student_submission_deadline: z.coerce.date(),
-          marker_submission_deadline: z.coerce.date(),
-          weight: z.number(),
-          allowed_marker_types: z
-            .array(
-              z.union([z.literal("supervisor"), z.literal("reader")], {
-                error: (issue) =>
-                  issue.code === "invalid_union"
-                    ? "Values must be either supervisor or reader"
-                    : (issue.message ?? "freaky error"),
-              }),
-            )
-            .refine((arr) => arr.length === new Set(arr).size, {
-              message: "no duplicate values",
-            }),
-          assessment_criteria: z.array(
-            z.object({
-              title: z.string(),
-              description: z.string(),
-              weight: z.number(),
-            }),
-          ),
-        }),
-      ),
     }),
   )
   .min(1);
@@ -248,22 +222,11 @@ function BasicDetailsPage() {
   );
 }
 
-function FlagsAssessmentPage() {
-  /**
-   * TODO hook up visual component (i.e. re-write with form control)
-   * need to create a bridge between the store and form
-   * can add an effect that syncs data between them ?
-   *
-   * - should initialise state using the current form values
-   * - need a way to update the form when the marking scheme changes
-   * - "New Flag" button should add flags to both the Zustand store and the form
-   * - flag deletion must update both states
-   *
-   */
+function StudentFlagsPage() {
   return (
     <WizardPage
-      title="Flags & Assessment Configuration"
-      description="Configure flags to categorize students and define assessments for each flag."
+      title="Student Flags Configuration"
+      description="Configure flags to categorise students."
     >
       <UploadJsonArea />
     </WizardPage>
@@ -574,47 +537,10 @@ function ReviewPage() {
           <p className="text-sm text-muted-foreground">Flags</p>
           <p>
             {formData.flags.map((f) => (
-              <div key={f.flag}>
-                <p className="font-semibold">{f.flag}</p>
+              <div key={f.id}>
+                <p className="font-semibold">{f.id}</p>
+                <p>{f.displayName}</p>
                 <p>{f.description}</p>
-                <div>
-                  {f.units_of_assessment.map((u) => (
-                    <div key={`${f.flag}-${u.title}`} className="pl-6">
-                      <p className="font-semibold">{u.title}</p>
-                      <p>weight: {u.weight}</p>
-                      <p>
-                        allowed marker types:{" "}
-                        {u.allowed_marker_types.join(", ")}
-                      </p>
-                      <p>
-                        <span>Student Submission Deadline: </span>
-                        {format(
-                          u.student_submission_deadline,
-                          "dd MMM yyyy - HH:mm",
-                        )}
-                      </p>
-                      <p>
-                        <span>Marker Submission Deadline: </span>
-                        {format(
-                          u.marker_submission_deadline,
-                          "dd MMM yyyy - HH:mm",
-                        )}
-                      </p>
-                      <div className="pl-6">
-                        {u.assessment_criteria.map((c) => (
-                          <div
-                            className="pl-6"
-                            key={`${f.flag}-${u.title}-${c.title}`}
-                          >
-                            <p className="font-semibold">{c.title}</p>
-                            <p>{c.description}</p>
-                            <p>{c.weight}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
             ))}
           </p>
@@ -681,9 +607,9 @@ export const WIZARD_STEPS: WizardStep<WizardFormData>[] = [
   },
   {
     id: "flags-assessment",
-    title: "Flags & Assessments",
+    title: "Student Flags",
     fieldsToValidate: ["flags"],
-    render: () => <FlagsAssessmentPage />,
+    render: () => <StudentFlagsPage />,
   },
   {
     id: "project-tags",

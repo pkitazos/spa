@@ -33,7 +33,7 @@ export class Student extends User {
       .findFirstOrThrow({
         where: { userId: this.id, ...expand(this.instance.params) },
         include: {
-          studentFlags: { include: { flag: true } },
+          studentFlag: true,
           userInInstance: { include: { user: true } },
         },
       })
@@ -193,7 +193,10 @@ export class Student extends User {
     return boardState;
   }
 
-  public async setStudentLevel(level: number): Promise<StudentDTO> {
+  /**
+   * @deprecated
+   */
+  public async setStudentLevel(_level: number): Promise<StudentDTO> {
     return await this.db.studentDetails
       .update({
         where: {
@@ -202,9 +205,9 @@ export class Student extends User {
             ...expand(this.instance.params),
           },
         },
-        data: { studentLevel: level },
+        data: {},
         include: {
-          studentFlags: { include: { flag: true } },
+          studentFlag: true,
           userInInstance: { include: { user: true } },
         },
       })

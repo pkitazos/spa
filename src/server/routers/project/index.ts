@@ -117,14 +117,12 @@ export const projectRouter = createTRPCRouter({
 
       if (await user.isStudent(instance.params)) {
         const student = await user.toStudent(instance.params);
-        const studentData = await student.get();
+        const { flag: studentFlag } = await student.get();
 
         return projectData
-          .filter((p) => {
-            const projectFlags = new Set(p.project.flags.map((f) => f.title));
-            const studentFlags = new Set(studentData.flags.map((f) => f.title));
-            return studentFlags.intersection(projectFlags).size !== 0;
-          })
+          .filter((p) =>
+            p.project.flags.map((f) => f.id).includes(studentFlag.id),
+          )
           .map((p) => ({
             project: p.project,
             supervisor: p.supervisor,
@@ -215,13 +213,11 @@ export const projectRouter = createTRPCRouter({
       } else if (await user.isStudent(instance.params)) {
         const student = await user.toStudent(instance.params);
 
-        const { flags: studentFlags } = await student.get();
-        const studentFlagSet = new Set(studentFlags);
+        const { flag: studentFlag } = await student.get();
 
         const projectFlags = await project.getFlags();
-        const projectFlagsSet = new Set(projectFlags);
 
-        if (studentFlagSet.intersection(projectFlagsSet).size !== 0) {
+        if (projectFlags.map((f) => f.id).includes(studentFlag.id)) {
           return { access: true };
         } else {
           return {
@@ -270,7 +266,7 @@ export const projectRouter = createTRPCRouter({
             include: {
               student: {
                 include: {
-                  studentFlags: { include: { flag: true } },
+                  studentFlag: true,
                   userInInstance: { include: { user: true } },
                 },
               },
@@ -280,7 +276,7 @@ export const projectRouter = createTRPCRouter({
             include: {
               student: {
                 include: {
-                  studentFlags: { include: { flag: true } },
+                  studentFlag: true,
                   userInInstance: { include: { user: true } },
                 },
               },
@@ -483,7 +479,7 @@ export const projectRouter = createTRPCRouter({
           student: {
             include: {
               userInInstance: { include: { user: true } },
-              studentFlags: { include: { flag: true } },
+              studentFlag: true,
             },
           },
         },

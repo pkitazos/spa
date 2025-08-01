@@ -44,7 +44,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
                 <TableCell colSpan={2}>
                   <SectionHeading className="flex items-center text-2xl no-underline">
                     <ClipboardPenIcon className="mr-2 h-6 w-6 text-indigo-500" />
-                    <span>{x.flag.title}</span>
+                    <span>{x.flag.displayName}</span>
                   </SectionHeading>
                 </TableCell>
               </TableRow>

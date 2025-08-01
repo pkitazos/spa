@@ -1,7 +1,7 @@
 model User {
   id              String           @id
   name            String
-  email           String           @unique
+  email           String // @unique
   // ---
   userInInstances UserInInstance[]
   superAdmin      SuperAdmin?
@@ -9,22 +9,6 @@ model User {
   subGroupAdmin   SubGroupAdmin[]
 
   @@map("user")
-}
-
-model FlagOnStudent {
-  flag                 Flag               @relation(fields: [flagId], references: [id], onDelete: Cascade, map: "flag_student_flag")
-  flagId               String             @map("flag_id")
-  student              StudentDetails     @relation(fields: [studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, map: "flag_student_student")
-  studentId            String             @map("student_id")
-  // ---
-  allocationGroupId    String             @map("allocation_group_id")
-  allocationSubGroupId String             @map("allocation_sub_group_id")
-  allocationInstanceId String             @map("allocation_instance_id")
-  // ---
-  allocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "flag_student_instance")
-
-  @@id([flagId, studentId, allocationGroupId, allocationSubGroupId, allocationInstanceId], name: "flagOnStudentId", map: "flag_on_student_id")
-  @@map("flag_on_student")
 }
 
 model StudentDetails {
@@ -37,7 +21,8 @@ model StudentDetails {
   allocationInstanceId     String                       @map("allocation_instance_id")
   // ---
   userInInstance           UserInInstance               @relation("student_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, map: "student_user")
-  studentFlags             FlagOnStudent[]
+  flagId                   String
+  studentFlag              Flag                         @relation(fields: [flagId], references: [id], onDelete: Cascade, map: "student_flag")
   draftPreferences         StudentDraftPreference[]
   submittedPreferences     StudentSubmittedPreference[]
   matchingPairs            MatchingPair[]

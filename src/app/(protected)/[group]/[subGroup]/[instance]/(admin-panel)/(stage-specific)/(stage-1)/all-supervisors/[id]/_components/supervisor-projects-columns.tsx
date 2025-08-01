@@ -128,7 +128,7 @@ export function useSupervisorProjectsColumns({
           {project.flags.length > 2 ? (
             <>
               <Badge className="w-fit" key={project.flags[0].id}>
-                {project.flags[0].title}
+                {project.flags[0].displayName}
               </Badge>
               <WithTooltip
                 side="right"
@@ -136,7 +136,7 @@ export function useSupervisorProjectsColumns({
                   <ul className="flex list-disc flex-col gap-1 p-2 pl-1">
                     {project.flags.slice(1).map((flag) => (
                       <Badge className="w-fit" key={flag.id}>
-                        {flag.title}
+                        {flag.displayName}
                       </Badge>
                     ))}
                   </ul>
@@ -150,7 +150,7 @@ export function useSupervisorProjectsColumns({
           ) : (
             project.flags.map((flag) => (
               <Badge className="w-fit" key={flag.id}>
-                {flag.title}
+                {flag.displayName}
               </Badge>
             ))
           )}

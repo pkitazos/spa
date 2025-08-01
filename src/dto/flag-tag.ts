@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const flagDtoSchema = z.object({
   id: z.string(),
-  title: z.string(),
+  displayName: z.string(),
   description: z.string(),
 });
 

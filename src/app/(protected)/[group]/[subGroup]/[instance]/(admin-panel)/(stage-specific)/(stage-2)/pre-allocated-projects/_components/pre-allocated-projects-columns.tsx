@@ -140,7 +140,7 @@ export function usePreAllocatedProjectColumns({
           {flags.length > 2 ? (
             <>
               <Badge className="w-fit" key={flags[0].id}>
-                {flags[0].title}
+                {flags[0].displayName}
               </Badge>
               <WithTooltip
                 side="right"
@@ -148,7 +148,7 @@ export function usePreAllocatedProjectColumns({
                   <ul className="flex list-disc flex-col gap-1 p-2 pl-1">
                     {flags.slice(1).map((flag) => (
                       <Badge className="w-max max-w-40" key={flag.id}>
-                        {flag.title}
+                        {flag.displayName}
                       </Badge>
                     ))}
                   </ul>
@@ -162,7 +162,7 @@ export function usePreAllocatedProjectColumns({
           ) : (
             flags.map((flag) => (
               <Badge className="w-max max-w-40" key={flag.id}>
-                {flag.title}
+                {flag.displayName}
               </Badge>
             ))
           )}

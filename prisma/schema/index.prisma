@@ -72,7 +72,6 @@ model AllocationInstance {
   // ---
   users                               UserInInstance[]
   projects                            Project[]
-  studentFlags                        FlagOnStudent[]
   algorithms                          Algorithm[]
   flags                               Flag[]
   tags                                Tag[]
@@ -87,8 +86,8 @@ model AllocationInstance {
 }
 
 model Flag {
-  id                   String             @id @default(uuid())
-  title                String
+  id                   String             @id
+  displayName          String             @map("display_name")
   description          String
   // ---
   allocationGroupId    String             @map("allocation_group_id")
@@ -97,10 +96,10 @@ model Flag {
   // ---
   allocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "flag_instance")
   flagOnProjects       FlagOnProject[]
-  flagOnStudents       FlagOnStudent[]
   unitsOfAssessment    UnitOfAssessment[]
+  students             StudentDetails[]
 
-  @@unique([title, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+  @@unique([displayName, allocationGroupId, allocationSubGroupId, allocationInstanceId])
   @@map("flag")
 }
 

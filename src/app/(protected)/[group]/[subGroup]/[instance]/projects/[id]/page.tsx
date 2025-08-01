@@ -259,7 +259,7 @@ async function ProjectDetailsCard({
           <div className="flex flex-wrap gap-2">
             {projectData.project.flags.map((flag, i) => (
               <Badge className="w-max" variant="outline" key={i}>
-                {flag.title}
+                {flag.displayName}
               </Badge>
             ))}
           </div>

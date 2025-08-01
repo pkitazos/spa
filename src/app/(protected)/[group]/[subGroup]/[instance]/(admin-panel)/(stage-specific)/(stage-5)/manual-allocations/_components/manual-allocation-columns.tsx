@@ -72,7 +72,7 @@ export function useManualAllocationColumns({
                   variant="accent"
                   className="px-2 py-1 text-xs"
                 >
-                  {flag.title}
+                  {flag.displayName}
                 </Badge>
               ))}
             </div>

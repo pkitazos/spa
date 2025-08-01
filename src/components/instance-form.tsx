@@ -183,7 +183,7 @@ export function InstanceForm({
     minReaderPreferences: 1,
     maxReaderPreferences: 1,
     readerPreferenceSubmissionDeadline: addMonths(new Date(), 1),
-    flags: [{ title: "", description: "" }],
+    flags: [{ displayName: "", description: "" }],
     tags: [],
   };
 

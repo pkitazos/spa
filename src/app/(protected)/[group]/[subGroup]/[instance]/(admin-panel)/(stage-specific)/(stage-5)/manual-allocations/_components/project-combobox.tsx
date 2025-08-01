@@ -196,7 +196,7 @@ function ProjectCell({
       <div className="flex flex-wrap gap-1">
         {project.flags.map((flag) => (
           <Badge key={flag.id} variant="accent">
-            {flag.title}
+            {flag.displayName}
           </Badge>
         ))}
       </div>
