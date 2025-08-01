@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 import { TRPCClientError } from "@trpc/client";
 import { FileText, RotateCcw } from "lucide-react";
@@ -23,20 +23,34 @@ import { api } from "@/lib/trpc/client";
 import { addStudentsCsvHeaders } from "@/lib/validations/add-users/csv";
 import { type NewStudent } from "@/lib/validations/add-users/new-user";
 
-import { CSVUploadButton, type CSVUploadHandle } from "./csv-upload-button";
+import { CSVUploadButton } from "./csv-upload-button";
+import { type ProcessingResult } from "./csv-validation-utils";
 import { FormSection } from "./form-section";
 import { useNewStudentColumns } from "./new-student-columns";
 
 export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
   const router = useRouter();
   const params = useInstanceParams();
-  const csvUploadRef = useRef<CSVUploadHandle>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [processingResult, setProcessingResult] =
+    useState<ProcessingResult | null>(null);
 
   const { data, isLoading, refetch } =
     api.institution.instance.getStudents.useQuery({ params });
 
   const { mutateAsync: addStudentAsync } =
     api.institution.instance.addStudent.useMutation();
+
+  const { mutateAsync: addStudentsAsync } =
+    api.institution.instance.addStudents.useMutation();
+
+  const { mutateAsync: removeStudentAsync } =
+    api.institution.instance.removeStudent.useMutation();
+
+  const { mutateAsync: removeStudentsAsync } =
+    api.institution.instance.removeStudents.useMutation();
 
   async function handleAddStudent(data: NewStudent) {
     const flag = flags.find((f) => f.id === data.flagId);
@@ -70,9 +84,6 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
     );
   }
 
-  const { mutateAsync: addStudentsAsync } =
-    api.institution.instance.addStudents.useMutation();
-
   async function handleAddStudents(
     students: StudentDTO[],
   ): Promise<LinkUserResult[]> {
@@ -89,9 +100,6 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
     }
   }
 
-  const { mutateAsync: removeStudentAsync } =
-    api.institution.instance.removeStudent.useMutation();
-
   async function handleStudentRemoval(studentId: string) {
     void toast.promise(
       removeStudentAsync({ params, studentId }).then(async () => {
@@ -105,10 +113,6 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
       },
     );
   }
-
-  const { mutateAsync: removeStudentsAsync } =
-    api.institution.instance.removeStudents.useMutation();
-
   async function handleStudentsRemoval(studentIds: string[]) {
     void toast.promise(
       removeStudentsAsync({ params, studentIds }).then(async () => {
@@ -123,6 +127,19 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
     );
   }
 
+  function handleClearResults() {
+    setProcessingResult(null);
+    setShowErrorModal(false);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  function handleShowModal() {
+    setShowErrorModal(true);
+  }
+
   const columns = useNewStudentColumns({
     removeStudent: handleStudentRemoval,
     removeSelectedStudents: handleStudentsRemoval,
@@ -134,10 +151,14 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
         <h3 className="text-xl">Upload using CSV</h3>
         <div className="flex items-center gap-6">
           <CSVUploadButton
-            ref={csvUploadRef}
             requiredHeaders={addStudentsCsvHeaders}
             handleUpload={handleAddStudents}
             flags={flags}
+            processingResult={processingResult}
+            onProcessingResultChange={setProcessingResult}
+            showErrorModal={showErrorModal}
+            onShowErrorModalChange={setShowErrorModal}
+            fileInputRef={fileInputRef}
           />
           <div className="flex flex-col items-start">
             <p className="text-muted-foreground">must contain header: </p>
@@ -149,8 +170,8 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => csvUploadRef.current?.showModal()}
-              disabled={!csvUploadRef.current?.hasResults()}
+              onClick={handleShowModal}
+              disabled={!processingResult}
               className="flex items-center gap-2"
             >
               <FileText className="h-4 w-4" />
@@ -159,8 +180,8 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => csvUploadRef.current?.clearResults()}
-              disabled={!csvUploadRef.current?.hasResults()}
+              onClick={handleClearResults}
+              disabled={!processingResult}
               className="flex items-center gap-2"
             >
               <RotateCcw className="h-4 w-4" />
