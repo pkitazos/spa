@@ -8,7 +8,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
-import z from "zod";
+import { z } from "zod";
 
 import { PAGES } from "@/config/pages";
 import { spacesLabels } from "@/config/spaces";

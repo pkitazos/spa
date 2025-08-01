@@ -1,0 +1,27 @@
+[
+  {
+    "id": "L4",
+    "displayName": "Level 4 - Single Honours (40 credits)",
+    "description": "This marks a project suitable for a Level 4 students"
+  },
+  {
+    "id": "L5",
+    "displayName": "Level 5 - Single Honours (80 credits)",
+    "description": "This marks a project suitable for a Level 5 students"
+  },
+  {
+    "id": "SEYP",
+    "displayName": "Software Engineering with Year Placement (40 credits)",
+    "description": "This marks a project suitable for SEYP students"
+  },
+  {
+    "id": "L4_JH",
+    "displayName": "Level 4 - Joint Honours (20 credits)",
+    "description": "This marks a project suitable for a Level 4 - Joint Honours students"
+  },
+  {
+    "id": "L5_JH",
+    "displayName": "Level 5 - Joint Honours (40 credits)",
+    "description": "This marks a project suitable for a Level 5 - Joint Honours students"
+  }
+]

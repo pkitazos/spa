@@ -70,7 +70,7 @@ export const STAGES: Record<Stage, StageInfo> = {
 
   [Stage.READER_BIDDING]: {
     id: Stage.READER_BIDDING,
-    number: 0,
+    number: 7,
     name: "Reader Bidding",
     description: "Readers can bid on projects.",
     permittedRoles: [Role.ADMIN, Role.SUPERVISOR, Role.READER],
@@ -78,7 +78,7 @@ export const STAGES: Record<Stage, StageInfo> = {
 
   [Stage.READER_ALLOCATION]: {
     id: Stage.READER_ALLOCATION,
-    number: 0,
+    number: 8,
     name: "Reader Allocation",
     description: "Readers are allocated to projects based on bids.",
     permittedRoles: [Role.ADMIN, Role.SUPERVISOR, Role.READER],
@@ -86,7 +86,7 @@ export const STAGES: Record<Stage, StageInfo> = {
 
   [Stage.MARK_SUBMISSION]: {
     id: Stage.MARK_SUBMISSION,
-    number: 0,
+    number: 9,
     name: "Mark Submission",
     description: "Readers and Supervisors submit marks for projects.",
     permittedRoles: [Role.ADMIN, Role.SUPERVISOR, Role.READER],
@@ -94,7 +94,7 @@ export const STAGES: Record<Stage, StageInfo> = {
 
   [Stage.GRADE_PUBLICATION]: {
     id: Stage.GRADE_PUBLICATION,
-    number: 0,
+    number: 10,
     name: "Grade Publication",
     description:
       "Readers and Supervisors can view the published grades for projects.",

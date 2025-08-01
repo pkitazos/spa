@@ -6,7 +6,7 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
-import z from "zod";
+import { z } from "zod";
 
 import { type ProjectDTO } from "@/dto";
 
