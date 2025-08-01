@@ -104,7 +104,9 @@ export function useNewStudentColumns({
         },
       }) => (
         <div className="grid w-28 place-items-center">
-          <Badge variant="accent">{flag.displayName}</Badge>
+          <Badge variant="accent" className="rounded-md">
+            {flag.displayName}
+          </Badge>
         </div>
       ),
       filterFn: (row, columnId, value) => {

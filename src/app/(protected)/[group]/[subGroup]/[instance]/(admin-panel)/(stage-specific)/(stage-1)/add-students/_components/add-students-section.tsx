@@ -1,6 +1,9 @@
 "use client";
 
+import { useRef } from "react";
+
 import { TRPCClientError } from "@trpc/client";
+import { FileText, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -10,6 +13,7 @@ import { type FlagDTO, type StudentDTO } from "@/dto";
 import { type LinkUserResult } from "@/dto/result/link-user-result";
 
 import { useInstanceParams } from "@/components/params-context";
+import { Button } from "@/components/ui/button";
 import DataTable from "@/components/ui/data-table/data-table";
 import { LabelledSeparator } from "@/components/ui/labelled-separator";
 import { Separator } from "@/components/ui/separator";
@@ -19,13 +23,14 @@ import { api } from "@/lib/trpc/client";
 import { addStudentsCsvHeaders } from "@/lib/validations/add-users/csv";
 import { type NewStudent } from "@/lib/validations/add-users/new-user";
 
-import { CSVUploadButton } from "./csv-upload-button";
+import { CSVUploadButton, type CSVUploadHandle } from "./csv-upload-button";
 import { FormSection } from "./form-section";
 import { useNewStudentColumns } from "./new-student-columns";
 
 export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
   const router = useRouter();
   const params = useInstanceParams();
+  const csvUploadRef = useRef<CSVUploadHandle>(null);
 
   const { data, isLoading, refetch } =
     api.institution.instance.getStudents.useQuery({ params });
@@ -129,6 +134,7 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
         <h3 className="text-xl">Upload using CSV</h3>
         <div className="flex items-center gap-6">
           <CSVUploadButton
+            ref={csvUploadRef}
             requiredHeaders={addStudentsCsvHeaders}
             handleUpload={handleAddStudents}
             flags={flags}
@@ -138,6 +144,28 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
             <code className="text-muted-foreground">
               {addStudentsCsvHeaders.join(",")}
             </code>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => csvUploadRef.current?.showModal()}
+              disabled={!csvUploadRef.current?.hasResults()}
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              View Upload Results
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => csvUploadRef.current?.clearResults()}
+              disabled={!csvUploadRef.current?.hasResults()}
+              className="flex items-center gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Clear & Upload New
+            </Button>
           </div>
         </div>
       </div>

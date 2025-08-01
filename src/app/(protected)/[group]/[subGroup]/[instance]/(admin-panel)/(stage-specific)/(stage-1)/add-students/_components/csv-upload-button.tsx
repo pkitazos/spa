@@ -1,6 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, {
+  useState,
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 
 import { parse } from "papaparse";
 import { toast } from "sonner";
@@ -20,24 +25,48 @@ import {
 } from "./csv-validation-utils";
 import { ErrorReportModal } from "./error-report-modal";
 
-export function CSVUploadButton({
-  handleUpload,
-  requiredHeaders,
-  flags,
-}: {
-  handleUpload: (data: StudentDTO[]) => Promise<LinkUserResult[]>;
-  requiredHeaders: string[];
-  flags: FlagDTO[];
-}) {
+export interface CSVUploadHandle {
+  clearResults: () => void;
+  showModal: () => void;
+  hasResults: () => boolean;
+}
+
+export const CSVUploadButton = forwardRef<
+  CSVUploadHandle,
+  {
+    handleUpload: (data: StudentDTO[]) => Promise<LinkUserResult[]>;
+    requiredHeaders: string[];
+    flags: FlagDTO[];
+  }
+>(function CSVUploadButton({ handleUpload, requiredHeaders, flags }, ref) {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [processingResult, setProcessingResult] =
     useState<ProcessingResult | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const clearResults = () => {
+    setProcessingResult(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const showModal = () => {
+    setShowErrorModal(true);
+  };
+
+  const hasResults = () => {
+    return processingResult !== null;
+  };
+
+  useImperativeHandle(ref, () => ({ clearResults, showModal, hasResults }));
 
   async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
 
     try {
+      // Read raw text first to preserve original formatting
       const rawText = await file.text();
       const rawLines = rawText.split("\n");
 
@@ -62,7 +91,7 @@ export function CSVUploadButton({
     rawLines: string[],
   ) {
     try {
-      // validate file structure
+      // Step 1: Validate file structure
       const fileErrors = validateCSVStructure(data, headers, requiredHeaders);
 
       if (fileErrors.length > 0) {
@@ -76,18 +105,15 @@ export function CSVUploadButton({
         setProcessingResult(result);
 
         toast.error("CSV file has structural issues", {
-          action: {
-            label: "View Details",
-            onClick: () => setShowErrorModal(true),
-          },
+          action: { label: "View Details", onClick: showModal },
         });
         return;
       }
 
-      // validate individual rows
+      // Step 2: Validate individual rows
       const validation = validateCSVRows(data, flags, rawLines);
 
-      // track original indices for duplicate filtering
+      // Step 3: Track original indices for duplicate filtering
       const originalValidIndices: number[] = [];
       data.forEach((_, index) => {
         const hasErrors = validation.invalidRows.some(
@@ -98,19 +124,21 @@ export function CSVUploadButton({
         }
       });
 
-      // filter duplicates within CSV
+      // Step 4: Filter duplicates within CSV
       const { uniqueRows, duplicateRows } = filterDuplicatesWithinCSV(
         validation.validRows,
         rawLines,
         originalValidIndices,
       );
 
+      // Combine all invalid rows
       const allInvalidRows = [...validation.invalidRows, ...duplicateRows];
 
-      // process valid rows if any exist
+      // Step 5: Process valid rows if any exist
       let serverResults: LinkUserResult[] = [];
       if (uniqueRows.length > 0) {
-        const studentsToCreate = uniqueRows.map((student) => {
+        // Convert to StudentDTO format for server
+        const studentsToCreate: StudentDTO[] = uniqueRows.map((student) => {
           const flag = flags.find((f) => f.id === student.flagId)!;
           return {
             id: student.institutionId,
@@ -119,7 +147,7 @@ export function CSVUploadButton({
             flag,
             joined: false,
             latestSubmission: undefined,
-          } satisfies StudentDTO;
+          };
         });
 
         try {
@@ -131,15 +159,13 @@ export function CSVUploadButton({
         }
       }
 
-      // determine final results
+      // Step 6: Calculate final results
       const created = serverResults.filter(
         (r) => r === LinkUserResult.CREATED_NEW || r === LinkUserResult.OK,
       ).length;
-
       const preExisting = serverResults.filter(
         (r) => r === LinkUserResult.PRE_EXISTING,
       ).length;
-
       const failed = allInvalidRows.length;
 
       const result: ProcessingResult = {
@@ -152,40 +178,35 @@ export function CSVUploadButton({
 
       setProcessingResult(result);
 
+      // Step 7: Show appropriate notifications
       const hasDetails = preExisting > 0 || failed > 0;
 
       if (created > 0) {
         toast.success(`Successfully created ${created} students`, {
           action: hasDetails
-            ? { label: "View Details", onClick: () => setShowErrorModal(true) }
+            ? { label: "View Details", onClick: showModal }
             : undefined,
         });
       }
 
       if (preExisting > 0) {
         toast.warning(`${preExisting} students already existed`, {
-          action: {
-            label: "View Details",
-            onClick: () => setShowErrorModal(true),
-          },
+          action: { label: "View Details", onClick: showModal },
         });
       }
 
       if (failed > 0) {
         toast.error(`${failed} rows failed to process`, {
-          action: {
-            label: "View Details",
-            onClick: () => setShowErrorModal(true),
-          },
+          action: { label: "View Details", onClick: showModal },
         });
       }
 
-      // if everything succeeded with no warnings, show simple success
+      // If everything succeeded with no warnings, show simple success
       if (created > 0 && preExisting === 0 && failed === 0) {
         toast.success(`Successfully created ${created} students!`);
       }
 
-      // if nothing was processed at all
+      // If nothing was processed at all
       if (created === 0 && preExisting === 0 && failed === 0) {
         toast.warning("No valid rows found to process");
       }
@@ -198,6 +219,7 @@ export function CSVUploadButton({
   return (
     <>
       <Input
+        ref={fileInputRef}
         className="w-56 cursor-pointer"
         type="file"
         accept=".csv"
@@ -214,4 +236,4 @@ export function CSVUploadButton({
       )}
     </>
   );
-}
+});
