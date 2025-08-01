@@ -6,8 +6,8 @@ export const baseNewStudentSchema = z.object({
   fullName: z
     .string("Please enter a valid name")
     .min(1, "Please enter a valid name"),
-  institutionId: z
-    .string("Please enter a valid institution ID")
+  institutionId: z.coerce
+    .string<string>("Please enter a valid institution ID")
     .min(1, "Please enter a valid institution ID"),
   email: z
     .email("Please enter a valid email address")

@@ -15,6 +15,9 @@ export const addSupervisorsCsvHeaders = [
   "projectUpperQuota",
 ];
 
+/**
+ * @deprecated use `csvStudentSchema` instead
+ */
 export const addStudentsCsvRowSchema = z.object({
   fullName: z.string("a valid Full Name"),
   institutionId: z.string("a valid Institution ID"),

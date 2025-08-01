@@ -348,7 +348,6 @@ export const instanceRouter = createTRPCRouter({
       },
     ),
 
-  // BREAKING input/output types changed
   addStudents: procedure.instance.subGroupAdmin
     .input(z.object({ newStudents: z.array(studentDtoSchema) }))
     .output(z.array(LinkUserResultSchema))
@@ -362,7 +361,9 @@ export const instanceRouter = createTRPCRouter({
           .getUsers()
           .then((data) => data.map(({ id }) => id));
 
-        await institution.createUsers(newStudents);
+        await institution.createUsers(
+          newStudents.map((s) => ({ id: s.id, name: s.name, email: s.email })),
+        );
 
         await instance.linkUsers(newStudents);
 

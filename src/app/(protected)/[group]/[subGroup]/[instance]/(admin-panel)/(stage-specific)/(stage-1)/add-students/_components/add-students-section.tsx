@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { spacesLabels } from "@/config/spaces";
 
 import { type FlagDTO, type StudentDTO } from "@/dto";
+import { type LinkUserResult } from "@/dto/result/link-user-result";
 
 import { useInstanceParams } from "@/components/params-context";
 import DataTable from "@/components/ui/data-table/data-table";
@@ -67,48 +68,20 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
   const { mutateAsync: addStudentsAsync } =
     api.institution.instance.addStudents.useMutation();
 
-  async function handleAddStudents(data: NewStudent[]) {
-    const newStudents: StudentDTO[] = [];
+  async function handleAddStudents(
+    students: StudentDTO[],
+  ): Promise<LinkUserResult[]> {
+    try {
+      const results = await addStudentsAsync({ params, newStudents: students });
 
-    for (const student of data) {
-      const flag = flags.find((f) => f.id === student.flagId);
-      if (!flag) {
-        toast.error(
-          `Invalid flag ID: ${student.flagId} for student ${student.institutionId}`,
-        );
-        continue;
-      }
+      router.refresh();
+      await refetch();
 
-      newStudents.push({
-        id: student.institutionId,
-        name: student.fullName,
-        email: student.email,
-        flag,
-        joined: false,
-        latestSubmission: undefined,
-      });
+      return results;
+    } catch (err) {
+      console.error("Error adding students:", err);
+      throw err;
     }
-
-    if (newStudents.length === 0) {
-      toast.error("No valid students to add");
-      return;
-    }
-
-    void toast.promise(
-      addStudentsAsync({ params, newStudents }).then(async (result) => {
-        router.refresh();
-        await refetch();
-        return result;
-      }),
-      {
-        loading: `Adding ${newStudents.length} students...`,
-        success: `Successfully processed ${newStudents.length} students`,
-        error: (err) =>
-          err instanceof TRPCClientError
-            ? err.message
-            : `Failed to add students to ${spacesLabels.instance.short}`,
-      },
-    );
   }
 
   const { mutateAsync: removeStudentAsync } =
@@ -158,6 +131,7 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
           <CSVUploadButton
             requiredHeaders={addStudentsCsvHeaders}
             handleUpload={handleAddStudents}
+            flags={flags}
           />
           <div className="flex flex-col items-start">
             <p className="text-muted-foreground">must contain header: </p>

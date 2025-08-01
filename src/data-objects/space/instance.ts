@@ -951,7 +951,7 @@ export class AllocationInstance extends DataObject {
     ).map(byTitle);
 
     await this.db.$transaction(async (tx) => {
-      await this.db.allocationInstance.update({
+      await tx.allocationInstance.update({
         where: { instanceId: toInstanceId(this.params) },
         data: {
           projectSubmissionDeadline: instance.projectSubmissionDeadline,
@@ -971,7 +971,7 @@ export class AllocationInstance extends DataObject {
         },
       });
 
-      await this.db.flag.createMany({
+      await tx.flag.createMany({
         data: newInstanceFlags.map((f) => ({
           ...expand(this.params),
           id: f.id,
@@ -1026,14 +1026,14 @@ export class AllocationInstance extends DataObject {
       //   ),
       // });
 
-      await this.db.tag.deleteMany({
+      await tx.tag.deleteMany({
         where: {
           ...expand(this.params),
           title: { in: staleInstanceTagTitles },
         },
       });
 
-      await this.db.tag.createMany({
+      await tx.tag.createMany({
         data: newInstanceTags.map((t) => ({
           ...expand(this.params),
           title: t.title,
