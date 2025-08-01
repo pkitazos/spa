@@ -42,12 +42,10 @@ yarn-error.log*
 next-env.d.ts
 
 # project specific
-*.t.txt
 *.t.*
 
 *.log
 
+_tmp/
 junk/
-docs/tmp/
 .react-email/
-scripts/db/patch/data/
