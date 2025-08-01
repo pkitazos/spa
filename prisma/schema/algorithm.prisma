@@ -53,7 +53,7 @@ model MatchingResult {
   algorithmId          String             @unique @map("algorithm_config_id")
   // ---
   allocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "matching_instance")
-  algorithm            Algorithm          @relation(fields: [algorithmId], references: [id], map: "matching_algorithm")
+  algorithm            Algorithm          @relation(fields: [algorithmId], references: [id], onDelete: Cascade, map: "matching_algorithm")
 
   @@map("matching_result")
 }
