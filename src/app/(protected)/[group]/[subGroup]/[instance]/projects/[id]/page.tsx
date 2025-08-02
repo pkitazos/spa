@@ -58,7 +58,7 @@ export default async function Project({ params }: { params: PageParams }) {
 
   const instancePath = formatParamsAsPath(params);
 
-  const userAccess = await api.project.getUserAccess({ params: toPP1(params) });
+  const userAccess = await api.ac.projectAccess({ params: toPP1(params) });
 
   if (!userAccess.access) {
     return (

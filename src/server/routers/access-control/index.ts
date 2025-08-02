@@ -80,6 +80,38 @@ export const accessControlRouter = createTRPCRouter({
       return false;
     }),
 
+  projectAccess: procedure.project.user
+    .output(
+      z.discriminatedUnion("access", [
+        z.object({ access: z.literal(true) }),
+        z.object({ access: z.literal(false), error: z.string() }),
+      ]),
+    )
+    .query(async ({ ctx: { user, instance, project } }) => {
+      if (await user.isStaff(instance.params)) {
+        return { access: true };
+      }
+
+      if (await user.isStudent(instance.params)) {
+        const student = await user.toStudent(instance.params);
+
+        const { flag: studentFlag } = await student.get();
+
+        const projectFlags = await project.getFlags();
+
+        if (projectFlags.map((f) => f.id).includes(studentFlag.id)) {
+          return { access: true };
+        } else {
+          return {
+            access: false,
+            error: "Student not eligible for this project",
+          };
+        }
+      }
+
+      return { access: false, error: "Not a member of this instance" };
+    }),
+
   breadcrumbs: procedure.user
     .input(z.object({ segments: z.array(z.string()) }))
     .output(z.array(z.object({ segment: z.string(), access: z.boolean() })))
