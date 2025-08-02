@@ -43,11 +43,7 @@ export function useStudentPreferenceColumns(): ColumnDef<StudentPreferenceData>[
       id: INSTITUTION.ID_NAME,
       accessorFn: ({ student }) => student.id,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={INSTITUTION.ID_NAME}
-          canFilter
-        />
+        <DataTableColumnHeader column={column} title={INSTITUTION.ID_NAME} />
       ),
       cell: ({
         row: {

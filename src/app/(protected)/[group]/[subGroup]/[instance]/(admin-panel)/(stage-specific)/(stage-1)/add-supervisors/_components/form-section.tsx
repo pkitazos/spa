@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, TextCursorInputIcon } from "lucide-react";
 
+import { INSTITUTION } from "@/config/institution";
+
 import { SectionHeading } from "@/components/heading";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,7 +75,7 @@ export function FormSection({
             render={({ field }) => (
               <FormItem className="w-1/6">
                 <FormControl>
-                  <Input placeholder="GUID" {...field} />
+                  <Input placeholder={INSTITUTION.ID_NAME} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

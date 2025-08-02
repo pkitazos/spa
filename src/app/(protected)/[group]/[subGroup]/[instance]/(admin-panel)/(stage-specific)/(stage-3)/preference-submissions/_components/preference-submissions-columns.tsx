@@ -46,7 +46,6 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
           className="w-28"
           column={column}
           title={INSTITUTION.ID_NAME}
-          canFilter
         />
       ),
     },

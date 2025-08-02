@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { INSTITUTION } from "@/config/institution";
 import { PAGES } from "@/config/pages";
 
 import { type SupervisorDTO } from "@/dto";
@@ -64,10 +65,10 @@ export function useNewSupervisorColumns({
       ),
     },
     {
-      id: "GUID",
+      id: INSTITUTION.ID_NAME,
       accessorFn: ({ id }) => id,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="GUID" canFilter />
+        <DataTableColumnHeader column={column} title={INSTITUTION.ID_NAME} />
       ),
       cell: ({
         row: {

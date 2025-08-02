@@ -4,6 +4,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { ShuffleIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
 
+import { INSTITUTION } from "@/config/institution";
 import { PAGES } from "@/config/pages";
 
 import { type ProjectDTO, type StudentDTO } from "@/dto";
@@ -61,14 +62,13 @@ export function useRandomAllocationColumns({
       },
     },
     {
-      id: "Student GUID",
+      id: `Student ${INSTITUTION.ID_NAME}`,
       accessorFn: (a) => a.student.id,
       header: ({ column }) => (
         <DataTableColumnHeader
           className="w-28"
           column={column}
-          title="Student GUID"
-          canFilter
+          title={`Student ${INSTITUTION.ID_NAME}`}
         />
       ),
       cell: ({

@@ -60,7 +60,7 @@ export function useStudentPreferencesColumns({
       id: "ID",
       accessorFn: ({ project }) => project.id,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="ID" canFilter />
+        <DataTableColumnHeader column={column} title="ID" />
       ),
       cell: ({
         row: {

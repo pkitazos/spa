@@ -9,6 +9,7 @@ import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { INSTITUTION } from "@/config/institution";
 import { spacesLabels } from "@/config/spaces";
 
 import { Button } from "@/components/ui/button";
@@ -100,7 +101,7 @@ export function FormButton({ params }: { params: GroupParams }) {
                   <FormItem className="grid w-full grid-cols-3 items-center gap-3">
                     <FormLabel className="col-span-1 text-lg">GUID</FormLabel>
                     <FormControl className="col-span-2 flex items-center">
-                      <Input placeholder="GUID" {...field} />
+                      <Input placeholder={INSTITUTION.ID_NAME} {...field} />
                     </FormControl>
                     <FormMessage className="col-span-3" />
                   </FormItem>

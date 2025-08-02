@@ -28,7 +28,7 @@ export function useSavedPreferencesColumns(): ColumnDef<SavedPreferenceData>[] {
       id: "ID",
       accessorFn: (project) => project.id,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="ID" canFilter />
+        <DataTableColumnHeader column={column} title="ID" />
       ),
       cell: ({ row: { original: project } }) => (
         <div className="text-left">

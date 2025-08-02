@@ -1,5 +1,7 @@
 import { type ColumnDef } from "@tanstack/react-table";
 
+import { INSTITUTION } from "@/config/institution";
+
 import { buttonVariants } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
@@ -11,7 +13,7 @@ export const columns: ColumnDef<AllocationCsvData>[] = [
     id: "Project ID",
     accessorFn: (row) => row.project.id,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Project ID" canFilter />
+      <DataTableColumnHeader column={column} title="Project ID" />
     ),
     cell: ({
       row: {
@@ -26,10 +28,13 @@ export const columns: ColumnDef<AllocationCsvData>[] = [
     ),
   },
   {
-    id: "Student GUID",
+    id: `Student ${INSTITUTION.ID_NAME}`,
     accessorFn: (row) => row.student.id,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Student GUID" canFilter />
+      <DataTableColumnHeader
+        column={column}
+        title={`Student ${INSTITUTION.ID_NAME}`}
+      />
     ),
     cell: ({
       row: {
@@ -47,7 +52,7 @@ export const columns: ColumnDef<AllocationCsvData>[] = [
     id: "Student Name",
     accessorFn: (row) => row.student.name,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Student Name" canFilter />
+      <DataTableColumnHeader column={column} title="Student Name" />
     ),
     cell: ({
       row: {
@@ -65,11 +70,7 @@ export const columns: ColumnDef<AllocationCsvData>[] = [
     id: "Student Matric.",
     accessorFn: (row) => row.student.matric,
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title="Student Matric."
-        canFilter
-      />
+      <DataTableColumnHeader column={column} title="Student Matric." />
     ),
     cell: ({
       row: {
@@ -151,10 +152,13 @@ export const columns: ColumnDef<AllocationCsvData>[] = [
     }) => <p className="text-center">{student.ranking}</p>,
   },
   {
-    id: "Supervisor GUID",
+    id: `Supervisor ${INSTITUTION.ID_NAME}`,
     accessorFn: (row) => row.supervisor.id,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Supervisor GUID" />
+      <DataTableColumnHeader
+        column={column}
+        title={`Supervisor ${INSTITUTION.ID_NAME}`}
+      />
     ),
     cell: ({
       row: {
