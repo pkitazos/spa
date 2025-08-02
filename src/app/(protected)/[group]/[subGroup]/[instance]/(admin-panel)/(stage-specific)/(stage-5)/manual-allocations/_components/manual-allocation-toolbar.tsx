@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 import { Input } from "@/components/ui/input";
 
+import { nubsById } from "@/lib/utils/list-unique";
+
 import { type ManualAllocationStudent } from "./manual-allocation-types";
 
 interface ManualAllocationToolbarProps {
@@ -22,15 +24,10 @@ export function ManualAllocationToolbar({
 }: ManualAllocationToolbarProps) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
-  // TODO: refactor this to use a more efficient data structure
   const availableFlags = useMemo(() => {
-    const flagMap = new Map<string, string>();
-
-    students.forEach((student) => {
-      flagMap.set(student.flag.id, student.flag.displayName);
-    });
-
-    return Array.from(flagMap.entries()).map(([id, title]) => ({ id, title }));
+    return students
+      .map((s) => ({ id: s.flag.id, title: s.flag.displayName }))
+      .filter(nubsById);
   }, [students]);
 
   return (

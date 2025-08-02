@@ -29,6 +29,7 @@ import {
 
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { setDiff } from "@/lib/utils/general/set-difference";
+import { nubsById } from "@/lib/utils/list-unique";
 import { type InstanceParams } from "@/lib/validations/params";
 import { type TabType } from "@/lib/validations/tabs";
 
@@ -893,7 +894,10 @@ export class AllocationInstance extends DataObject {
       include: { flag: true },
     });
 
-    return flagData.map((f) => T.toFlagDTO(f.flag));
+    return flagData
+      .map((f) => T.toFlagDTO(f.flag))
+      .filter(nubsById)
+      .sort((a, b) => a.displayName.localeCompare(b.displayName));
   }
 
   public async getTagsOnProjects(): Promise<TagDTO[]> {
@@ -902,7 +906,10 @@ export class AllocationInstance extends DataObject {
       include: { tag: true },
     });
 
-    return tagData.map(({ tag }) => T.toTagDTO(tag));
+    return tagData
+      .map(({ tag }) => T.toTagDTO(tag))
+      .filter(nubsById)
+      .sort((a, b) => a.title.localeCompare(b.title));
   }
 
   public getProject(projectId: string): Project {

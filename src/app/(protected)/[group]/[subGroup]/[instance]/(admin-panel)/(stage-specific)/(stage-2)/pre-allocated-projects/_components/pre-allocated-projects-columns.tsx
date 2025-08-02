@@ -63,12 +63,7 @@ export function usePreAllocatedProjectColumns({
       id: "ID",
       accessorFn: ({ project }) => project.id,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          className="w-24"
-          column={column}
-          title="ID"
-          canFilter
-        />
+        <DataTableColumnHeader className="w-24" column={column} title="ID" />
       ),
       cell: ({
         row: {
@@ -134,12 +129,12 @@ export function usePreAllocatedProjectColumns({
       accessorFn: ({ project }) => project.flags,
       header: () => <div className="text-center">Flags</div>,
       filterFn: (row, columnId, value) => {
-        const selectedFilters = z.array(flagDtoSchema).parse(value);
+        const selectedFilters = z.array(z.string()).parse(value);
         const rowFlags = z.array(flagDtoSchema).parse(row.getValue(columnId));
 
         return (
           new Set(rowFlags.map((f) => f.id)).size > 0 &&
-          selectedFilters.some((f) => rowFlags.some((rf) => rf.id === f.id))
+          selectedFilters.some((f) => rowFlags.some((rf) => rf.id === f))
         );
       },
       cell: ({
@@ -152,7 +147,11 @@ export function usePreAllocatedProjectColumns({
         <div className="flex flex-col gap-2">
           {flags.length > 2 ? (
             <>
-              <Badge className="w-20 rounded-md" key={flags[0].id}>
+              <Badge
+                variant="accent"
+                className="w-40 rounded-md"
+                key={flags[0].id}
+              >
                 {flags[0].displayName}
               </Badge>
               <WithTooltip
@@ -160,21 +159,30 @@ export function usePreAllocatedProjectColumns({
                 tip={
                   <ul className="flex list-disc flex-col gap-1 p-2 pl-1">
                     {flags.slice(1).map((flag) => (
-                      <Badge className="w-20 rounded-md" key={flag.id}>
+                      <Badge
+                        variant="accent"
+                        className="w-40 rounded-md"
+                        key={flag.id}
+                      >
                         {flag.displayName}
                       </Badge>
                     ))}
                   </ul>
                 }
               >
-                <div className={cn(badgeVariants(), "w-fit font-normal")}>
+                <div
+                  className={cn(
+                    badgeVariants({ variant: "accent" }),
+                    "w-fit rounded-md font-normal",
+                  )}
+                >
                   {flags.length - 1}+
                 </div>
               </WithTooltip>
             </>
           ) : (
             flags.map((flag) => (
-              <Badge className="w-max max-w-40" key={flag.id}>
+              <Badge variant="accent" className="w-40 rounded-md" key={flag.id}>
                 {flag.displayName}
               </Badge>
             ))

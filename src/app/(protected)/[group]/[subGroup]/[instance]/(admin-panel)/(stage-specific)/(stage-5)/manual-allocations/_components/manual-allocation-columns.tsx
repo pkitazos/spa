@@ -86,9 +86,9 @@ export function useManualAllocationColumns({
       accessorFn: (row) => row.flag.id,
       header: () => null,
       cell: () => null,
-      filterFn: (row, _, value: string[]) => {
-        if (!value?.length) return true;
-        return value.some((flagId) => flagId === row.original.flag.id);
+      filterFn: (row, columnId, value) => {
+        const selectedFilters = z.array(z.string()).parse(value);
+        return selectedFilters.includes(row.getValue<string>(columnId));
       },
     },
     {
