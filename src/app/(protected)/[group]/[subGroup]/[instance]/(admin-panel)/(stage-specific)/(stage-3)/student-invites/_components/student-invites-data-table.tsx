@@ -1,31 +1,46 @@
 "use client";
 
-import { type StudentDTO } from "@/dto";
+import { type FlagDTO, type StudentDTO } from "@/dto";
 
 import DataTable from "@/components/ui/data-table/data-table";
-import { studentLevelFilter } from "@/components/ui/data-table/data-table-context";
 
 import { useStudentInvitesColumns } from "./student-invites-columns";
 
-export function StudentInvitesDataTable({ data }: { data: StudentDTO[] }) {
+export function StudentInvitesDataTable({
+  data,
+  projectDescriptors,
+}: {
+  data: StudentDTO[];
+  projectDescriptors: { flags: FlagDTO[] };
+}) {
   const columns = useStudentInvitesColumns();
+
+  const studentFlagFilter = {
+    title: "filter by Flag",
+    columnId: "Flag",
+    options: projectDescriptors.flags.map((flag) => ({
+      id: flag.displayName,
+      title: flag.displayName,
+    })),
+  };
+
+  const filters = [
+    {
+      columnId: "Status",
+      title: "Joined Status",
+      options: [
+        { title: "Joined", id: "joined" },
+        { title: "Invited", id: "invited" },
+      ],
+    },
+    studentFlagFilter,
+  ];
 
   return (
     <DataTable
       className="w-full"
-      searchableColumn={{ id: "Name", displayName: "Names" }}
       columns={columns}
-      filters={[
-        {
-          columnId: "Status",
-          title: "Joined Status",
-          options: [
-            { title: "Joined", id: "joined" },
-            { title: "Invited", id: "invited" },
-          ],
-        },
-        studentLevelFilter,
-      ]}
+      filters={filters}
       data={data}
     />
   );

@@ -4,14 +4,15 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import {
+  type FlagDTO,
   ProjectAllocationStatus,
+  type TagDTO,
   type ProjectDTO,
   type StudentDTO,
 } from "@/dto";
 
 import { useInstanceParams } from "@/components/params-context";
 import DataTable from "@/components/ui/data-table/data-table";
-import { useDataTableProjectFilters } from "@/components/ui/data-table/data-table-context";
 
 import { api } from "@/lib/trpc/client";
 import { toPP3 } from "@/lib/utils/general/instance-params";
@@ -20,8 +21,10 @@ import { useSupervisorProjectsColumns } from "./supervisor-projects-columns";
 
 export function SupervisorProjectsDataTable({
   data,
+  projectDescriptors,
 }: {
   data: { project: ProjectDTO; allocatedStudent?: StudentDTO }[];
+  projectDescriptors: { flags: FlagDTO[]; tags: TagDTO[] };
 }) {
   const params = useInstanceParams();
   const router = useRouter();
@@ -54,7 +57,22 @@ export function SupervisorProjectsDataTable({
     );
   }
 
-  const filters = useDataTableProjectFilters();
+  const filters = [
+    {
+      columnId: "Flags",
+      options: projectDescriptors.flags.map((flag) => ({
+        id: flag.id,
+        title: flag.displayName,
+      })),
+    },
+    {
+      columnId: "Keywords",
+      options: projectDescriptors.tags.map((tag) => ({
+        id: tag.id,
+        title: tag.title,
+      })),
+    },
+  ];
 
   const columns = useSupervisorProjectsColumns({
     deleteProject: handleDelete,
@@ -64,7 +82,6 @@ export function SupervisorProjectsDataTable({
   return (
     <DataTable
       className="w-full"
-      searchableColumn={{ id: "Title", displayName: "Project Titles" }}
       columns={columns}
       filters={[
         ...filters,

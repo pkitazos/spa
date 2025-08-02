@@ -165,43 +165,32 @@ export const instanceRouter = createTRPCRouter({
       return allocationData.getViews();
     }),
 
-  // TODO review usage of this
-  // DEFINITELY it should use std. names
-  // MAYBE kill it and use other gets?
-  // BREAKING
-  getEditFormDetails: procedure.instance.subGroupAdmin
+  getUsedProjectDescriptors: procedure.instance.user
     .output(
-      z.object({
-        instance: instanceDtoSchema,
-        flags: z.array(
-          flagDtoSchema.extend({
-            unitsOfAssessment: z.array(unitOfAssessmentDtoSchema),
-          }),
-        ),
-        tags: z.array(tagDtoSchema),
-      }),
+      z.object({ flags: z.array(flagDtoSchema), tags: z.array(tagDtoSchema) }),
     )
-    .query(async ({ ctx: { instance } }) => {
-      const flags = await instance.getFlagsWithAssessmentDetails();
+    .query(async ({ ctx: { instance } }) => ({
+      flags: await instance.getFlagsOnProjects(),
+      tags: await instance.getTagsOnProjects(),
+    })),
 
-      return {
-        instance: await instance.get(),
-        tags: await instance.getTags(),
-        flags,
-      };
-    }),
+  getAllProjectDescriptors: procedure.instance.user
+    .output(
+      z.object({ flags: z.array(flagDtoSchema), tags: z.array(tagDtoSchema) }),
+    )
+    .query(async ({ ctx: { instance } }) => ({
+      tags: await instance.getTags(),
+      flags: await instance.getFlags(),
+    })),
 
   supervisors: procedure.instance.user
     .output(z.array(supervisorDtoSchema))
     .query(async ({ ctx: { instance } }) => await instance.getSupervisors()),
 
-  // BREAKING output type changed
   getSupervisors: procedure.instance.subGroupAdmin
     .output(z.array(supervisorDtoSchema))
     .query(async ({ ctx: { instance } }) => await instance.getSupervisors()),
 
-  // BREAKING input/output type changed
-  // TODO emit audit
   addSupervisor: procedure.instance.subGroupAdmin
     .input(z.object({ newSupervisor: supervisorDtoSchema }))
     .output(LinkUserResultSchema)
@@ -620,7 +609,7 @@ export const instanceRouter = createTRPCRouter({
         z.object({
           project: projectDtoSchema,
           supervisor: supervisorDtoSchema,
-          status: z.nativeEnum(ProjectAllocationStatus),
+          status: z.enum(ProjectAllocationStatus),
           studentId: z.string().optional(),
         }),
       ),

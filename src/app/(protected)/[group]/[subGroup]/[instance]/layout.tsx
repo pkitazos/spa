@@ -3,7 +3,6 @@ import { type ReactNode } from "react";
 import { notFound } from "next/navigation";
 
 import { InstanceParamsProvider } from "@/components/params-context";
-import { DataTableProvider } from "@/components/ui/data-table/data-table-context";
 import { SidebarInset } from "@/components/ui/sidebar";
 import { Unauthorised } from "@/components/unauthorised";
 
@@ -51,23 +50,18 @@ export default async function Layout({
 
   const roles = await api.user.roles({ params });
 
-  const { flags, tags } = await api.project.details({ params });
-
   const tabGroups = await api.institution.instance.getSidePanelTabs({ params });
 
   return (
     <InstanceParamsProvider instance={{ params, stage, roles }}>
-      {/* this is really stupid actually, I should just be able to pass tha flags and tags directly to data tables */}
-      <DataTableProvider details={{ flags, tags }}>
-        <div className="flex flex-1">
-          <AppSidebar tabGroups={tabGroups} instanceName={displayName} />
-          <SidebarInset>
-            <div className="absolute flex flex-1 w-full flex-col gap-4 p-4">
-              {children}
-            </div>
-          </SidebarInset>
-        </div>
-      </DataTableProvider>
+      <div className="flex flex-1">
+        <AppSidebar tabGroups={tabGroups} instanceName={displayName} />
+        <SidebarInset>
+          <div className="absolute flex flex-1 w-full flex-col gap-4 p-4">
+            {children}
+          </div>
+        </SidebarInset>
+      </div>
     </InstanceParamsProvider>
   );
 }

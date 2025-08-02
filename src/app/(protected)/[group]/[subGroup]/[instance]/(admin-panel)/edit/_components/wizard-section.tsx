@@ -5,12 +5,7 @@ import { toast } from "sonner";
 
 import { spacesLabels } from "@/config/spaces";
 
-import {
-  type FlagDTO,
-  type InstanceDTO,
-  type TagDTO,
-  type UnitOfAssessmentDTO,
-} from "@/dto";
+import { type FlagDTO, type InstanceDTO, type TagDTO } from "@/dto";
 
 import {
   InstanceWizard,
@@ -21,16 +16,10 @@ import { useInstanceParams } from "@/components/params-context";
 import { api } from "@/lib/trpc/client";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 
-// TODO consider how this should change in a forked instance?
-
 export function WizardSection({
   formDetails,
 }: {
-  formDetails: {
-    instance: InstanceDTO;
-    flags: (FlagDTO & { unitsOfAssessment: UnitOfAssessmentDTO[] })[];
-    tags: TagDTO[];
-  };
+  formDetails: { instance: InstanceDTO; flags: FlagDTO[]; tags: TagDTO[] };
 }) {
   const params = useInstanceParams();
   const router = useRouter();

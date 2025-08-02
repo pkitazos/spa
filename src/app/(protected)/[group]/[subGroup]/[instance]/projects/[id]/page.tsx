@@ -93,6 +93,9 @@ export default async function Project({ params }: { params: PageParams }) {
     params: toPP1(params),
   });
 
+  const projectDescriptors =
+    await api.institution.instance.getUsedProjectDescriptors({ params });
+
   return (
     <PanelWrapper>
       <Heading
@@ -194,7 +197,10 @@ export default async function Project({ params }: { params: PageParams }) {
       >
         <section className="mt-16 flex flex-col gap-8">
           <SubHeading>Student Preferences</SubHeading>
-          <StudentPreferenceDataTable data={studentPreferences} />
+          <StudentPreferenceDataTable
+            data={studentPreferences}
+            projectDescriptors={projectDescriptors}
+          />
         </section>
       </AccessControl>
     </PanelWrapper>

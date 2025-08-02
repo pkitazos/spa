@@ -44,6 +44,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
   const students = await api.institution.instance.preference.studentSubmissions(
     { params },
   );
+  const projectDescriptors =
+    await api.institution.instance.getUsedProjectDescriptors({ params });
 
   return (
     <PanelWrapper className="gap-16">
@@ -127,7 +129,10 @@ export default async function Page({ params }: { params: InstanceParams }) {
           <DatabaseIcon className="mr-2 h-6 w-6 text-indigo-500" />
           <span>All data</span>
         </SectionHeading>
-        <PreferenceSubmissionsDataTable data={students.all} />
+        <PreferenceSubmissionsDataTable
+          data={students.all}
+          projectDescriptors={projectDescriptors}
+        />
       </section>
     </PanelWrapper>
   );

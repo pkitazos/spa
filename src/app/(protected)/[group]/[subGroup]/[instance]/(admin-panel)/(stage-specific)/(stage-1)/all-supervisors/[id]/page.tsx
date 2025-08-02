@@ -47,6 +47,9 @@ export default async function Page({ params }: { params: PageParams }) {
     supervisorId,
   });
 
+  const projectDescriptors =
+    await api.institution.instance.getUsedProjectDescriptors({ params });
+
   return (
     <PanelWrapper>
       <Heading
@@ -74,7 +77,10 @@ export default async function Page({ params }: { params: PageParams }) {
           <p>{PAGES.newSupervisorProject.title}</p>
         </Link>
       </div>
-      <SupervisorProjectsDataTable data={projects} />
+      <SupervisorProjectsDataTable
+        data={projects}
+        projectDescriptors={projectDescriptors}
+      />
     </PanelWrapper>
   );
 }
