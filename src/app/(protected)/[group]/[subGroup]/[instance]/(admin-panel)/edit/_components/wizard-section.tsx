@@ -48,11 +48,7 @@ export function WizardSection({
     <InstanceWizard
       defaultValues={{
         tags: formDetails.tags,
-        flags: formDetails.flags.map((f) => ({
-          id: f.id,
-          displayName: f.displayName,
-          description: f.description,
-        })),
+        flags: formDetails.flags,
         ...formDetails.instance,
       }}
       onSubmit={onSubmit}

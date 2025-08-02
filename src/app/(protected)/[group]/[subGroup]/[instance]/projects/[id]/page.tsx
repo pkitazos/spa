@@ -216,7 +216,7 @@ async function ProjectDetailsCard({
 }) {
   const user = await api.user.get();
   return (
-    <Card className="w-full max-w-sm border-none bg-accent">
+    <Card className="w-full max-w-sm">
       <CardContent className="flex flex-col gap-10 pt-5">
         <AccessControl
           allowedRoles={[Role.ADMIN, Role.STUDENT]}
@@ -255,7 +255,7 @@ async function ProjectDetailsCard({
           </div>
           <div className="flex flex-wrap gap-2">
             {projectData.project.flags.map((flag, i) => (
-              <Badge className="w-40 rounded-md" variant="accent" key={i}>
+              <Badge className="rounded-md" variant="accent" key={i}>
                 {flag.displayName}
               </Badge>
             ))}

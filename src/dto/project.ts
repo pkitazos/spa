@@ -84,8 +84,8 @@ const submissionSchema = z.object({
   description: z.string(),
   specialTechnicalRequirements: z.string().optional(),
 
-  flags: z.array(z.object({ id: z.string(), title: z.string() })),
-  tags: z.array(z.object({ id: z.string(), title: z.string() })),
+  flags: z.array(flagDtoSchema),
+  tags: z.array(tagDtoSchema),
 
   capacityUpperBound: z.number().int().positive(),
   preAllocatedStudentId: z.string().optional(),
