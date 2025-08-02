@@ -21,7 +21,7 @@ export default async function Students({ params }: { params: InstanceParams }) {
   const roles = await api.user.roles({ params });
   const tableData = await api.institution.instance.students({ params });
   const projectDescriptors =
-    await api.institution.instance.getUsedProjectDescriptors({ params });
+    await api.institution.instance.getAllProjectDescriptors({ params });
 
   return (
     <PanelWrapper>

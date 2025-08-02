@@ -1,9 +1,10 @@
+import { User2Icon } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
-import { Heading, SubHeading } from "@/components/heading";
+import { Heading, SectionHeading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
@@ -35,24 +36,31 @@ export default async function Page({ params }: { params: PageParams }) {
   const exists = await api.user.student.exists({ params, studentId });
   if (!exists) notFound();
 
+  const { flags } = await api.institution.instance.getAllProjectDescriptors({
+    params,
+  });
+
   const { student, selfDefinedProjectId, allocation } =
     await api.user.student.getById({ params, studentId });
 
   return (
     <PanelWrapper>
       <Heading>{student.name}</Heading>
-      <SubHeading>Details</SubHeading>
+      <SectionHeading className="mt-6 mb-2 flex items-center">
+        <User2Icon className="mr-2 h-6 w-6 text-indigo-500" />
+        <span>Details</span>
+      </SectionHeading>
       <section className="flex gap-10">
-        <StudentDetailsCard className="w-1/2" student={student} />
-        {!selfDefinedProjectId && !!allocation && (
+        <StudentDetailsCard className="w-1/2" student={student} flags={flags} />
+        {/* If the student has been allocated a project show it */}
+        {allocation && (
           <StudentAllocation className="w-1/2" allocation={allocation} />
         )}
       </section>
-      {!selfDefinedProjectId ? (
-        <StudentPreferencesSection params={params} />
-      ) : (
-        <StudentProjectSection params={params} />
-      )}
+      {/* if the student has already been allocated a project show it */}
+      {allocation && <StudentProjectSection params={params} />}
+      {/* if the student has not defined a project show their preferences */}
+      {!selfDefinedProjectId && <StudentPreferencesSection params={params} />}
     </PanelWrapper>
   );
 }

@@ -415,6 +415,14 @@ export const instanceRouter = createTRPCRouter({
       };
     }),
 
+  updateStudentFlag: procedure.instance.subGroupAdmin
+    .input(z.object({ studentId: z.string(), flagId: z.string() }))
+    .output(studentDtoSchema)
+    .mutation(async ({ ctx: { instance }, input: { studentId, flagId } }) => {
+      const student = await instance.getStudent(studentId);
+      return student.setStudentFlag(flagId);
+    }),
+
   edit: procedure.instance.subGroupAdmin
     .input(
       z.object({
