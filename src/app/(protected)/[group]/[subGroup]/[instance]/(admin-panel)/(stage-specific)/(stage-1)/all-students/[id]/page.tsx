@@ -53,12 +53,21 @@ export default async function Page({ params }: { params: PageParams }) {
         <StudentDetailsCard className="w-1/2" student={student} flags={flags} />
         {/* If the student has been allocated a project show it */}
         {allocation && (
-          <StudentAllocation className="w-1/2" allocation={allocation} />
+          <StudentAllocation
+            className="w-1/2"
+            allocation={allocation}
+            selfDefined={!!selfDefinedProjectId}
+          />
         )}
       </section>
 
       {/* if the student has already been allocated a project show it */}
-      {allocation && <StudentProjectSection params={params} />}
+      {allocation && (
+        <StudentProjectSection
+          className="mt-16"
+          allocatedProject={allocation.project}
+        />
+      )}
 
       {/* if the student has not defined a project show their preferences */}
       {!selfDefinedProjectId && <StudentPreferencesSection params={params} />}
