@@ -28,17 +28,7 @@ export function WizardSection({
   const { mutateAsync: editInstanceAsync } =
     api.institution.instance.edit.useMutation();
 
-  async function onSubmit({
-    flags: flagData,
-    tags,
-    ...instance
-  }: WizardFormData) {
-    const flags = flagData.map((f) => ({
-      id: f.id,
-      displayName: f.displayName,
-      description: f.description,
-    }));
-
+  async function onSubmit({ flags, tags, ...instance }: WizardFormData) {
     const updatedInstance = { ...params, ...instance };
 
     void toast.promise(

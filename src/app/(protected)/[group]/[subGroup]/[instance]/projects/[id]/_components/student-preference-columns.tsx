@@ -6,6 +6,7 @@ import {
   MoreHorizontalIcon as MoreIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { z } from "zod";
 
 import { INSTITUTION } from "@/config/institution";
 import { PAGES } from "@/config/pages";
@@ -82,7 +83,7 @@ export function useStudentPreferenceColumns(): ColumnDef<StudentPreferenceData>[
     },
     {
       id: "Flag",
-      accessorFn: ({ student }) => student.flag.id,
+      accessorFn: ({ student }) => student.flag.displayName,
       header: ({ column }) => (
         <DataTableColumnHeader className="w-20" column={column} title="Flag" />
       ),
@@ -98,13 +99,8 @@ export function useStudentPreferenceColumns(): ColumnDef<StudentPreferenceData>[
         </div>
       ),
       filterFn: (row, columnId, value) => {
-        //  TODO: fix this mess
-        const selectedFilters = value as ("4" | "5")[];
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-        const rowValue = row.getValue(columnId) as 4 | 5;
-        console.log({ selectedFilters });
-        const studentLevel = rowValue.toString() as "4" | "5";
-        return selectedFilters.includes(studentLevel);
+        const selectedFilters = z.array(z.string()).parse(value);
+        return selectedFilters.includes(row.getValue<string>(columnId));
       },
     },
     {

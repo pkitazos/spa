@@ -36,9 +36,7 @@ export default async function Page({ params }: { params: PageParams }) {
   const exists = await api.user.student.exists({ params, studentId });
   if (!exists) notFound();
 
-  const { flags } = await api.institution.instance.getAllProjectDescriptors({
-    params,
-  });
+  const flags = await api.institution.instance.getFlags({ params });
 
   const { student, selfDefinedProjectId, allocation } =
     await api.user.student.getById({ params, studentId });
@@ -46,6 +44,7 @@ export default async function Page({ params }: { params: PageParams }) {
   return (
     <PanelWrapper>
       <Heading>{student.name}</Heading>
+
       <SectionHeading className="mt-6 mb-2 flex items-center">
         <User2Icon className="mr-2 h-6 w-6 text-indigo-500" />
         <span>Details</span>
@@ -57,8 +56,10 @@ export default async function Page({ params }: { params: PageParams }) {
           <StudentAllocation className="w-1/2" allocation={allocation} />
         )}
       </section>
+
       {/* if the student has already been allocated a project show it */}
       {allocation && <StudentProjectSection params={params} />}
+
       {/* if the student has not defined a project show their preferences */}
       {!selfDefinedProjectId && <StudentPreferencesSection params={params} />}
     </PanelWrapper>

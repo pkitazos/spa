@@ -80,7 +80,7 @@ export function SubmissionsTable({ data }: { data: SubmissionTableRow[] }) {
               <TableHead className="w-[30px]"></TableHead>
               <TableHead>Submission Title</TableHead>
               <TableHead>Due Date</TableHead>
-              <TableHead>Level</TableHead>
+              <TableHead>Flag</TableHead>
               <TableHead>Role</TableHead>
             </TableRow>
           </TableHeader>
