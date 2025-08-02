@@ -66,6 +66,9 @@ export const newSupervisorSchema = z
     },
   );
 
+// for CSV parsing - validates supervisor data from CSV
+export const csvSupervisorSchema = newSupervisorSchema;
+
 export type NewStudent = z.infer<ReturnType<typeof buildNewStudentSchema>>;
 
 export type NewSupervisor = z.infer<typeof newSupervisorSchema>;
