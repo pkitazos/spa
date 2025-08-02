@@ -178,10 +178,6 @@ export function AddSupervisorsSection() {
         <Skeleton className="h-20 w-full" />
       ) : (
         <DataTable
-          searchableColumn={{
-            id: "Full Name",
-            displayName: "Supervisor Names",
-          }}
           columns={columns}
           data={data ?? []}
         />

@@ -10,13 +10,14 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Badge, ChevronDown, ChevronRight, Send } from "lucide-react";
+import { ChevronDown, ChevronRight, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { CopyButton } from "@/components/copy-button";
 import { CopyEmailsButton } from "@/components/copy-emails-button";
 import { ExportCSVButton } from "@/components/export-csv";
 import { useInstanceParams } from "@/components/params-context";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
 import { Input } from "@/components/ui/input";

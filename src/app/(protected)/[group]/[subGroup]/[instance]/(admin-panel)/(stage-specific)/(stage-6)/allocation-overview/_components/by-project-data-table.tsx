@@ -14,10 +14,6 @@ export function ByProjectDataTable({
   return (
     <div className="w-full">
       <DataTable
-        searchableColumn={{
-          id: "Project Title",
-          displayName: "Project Titles",
-        }}
         columns={byProjectColumns}
         data={data}
       />

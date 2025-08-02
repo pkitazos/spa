@@ -96,7 +96,6 @@ export function RandomAllocationsDataTable({
 
   return (
     <DataTable
-      searchableColumn={{ id: "Student Name", displayName: "Names" }}
       columns={columns}
       data={studentData}
     />

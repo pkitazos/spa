@@ -15,7 +15,6 @@ export function StudentSavedPreferenceDataTable({
 
   return (
     <DataTable
-      searchableColumn={{ id: "Title", displayName: "Project Title" }}
       className="w-full"
       columns={columns}
       data={data}
