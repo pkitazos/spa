@@ -45,15 +45,6 @@ import { algorithmRouter } from "./algorithm";
 import { matchingRouter } from "./matching";
 import { preferenceRouter } from "./preference";
 
-// TODO: inline
-const tgc = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string(),
-  joined: z.boolean(),
-  preAllocated: z.boolean(),
-});
-
 // TODO: add stage checks to stage-specific procedures
 export const instanceRouter = createTRPCRouter({
   matching: matchingRouter,
@@ -398,9 +389,15 @@ export const instanceRouter = createTRPCRouter({
   invitedStudents: procedure.instance.subGroupAdmin
     .output(
       z.object({
-        all: z.array(tgc),
-        incomplete: z.array(tgc),
-        preAllocated: z.array(tgc),
+        all: z.array(
+          z.object({ student: studentDtoSchema, preAllocated: z.boolean() }),
+        ),
+        incomplete: z.array(
+          z.object({ student: studentDtoSchema, preAllocated: z.boolean() }),
+        ),
+        preAllocated: z.array(
+          z.object({ student: studentDtoSchema, preAllocated: z.boolean() }),
+        ),
       }),
     )
     .query(async ({ ctx: { instance } }) => {
@@ -412,16 +409,13 @@ export const instanceRouter = createTRPCRouter({
       );
 
       const all = invitedStudents.map((u) => ({
-        id: u.id,
-        name: u.name,
-        email: u.email,
-        joined: u.joined,
+        student: u,
         preAllocated: preAllocatedStudents.has(u.id),
       }));
 
       return {
         all,
-        incomplete: all.filter((s) => !s.joined && !s.preAllocated),
+        incomplete: all.filter((s) => !s.student.joined && !s.preAllocated),
         preAllocated: all.filter((s) => s.preAllocated),
       };
     }),

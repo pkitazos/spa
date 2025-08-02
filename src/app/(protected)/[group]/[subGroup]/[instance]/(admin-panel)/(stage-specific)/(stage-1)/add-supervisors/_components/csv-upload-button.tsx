@@ -55,11 +55,17 @@ export function CSVUploadButton({
             return;
           }
 
-          const { uniqueRows, duplicateRowGuids } = parseForDuplicates(
-            result.data,
+          const { uniqueRows, duplicateRowInstitutionIds } = parseForDuplicates(
+            result.data.map((row) => ({
+              institutionId: row.guid,
+              fullName: row.full_name,
+              email: row.email,
+              projectTarget: row.project_target,
+              projectUpperQuota: row.project_upper_quota,
+            })),
           );
 
-          if (duplicateRowGuids.size === 0) {
+          if (duplicateRowInstitutionIds.length === 0) {
             toast.success("CSV parsed successfully!");
           } else if (uniqueRows.length === 0) {
             toast.error("All rows seem to contain duplicates");
@@ -67,22 +73,13 @@ export function CSVUploadButton({
             toast.success(`${uniqueRows.length} rows parsed successfully!`);
             toast.error(
               <UserCreationErrorCard
-                error={`${duplicateRowGuids.size} duplicate rows found`}
-                affectedUsers={Array.from(duplicateRowGuids)}
+                error={`${duplicateRowInstitutionIds.length} duplicate rows found`}
+                affectedUsers={Array.from(duplicateRowInstitutionIds)}
               />,
             );
           }
 
-          // todo: can I actually do this?
-          void handleUpload(
-            uniqueRows.map((e) => ({
-              fullName: e.full_name,
-              institutionId: e.guid,
-              email: e.email,
-              projectTarget: e.project_target,
-              projectUpperQuota: e.project_upper_quota,
-            })),
-          );
+          void handleUpload(uniqueRows);
         },
         header: true,
         skipEmptyLines: true,

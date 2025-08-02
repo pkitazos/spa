@@ -50,7 +50,13 @@ const formInternalStateSchema = z
     description: z.string().min(10, "Please enter a longer description"),
     specialTechnicalRequirements: z.string().optional(),
     flags: z
-      .array(z.object({ id: z.string(), title: z.string() }))
+      .array(
+        z.object({
+          id: z.string(),
+          displayName: z.string(),
+          description: z.string(),
+        }),
+      )
       .min(1, "You must select at least one flag"),
     tags: z
       .array(z.object({ id: z.string(), title: z.string() }))
@@ -109,7 +115,13 @@ const editApiInputSchema = createApiInputSchema.extend({ id: z.string() });
 type ProjectFormEditApiInputDTO = z.infer<typeof editApiInputSchema>;
 
 const initialisationSchema = z.object({
-  flags: z.array(z.object({ id: z.string(), title: z.string() })),
+  flags: z.array(
+    z.object({
+      id: z.string(),
+      displayName: z.string(),
+      description: z.string(),
+    }),
+  ),
   tags: z.array(z.object({ id: z.string(), title: z.string() })),
   studentIds: z.array(z.string()),
   supervisorIds: z.array(z.string()),

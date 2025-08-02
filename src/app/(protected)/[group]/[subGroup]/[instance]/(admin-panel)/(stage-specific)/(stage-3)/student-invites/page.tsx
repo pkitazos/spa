@@ -56,7 +56,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
                 </p>
                 <div className="flex w-44 items-center">
                   <CopyEmailsButton
-                    data={students.incomplete}
+                    data={students.incomplete.map((s) => s.student)}
                     className="w-36 rounded-r-none"
                   />
                   <DropdownMenu>
@@ -80,8 +80,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
                           className="flex w-full items-center gap-2 text-left"
                           label="Include Pre-allocated Students"
                           data={[
-                            ...students.incomplete,
-                            ...students.preAllocated,
+                            ...students.incomplete.map((s) => s.student),
+                            ...students.preAllocated.map((s) => s.student),
                           ]}
                           unstyled
                         />
@@ -101,7 +101,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
           <DatabaseIcon className="mr-2 h-6 w-6 text-indigo-500" />
           <span>All data</span>
         </SectionHeading>
-        <StudentInvitesDataTable data={students.all} />
+        <StudentInvitesDataTable data={students.all.map((s) => s.student)} />
       </section>
     </PanelWrapper>
   );

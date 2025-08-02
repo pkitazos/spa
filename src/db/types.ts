@@ -134,6 +134,16 @@ export const preferenceTypeSchema = z.enum([
   PreferenceType.PREFERENCE,
 ]);
 
+export const extendedPreferenceTypeSchema = z.enum([
+  PreferenceType.SHORTLIST,
+  PreferenceType.PREFERENCE,
+  "SUBMITTED",
+]);
+
+export type ExtendedPreferenceType = z.infer<
+  typeof extendedPreferenceTypeSchema
+>;
+
 export {
   AlgorithmFlag,
   PreferenceType,

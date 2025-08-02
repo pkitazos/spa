@@ -45,14 +45,9 @@ export default async function Page({ params }: { params: InstanceParams }) {
           {allocations.map(({ project, student, rank }, i) => (
             <AllocationCard
               key={i}
-              title={project.title}
-              student={{
-                id: student.id,
-                name: student.name,
-                email: student.email,
-                level: student.level,
-                rank: rank,
-              }}
+              project={project}
+              student={student}
+              allocationRank={rank}
             />
           ))}
         </div>

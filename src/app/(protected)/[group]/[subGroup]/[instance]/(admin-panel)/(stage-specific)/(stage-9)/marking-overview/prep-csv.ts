@@ -14,7 +14,7 @@ import {
 interface CSVRow {
   studentGUID: string;
   studentName: string;
-  studentLevel: number;
+  studentFlag: string;
   studentEmail: string;
   projectTitle: string;
 
@@ -97,7 +97,7 @@ export function prepCSV(data: ProjectMarkingOverview[]): CSVRow[] {
     return {
       studentGUID: student.id,
       studentName: student.name,
-      studentLevel: student.level,
+      studentFlag: student.flag.displayName,
       studentEmail: student.email,
       projectTitle: project.title,
 

@@ -112,7 +112,6 @@ export const supervisorRouter = createTRPCRouter({
       };
     }),
 
-  // BREAKING output type
   rowProjects: procedure.instance.supervisor
     .output(
       z.array(
@@ -171,7 +170,6 @@ export const supervisorRouter = createTRPCRouter({
         await instance.deleteSupervisors(supervisorIds),
     ),
 
-  // BREAKING output type
   // TODO: change rank to studentRanking
   allocations: procedure.instance.supervisor
     .output(

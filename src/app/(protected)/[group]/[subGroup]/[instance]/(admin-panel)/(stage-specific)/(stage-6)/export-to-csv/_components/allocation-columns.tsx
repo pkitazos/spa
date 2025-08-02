@@ -98,16 +98,16 @@ export const columns: ColumnDef<AllocationCsvData>[] = [
     }) => <p className="text-center">{student.email}</p>,
   },
   {
-    id: "Student Level",
-    accessorFn: (row) => row.student.level,
+    id: "Student Flag",
+    accessorFn: (row) => row.student.flag.id,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Student Level" />
+      <DataTableColumnHeader column={column} title="Student Flag" />
     ),
     cell: ({
       row: {
         original: { student },
       },
-    }) => <div className="text-center">{student.level}</div>,
+    }) => <div className="text-center">{student.flag.displayName}</div>,
   },
   {
     id: "Project Title",

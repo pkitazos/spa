@@ -13,13 +13,13 @@ export async function linkProjectFlags(
   await db.flagOnProject.deleteMany({
     where: {
       projectId: params.projectId,
-      flag: { title: { notIn: flagTitles } },
+      flag: { displayName: { notIn: flagTitles } },
     },
   });
 
   const existingFlags = await db.flag.findMany({
-    where: { ...expand(params), title: { in: flagTitles } },
-    select: { id: true, title: true },
+    where: { ...expand(params), displayName: { in: flagTitles } },
+    select: { id: true, displayName: true },
   });
 
   await db.flagOnProject.createMany({

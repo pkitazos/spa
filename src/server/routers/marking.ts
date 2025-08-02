@@ -28,10 +28,8 @@ export const markingRouter = createTRPCRouter({
     .query(async ({ ctx: { db, instance } }) => {
       const { id: seyp_flag_id } = await db.flag.findUniqueOrThrow({
         where: {
-          title_allocationGroupId_allocationSubGroupId_allocationInstanceId: {
-            ...expand(instance.params),
-            title: "SEYP",
-          },
+          displayName_allocationGroupId_allocationSubGroupId_allocationInstanceId:
+            { ...expand(instance.params), displayName: "SEYP" },
         },
         select: { id: true },
       });
@@ -40,14 +38,7 @@ export const markingRouter = createTRPCRouter({
         .findMany({
           where: {
             ...expand(instance.params),
-            OR: [
-              { student: { studentLevel: { equals: 4 } } },
-              {
-                student: {
-                  studentFlags: { some: { flagId: { equals: seyp_flag_id } } },
-                },
-              },
-            ],
+            OR: [{ student: { studentFlag: { id: seyp_flag_id } } }],
           },
           include: {
             project: {
@@ -69,7 +60,7 @@ export const markingRouter = createTRPCRouter({
             student: {
               include: {
                 userInInstance: { include: { user: true } },
-                studentFlags: { include: { flag: true } },
+                studentFlag: true,
               },
             },
           },
@@ -191,8 +182,8 @@ export const markingRouter = createTRPCRouter({
           const unitFinalMarksByUnit =
             unitFinalMarksByUnitByStudent[student.id] ?? {};
 
-          const applicableUnits = units.filter((u) =>
-            student.flags.map((f) => f.id).includes(u.flag.id),
+          const applicableUnits = units.filter(
+            (u) => student.flag.id === u.flag.id,
           );
 
           const unitData = applicableUnits.map((u) => {

@@ -25,18 +25,15 @@ export async function updateManyPreferenceTransaction(
         where: { id: { in: projectIds } },
         select: { flagsOnProject: { select: { flag: true } } },
       })
-      .then((data) => data.flagsOnProject.map((f) => f.flag.title))
+      .then((data) => data.flagsOnProject.map((f) => f.flag.displayName))
       .then((x) => new Set(x));
 
-    const studentFlags = await tx.studentDetails
-      .findFirstOrThrow({
-        where: { userId, ...expand(params) },
-        select: { studentFlags: { select: { flag: true } } },
-      })
-      .then((data) => data.studentFlags.map((f) => f.flag.title))
-      .then((x) => new Set(x));
+    const { studentFlag } = await tx.studentDetails.findFirstOrThrow({
+      where: { userId, ...expand(params) },
+      select: { studentFlag: true },
+    });
 
-    if (projectFlags.intersection(studentFlags).size <= 0) {
+    if (projectFlags.has(studentFlag.displayName)) {
       throw new Error(
         `One or more of the selected projects are not suitable for this student`,
       );

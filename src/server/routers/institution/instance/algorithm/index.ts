@@ -116,7 +116,7 @@ export const algorithmRouter = createTRPCRouter({
                 include: {
                   student: {
                     include: {
-                      studentFlags: { include: { flag: true } },
+                      studentFlag: true,
                       userInInstance: { include: { user: true } },
                     },
                   },

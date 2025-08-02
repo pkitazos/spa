@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { INSTITUTION } from "@/config/institution";
 import { PAGES } from "@/config/pages";
 
 import { ExportCSVButton } from "@/components/export-csv";
@@ -36,56 +37,56 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
 
   const baseCols: ColumnDef<StudentPreferenceSubmissionDto>[] = [
     {
-      id: "GUID",
-      accessorFn: (s) => s.id,
+      id: INSTITUTION.ID_NAME,
+      accessorFn: (s) => s.student.id,
       header: ({ column }) => (
         <DataTableColumnHeader
           className="w-28"
           column={column}
-          title="GUID"
+          title={INSTITUTION.ID_NAME}
           canFilter
         />
       ),
     },
     {
       id: "Name",
-      accessorFn: (s) => s.name,
+      accessorFn: (s) => s.student.name,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
       ),
       cell: ({
         row: {
-          original: { name, id },
+          original: { student },
         },
       }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`./${PAGES.allStudents.href}/${id}`}
+          href={`./${PAGES.allStudents.href}/${student.id}`}
         >
-          {name}
+          {student.name}
         </Link>
       ),
     },
     {
       id: "Email",
-      accessorFn: (s) => s.email,
+      accessorFn: (s) => s.student.email,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Email" />
       ),
     },
     {
-      id: "Level",
-      accessorFn: ({ level }) => level,
+      id: "Flag",
+      accessorFn: (s) => s.student.flag.id,
       header: ({ column }) => (
-        <DataTableColumnHeader className="w-20" column={column} title="Level" />
+        <DataTableColumnHeader className="w-20" column={column} title="Flag" />
       ),
       cell: ({
         row: {
-          original: { level },
+          original: { student },
         },
       }) => (
         <div className="grid w-20 place-items-center">
-          <Badge variant="accent">{level}</Badge>
+          <Badge variant="accent">{student.flag.displayName}</Badge>
         </div>
       ),
       filterFn: (row, columnId, value) => {
@@ -162,9 +163,9 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
         const data = table
           .getSelectedRowModel()
           .rows.map(({ original: r }) => [
-            r.id,
-            r.name,
-            r.email,
+            r.student.id,
+            r.student.name,
+            r.student.email,
             r.submissionCount,
             r.submitted ? 1 : 0,
           ]);
@@ -199,7 +200,7 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
       },
       cell: ({
         row: {
-          original: { id, name, email },
+          original: { student },
         },
       }) => (
         <div className="flex w-14 items-center justify-center">
@@ -213,13 +214,15 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
             <DropdownMenuContent align="center" side="bottom">
               <DropdownMenuLabel>
                 Actions
-                <span className="ml-2 text-muted-foreground">for {name}</span>
+                <span className="ml-2 text-muted-foreground">
+                  for {student.name}
+                </span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./${PAGES.allStudents.href}/${id}`}
+                  href={`./${PAGES.allStudents.href}/${student.id}`}
                 >
                   <CornerDownRightIcon className="h-4 w-4" />
                   <span>View student details</span>
@@ -228,7 +231,7 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./${PAGES.allStudents.href}/${id}?edit=true`}
+                  href={`./${PAGES.allStudents.href}/${student.id}?edit=true`}
                 >
                   <PenIcon className="h-4 w-4" />
                   <span>Edit student details</span>
@@ -237,7 +240,7 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
               <DropdownMenuItem className="group/item">
                 <button
                   className="flex items-center gap-2 text-sm text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  onClick={async () => await copyToClipboard(email)}
+                  onClick={async () => await copyToClipboard(student.email)}
                 >
                   <CopyIcon className="h-4 w-4" />
                   <span>Copy email</span>

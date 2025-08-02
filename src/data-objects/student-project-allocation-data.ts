@@ -34,7 +34,7 @@ export class StudentProjectAllocationData extends DataObject {
         student: {
           include: {
             userInInstance: { include: { user: true } },
-            studentFlags: { include: { flag: true } },
+            studentFlag: true,
           },
         },
         project: {
@@ -150,8 +150,8 @@ export class StudentProjectAllocationData extends DataObject {
           id: student.id,
           name: student.name,
           matric: guidToMatric(student.id),
-          level: student.level,
           email: student.email,
+          flag: student.flag,
           ranking: e.ranking,
         },
         supervisor: supervisor,

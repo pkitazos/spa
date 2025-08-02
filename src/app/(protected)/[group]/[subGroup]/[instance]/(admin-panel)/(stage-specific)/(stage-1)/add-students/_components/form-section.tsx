@@ -3,6 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus } from "lucide-react";
 
+import { INSTITUTION } from "@/config/institution";
+
 import { type FlagDTO } from "@/dto";
 
 import { Button } from "@/components/ui/button";
@@ -78,7 +80,7 @@ export function FormSection({
             render={({ field }) => (
               <FormItem className="w-1/6">
                 <FormControl>
-                  <Input placeholder="Institution ID" {...field} />
+                  <Input placeholder={INSTITUTION.ID_NAME} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

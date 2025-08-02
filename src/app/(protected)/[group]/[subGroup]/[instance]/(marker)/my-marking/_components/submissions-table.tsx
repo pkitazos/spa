@@ -23,6 +23,7 @@ import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status"
 import { MarkerType } from "@/db/types";
 
 import { CopyButton } from "@/components/copy-button";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -128,7 +129,11 @@ function ProjectRow({ row }: { row: Row<SubmissionTableRow> }) {
             <CopyButton data={row.original.student.id} message="student ID" />)
           </div>
         </TableCell>
-        <TableCell colSpan={1}>{row.original.student.level}</TableCell>
+        <TableCell colSpan={1}>
+          <Badge variant="accent" className="rounded-md">
+            {row.original.student.flag.displayName}
+          </Badge>
+        </TableCell>
         <TableCell colSpan={2}>
           {row.original.markerType === MarkerType.SUPERVISOR
             ? "Supervisor"

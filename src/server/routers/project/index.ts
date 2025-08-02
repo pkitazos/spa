@@ -254,7 +254,7 @@ export const projectRouter = createTRPCRouter({
             .filter((x) => x.type === PreferenceType.PREFERENCE)
             .map((x) => x.projectId);
 
-          return { ...acc, [val.institutionId]: draft };
+          return { ...acc, [val.student.id]: draft };
         },
         {} as Record<string, string[]>,
       );

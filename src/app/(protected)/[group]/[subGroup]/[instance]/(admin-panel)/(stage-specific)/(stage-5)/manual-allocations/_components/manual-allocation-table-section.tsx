@@ -111,14 +111,13 @@ export function ManualAllocationDataTableSection({
       }
 
       // Flag compatibility check
-      const hasCompatibleFlag = allocation.flags.some(
-        (flag) =>
-          !!project.flags.find((f) => f.displayName === flag.displayName),
+      const hasCompatibleFlag = !!project.flags.find(
+        (f) => f.displayName === allocation.flag.displayName,
       );
       if (!hasCompatibleFlag) {
         warnings.push({
           type: ValidationWarningType.FLAG_MISMATCH,
-          message: `Student flags (${allocation.flags.map((f) => f.displayName).join(", ")}) don't match project requirements (${project.flags.map((f) => f.displayName).join(", ")})`,
+          message: `Student flag (${allocation.flag.displayName}) doesn't match project requirements (${project.flags.map((f) => f.displayName).join(", ")})`,
           severity: ValidationWarningSeverity.WARNING,
         });
       }

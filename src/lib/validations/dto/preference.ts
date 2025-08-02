@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { studentDtoSchema } from "@/dto";
+
 import { PreferenceType } from "@/db/types";
 
 export const savedPreferenceDto = z.object({
@@ -12,10 +14,7 @@ export const savedPreferenceDto = z.object({
 export type SavedPreferenceDto = z.infer<typeof savedPreferenceDto>;
 
 export const studentPreferenceSubmissionDto = z.object({
-  id: z.string(),
-  name: z.string(),
-  email: z.string(),
-  level: z.number(),
+  student: studentDtoSchema,
   submissionCount: z.number(),
   submitted: z.boolean(),
   preAllocated: z.boolean(),

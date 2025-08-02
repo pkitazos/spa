@@ -7,7 +7,7 @@ import { PAGES } from "@/config/pages";
 
 import { type ProjectDTO, type StudentDTO, type SupervisorDTO } from "@/dto";
 
-import { type PreferenceType, Role, Stage } from "@/db/types";
+import { Role, Stage } from "@/db/types";
 
 import { AccessControl } from "@/components/access-control";
 import { Heading, SubHeading } from "@/components/heading";
@@ -170,7 +170,7 @@ export default async function Project({ params }: { params: PageParams }) {
             />
           </section>
         )}
-        {/* TODO: fix type errors */}
+        {/* // TODO: fix type errors */}
         {/* <section className="mb-16 flex flex-col">
           <SectionHeading>Special Circumstances</SectionHeading>
           <SpecialCircumstancesPage
@@ -194,16 +194,7 @@ export default async function Project({ params }: { params: PageParams }) {
       >
         <section className="mt-16 flex flex-col gap-8">
           <SubHeading>Student Preferences</SubHeading>
-          <StudentPreferenceDataTable
-            data={studentPreferences.map((s) => ({
-              id: s.student.id,
-              name: s.student.name,
-              level: s.student.level,
-              // TODO: fix data table display for submitted projects
-              type: s.preference.type as PreferenceType,
-              rank: s.preference.rank! ?? NaN,
-            }))}
-          />
+          <StudentPreferenceDataTable data={studentPreferences} />
         </section>
       </AccessControl>
     </PanelWrapper>

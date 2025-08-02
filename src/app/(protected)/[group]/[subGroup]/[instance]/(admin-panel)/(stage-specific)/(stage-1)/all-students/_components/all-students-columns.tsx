@@ -105,10 +105,10 @@ export function useAllStudentsColumns({
       ),
     },
     {
-      id: "Level",
-      accessorFn: ({ student }) => student.level,
+      id: "Flag",
+      accessorFn: ({ student }) => student.flag.id,
       header: ({ column }) => (
-        <DataTableColumnHeader className="w-20" column={column} title="Level" />
+        <DataTableColumnHeader className="w-20" column={column} title="Flag" />
       ),
       cell: ({
         row: {
@@ -116,10 +116,11 @@ export function useAllStudentsColumns({
         },
       }) => (
         <div className="grid w-20 place-items-center">
-          <Badge variant="accent">{student.level}</Badge>
+          <Badge variant="accent">{student.flag.displayName}</Badge>
         </div>
       ),
       filterFn: (row, columnId, value) => {
+        // TODO: fix this filter
         const selectedFilters = value as ("4" | "5")[];
         const rowValue = row.getValue<string>(columnId);
         console.log({ selectedFilters });

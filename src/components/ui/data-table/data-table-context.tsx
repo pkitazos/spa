@@ -4,10 +4,12 @@ import { createContext, type ReactNode, useContext } from "react";
 
 import { type DB_Flag, type DB_Tag } from "@/db/types";
 
+// TODO: kill this whole file
+
 const DataTableCtx = createContext<Details | undefined>(undefined);
 
 type Details = {
-  flags: Pick<DB_Flag, "id" | "title">[];
+  flags: Pick<DB_Flag, "id" | "displayName">[];
   tags: Pick<DB_Tag, "id" | "title">[];
 };
 

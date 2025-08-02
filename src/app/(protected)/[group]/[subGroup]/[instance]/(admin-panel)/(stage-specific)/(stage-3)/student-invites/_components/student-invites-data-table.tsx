@@ -1,17 +1,13 @@
 "use client";
 
+import { type StudentDTO } from "@/dto";
+
 import DataTable from "@/components/ui/data-table/data-table";
 import { studentLevelFilter } from "@/components/ui/data-table/data-table-context";
 
-import { type StudentInviteDto } from "@/lib/validations/dto/student";
-
 import { useStudentInvitesColumns } from "./student-invites-columns";
 
-export function StudentInvitesDataTable({
-  data,
-}: {
-  data: StudentInviteDto[];
-}) {
+export function StudentInvitesDataTable({ data }: { data: StudentDTO[] }) {
   const columns = useStudentInvitesColumns();
 
   return (

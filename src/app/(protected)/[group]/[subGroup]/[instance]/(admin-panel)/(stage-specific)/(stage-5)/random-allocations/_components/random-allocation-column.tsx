@@ -100,10 +100,10 @@ export function useRandomAllocationColumns({
       ),
     },
     {
-      id: "Level",
-      accessorFn: (a) => a.student.level,
+      id: "Flag",
+      accessorFn: (a) => a.student.flag.id,
       header: ({ column }) => (
-        <DataTableColumnHeader className="w-16" column={column} title="Level" />
+        <DataTableColumnHeader className="w-16" column={column} title="Flag" />
       ),
       cell: ({
         row: {
@@ -112,7 +112,7 @@ export function useRandomAllocationColumns({
       }) => (
         <p className="grid w-16 place-items-center">
           <Badge variant="outline" className="w-fit">
-            {student.level}
+            {student.flag.displayName}
           </Badge>
         </p>
       ),

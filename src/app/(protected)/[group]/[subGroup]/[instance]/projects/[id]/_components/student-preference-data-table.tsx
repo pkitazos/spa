@@ -1,16 +1,21 @@
 "use client";
 
+import { type StudentDTO } from "@/dto";
+
+import { type ExtendedPreferenceType } from "@/db/types";
+
 import DataTable from "@/components/ui/data-table/data-table";
 import { studentLevelFilter } from "@/components/ui/data-table/data-table-context";
-
-import { type ProjectStudentDto } from "@/lib/validations/dto/preference";
 
 import { useStudentPreferenceColumns } from "./student-preference-columns";
 
 export function StudentPreferenceDataTable({
   data,
 }: {
-  data: ProjectStudentDto[];
+  data: {
+    student: StudentDTO;
+    preference: { type: ExtendedPreferenceType; rank?: number };
+  }[];
 }) {
   const columns = useStudentPreferenceColumns();
 

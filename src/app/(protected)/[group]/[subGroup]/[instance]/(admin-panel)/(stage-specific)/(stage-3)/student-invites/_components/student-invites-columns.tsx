@@ -9,6 +9,8 @@ import Link from "next/link";
 
 import { PAGES } from "@/config/pages";
 
+import { type StudentDTO } from "@/dto";
+
 import { ExportCSVButton } from "@/components/export-csv";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -27,12 +29,11 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { cn } from "@/lib/utils";
 import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
-import { type StudentInviteDto } from "@/lib/validations/dto/student";
 
-export function useStudentInvitesColumns(): ColumnDef<StudentInviteDto>[] {
-  const selectCol = getSelectColumn<StudentInviteDto>();
+export function useStudentInvitesColumns(): ColumnDef<StudentDTO>[] {
+  const selectCol = getSelectColumn<StudentDTO>();
 
-  const baseCols: ColumnDef<StudentInviteDto>[] = [
+  const baseCols: ColumnDef<StudentDTO>[] = [
     {
       id: "Name",
       accessorFn: (s) => s.name,
@@ -78,18 +79,18 @@ export function useStudentInvitesColumns(): ColumnDef<StudentInviteDto>[] {
       ),
     },
     {
-      id: "Level",
-      accessorFn: ({ level }) => level,
+      id: "Flag",
+      accessorFn: ({ flag }) => flag.id,
       header: ({ column }) => (
-        <DataTableColumnHeader className="w-20" column={column} title="Level" />
+        <DataTableColumnHeader className="w-20" column={column} title="Flag" />
       ),
       cell: ({
         row: {
-          original: { level },
+          original: { flag },
         },
       }) => (
         <div className="grid w-20 place-items-center">
-          <Badge variant="accent">{level}</Badge>
+          <Badge variant="accent">{flag.displayName}</Badge>
         </div>
       ),
       filterFn: (row, columnId, value) => {

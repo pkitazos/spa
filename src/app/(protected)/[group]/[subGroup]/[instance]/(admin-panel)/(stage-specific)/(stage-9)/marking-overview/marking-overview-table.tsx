@@ -10,7 +10,7 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronDown, ChevronRight, Send } from "lucide-react";
+import { Badge, ChevronDown, ChevronRight, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { CopyButton } from "@/components/copy-button";
@@ -228,7 +228,11 @@ export function MarkingOverviewTable({
                 <TableCell colSpan={1}>
                   <span>{row.original.project.title}</span>
                 </TableCell>
-                <TableCell>{row.original.student.level}</TableCell>
+                <TableCell>
+                  <Badge variant="accent" className="rounded-md">
+                    {row.original.student.flag.displayName}
+                  </Badge>
+                </TableCell>
                 <TableCell colSpan={1}>
                   <div className="text-sm text-muted-foreground">
                     {row.original.student.name} ({row.original.student.id}{" "}

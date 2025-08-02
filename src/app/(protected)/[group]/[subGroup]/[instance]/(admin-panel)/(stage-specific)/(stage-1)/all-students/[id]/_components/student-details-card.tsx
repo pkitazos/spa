@@ -14,6 +14,8 @@ import { toast } from "sonner";
 
 import { spacesLabels } from "@/config/spaces";
 
+import { type StudentDTO } from "@/dto";
+
 import { useInstanceParams } from "@/components/params-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,7 +31,6 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { api } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { type User } from "@/lib/validations/auth";
 import {
   type StudentInstanceDetails,
   studentInstanceDetailsSchema,
@@ -42,13 +43,15 @@ import { studentLevelSchema } from "@/lib/validations/student-level";
 
 // TODO: jump through typescript hoops
 
+// TODO: jump through typescript hoops
+
 // @ts-nocheck
 
 export function StudentDetailsCard({
   student,
   className,
 }: {
-  student: User & { level: number };
+  student: StudentDTO;
   className?: ClassValue;
 }) {
   const router = useRouter();

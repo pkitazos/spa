@@ -7,9 +7,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { INSTITUTION } from "@/config/institution";
 import { PAGES } from "@/config/pages";
 
-import { PreferenceType } from "@/db/types";
+import { type StudentDTO } from "@/dto/user";
+
+import { type ExtendedPreferenceType, PreferenceType } from "@/db/types";
 
 import { useInstancePath } from "@/components/params-context";
 import { Badge } from "@/components/ui/badge";
@@ -26,19 +29,30 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
-import { type ProjectStudentDto } from "@/lib/validations/dto/preference";
+type StudentPreferenceData = {
+  student: StudentDTO;
+  preference: { type: ExtendedPreferenceType; rank?: number };
+};
 
-export function useStudentPreferenceColumns(): ColumnDef<ProjectStudentDto>[] {
+export function useStudentPreferenceColumns(): ColumnDef<StudentPreferenceData>[] {
   const instancePath = useInstancePath();
 
-  const columns: ColumnDef<ProjectStudentDto>[] = [
+  const columns: ColumnDef<StudentPreferenceData>[] = [
     {
-      id: "GUID",
-      accessorFn: ({ id }) => id,
+      id: INSTITUTION.ID_NAME,
+      accessorFn: ({ student }) => student.id,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="GUID" canFilter />
+        <DataTableColumnHeader
+          column={column}
+          title={INSTITUTION.ID_NAME}
+          canFilter
+        />
       ),
-      cell: ({ row: { original: student } }) => (
+      cell: ({
+        row: {
+          original: { student },
+        },
+      }) => (
         <WithTooltip
           align="start"
           tip={<div className="max-w-xs">{student.id}</div>}
@@ -49,39 +63,42 @@ export function useStudentPreferenceColumns(): ColumnDef<ProjectStudentDto>[] {
     },
     {
       id: "Name",
-      accessorFn: ({ name }) => name,
+      accessorFn: ({ student }) => student.name,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
       ),
       cell: ({
         row: {
-          original: { name, id },
+          original: { student },
         },
       }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`${instancePath}/${PAGES.allStudents.href}/${id}`}
+          href={`${instancePath}/${PAGES.allStudents.href}/${student.id}`}
         >
-          {name}
+          {student.name}
         </Link>
       ),
     },
     {
-      id: "Level",
-      accessorFn: ({ level }) => level,
+      id: "Flag",
+      accessorFn: ({ student }) => student.flag.id,
       header: ({ column }) => (
-        <DataTableColumnHeader className="w-20" column={column} title="Level" />
+        <DataTableColumnHeader className="w-20" column={column} title="Flag" />
       ),
       cell: ({
         row: {
-          original: { level },
+          original: { student },
         },
       }) => (
         <div className="grid w-20 place-items-center">
-          <Badge variant="accent">{level}</Badge>
+          <Badge variant="accent" className="rounded-md">
+            {student.flag.displayName}
+          </Badge>
         </div>
       ),
       filterFn: (row, columnId, value) => {
+        //  TODO: fix this mess
         const selectedFilters = value as ("4" | "5")[];
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
         const rowValue = row.getValue(columnId) as 4 | 5;
@@ -92,16 +109,16 @@ export function useStudentPreferenceColumns(): ColumnDef<ProjectStudentDto>[] {
     },
     {
       id: "Type",
-      accessorFn: ({ type }) => type,
+      accessorFn: ({ preference }) => preference.type,
       header: ({ column }) => (
         <DataTableColumnHeader title="Type" column={column} />
       ),
       cell: ({
         row: {
-          original: { type },
+          original: { preference },
         },
       }) => {
-        return type === PreferenceType.PREFERENCE ? (
+        return preference.type === PreferenceType.PREFERENCE ? (
           <Badge className="bg-primary text-center font-semibold">
             Preference
           </Badge>
@@ -114,17 +131,17 @@ export function useStudentPreferenceColumns(): ColumnDef<ProjectStudentDto>[] {
     },
     {
       id: "Rank",
-      accessorFn: ({ rank }) => rank,
+      accessorFn: ({ preference }) => preference.rank,
       header: ({ column }) => (
         <DataTableColumnHeader title="Rank" column={column} />
       ),
       cell: ({
         row: {
-          original: { rank },
+          original: { preference },
         },
       }) => (
         <div className="text-center font-semibold">
-          {Number.isNaN(rank) ? "-" : rank}
+          {Number.isNaN(preference.rank) ? "-" : preference.rank}
         </div>
       ),
     },
@@ -132,7 +149,11 @@ export function useStudentPreferenceColumns(): ColumnDef<ProjectStudentDto>[] {
       accessorKey: "actions",
       id: "Actions",
       header: () => <ActionColumnLabel className="w-24" />,
-      cell: ({ row: { original: student } }) => (
+      cell: ({
+        row: {
+          original: { student },
+        },
+      }) => (
         <div className="flex w-24 items-center justify-center">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

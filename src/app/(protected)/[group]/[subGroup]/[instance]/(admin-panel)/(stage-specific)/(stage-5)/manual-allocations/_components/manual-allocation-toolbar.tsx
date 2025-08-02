@@ -22,13 +22,12 @@ export function ManualAllocationToolbar({
 }: ManualAllocationToolbarProps) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
+  // TODO: refactor this to use a more efficient data structure
   const availableFlags = useMemo(() => {
     const flagMap = new Map<string, string>();
 
     students.forEach((student) => {
-      student.flags.forEach((flag) => {
-        flagMap.set(flag.id, flag.displayName);
-      });
+      flagMap.set(student.flag.id, student.flag.displayName);
     });
 
     return Array.from(flagMap.entries()).map(([id, title]) => ({ id, title }));

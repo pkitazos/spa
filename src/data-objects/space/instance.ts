@@ -19,7 +19,13 @@ import {
 
 import { collectMatchingData } from "@/db/transactions/collect-matching-data";
 import { Transformers as T } from "@/db/transformers";
-import { type DB, Stage, type New, AllocationMethod } from "@/db/types";
+import {
+  type DB,
+  Stage,
+  type New,
+  AllocationMethod,
+  type PreferenceType,
+} from "@/db/types";
 
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { setDiff } from "@/lib/utils/general/set-difference";
@@ -417,8 +423,18 @@ export class AllocationInstance extends DataObject {
   }
 
   // TODO: standardise return type
-  public async getStudentPreferenceDetails() {
-    const students = await this.db.studentDetails.findMany({
+  public async getStudentPreferenceDetails(): Promise<
+    {
+      student: StudentDTO;
+      draftPreferences: {
+        projectId: string;
+        score: number;
+        type: PreferenceType;
+      }[];
+      submittedPreferences: { projectId: string; rank: number }[];
+    }[]
+  > {
+    const studentData = await this.db.studentDetails.findMany({
       where: expand(this.params),
       include: {
         userInInstance: { include: { user: true } },
@@ -428,12 +444,8 @@ export class AllocationInstance extends DataObject {
       },
     });
 
-    return students.map((u) => ({
-      institutionId: u.userId,
-      fullName: u.userInInstance.user.name,
-      email: u.userInInstance.user.email,
-      joined: u.userInInstance.joined,
-      flag: u.studentFlag,
+    return studentData.map((u) => ({
+      student: T.toStudentDTO(u),
       draftPreferences: u.draftPreferences,
       submittedPreferences: u.submittedPreferences,
     }));

@@ -49,8 +49,7 @@ export const fakeStudent = {
   email: "",
   name: "John Doe",
   joined: false,
-  flags: [],
-  level: 0,
+  flag: { id: "", displayName: "", description: "" },
 };
 
 export const fakePresentationUnit = {
@@ -61,7 +60,7 @@ export const fakePresentationUnit = {
   weight: 0,
   isOpen: false,
   components: [],
-  flag: { id: "", title: "", description: "" },
+  flag: { id: "", displayName: "", description: "" },
   allowedMarkerTypes: [],
 };
 
@@ -73,7 +72,7 @@ export const fakeConductUnit = {
   weight: 0,
   isOpen: false,
   components: [],
-  flag: { id: "", title: "", description: "" },
+  flag: { id: "", displayName: "", description: "" },
   allowedMarkerTypes: [],
 };
 
@@ -85,7 +84,7 @@ export const fakeDissertationUnit = {
   weight: 0,
   isOpen: false,
   components: [],
-  flag: { id: "", title: "", description: "" },
+  flag: { id: "", displayName: "", description: "" },
   allowedMarkerTypes: [],
 };
 
