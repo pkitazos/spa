@@ -1,12 +1,13 @@
 import { useForm } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus } from "lucide-react";
+import { Plus, TextCursorInputIcon } from "lucide-react";
 
 import { INSTITUTION } from "@/config/institution";
 
 import { type FlagDTO } from "@/dto";
 
+import { SectionHeading } from "@/components/heading";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -60,7 +61,10 @@ export function FormSection({
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex w-full flex-col items-start gap-3"
       >
-        <h3 className="text-xl">Manually create Student</h3>
+        <SectionHeading className="mb-2 flex items-center">
+          <TextCursorInputIcon className="mr-2 h-6 w-6 text-indigo-500" />
+          <span>Manually create Student</span>
+        </SectionHeading>
         <div className="flex w-full items-center justify-start gap-5">
           <FormField
             control={form.control}

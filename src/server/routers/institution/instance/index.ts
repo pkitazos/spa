@@ -226,7 +226,13 @@ export const instanceRouter = createTRPCRouter({
           .getUsers()
           .then((data) => data.map(({ id }) => id));
 
-        await institution.createUsers(newSupervisors);
+        await institution.createUsers(
+          newSupervisors.map((s) => ({
+            id: s.id,
+            name: s.name,
+            email: s.email,
+          })),
+        );
 
         await instance.linkUsers(newSupervisors);
 

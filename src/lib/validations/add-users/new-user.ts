@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import { type FlagDTO } from "@/dto";
 
+// MOVE - maybe co-locate these with the CSV parsing logic, it's the only place they are used
+
 export const baseNewStudentSchema = z.object({
   fullName: z
     .string("Please enter a valid name")
@@ -30,6 +32,8 @@ export function buildNewStudentSchema(flags: FlagDTO[]) {
       }),
   });
 }
+
+export type NewStudent = z.infer<ReturnType<typeof buildNewStudentSchema>>;
 
 export const newSupervisorSchema = z
   .object({
@@ -68,7 +72,5 @@ export const newSupervisorSchema = z
 
 // for CSV parsing - validates supervisor data from CSV
 export const csvSupervisorSchema = newSupervisorSchema;
-
-export type NewStudent = z.infer<ReturnType<typeof buildNewStudentSchema>>;
 
 export type NewSupervisor = z.infer<typeof newSupervisorSchema>;

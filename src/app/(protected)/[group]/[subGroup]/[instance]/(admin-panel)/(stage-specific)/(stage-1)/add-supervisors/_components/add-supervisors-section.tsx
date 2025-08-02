@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 
 import { TRPCClientError } from "@trpc/client";
-import { FileText, RotateCcw } from "lucide-react";
+import { FileSpreadsheetIcon, FileText, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -13,6 +13,7 @@ import { type SupervisorDTO } from "@/dto";
 import { type LinkUserResult } from "@/dto/result/link-user-result";
 
 import { CodeSnippet } from "@/components/code-snippet";
+import { SectionHeading } from "@/components/heading";
 import { useInstanceParams } from "@/components/params-context";
 import { Button } from "@/components/ui/button";
 import DataTable from "@/components/ui/data-table/data-table";
@@ -147,8 +148,10 @@ export function AddSupervisorsSection() {
   return (
     <>
       <div className="mt-6 flex flex-col gap-6">
-        <h3 className="text-xl">Upload using CSV</h3>
-
+        <SectionHeading className="mb-2 flex items-center">
+          <FileSpreadsheetIcon className="mr-2 h-6 w-6 text-indigo-500" />
+          <span>Upload using CSV</span>
+        </SectionHeading>
         <div className="flex items-center gap-6">
           <CSVUploadButton
             requiredHeaders={addSupervisorsCsvHeaders}
