@@ -16,7 +16,7 @@
     "(admin-panel)": "admin",
     "validations": "class",
     "trpc": "api",
-    "tmp": "trash"
+    "_tmp": "directive"
   },
   "better-comments.tags": [
     {
