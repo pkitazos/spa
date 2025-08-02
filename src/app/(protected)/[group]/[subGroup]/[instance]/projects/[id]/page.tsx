@@ -94,7 +94,7 @@ export default async function Project({ params }: { params: PageParams }) {
   });
 
   const projectDescriptors =
-    await api.institution.instance.getUsedProjectDescriptors({ params });
+    await api.institution.instance.getAllProjectDescriptors({ params });
 
   return (
     <PanelWrapper>

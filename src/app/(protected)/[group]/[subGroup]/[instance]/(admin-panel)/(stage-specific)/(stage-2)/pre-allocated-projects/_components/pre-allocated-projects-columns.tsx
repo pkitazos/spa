@@ -8,9 +8,15 @@ import {
 import Link from "next/link";
 import { z } from "zod";
 
+import { INSTITUTION } from "@/config/institution";
 import { PAGES } from "@/config/pages";
 
-import { type ProjectDTO, type StudentDTO, type SupervisorDTO } from "@/dto";
+import {
+  flagDtoSchema,
+  type ProjectDTO,
+  type StudentDTO,
+  type SupervisorDTO,
+} from "@/dto";
 
 import { useInstancePath } from "@/components/params-context";
 import { tagTypeSchema } from "@/components/tag/tag-input";
@@ -100,11 +106,14 @@ export function usePreAllocatedProjectColumns({
       ),
     },
     {
-      id: "Supervisor GUID",
+      id: `Supervisor ${INSTITUTION.ID_NAME}`,
       accessorFn: ({ supervisor }) => supervisor.id,
       header: ({ column }) => (
         <div className="w-28 py-1">
-          <DataTableColumnHeader column={column} title="Supervisor GUID" />
+          <DataTableColumnHeader
+            column={column}
+            title={`Supervisor ${INSTITUTION.ID_NAME}`}
+          />
         </div>
       ),
       cell: ({
@@ -125,9 +134,13 @@ export function usePreAllocatedProjectColumns({
       accessorFn: ({ project }) => project.flags,
       header: () => <div className="text-center">Flags</div>,
       filterFn: (row, columnId, value) => {
-        const ids = value as string[];
-        const rowFlags = z.array(tagTypeSchema).parse(row.getValue(columnId));
-        return rowFlags.some((e) => ids.includes(e.id));
+        const selectedFilters = z.array(flagDtoSchema).parse(value);
+        const rowFlags = z.array(flagDtoSchema).parse(row.getValue(columnId));
+
+        return (
+          new Set(rowFlags.map((f) => f.id)).size > 0 &&
+          selectedFilters.some((f) => rowFlags.some((rf) => rf.id === f.id))
+        );
       },
       cell: ({
         row: {
@@ -139,7 +152,7 @@ export function usePreAllocatedProjectColumns({
         <div className="flex flex-col gap-2">
           {flags.length > 2 ? (
             <>
-              <Badge className="w-fit" key={flags[0].id}>
+              <Badge className="w-20 rounded-md" key={flags[0].id}>
                 {flags[0].displayName}
               </Badge>
               <WithTooltip
@@ -147,7 +160,7 @@ export function usePreAllocatedProjectColumns({
                 tip={
                   <ul className="flex list-disc flex-col gap-1 p-2 pl-1">
                     {flags.slice(1).map((flag) => (
-                      <Badge className="w-max max-w-40" key={flag.id}>
+                      <Badge className="w-20 rounded-md" key={flag.id}>
                         {flag.displayName}
                       </Badge>
                     ))}
@@ -225,12 +238,12 @@ export function usePreAllocatedProjectColumns({
     },
     {
       accessorFn: (p) => p.student.id,
-      id: "Student GUID",
+      id: `Student ${INSTITUTION.ID_NAME}`,
       header: ({ column }) => (
         <DataTableColumnHeader
           className="w-20"
           column={column}
-          title="Student GUID"
+          title={`Student ${INSTITUTION.ID_NAME}`}
         />
       ),
       cell: ({

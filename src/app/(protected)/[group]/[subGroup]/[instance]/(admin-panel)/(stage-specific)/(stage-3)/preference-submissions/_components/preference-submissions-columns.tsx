@@ -3,12 +3,14 @@ import {
   CopyIcon,
   CornerDownRightIcon,
   MoreHorizontalIcon as MoreIcon,
-  PenIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { z } from "zod";
 
 import { INSTITUTION } from "@/config/institution";
 import { PAGES } from "@/config/pages";
+
+import { type FlagDTO } from "@/dto";
 
 import { ExportCSVButton } from "@/components/export-csv";
 import { CircleCheckSolidIcon } from "@/components/icons/circle-check";
@@ -76,7 +78,7 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
     },
     {
       id: "Flag",
-      accessorFn: (s) => s.student.flag.id,
+      accessorFn: (s) => s.student.flag,
       header: ({ column }) => (
         <DataTableColumnHeader className="w-20" column={column} title="Flag" />
       ),
@@ -86,17 +88,16 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
         },
       }) => (
         <div className="grid w-20 place-items-center">
-          <Badge variant="accent">{student.flag.displayName}</Badge>
+          <Badge variant="accent" className="rounded-md">
+            {student.flag.displayName}
+          </Badge>
         </div>
       ),
       filterFn: (row, columnId, value) => {
-        const selectedFilters = value as ("4" | "5")[];
-        // TODO: fix this
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-        const rowValue = row.getValue(columnId) as 4 | 5;
-        console.log({ selectedFilters });
-        const studentLevel = rowValue.toString() as "4" | "5";
-        return selectedFilters.includes(studentLevel);
+        const selectedFilters = z.array(z.string()).parse(value);
+        return selectedFilters.includes(
+          row.getValue<FlagDTO>(columnId).displayName,
+        );
       },
     },
     {
@@ -228,15 +229,7 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
                   <span>View student details</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="group/item">
-                <Link
-                  className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./${PAGES.allStudents.href}/${student.id}?edit=true`}
-                >
-                  <PenIcon className="h-4 w-4" />
-                  <span>Edit student details</span>
-                </Link>
-              </DropdownMenuItem>
+              {/* // TODO: make the actual email be click-copyable instead */}
               <DropdownMenuItem className="group/item">
                 <button
                   className="flex items-center gap-2 text-sm text-primary underline-offset-4 group-hover/item:underline hover:underline"

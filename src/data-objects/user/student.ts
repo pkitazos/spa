@@ -193,10 +193,7 @@ export class Student extends User {
     return boardState;
   }
 
-  /**
-   * @deprecated
-   */
-  public async setStudentLevel(_level: number): Promise<StudentDTO> {
+  public async setStudentFlag(flagId: string): Promise<StudentDTO> {
     return await this.db.studentDetails
       .update({
         where: {
@@ -205,7 +202,7 @@ export class Student extends User {
             ...expand(this.instance.params),
           },
         },
-        data: {},
+        data: { studentFlag: { connect: { id: flagId } } },
         include: {
           studentFlag: true,
           userInInstance: { include: { user: true } },

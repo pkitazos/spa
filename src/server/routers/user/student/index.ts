@@ -106,18 +106,6 @@ export const studentRouter = createTRPCRouter({
     },
   ),
 
-  // MOVE to instance router (a lot of these operations should really be on the instance object)
-  // they can also be on the student object and just use the same underlying dal methods
-  // maybe not
-  // ! deprecated
-  updateLevel: procedure.instance.subGroupAdmin
-    .input(z.object({ studentId: z.string(), level: z.number() }))
-    .output(studentDtoSchema)
-    .mutation(async ({ ctx: { instance }, input: { studentId, level } }) => {
-      const student = await instance.getStudent(studentId);
-      return student.setStudentLevel(level);
-    }),
-
   // Can anyone see this?
   latestSubmission: procedure.instance.user
     .input(z.object({ studentId: z.string() }))
@@ -127,7 +115,6 @@ export const studentRouter = createTRPCRouter({
       return student.getLatestSubmissionDateTime();
     }),
 
-  // BREAKING output type
   isPreAllocated: procedure.instance.student
     .output(z.boolean())
     .query(async ({ ctx: { user } }) => await user.hasSelfDefinedProject()),

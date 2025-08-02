@@ -4,10 +4,10 @@ import { type ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
   MoreHorizontal as MoreIcon,
-  PenIcon,
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
+import { z } from "zod";
 
 import { INSTITUTION } from "@/config/institution";
 import { PAGES } from "@/config/pages";
@@ -19,7 +19,7 @@ import { Stage } from "@/db/types";
 import { AccessControl } from "@/components/access-control";
 import { useInstanceStage } from "@/components/params-context";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionColumnLabel } from "@/components/ui/data-table/action-column-label";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { getSelectColumn } from "@/components/ui/data-table/select-column";
@@ -55,13 +55,17 @@ export function useNewStudentColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Full Name" />
       ),
-      cell: ({
-        row: {
-          original: { name },
-        },
-      }) => (
-        <WithTooltip align="start" tip={<div className="max-w-xs">{name}</div>}>
-          <div className="w-40 truncate">{name}</div>
+      cell: ({ row: { original: student } }) => (
+        <WithTooltip
+          align="start"
+          tip={<div className="max-w-xs">{student.name}</div>}
+        >
+          <Link
+            className={buttonVariants({ variant: "link" })}
+            href={`./${PAGES.allStudents.href}/${student.id}`}
+          >
+            {student.name}
+          </Link>
         </WithTooltip>
       ),
     },
@@ -69,19 +73,15 @@ export function useNewStudentColumns({
       id: INSTITUTION.ID_NAME,
       accessorFn: ({ id }) => id,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title={INSTITUTION.ID_NAME}
-          canFilter
-        />
+        <DataTableColumnHeader column={column} title={INSTITUTION.ID_NAME} />
       ),
       cell: ({
         row: {
           original: { id },
         },
       }) => (
-        <WithTooltip align="start" tip={<div className="max-w-xs">{id}</div>}>
-          <div className="w-32 truncate">{id}</div>
+        <WithTooltip tip={<div className="max-w-xs">{id}</div>}>
+          <div className="w-20 truncate">{id}</div>
         </WithTooltip>
       ),
     },
@@ -110,9 +110,8 @@ export function useNewStudentColumns({
         </div>
       ),
       filterFn: (row, columnId, value) => {
-        const selectedFilters = value as string[];
-        const rowValue = row.getValue<string>(columnId);
-        return selectedFilters.includes(rowValue);
+        const selectedFilters = z.array(z.string()).parse(value);
+        return selectedFilters.includes(row.getValue<string>(columnId));
       },
     },
     {
@@ -200,15 +199,6 @@ export function useNewStudentColumns({
                   >
                     <CornerDownRightIcon className="h-4 w-4" />
                     <span>View student details</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="group/item">
-                  <Link
-                    className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={`./${PAGES.allStudents.href}/${id}?edit=true`}
-                  >
-                    <PenIcon className="h-4 w-4" />
-                    <span>Edit student details</span>
                   </Link>
                 </DropdownMenuItem>
                 <AccessControl allowedStages={[Stage.SETUP]}>

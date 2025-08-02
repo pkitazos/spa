@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 export default async function Page({ params }: { params: InstanceParams }) {
   const preAllocations = await api.project.getAllPreAllocated({ params });
   const projectDescriptors =
-    await api.institution.instance.getUsedProjectDescriptors({ params });
+    await api.institution.instance.getAllProjectDescriptors({ params });
 
   return (
     <PanelWrapper className="gap-16">

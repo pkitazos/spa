@@ -4,11 +4,12 @@ import { type ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
   LucideMoreHorizontal as MoreIcon,
-  PenIcon,
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
+import { z } from "zod";
 
+import { INSTITUTION } from "@/config/institution";
 import { PAGES } from "@/config/pages";
 
 import { type ProjectDTO, type StudentDTO } from "@/dto";
@@ -60,10 +61,10 @@ export function useAllStudentsColumns({
 
   const userCols: ColumnDef<StudentWithAllocation>[] = [
     {
-      id: "GUID",
+      id: INSTITUTION.ID_NAME,
       accessorFn: ({ student }) => student.id,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="GUID" canFilter />
+        <DataTableColumnHeader column={column} title={INSTITUTION.ID_NAME} />
       ),
       cell: ({
         row: {
@@ -74,7 +75,7 @@ export function useAllStudentsColumns({
           align="start"
           tip={<div className="max-w-xs">{student.id}</div>}
         >
-          <div className="w-40 truncate">{student.id}</div>
+          <div className="w-20 truncate">{student.id}</div>
         </WithTooltip>
       ),
     },
@@ -106,7 +107,7 @@ export function useAllStudentsColumns({
     },
     {
       id: "Flag",
-      accessorFn: ({ student }) => student.flag.id,
+      accessorFn: ({ student }) => student.flag.displayName,
       header: ({ column }) => (
         <DataTableColumnHeader className="w-20" column={column} title="Flag" />
       ),
@@ -116,27 +117,21 @@ export function useAllStudentsColumns({
         },
       }) => (
         <div className="grid w-20 place-items-center">
-          <Badge variant="accent">{student.flag.displayName}</Badge>
+          <Badge variant="accent" className="rounded-md">
+            {student.flag.displayName}
+          </Badge>
         </div>
       ),
       filterFn: (row, columnId, value) => {
-        // TODO: fix this filter
-        const selectedFilters = value as ("4" | "5")[];
-        const rowValue = row.getValue<string>(columnId);
-        console.log({ selectedFilters });
-        const studentLevel = rowValue.toString();
-        return selectedFilters.includes(studentLevel);
+        const selectedFilters = z.array(z.string()).parse(value);
+        return selectedFilters.includes(row.getValue<string>(columnId));
       },
     },
     {
       id: "Project Allocation",
       accessorFn: ({ allocation }) => allocation?.title,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          column={column}
-          title="Project Allocation"
-          canFilter
-        />
+        <DataTableColumnHeader column={column} title="Project Allocation" />
       ),
       cell: ({
         row: {
@@ -256,15 +251,6 @@ export function useAllStudentsColumns({
                 >
                   <CornerDownRightIcon className="h-4 w-4" />
                   <span>View Student Details</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="group/item">
-                <Link
-                  className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./${PAGES.allStudents.href}/${student.id}?edit=true`}
-                >
-                  <PenIcon className="h-4 w-4" />
-                  <span>Edit student details</span>
                 </Link>
               </DropdownMenuItem>
               <AccessControl
