@@ -12,6 +12,7 @@ import { spacesLabels } from "@/config/spaces";
 import { type SupervisorDTO } from "@/dto";
 import { type LinkUserResult } from "@/dto/result/link-user-result";
 
+import { CodeSnippet } from "@/components/code-snippet";
 import { useInstanceParams } from "@/components/params-context";
 import { Button } from "@/components/ui/button";
 import DataTable from "@/components/ui/data-table/data-table";
@@ -147,6 +148,7 @@ export function AddSupervisorsSection() {
     <>
       <div className="mt-6 flex flex-col gap-6">
         <h3 className="text-xl">Upload using CSV</h3>
+
         <div className="flex items-center gap-6">
           <CSVUploadButton
             requiredHeaders={addSupervisorsCsvHeaders}
@@ -157,12 +159,6 @@ export function AddSupervisorsSection() {
             onShowErrorModalChange={setShowErrorModal}
             fileInputRef={fileInputRef}
           />
-          <div className="flex flex-col items-start">
-            <p className="text-muted-foreground">must contain header: </p>
-            <code className="text-muted-foreground">
-              {addSupervisorsCsvHeaders.join(",")}
-            </code>
-          </div>
           <div className="ml-auto flex items-center gap-2">
             <Button
               variant="outline"
@@ -186,6 +182,11 @@ export function AddSupervisorsSection() {
             </Button>
           </div>
         </div>
+        <CodeSnippet
+          label="must contain header:"
+          code={addSupervisorsCsvHeaders.join(",")}
+          copyMessage="CSV Headers"
+        />
       </div>
       <LabelledSeparator label="or" className="my-6" />
       <FormSection handleAddSupervisor={handleAddSupervisor} />

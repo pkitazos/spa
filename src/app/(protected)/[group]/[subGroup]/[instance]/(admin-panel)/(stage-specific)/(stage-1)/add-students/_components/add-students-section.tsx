@@ -12,6 +12,7 @@ import { spacesLabels } from "@/config/spaces";
 import { type FlagDTO, type StudentDTO } from "@/dto";
 import { type LinkUserResult } from "@/dto/result/link-user-result";
 
+import { CodeSnippet } from "@/components/code-snippet";
 import { useInstanceParams } from "@/components/params-context";
 import { Button } from "@/components/ui/button";
 import DataTable from "@/components/ui/data-table/data-table";
@@ -160,12 +161,7 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
             onShowErrorModalChange={setShowErrorModal}
             fileInputRef={fileInputRef}
           />
-          <div className="flex flex-col items-start">
-            <p className="text-muted-foreground">must contain header: </p>
-            <code className="text-muted-foreground">
-              {addStudentsCsvHeaders.join(",")}
-            </code>
-          </div>
+
           <div className="ml-auto flex items-center gap-2">
             <Button
               variant="outline"
@@ -189,6 +185,11 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
             </Button>
           </div>
         </div>
+        <CodeSnippet
+          label="must contain header:"
+          code={addStudentsCsvHeaders.join(",")}
+          copyMessage="CSV Headers"
+        />
       </div>
       <LabelledSeparator label="or" className="my-6" />
       <FormSection handleAddStudent={handleAddStudent} flags={flags} />
