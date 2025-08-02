@@ -1,6 +1,3 @@
-// TODO: jump through typescript hoops
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -52,22 +49,6 @@ import { cn } from "@/lib/utils";
 import { MarkdownEditor } from "../markdown-editor";
 import { MultiSelect } from "../ui/multi-select";
 
-// TODO: jump through typescript hoops
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
-
-// TODO: jump through typescript hoops
-
-// @ts-nocheck
-
-// TODO: jump through typescript hoops
-
-// @ts-nocheck
-
-// TODO: jump through typescript hoops
-
-// @ts-nocheck
-
 interface ProjectFormProps {
   formInitialisationData: ProjectFormInitialisationDTO;
   defaultValues?: Partial<ProjectFormInternalStateDTO>;
@@ -93,7 +74,7 @@ export function ProjectForm({
   const projectFormInternalStateSchema =
     projectForm.buildInternalStateSchema(takenTitles);
 
-  const form = useForm<ProjectFormInternalStateDTO>({
+  const form = useForm({
     resolver: zodResolver(projectFormInternalStateSchema),
     defaultValues: {
       title: "",
@@ -154,7 +135,7 @@ export function ProjectForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(handleFormSubmit)}
-        className="flex w-full max-w-5xl flex-col gap-6"
+        className="flex w-full flex-col gap-6"
       >
         {/* Supervisor Selection (Admin only) */}
         {isAdmin && (
@@ -311,7 +292,7 @@ export function ProjectForm({
                       return (
                         <FormItem
                           key={flag.id}
-                          className="flex flex-row items-start space-x-3 space-y-0"
+                          className="flex flex-row items-center space-x-3 space-y-0"
                         >
                           <FormControl>
                             <Checkbox
@@ -330,9 +311,14 @@ export function ProjectForm({
                               }}
                             />
                           </FormControl>
-                          <FormLabel className="text-base font-normal">
-                            {flag.title}
-                          </FormLabel>
+                          <div>
+                            <FormLabel className="text-base font-normal">
+                              {flag.displayName}
+                            </FormLabel>
+                            <FormDescription className="text-sm">
+                              {flag.description}
+                            </FormDescription>
+                          </div>
                         </FormItem>
                       );
                     }}
@@ -363,6 +349,11 @@ export function ProjectForm({
                     className="sm:min-w-[450px]"
                   />
                 </FormControl>
+                <FormDescription className="mt-2">
+                  Tags help students find projects that match their interests.
+                  You can select multiple tags. If you need to add a new tag,
+                  please contact the system administrators.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -413,7 +404,7 @@ export function ProjectForm({
                   </FormLabel>
                   <FormControl>
                     <Input
-                      disabled={isPreAllocated || isSubmitting}
+                      disabled={isPreAllocated ?? isSubmitting}
                       className="w-16"
                       placeholder="1"
                       {...field}

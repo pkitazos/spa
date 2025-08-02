@@ -16,9 +16,8 @@ import { Role } from "@/db/types";
 import { Button } from "@/components/ui/button";
 
 import { api } from "@/lib/trpc/client";
-import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 
-import { useInstanceParams } from "../params-context";
+import { useInstanceParams, usePathInInstance } from "../params-context";
 
 import { ProjectForm } from ".";
 
@@ -38,6 +37,8 @@ export function CreateProjectForm({
   const params = useInstanceParams();
   const router = useRouter();
 
+  const { basePath, getPath } = usePathInInstance();
+
   const { mutateAsync: api_createProject, isPending } =
     api.project.create.useMutation();
 
@@ -46,10 +47,11 @@ export function CreateProjectForm({
       submissionData,
       currentUserId,
     );
+
     void toast.promise(
       api_createProject({ params, newProject: apiData })
         .then((projectId) => {
-          router.push(`${formatParamsAsPath(params)}/projects/${projectId}`);
+          router.push(getPath(`projects/${projectId}`));
           router.refresh();
           return projectId;
         })
@@ -66,7 +68,10 @@ export function CreateProjectForm({
 
   const handleCancel = () => {
     const redirectPath =
-      userRole === Role.ADMIN ? "." : `./${PAGES.myProposedProjects.href}`;
+      userRole === Role.ADMIN
+        ? basePath
+        : getPath(`${PAGES.myProposedProjects.href}`);
+
     router.push(redirectPath);
   };
 
