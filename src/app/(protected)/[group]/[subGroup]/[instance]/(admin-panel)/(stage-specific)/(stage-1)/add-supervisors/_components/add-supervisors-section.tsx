@@ -22,13 +22,15 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { api } from "@/lib/trpc/client";
-import { addSupervisorsCsvHeaders } from "@/lib/validations/add-users/csv";
-import { type NewSupervisor } from "@/lib/validations/add-users/new-user";
 
 import { CSVUploadButton } from "./csv-upload-button";
 import { type ProcessingResult } from "./csv-validation-utils";
 import { FormSection } from "./form-section";
 import { useNewSupervisorColumns } from "./new-supervisor-columns";
+import {
+  newSupervisorSchema,
+  type NewSupervisor,
+} from "./new-supervisor-schema";
 
 export function AddSupervisorsSection() {
   const router = useRouter();
@@ -38,6 +40,10 @@ export function AddSupervisorsSection() {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [processingResult, setProcessingResult] =
     useState<ProcessingResult | null>(null);
+
+  const addSupervisorsCsvHeaders = newSupervisorSchema
+    .keyof()
+    .options.toSorted();
 
   const { data, isLoading, refetch } =
     api.institution.instance.getSupervisors.useQuery({ params });

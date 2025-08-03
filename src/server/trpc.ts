@@ -15,8 +15,8 @@ import { ZodError } from "zod";
 import { db } from "@/db";
 
 import { auth } from "@/lib/auth";
+import { type Session } from "@/lib/auth/types";
 import { logger, LogLevels } from "@/lib/logging/logger";
-import { type Session } from "@/lib/validations/auth";
 
 const trpcLogger = logger.child({ service: "trpc" });
 

@@ -21,10 +21,10 @@ import { ToastSuccessCard } from "@/components/toast-success-card";
 import { buttonVariants } from "@/components/ui/button";
 import DataTable from "@/components/ui/data-table/data-table";
 
+import { type User } from "@/lib/auth/types";
 import { api } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { toPP3 } from "@/lib/utils/general/instance-params";
-import { type User } from "@/lib/validations/auth";
 import { type StudentPreferenceType } from "@/lib/validations/student-preference";
 
 import { useAllProjectsColumns } from "./all-projects-columns";

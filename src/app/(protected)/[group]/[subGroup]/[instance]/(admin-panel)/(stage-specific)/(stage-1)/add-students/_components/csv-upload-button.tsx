@@ -10,15 +10,15 @@ import { LinkUserResult } from "@/dto/result/link-user-result";
 
 import { Input } from "@/components/ui/input";
 
-import { type NewStudent } from "@/lib/validations/add-users/new-user";
+import { validateCSVStructure } from "@/lib/utils/csv/validate-structure";
 
 import {
-  validateCSVStructure,
   validateCSVRows,
   filterDuplicatesWithinCSV,
   type ProcessingResult,
 } from "./csv-validation-utils";
 import { ErrorReportModal } from "./error-report-modal";
+import { type NewStudent } from "./new-student-schema";
 
 interface CSVUploadButtonProps {
   handleUpload: (data: StudentDTO[]) => Promise<LinkUserResult[]>;

@@ -2,6 +2,7 @@
 
 import { type RefObject } from "react";
 
+import { type NewSupervisor } from "@/app/(protected)/[group]/[subGroup]/[instance]/(admin-panel)/(stage-specific)/(stage-1)/add-supervisors/_components/new-supervisor-schema";
 import { parse } from "papaparse";
 import { toast } from "sonner";
 
@@ -10,10 +11,9 @@ import { LinkUserResult } from "@/dto/result/link-user-result";
 
 import { Input } from "@/components/ui/input";
 
-import { type NewSupervisor } from "@/lib/validations/add-users/new-user";
+import { validateCSVStructure } from "@/lib/utils/csv/validate-structure";
 
 import {
-  validateCSVStructure,
   validateCSVRows,
   filterDuplicatesWithinCSV,
   type ProcessingResult,

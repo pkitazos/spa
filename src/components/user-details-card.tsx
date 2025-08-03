@@ -3,9 +3,9 @@ import { type ReactNode } from "react";
 import { type ClassValue } from "clsx";
 import { HashIcon, User2Icon } from "lucide-react";
 
+import { type User } from "@/lib/auth/types";
 import { cn } from "@/lib/utils";
 import { getColorFromName, getInitials } from "@/lib/utils/avatar-icon-helpers";
-import { type User } from "@/lib/validations/auth";
 
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";

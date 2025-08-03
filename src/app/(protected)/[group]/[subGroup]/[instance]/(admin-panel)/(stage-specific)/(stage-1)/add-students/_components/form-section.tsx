@@ -25,10 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-import {
-  type NewStudent,
-  buildNewStudentSchema,
-} from "@/lib/validations/add-users/new-user";
+import { type NewStudent, buildNewStudentSchema } from "./new-student-schema";
 
 const blankStudentForm = {
   fullName: "",

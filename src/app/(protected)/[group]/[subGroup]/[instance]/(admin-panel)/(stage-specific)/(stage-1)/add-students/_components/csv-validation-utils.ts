@@ -1,9 +1,6 @@
 import { type FlagDTO } from "@/dto";
 
-import {
-  csvStudentSchema,
-  type NewStudent,
-} from "@/lib/validations/add-users/new-user";
+import { buildNewStudentSchema, type NewStudent } from "./new-student-schema";
 
 // TODO: this is a bit of a mess, needs refactoring
 // also lots of duplication with the add-supervisors section
@@ -31,38 +28,6 @@ export type ProcessingResult = {
   fileErrors: string[];
 };
 
-export function validateCSVStructure(
-  data: NewStudent[],
-  headers: string[] | undefined,
-  requiredHeaders: string[],
-): string[] {
-  const fileErrors: string[] = [];
-
-  if (!headers) {
-    fileErrors.push("CSV does not contain headers");
-    return fileErrors;
-  }
-
-  const expectedSet = new Set(requiredHeaders);
-  const actualSet = new Set(headers);
-
-  if (
-    expectedSet.size !== actualSet.size ||
-    !requiredHeaders.every((h) => actualSet.has(h))
-  ) {
-    fileErrors.push(
-      `CSV headers do not match required format. Expected: ${requiredHeaders.join(", ")}, Got: ${headers.join(", ")}`,
-    );
-    return fileErrors;
-  }
-
-  if (data.length === 0) {
-    fileErrors.push("CSV file is empty");
-  }
-
-  return fileErrors;
-}
-
 export function validateCSVRows(
   data: NewStudent[],
   flags: FlagDTO[],
@@ -70,12 +35,11 @@ export function validateCSVRows(
 ): ValidationResult {
   const validRows: NewStudent[] = [];
   const invalidRows: InvalidRow[] = [];
-  const flagIds = new Set(flags.map((f) => f.id));
 
   data.forEach((row, index) => {
     const errors: FieldError[] = [];
 
-    const schemaResult = csvStudentSchema.safeParse(row);
+    const schemaResult = buildNewStudentSchema(flags).safeParse(row);
 
     if (!schemaResult.success) {
       schemaResult.error.issues.forEach((issue) => {
@@ -84,13 +48,6 @@ export function validateCSVRows(
       });
     } else {
       const validatedRow = schemaResult.data;
-
-      if (!flagIds.has(validatedRow.flagId)) {
-        errors.push({
-          field: "flagId",
-          message: `Flag '${validatedRow.flagId}' does not exist. Available flags: ${Array.from(flagIds).join(", ")}`,
-        });
-      }
 
       if (errors.length === 0) {
         validRows.push(validatedRow);

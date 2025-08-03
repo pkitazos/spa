@@ -2,6 +2,10 @@
 
 import { useRef, useState } from "react";
 
+import {
+  buildNewStudentSchema,
+  type NewStudent,
+} from "@/app/(protected)/[group]/[subGroup]/[instance]/(admin-panel)/(stage-specific)/(stage-1)/add-students/_components/new-student-schema";
 import { TRPCClientError } from "@trpc/client";
 import { FileSpreadsheetIcon, FileText, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -22,8 +26,6 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { api } from "@/lib/trpc/client";
-import { addStudentsCsvHeaders } from "@/lib/validations/add-users/csv";
-import { type NewStudent } from "@/lib/validations/add-users/new-user";
 
 import { CSVUploadButton } from "./csv-upload-button";
 import { type ProcessingResult } from "./csv-validation-utils";
@@ -38,6 +40,10 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [processingResult, setProcessingResult] =
     useState<ProcessingResult | null>(null);
+
+  const addStudentsCsvHeaders = buildNewStudentSchema(flags)
+    .keyof()
+    .options.toSorted();
 
   const { data, isLoading, refetch } =
     api.institution.instance.getStudents.useQuery({ params });

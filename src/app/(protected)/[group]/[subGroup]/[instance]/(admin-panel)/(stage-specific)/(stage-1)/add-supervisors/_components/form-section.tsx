@@ -1,5 +1,9 @@
 import { useForm } from "react-hook-form";
 
+import {
+  type NewSupervisor,
+  newSupervisorSchema,
+} from "@/app/(protected)/[group]/[subGroup]/[instance]/(admin-panel)/(stage-specific)/(stage-1)/add-supervisors/_components/new-supervisor-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, TextCursorInputIcon } from "lucide-react";
 
@@ -15,11 +19,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-
-import {
-  type NewSupervisor,
-  newSupervisorSchema,
-} from "@/lib/validations/add-users/new-user";
 
 const blankSupervisorForm = {
   fullName: "",

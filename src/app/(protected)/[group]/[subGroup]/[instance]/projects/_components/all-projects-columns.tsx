@@ -44,9 +44,9 @@ import {
   YesNoActionTrigger,
 } from "@/components/yes-no-action";
 
+import { type User } from "@/lib/auth/types";
 import { cn } from "@/lib/utils";
 import { stageIn } from "@/lib/utils/permissions/stage-check";
-import { type User } from "@/lib/validations/auth";
 import { type StudentPreferenceType } from "@/lib/validations/student-preference";
 
 type ProjectData = { project: ProjectDTO; supervisor: SupervisorDTO };
