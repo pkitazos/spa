@@ -1,4 +1,3 @@
-import { Tooltip } from "@radix-ui/react-tooltip";
 import { type ClassValue } from "clsx";
 import { CopyIcon } from "lucide-react";
 
@@ -6,9 +5,13 @@ import { cn } from "@/lib/utils";
 import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
 
 import { Button } from "./ui/button";
-import { TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
 
-// pin - check styling @pkitazos
 export function CopyButton({
   data,
   message,

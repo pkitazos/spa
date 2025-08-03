@@ -1,33 +1,30 @@
-import { findDuplicates } from "@/lib/utils/general/find-duplicates";
-
-export function parseForDuplicates<T extends { guid: string; email: string }>(
-  data: T[],
+function isDuplicate<T extends { institutionId: string; email: string }>(
+  row: T,
+  index: number,
+  arr: T[],
 ) {
-  // record of duplicate ids
-  const duplicatedGuidsRecord = findDuplicates(data, (a) => a.guid);
-
-  // have duplicate ids
-  const ids_of_duplicate_guid_rows = new Set(
-    data
-      .filter((e) => Object.keys(duplicatedGuidsRecord).includes(e.guid))
-      .map((e) => e.guid),
+  return arr.some(
+    (x, idx) =>
+      idx !== index &&
+      (x.institutionId === row.institutionId || x.email === row.email),
   );
+}
 
-  // record of duplicate emails
-  const duplicatedEmailsRecord = findDuplicates(data, (a) => a.email);
+function isNotDuplicate<T extends { institutionId: string; email: string }>(
+  row: T,
+  index: number,
+  arr: T[],
+) {
+  return !isDuplicate(row, index, arr);
+}
 
-  // have duplicate emails
-  const ids_of_duplicate_email_rows = new Set(
-    data
-      .filter((e) => Object.keys(duplicatedEmailsRecord).includes(e.email))
-      .map((e) => e.guid),
-  );
+export function parseForDuplicates<
+  T extends { institutionId: string; email: string },
+>(data: T[]) {
+  const duplicateRows = data.filter(isDuplicate);
 
-  const duplicateRowGuids = ids_of_duplicate_guid_rows.union(
-    ids_of_duplicate_email_rows,
-  );
-
-  const uniqueRows = data.filter((e) => !duplicateRowGuids.has(e.guid));
-
-  return { uniqueRows, duplicateRowGuids };
+  return {
+    uniqueRows: data.filter(isNotDuplicate),
+    duplicateRowInstitutionIds: duplicateRows.map((row) => row.institutionId),
+  };
 }

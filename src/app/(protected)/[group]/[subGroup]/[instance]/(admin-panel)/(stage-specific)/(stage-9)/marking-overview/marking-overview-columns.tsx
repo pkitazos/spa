@@ -15,7 +15,11 @@ export const columns: ColumnDef<ProjectMarkingOverview>[] = [
     header: "Project Title",
     accessorFn: (x) => x.project.title,
   },
-  { id: "student-level", header: "Level", accessorFn: (x) => x.student.level },
+  {
+    id: "student-flag",
+    header: "Flag",
+    accessorFn: (x) => x.student.flag.displayName,
+  },
   {
     id: "student-name",
     header: "Student Name",

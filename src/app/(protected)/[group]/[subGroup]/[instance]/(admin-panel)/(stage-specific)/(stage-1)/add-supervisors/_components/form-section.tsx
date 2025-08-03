@@ -1,8 +1,15 @@
 import { useForm } from "react-hook-form";
 
+import {
+  type NewSupervisor,
+  newSupervisorSchema,
+} from "@/app/(protected)/[group]/[subGroup]/[instance]/(admin-panel)/(stage-specific)/(stage-1)/add-supervisors/_components/new-supervisor-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus } from "lucide-react";
+import { Plus, TextCursorInputIcon } from "lucide-react";
 
+import { INSTITUTION } from "@/config/institution";
+
+import { SectionHeading } from "@/components/heading";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -12,11 +19,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-
-import {
-  type NewSupervisor,
-  newSupervisorSchema,
-} from "@/lib/validations/add-users/new-user";
 
 const blankSupervisorForm = {
   fullName: "",
@@ -49,7 +51,10 @@ export function FormSection({
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex w-full flex-col items-start gap-3"
       >
-        <h3 className="text-xl">Manually create Supervisor</h3>
+        <SectionHeading className="mb-2 flex items-center">
+          <TextCursorInputIcon className="mr-2 h-6 w-6 text-indigo-500" />
+          <span>Manually create Supervisor</span>
+        </SectionHeading>
         <div className="flex w-full items-center justify-start gap-5">
           <FormField
             control={form.control}
@@ -69,7 +74,7 @@ export function FormSection({
             render={({ field }) => (
               <FormItem className="w-1/6">
                 <FormControl>
-                  <Input placeholder="GUID" {...field} />
+                  <Input placeholder={INSTITUTION.ID_NAME} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

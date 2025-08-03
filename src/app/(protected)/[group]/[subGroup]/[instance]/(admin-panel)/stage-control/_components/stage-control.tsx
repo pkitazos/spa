@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { CHAPTER } from "@/config/config/stage";
+import { CHAPTER } from "@/config/stages";
 
 import { stageSchema } from "@/db/types";
 import { type Stage } from "@/db/types";

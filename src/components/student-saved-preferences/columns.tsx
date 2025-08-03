@@ -9,11 +9,18 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
-import { type SavedPreferenceDto } from "@/lib/validations/dto/preference";
-
 import { useInstanceRoles } from "../params-context";
 
-export function useSavedPreferencesColumns(): ColumnDef<SavedPreferenceDto>[] {
+// TODO: standardise data type
+
+export type SavedPreferenceData = {
+  id: string;
+  title: string;
+  supervisor: { id: string; name: string };
+  rank: number;
+};
+
+export function useSavedPreferencesColumns(): ColumnDef<SavedPreferenceData>[] {
   const roles = useInstanceRoles();
 
   return [
@@ -21,7 +28,7 @@ export function useSavedPreferencesColumns(): ColumnDef<SavedPreferenceDto>[] {
       id: "ID",
       accessorFn: (project) => project.id,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="ID" canFilter />
+        <DataTableColumnHeader column={column} title="ID" />
       ),
       cell: ({ row: { original: project } }) => (
         <div className="text-left">

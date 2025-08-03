@@ -7,6 +7,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { INSTITUTION } from "@/config/institution";
+
 import { Stage } from "@/db/types";
 
 import { useInstancePath, useInstanceStage } from "@/components/params-context";
@@ -56,7 +58,7 @@ export function useMyProjectColumns({
       id: "ID",
       accessorFn: ({ id }) => id,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="ID" canFilter />
+        <DataTableColumnHeader column={column} title="ID" />
       ),
       cell: ({ row: { original: project } }) => (
         <WithTooltip
@@ -108,13 +110,13 @@ export function useMyProjectColumns({
       }) => <div className="w-36 py-1 pl-2">{allocatedStudentName}</div>,
     },
     {
-      id: "Allocated Student GUID",
+      id: `Allocated Student ${INSTITUTION.ID_NAME}`,
       accessorFn: ({ allocatedStudentId }) => allocatedStudentId,
       header: ({ column }) => (
         <div className="w-28 py-1">
           <DataTableColumnHeader
             column={column}
-            title="Allocated Student GUID"
+            title={`Allocated Student ${INSTITUTION.ID_NAME}`}
           />
         </div>
       ),

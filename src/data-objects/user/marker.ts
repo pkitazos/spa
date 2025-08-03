@@ -92,18 +92,14 @@ export class Marker extends User {
           student: {
             include: {
               userInInstance: { include: { user: true } },
-              studentFlags: {
+              studentFlag: {
                 include: {
-                  flag: {
+                  unitsOfAssessment: {
+                    where: { allowedMarkerTypes: { has: "SUPERVISOR" } },
                     include: {
-                      unitsOfAssessment: {
-                        where: { allowedMarkerTypes: { has: "SUPERVISOR" } },
-                        include: {
-                          assessmentCriteria: true,
-                          flag: true,
-                          markerSubmissions: { where: { markerId } },
-                        },
-                      },
+                      assessmentCriteria: true,
+                      flag: true,
+                      markerSubmissions: { where: { markerId } },
                     },
                   },
                 },
@@ -120,12 +116,12 @@ export class Marker extends User {
       });
 
       assignedProjects = assignedProjects.concat(
-        data.flatMap((a) =>
-          a.student.studentFlags.flatMap((f) => ({
-            project: T.toProjectDTO(a.project),
-            student: T.toStudentDTO(a.student),
-            markerType: MarkerType.SUPERVISOR,
-            unitsOfAssessment: f.flag.unitsOfAssessment.map((u) => {
+        data.flatMap((a) => ({
+          project: T.toProjectDTO(a.project),
+          student: T.toStudentDTO(a.student),
+          markerType: MarkerType.SUPERVISOR,
+          unitsOfAssessment: a.student.studentFlag.unitsOfAssessment.map(
+            (u) => {
               const submission = u.markerSubmissions.find(
                 (s) => s.studentId === a.student.userId,
               );
@@ -139,9 +135,9 @@ export class Marker extends User {
                   submission && T.toMarkingSubmissionDTO(submission),
                 ),
               };
-            }),
-          })),
-        ),
+            },
+          ),
+        })),
       );
     }
 
@@ -152,18 +148,14 @@ export class Marker extends User {
           student: {
             include: {
               userInInstance: { include: { user: true } },
-              studentFlags: {
+              studentFlag: {
                 include: {
-                  flag: {
+                  unitsOfAssessment: {
+                    where: { allowedMarkerTypes: { has: "READER" } },
                     include: {
-                      unitsOfAssessment: {
-                        where: { allowedMarkerTypes: { has: "READER" } },
-                        include: {
-                          assessmentCriteria: true,
-                          flag: true,
-                          markerSubmissions: { where: { markerId: this.id } },
-                        },
-                      },
+                      assessmentCriteria: true,
+                      flag: true,
+                      markerSubmissions: { where: { markerId: this.id } },
                     },
                   },
                 },
@@ -180,12 +172,12 @@ export class Marker extends User {
       });
 
       assignedProjects = assignedProjects.concat(
-        readerAllocations.flatMap((a) =>
-          a.student.studentFlags.map((f) => ({
-            project: T.toProjectDTO(a.project),
-            student: T.toStudentDTO(a.student),
-            markerType: MarkerType.READER,
-            unitsOfAssessment: f.flag.unitsOfAssessment.map((u) => {
+        readerAllocations.flatMap((a) => ({
+          project: T.toProjectDTO(a.project),
+          student: T.toStudentDTO(a.student),
+          markerType: MarkerType.READER,
+          unitsOfAssessment: a.student.studentFlag.unitsOfAssessment.map(
+            (u) => {
               const submission = u.markerSubmissions.find(
                 (s) => s.studentId === a.student.userId,
               );
@@ -199,9 +191,9 @@ export class Marker extends User {
                   submission && T.toMarkingSubmissionDTO(submission),
                 ),
               };
-            }),
-          })),
-        ),
+            },
+          ),
+        })),
       );
     }
 

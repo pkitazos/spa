@@ -1,97 +1,219 @@
 "use client";
 
-import React from "react";
+import { type RefObject } from "react";
 
 import { parse } from "papaparse";
 import { toast } from "sonner";
-import { z } from "zod";
 
-import { CSVParsingErrorCard } from "@/components/toast-card/csv-parsing-error";
-import { UserCreationErrorCard } from "@/components/toast-card/user-creation-error";
+import { type FlagDTO, type StudentDTO } from "@/dto";
+import { LinkUserResult } from "@/dto/result/link-user-result";
+
 import { Input } from "@/components/ui/input";
 
-import { parseForDuplicates } from "@/lib/utils/csv/parse-for-duplicates";
-import { addStudentsCsvRowSchema } from "@/lib/validations/add-users/csv";
-import { type NewStudent } from "@/lib/validations/add-users/new-user";
+import { validateCSVStructure } from "@/lib/utils/csv/validate-structure";
+
+import {
+  validateCSVRows,
+  filterDuplicatesWithinCSV,
+  type ProcessingResult,
+} from "./csv-validation-utils";
+import { ErrorReportModal } from "./error-report-modal";
+import { type NewStudent } from "./new-student-schema";
+
+interface CSVUploadButtonProps {
+  handleUpload: (data: StudentDTO[]) => Promise<LinkUserResult[]>;
+  requiredHeaders: string[];
+  flags: FlagDTO[];
+  processingResult: ProcessingResult | null;
+  showErrorModal: boolean;
+  onProcessingResultChange: (result: ProcessingResult | null) => void;
+  onShowErrorModalChange: (show: boolean) => void;
+  fileInputRef: RefObject<HTMLInputElement>;
+}
 
 export function CSVUploadButton({
   handleUpload,
   requiredHeaders,
-}: {
-  handleUpload: (data: NewStudent[]) => Promise<void>;
-  requiredHeaders: string[];
-}) {
-  function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const fileList = event.target.files;
-    if (fileList && fileList.length > 0) {
-      const file = fileList[0];
-      parse(file, {
+  flags,
+  processingResult,
+  showErrorModal,
+  onProcessingResultChange,
+  onShowErrorModalChange,
+  fileInputRef,
+}: CSVUploadButtonProps) {
+  async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const rawText = await file.text();
+      const rawLines = rawText.split("\n");
+
+      parse<NewStudent>(file, {
         complete: (res) => {
-          const headers = res.meta.fields;
-          if (!headers) {
-            toast.error("CSV does not contain headers");
-            return;
-          }
-
-          if (requiredHeaders.join() !== headers.join()) {
-            toast.error("CSV does not have the required headers");
-            return;
-          }
-
-          const result = z.array(addStudentsCsvRowSchema).safeParse(res.data);
-          if (!result.success) {
-            const allErrors = result.error.issues;
-            const uniqueErrors = [...new Set(allErrors)];
-            toast.error(
-              <CSVParsingErrorCard
-                title="CSV data was not formatted correctly. Ensure all rows contain:"
-                errors={uniqueErrors}
-              />,
-            );
-            return;
-          }
-
-          const { uniqueRows, duplicateRowGuids } = parseForDuplicates(
-            result.data,
-          );
-
-          if (duplicateRowGuids.size === 0) {
-            toast.success("CSV parsed successfully!");
-          } else if (uniqueRows.length === 0) {
-            toast.error("All rows seem to contain duplicates");
-          } else {
-            toast.success(`${uniqueRows.length} rows parsed successfully!`);
-            toast.error(
-              <UserCreationErrorCard
-                error={`${duplicateRowGuids.size} duplicate rows found`}
-                affectedUsers={Array.from(duplicateRowGuids)}
-              />,
-            );
-          }
-
-          // TODO can this be voided?
-          void handleUpload(
-            uniqueRows.map((e) => ({
-              fullName: e.full_name,
-              institutionId: e.guid,
-              email: e.email,
-              level: e.student_level,
-            })),
-          );
+          void processCSVData(res.data, res.meta.fields, rawLines);
         },
         header: true,
         skipEmptyLines: true,
         dynamicTyping: true,
       });
+    } catch (error) {
+      console.error("Error reading file:", error);
+      toast.error("Failed to read the CSV file");
+    }
+  }
+
+  async function processCSVData(
+    data: NewStudent[],
+    headers: string[] | undefined,
+    rawLines: string[],
+  ) {
+    try {
+      const fileErrors = validateCSVStructure(data, headers, requiredHeaders);
+
+      if (fileErrors.length > 0) {
+        const result: ProcessingResult = {
+          created: 0,
+          preExisting: 0,
+          failed: data.length,
+          invalidRows: [],
+          fileErrors,
+        };
+        onProcessingResultChange(result);
+
+        toast.error("CSV file has structural issues", {
+          action: {
+            label: "View Details",
+            onClick: () => onShowErrorModalChange(true),
+          },
+        });
+        return;
+      }
+
+      const validation = validateCSVRows(data, flags, rawLines);
+
+      const originalValidIndices: number[] = [];
+      data.forEach((_, index) => {
+        const hasErrors = validation.invalidRows.some(
+          (invalid) => invalid.rowIndex === index + 1,
+        );
+        if (!hasErrors) {
+          originalValidIndices.push(index);
+        }
+      });
+
+      const { uniqueRows, duplicateRows } = filterDuplicatesWithinCSV(
+        validation.validRows,
+        rawLines,
+        originalValidIndices,
+      );
+
+      const allInvalidRows = [...validation.invalidRows, ...duplicateRows];
+
+      let serverResults: LinkUserResult[] = [];
+      if (uniqueRows.length > 0) {
+        const studentsToCreate = uniqueRows.map((student) => ({
+          id: student.institutionId,
+          name: student.fullName,
+          email: student.email,
+          flag: flags.find((f) => f.id === student.flagId)!,
+          joined: false,
+          latestSubmission: undefined,
+        }));
+
+        try {
+          serverResults = await handleUpload(studentsToCreate);
+        } catch (error) {
+          console.error("Server upload error:", error);
+          toast.error("Failed to upload students to server");
+          return;
+        }
+      }
+
+      const created = serverResults.filter(
+        (r) => r === LinkUserResult.CREATED_NEW || r === LinkUserResult.OK,
+      ).length;
+
+      const preExisting = serverResults.filter(
+        (r) => r === LinkUserResult.PRE_EXISTING,
+      ).length;
+
+      const failed = allInvalidRows.length;
+
+      const result: ProcessingResult = {
+        created,
+        preExisting,
+        failed,
+        invalidRows: allInvalidRows,
+        fileErrors: [],
+      };
+
+      onProcessingResultChange(result);
+
+      const hasDetails = preExisting > 0 || failed > 0;
+
+      if (created > 0) {
+        toast.success(`Successfully created ${created} students`, {
+          action: hasDetails
+            ? {
+                label: "View Details",
+                onClick: () => onShowErrorModalChange(true),
+              }
+            : undefined,
+        });
+      }
+
+      if (preExisting > 0) {
+        toast.warning(`${preExisting} students already existed`, {
+          action: {
+            label: "View Details",
+            onClick: () => onShowErrorModalChange(true),
+          },
+        });
+      }
+
+      if (failed > 0) {
+        toast.error(`${failed} rows failed to process`, {
+          action: {
+            label: "View Details",
+            onClick: () => onShowErrorModalChange(true),
+          },
+        });
+      }
+
+      // everything succeeded with no warnings
+      if (created > 0 && preExisting === 0 && failed === 0) {
+        toast.success(`Successfully created ${created} students!`);
+      }
+
+      // nothing was processed at all
+      if (created === 0 && preExisting === 0 && failed === 0) {
+        toast.warning("No valid rows found to process");
+      }
+    } catch (error) {
+      console.error("Error processing CSV:", error);
+      toast.error("An unexpected error occurred while processing the CSV");
     }
   }
 
   return (
-    <Input
-      className="w-56 cursor-pointer"
-      type="file"
-      accept=".csv"
-      onChange={handleFileChange}
-    />
+    <>
+      <Input
+        ref={fileInputRef}
+        className="w-56 cursor-pointer"
+        type="file"
+        accept=".csv"
+        onChange={handleFileChange}
+      />
+
+      {processingResult && (
+        <ErrorReportModal
+          open={showErrorModal}
+          onOpenChange={onShowErrorModalChange}
+          result={processingResult}
+          requiredHeaders={requiredHeaders}
+        />
+      )}
+    </>
   );
 }

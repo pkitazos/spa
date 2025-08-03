@@ -29,7 +29,6 @@ import {
 } from "@/lib/utils/permissions/stage-check";
 
 export const projectRouter = createTRPCRouter({
-  // ok
   exists: procedure.project.user
     .output(z.boolean())
     .query(async ({ ctx: { project } }) => await project.exists()),
@@ -99,7 +98,6 @@ export const projectRouter = createTRPCRouter({
       },
     ),
 
-  // BREAKING input/output type
   getAllForUser: procedure.instance.user
     .output(
       z.array(
@@ -117,14 +115,12 @@ export const projectRouter = createTRPCRouter({
 
       if (await user.isStudent(instance.params)) {
         const student = await user.toStudent(instance.params);
-        const studentData = await student.get();
+        const { flag: studentFlag } = await student.get();
 
         return projectData
-          .filter((p) => {
-            const projectFlags = new Set(p.project.flags.map((f) => f.title));
-            const studentFlags = new Set(studentData.flags.map((f) => f.title));
-            return studentFlags.intersection(projectFlags).size !== 0;
-          })
+          .filter((p) =>
+            p.project.flags.map((f) => f.id).includes(studentFlag.id),
+          )
           .map((p) => ({
             project: p.project,
             supervisor: p.supervisor,
@@ -138,13 +134,10 @@ export const projectRouter = createTRPCRouter({
       }));
     }),
 
-  // BREAKING output type
   getAllLateProposals: procedure.instance.subGroupAdmin
     .output(z.array(projectDtoSchema))
     .query(async ({ ctx: { instance } }) => await instance.getLateProjects()),
 
-  // ok
-  // BREAKING output type
   getAllPreAllocated: procedure.instance
     .inStage(subsequentStages(Stage.PROJECT_SUBMISSION))
     .subGroupAdmin.output(
@@ -158,7 +151,6 @@ export const projectRouter = createTRPCRouter({
     )
     .query(async ({ ctx: { instance } }) => await instance.getPreAllocations()),
 
-  // ok
   getById: procedure.project.user
     .output(projectDtoSchema)
     .query(async ({ ctx: { db, project } }) => {
@@ -200,42 +192,7 @@ export const projectRouter = createTRPCRouter({
       };
     }),
 
-  // MOVE to ac
-  // ok
-  getUserAccess: procedure.project.user
-    .output(
-      z.discriminatedUnion("access", [
-        z.object({ access: z.literal(true) }),
-        z.object({ access: z.literal(false), error: z.string() }),
-      ]),
-    )
-    .query(async ({ ctx: { user, instance, project } }) => {
-      if (await user.isStaff(instance.params)) {
-        return { access: true };
-      } else if (await user.isStudent(instance.params)) {
-        const student = await user.toStudent(instance.params);
-
-        const { flags: studentFlags } = await student.get();
-        const studentFlagSet = new Set(studentFlags);
-
-        const projectFlags = await project.getFlags();
-        const projectFlagsSet = new Set(projectFlags);
-
-        if (studentFlagSet.intersection(projectFlagsSet).size !== 0) {
-          return { access: true };
-        } else {
-          return {
-            access: false,
-            error: "Student not eligible for this project",
-          };
-        }
-      }
-
-      return { access: false, error: "Not a member of this instance" };
-    }),
-
-  // ok
-  //getStudentPreferencesForId
+  // TODO: rename maybe? getStudentPreferencesForId
   getAllStudentPreferences: procedure.project.user
     .output(
       z.array(
@@ -258,7 +215,7 @@ export const projectRouter = createTRPCRouter({
             .filter((x) => x.type === PreferenceType.PREFERENCE)
             .map((x) => x.projectId);
 
-          return { ...acc, [val.institutionId]: draft };
+          return { ...acc, [val.student.id]: draft };
         },
         {} as Record<string, string[]>,
       );
@@ -270,7 +227,7 @@ export const projectRouter = createTRPCRouter({
             include: {
               student: {
                 include: {
-                  studentFlags: { include: { flag: true } },
+                  studentFlag: true,
                   userInInstance: { include: { user: true } },
                 },
               },
@@ -280,7 +237,7 @@ export const projectRouter = createTRPCRouter({
             include: {
               student: {
                 include: {
-                  studentFlags: { include: { flag: true } },
+                  studentFlag: true,
                   userInInstance: { include: { user: true } },
                 },
               },
@@ -313,8 +270,6 @@ export const projectRouter = createTRPCRouter({
       return [...submittedPreferences, ...draftPreferences];
     }),
 
-  // ok
-  // BREAKING output type changed
   delete: procedure.project
     .inStage(previousStages(Stage.PROJECT_ALLOCATION))
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
@@ -333,8 +288,6 @@ export const projectRouter = createTRPCRouter({
       return PermissionResult.UNAUTHORISED;
     }),
 
-  // ok
-  // BREAKING output type changed
   deleteSelected: procedure.instance
     .inStage(previousStages(Stage.PROJECT_ALLOCATION))
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
@@ -361,18 +314,6 @@ export const projectRouter = createTRPCRouter({
       );
     }),
 
-  // ok
-  // MOVE to instance
-  details: procedure.instance.user
-    .output(
-      z.object({ flags: z.array(flagDtoSchema), tags: z.array(tagDtoSchema) }),
-    )
-    .query(async ({ ctx: { instance } }) => ({
-      flags: await instance.getFlagsOnProjects(),
-      tags: await instance.getTagsOnProjects(),
-    })),
-
-  // ok
   create: procedure.instance
     .inStage([Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING])
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
@@ -471,7 +412,6 @@ export const projectRouter = createTRPCRouter({
       };
     }),
 
-  // ok
   getAllocation: procedure.project.user
     .output(
       z.object({ student: studentDtoSchema, rank: z.number() }).optional(),
@@ -483,7 +423,7 @@ export const projectRouter = createTRPCRouter({
           student: {
             include: {
               userInInstance: { include: { user: true } },
-              studentFlags: { include: { flag: true } },
+              studentFlag: true,
             },
           },
         },

@@ -65,17 +65,9 @@ export function useManualAllocationColumns({
               {student.name}
             </Link>
             <div className="text-xs text-muted-foreground">{student.id}</div>
-            <div className="flex flex-wrap gap-1">
-              {student.flags.map((flag) => (
-                <Badge
-                  key={flag.id}
-                  variant="accent"
-                  className="px-2 py-1 text-xs"
-                >
-                  {flag.title}
-                </Badge>
-              ))}
-            </div>
+            <Badge variant="accent" className="rounded-md">
+              {student.flag.displayName}
+            </Badge>
           </div>
         );
       },
@@ -91,13 +83,12 @@ export function useManualAllocationColumns({
 
     {
       id: "flags",
-      accessorFn: (row) => row.flags.map((flag) => flag.id),
+      accessorFn: (row) => row.flag.id,
       header: () => null,
       cell: () => null,
-      filterFn: (row, _, value: string[]) => {
-        if (!value?.length) return true;
-        const studentFlagIds = row.original.flags.map((flag) => flag.id);
-        return value.some((flagId) => studentFlagIds.includes(flagId));
+      filterFn: (row, columnId, value) => {
+        const selectedFilters = z.array(z.string()).parse(value);
+        return selectedFilters.includes(row.getValue<string>(columnId));
       },
     },
     {

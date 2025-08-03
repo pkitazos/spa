@@ -1,10 +1,10 @@
-import { PenIcon } from "lucide-react";
+import { BookmarkIcon, PenIcon } from "lucide-react";
 import Link from "next/link";
 
 import { Stage } from "@/db/types";
 
 import { AccessControl } from "@/components/access-control";
-import { SubHeading } from "@/components/heading";
+import { SectionHeading } from "@/components/heading";
 import { StudentSavedPreferenceDataTable } from "@/components/student-saved-preferences/data-table";
 import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -36,7 +36,10 @@ export async function StudentPreferencesSection({
   return (
     <>
       <div className="-mb-2 mt-6 flex items-center justify-between">
-        <SubHeading>Preferences</SubHeading>
+        <SectionHeading className="mb-2 flex items-center">
+          <BookmarkIcon className="mr-2 h-6 w-6 text-indigo-500" />
+          <span>Preferences</span>
+        </SectionHeading>
         <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
           <Link
             className={cn(

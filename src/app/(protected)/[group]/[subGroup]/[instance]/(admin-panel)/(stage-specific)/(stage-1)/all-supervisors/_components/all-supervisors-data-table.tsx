@@ -62,7 +62,6 @@ export function SupervisorsDataTable({
 
   return (
     <DataTable
-      searchableColumn={{ id: "Name", displayName: "Supervisor Names" }}
       className="w-full"
       columns={columns}
       data={data}

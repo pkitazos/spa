@@ -6,6 +6,7 @@ import { PAGES } from "@/config/pages";
 
 import { type ProjectDTO, type SupervisorDTO } from "@/dto";
 
+import { CircleCheckSolidIcon } from "@/components/icons/circle-check";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -13,6 +14,7 @@ import { cn } from "@/lib/utils";
 
 export function StudentAllocation({
   allocation: { project, supervisor, studentRanking },
+  selfDefined,
   className,
 }: {
   allocation: {
@@ -20,6 +22,7 @@ export function StudentAllocation({
     supervisor: SupervisorDTO;
     studentRanking: number;
   };
+  selfDefined: boolean;
   className?: ClassValue;
 }) {
   return (
@@ -60,11 +63,18 @@ export function StudentAllocation({
               {supervisor.name}
             </Link>
           </div>
-          <div className="flex items-center gap-2">
-            <HashIcon className="h-4 w-4 text-muted-foreground" />
-            <span className="mr-2 font-medium">Rank:</span>
-            {studentRanking}
-          </div>
+          {selfDefined ? (
+            <div className="flex items-center gap-2">
+              <CircleCheckSolidIcon className="h-4 w-4 fill-blue-500" />
+              <p>This student has defined their own project.</p>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <HashIcon className="h-4 w-4 text-muted-foreground" />
+              <span className="mr-2 font-medium">Rank:</span>
+              {studentRanking}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

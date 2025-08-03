@@ -3,11 +3,16 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { type ProjectDTO, type StudentDTO, type SupervisorDTO } from "@/dto";
+import {
+  type FlagDTO,
+  type TagDTO,
+  type ProjectDTO,
+  type StudentDTO,
+  type SupervisorDTO,
+} from "@/dto";
 
 import { useInstanceParams } from "@/components/params-context";
 import DataTable from "@/components/ui/data-table/data-table";
-import { useDataTableProjectFilters } from "@/components/ui/data-table/data-table-context";
 
 import { api } from "@/lib/trpc/client";
 import { toPP3 } from "@/lib/utils/general/instance-params";
@@ -16,12 +21,14 @@ import { usePreAllocatedProjectColumns } from "./pre-allocated-projects-columns"
 
 export function PreAllocatedProjectDataTable({
   data,
+  projectDescriptors,
 }: {
   data: {
     project: ProjectDTO;
     supervisor: SupervisorDTO;
     student: StudentDTO;
   }[];
+  projectDescriptors: { flags: FlagDTO[]; tags: TagDTO[] };
 }) {
   const params = useInstanceParams();
   const router = useRouter();
@@ -54,19 +61,27 @@ export function PreAllocatedProjectDataTable({
     );
   }
 
-  const filters = useDataTableProjectFilters();
+  const filters = [
+    {
+      columnId: "Flags",
+      options: projectDescriptors.flags.map((flag) => ({
+        id: flag.id,
+        title: flag.displayName,
+      })),
+    },
+    {
+      columnId: "Keywords",
+      options: projectDescriptors.tags.map((tag) => ({
+        id: tag.id,
+        title: tag.title,
+      })),
+    },
+  ];
 
   const columns = usePreAllocatedProjectColumns({
     deleteProject: handleDelete,
     deleteSelectedProjects: handleDeleteSelected,
   });
 
-  return (
-    <DataTable
-      searchableColumn={{ id: "Project Title", displayName: "Project Titles" }}
-      columns={columns}
-      filters={filters}
-      data={data}
-    />
-  );
+  return <DataTable columns={columns} filters={filters} data={data} />;
 }

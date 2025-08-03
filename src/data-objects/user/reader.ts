@@ -22,14 +22,10 @@ export class Reader extends Marker {
         student: {
           include: {
             userInInstance: { include: { user: true } },
-            studentFlags: {
+            studentFlag: {
               include: {
-                flag: {
-                  include: {
-                    unitsOfAssessment: {
-                      include: { assessmentCriteria: true, flag: true },
-                    },
-                  },
+                unitsOfAssessment: {
+                  include: { assessmentCriteria: true, flag: true },
                 },
               },
             },

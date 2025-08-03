@@ -195,8 +195,8 @@ function ProjectCell({
       <p className="mb-2 text-xs text-muted-foreground">#{project.id}</p>
       <div className="flex flex-wrap gap-1">
         {project.flags.map((flag) => (
-          <Badge key={flag.id} variant="accent">
-            {flag.title}
+          <Badge key={flag.id} variant="accent" className="rounded-md">
+            {flag.displayName}
           </Badge>
         ))}
       </div>

@@ -54,7 +54,7 @@ export class Supervisor extends Marker {
           },
           student: {
             include: {
-              studentFlags: { include: { flag: true } },
+              studentFlag: true,
               userInInstance: { include: { user: true } },
             },
           },
@@ -95,7 +95,7 @@ export class Supervisor extends Marker {
           include: {
             student: {
               include: {
-                studentFlags: { include: { flag: true } },
+                studentFlag: true,
                 userInInstance: { include: { user: true } },
               },
             },
@@ -126,7 +126,7 @@ export class Supervisor extends Marker {
                   student: {
                     include: {
                       userInInstance: { include: { user: true } },
-                      studentFlags: { include: { flag: true } },
+                      studentFlag: true,
                     },
                   },
                 },

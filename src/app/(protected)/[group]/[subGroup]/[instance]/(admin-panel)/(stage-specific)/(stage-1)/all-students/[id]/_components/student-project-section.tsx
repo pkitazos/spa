@@ -1,41 +1,32 @@
-import Link from "next/link";
+import { type ClassValue } from "clsx";
+import { FileIcon } from "lucide-react";
 
-import { SubHeading } from "@/components/heading";
-import { buttonVariants } from "@/components/ui/button";
+import { type ProjectDTO } from "@/dto";
 
-import { api } from "@/lib/trpc/server";
+import { SectionHeading } from "@/components/heading";
+import { MarkdownRenderer } from "@/components/markdown-editor";
+import { Separator } from "@/components/ui/separator";
+
 import { cn } from "@/lib/utils";
-import { type PageParams } from "@/lib/validations/params";
 
 export async function StudentProjectSection({
-  params,
+  allocatedProject,
+  className,
 }: {
-  params: PageParams;
+  allocatedProject: ProjectDTO;
+  className?: ClassValue;
 }) {
-  const project = await api.user.student.getAllocatedProject({
-    params,
-    studentId: params.id,
-  });
-
-  if (!project) {
-    throw new Error("Pre-allocated project not found");
-  }
-
   return (
-    <>
-      <SubHeading>Self-Defined Project</SubHeading>
-      <div>
-        <p>This student has been allocated their self-defined project</p>
-        <p className="flex items-center justify-start gap-2">
-          View project:
-          <Link
-            href={`../projects/${project.id}`}
-            className={cn(buttonVariants({ variant: "link" }), "text-base")}
-          >
-            {project.title}
-          </Link>
-        </p>
+    <section className={cn("flex flex-col", className)}>
+      <SectionHeading className="mb-2 flex items-center">
+        <FileIcon className="mr-2 h-6 w-6 text-indigo-500" />
+        <span>Project Description</span>
+      </SectionHeading>
+      <Separator className="my-6" />
+      <div className="flex flex-col items-start gap-6">
+        <SectionHeading>{allocatedProject.title}</SectionHeading>
+        <MarkdownRenderer source={allocatedProject.description} />
       </div>
-    </>
+    </section>
   );
 }

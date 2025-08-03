@@ -19,7 +19,6 @@ export function SupervisorResultsDataTable({
   const columns = useSupervisorResultsColumns();
   return (
     <DataTable
-      searchableColumn={{ id: "Name", displayName: "Names" }}
       columns={columns}
       data={data}
     />

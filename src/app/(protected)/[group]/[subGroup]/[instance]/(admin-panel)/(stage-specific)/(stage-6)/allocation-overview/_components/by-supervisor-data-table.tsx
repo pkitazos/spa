@@ -14,10 +14,6 @@ export function BySupervisorDataTable({
   return (
     <div className="w-full">
       <DataTable
-        searchableColumn={{
-          id: "Supervisor Name",
-          displayName: "Supervisor Names",
-        }}
         columns={bySupervisorColumns}
         data={data}
       />

@@ -1,31 +1,49 @@
 "use client";
 
+import { useRef, useState } from "react";
+
+import {
+  buildNewStudentSchema,
+  type NewStudent,
+} from "@/app/(protected)/[group]/[subGroup]/[instance]/(admin-panel)/(stage-specific)/(stage-1)/add-students/_components/new-student-schema";
 import { TRPCClientError } from "@trpc/client";
+import { FileSpreadsheetIcon, FileText, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { spacesLabels } from "@/config/spaces";
 
-import { type StudentDTO } from "@/dto";
+import { type FlagDTO, type StudentDTO } from "@/dto";
 import { type LinkUserResult } from "@/dto/result/link-user-result";
 
+import { CodeSnippet } from "@/components/code-snippet";
+import { SectionHeading } from "@/components/heading";
 import { useInstanceParams } from "@/components/params-context";
+import { Button } from "@/components/ui/button";
 import DataTable from "@/components/ui/data-table/data-table";
 import { LabelledSeparator } from "@/components/ui/labelled-separator";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { api } from "@/lib/trpc/client";
-import { addStudentsCsvHeaders } from "@/lib/validations/add-users/csv";
-import { type NewStudent } from "@/lib/validations/add-users/new-user";
 
 import { CSVUploadButton } from "./csv-upload-button";
+import { type ProcessingResult } from "./csv-validation-utils";
 import { FormSection } from "./form-section";
 import { useNewStudentColumns } from "./new-student-columns";
 
-export function AddStudentsSection() {
+export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
   const router = useRouter();
   const params = useInstanceParams();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [processingResult, setProcessingResult] =
+    useState<ProcessingResult | null>(null);
+
+  const addStudentsCsvHeaders = buildNewStudentSchema(flags)
+    .keyof()
+    .options.toSorted();
 
   const { data, isLoading, refetch } =
     api.institution.instance.getStudents.useQuery({ params });
@@ -33,16 +51,29 @@ export function AddStudentsSection() {
   const { mutateAsync: addStudentAsync } =
     api.institution.instance.addStudent.useMutation();
 
-  // TODO: handle error messages properly (add status codes or something)
+  const { mutateAsync: addStudentsAsync } =
+    api.institution.instance.addStudents.useMutation();
+
+  const { mutateAsync: removeStudentAsync } =
+    api.institution.instance.removeStudent.useMutation();
+
+  const { mutateAsync: removeStudentsAsync } =
+    api.institution.instance.removeStudents.useMutation();
+
   async function handleAddStudent(data: NewStudent) {
+    const flag = flags.find((f) => f.id === data.flagId);
+    if (!flag) {
+      toast.error("Invalid flag selected");
+      return;
+    }
+
     const newStudent: StudentDTO = {
       id: data.institutionId,
       name: data.fullName,
       email: data.email,
-      level: data.level,
+      flag,
       joined: false,
       latestSubmission: undefined,
-      flags: [], // TODO: update form to accept flags
     };
 
     void toast.promise(
@@ -61,58 +92,21 @@ export function AddStudentsSection() {
     );
   }
 
-  const { mutateAsync: addStudentsAsync } =
-    api.institution.instance.addStudents.useMutation();
+  async function handleAddStudents(
+    students: StudentDTO[],
+  ): Promise<LinkUserResult[]> {
+    try {
+      const results = await addStudentsAsync({ params, newStudents: students });
 
-  async function handleAddStudents(data: NewStudent[]) {
-    const newStudents = data.map((s) => ({
-      id: s.institutionId,
-      name: s.fullName,
-      email: s.email,
-      level: s.level,
-      joined: false,
-      latestSubmission: undefined,
-      flags: [], // TODO: update form to accept flags
-    }));
+      router.refresh();
+      await refetch();
 
-    const _res = await addStudentsAsync({ params, newStudents }).then(
-      async (data) => {
-        router.refresh();
-        await refetch();
-        return data.reduce(
-          (acc, val) => ({ ...acc, [val]: (acc[val] ?? 0) + 1 }),
-          {} as Record<LinkUserResult, number>,
-        );
-      },
-    );
-
-    // TODO: report status of csv upload
-
-    // if (res.successFullyAdded === 0) {
-    //   toast.error(`No students were added to ${spacesLabels.instance.short}`);
-    // } else {
-    //   toast.success(
-    //     `Successfully added ${res.successFullyAdded} students to ${spacesLabels.instance.short}`,
-    //   );
-    // }
-
-    // const errors = res.errors.reduce(
-    //   (acc, val) => ({
-    //     ...acc,
-    //     [val.msg]: [...(acc[val.msg] ?? []), val.user.institutionId],
-    //   }),
-    //   {} as { [key: string]: string[] },
-    // );
-
-    // Object.entries(errors).forEach(([msg, affectedUsers]) => {
-    //   toast.error(
-    //     <UserCreationErrorCard error={msg} affectedUsers={affectedUsers} />,
-    //   );
-    // });
+      return results;
+    } catch (err) {
+      console.error("Error adding students:", err);
+      throw err;
+    }
   }
-
-  const { mutateAsync: removeStudentAsync } =
-    api.institution.instance.removeStudent.useMutation();
 
   async function handleStudentRemoval(studentId: string) {
     void toast.promise(
@@ -127,10 +121,6 @@ export function AddStudentsSection() {
       },
     );
   }
-
-  const { mutateAsync: removeStudentsAsync } =
-    api.institution.instance.removeStudents.useMutation();
-
   async function handleStudentsRemoval(studentIds: string[]) {
     void toast.promise(
       removeStudentsAsync({ params, studentIds }).then(async () => {
@@ -145,44 +135,87 @@ export function AddStudentsSection() {
     );
   }
 
+  function handleClearResults() {
+    setProcessingResult(null);
+    setShowErrorModal(false);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
+  function handleShowModal() {
+    setShowErrorModal(true);
+  }
+
   const columns = useNewStudentColumns({
     removeStudent: handleStudentRemoval,
     removeSelectedStudents: handleStudentsRemoval,
   });
+
   return (
     <>
-      {" "}
       <div className="mt-6 flex flex-col gap-6">
-        <h3 className="text-xl">Upload using CSV</h3>
+        <SectionHeading className="mb-2 flex items-center">
+          <FileSpreadsheetIcon className="mr-2 h-6 w-6 text-indigo-500" />
+          <span>Upload using CSV</span>
+        </SectionHeading>
         <div className="flex items-center gap-6">
           <CSVUploadButton
             requiredHeaders={addStudentsCsvHeaders}
             handleUpload={handleAddStudents}
+            flags={flags}
+            processingResult={processingResult}
+            onProcessingResultChange={setProcessingResult}
+            showErrorModal={showErrorModal}
+            onShowErrorModalChange={setShowErrorModal}
+            fileInputRef={fileInputRef}
           />
-          <div className="flex flex-col items-start">
-            <p className="text-muted-foreground">must contain header: </p>
-            <code className="text-muted-foreground">
-              {addStudentsCsvHeaders.join(",")}
-            </code>
+
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleShowModal}
+              disabled={!processingResult}
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              View Upload Results
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleClearResults}
+              disabled={!processingResult}
+              className="flex items-center gap-2"
+            >
+              <RotateCcw className="h-4 w-4" />
+              Clear & Upload New
+            </Button>
           </div>
         </div>
+        <CodeSnippet
+          label="must contain header:"
+          code={addStudentsCsvHeaders.join(",")}
+          copyMessage="CSV Headers"
+        />
       </div>
       <LabelledSeparator label="or" className="my-6" />
-      <FormSection handleAddStudent={handleAddStudent} />
+      <FormSection handleAddStudent={handleAddStudent} flags={flags} />
       <Separator className="my-14" />
       {isLoading ? (
         <Skeleton className="h-20 w-full" />
       ) : (
         <DataTable
-          searchableColumn={{ id: "Full Name", displayName: "Student Names" }}
           filters={[
             {
-              title: "filter Student Level",
-              columnId: "Student Level",
-              options: [
-                { id: "4", title: "Level 4" },
-                { id: "5", title: "Level 5" },
-              ],
+              title: "filter by Flag",
+              columnId: "Flag",
+              options: flags.map((flag) => ({
+                id: flag.displayName,
+                title: flag.displayName,
+              })),
             },
           ]}
           columns={columns}

@@ -13,7 +13,7 @@ import { z } from "zod";
 import { PAGES } from "@/config/pages";
 import { spacesLabels } from "@/config/spaces";
 
-import { type ProjectDTO, type SupervisorDTO } from "@/dto";
+import { flagDtoSchema, type ProjectDTO, type SupervisorDTO } from "@/dto";
 
 import { type PreferenceType, Role, Stage } from "@/db/types";
 
@@ -44,9 +44,9 @@ import {
   YesNoActionTrigger,
 } from "@/components/yes-no-action";
 
+import { type User } from "@/lib/auth/types";
 import { cn } from "@/lib/utils";
 import { stageIn } from "@/lib/utils/permissions/stage-check";
-import { type User } from "@/lib/validations/auth";
 import { type StudentPreferenceType } from "@/lib/validations/student-preference";
 
 type ProjectData = { project: ProjectDTO; supervisor: SupervisorDTO };
@@ -131,9 +131,13 @@ export function useAllProjectsColumns({
       accessorFn: (row) => row.project.flags,
       header: () => <div className="text-center">Flags</div>,
       filterFn: (row, columnId, value) => {
-        const ids = value as string[];
-        const rowFlags = z.array(tagTypeSchema).parse(row.getValue(columnId));
-        return rowFlags.some((e) => ids.includes(e.id));
+        const selectedFilters = z.array(z.string()).parse(value);
+        const rowFlags = z.array(flagDtoSchema).parse(row.getValue(columnId));
+
+        return (
+          new Set(rowFlags.map((f) => f.id)).size > 0 &&
+          selectedFilters.some((f) => rowFlags.some((rf) => rf.id === f))
+        );
       },
       cell: ({
         row: {
@@ -143,30 +147,43 @@ export function useAllProjectsColumns({
         <div className="flex flex-col gap-2">
           {project.flags.length > 2 ? (
             <>
-              <Badge className="w-fit" key={project.flags[0].id}>
-                {project.flags[0].title}
+              <Badge
+                variant="accent"
+                className="w-40 rounded-md"
+                key={project.flags[0].id}
+              >
+                {project.flags[0].displayName}
               </Badge>
               <WithTooltip
                 side="right"
                 tip={
                   <ul className="flex list-disc flex-col gap-1 p-2 pl-1">
                     {project.flags.slice(1).map((flag) => (
-                      <Badge className="w-fit" key={flag.id}>
-                        {flag.title}
+                      <Badge
+                        variant="accent"
+                        className="w-40 rounded-md"
+                        key={flag.id}
+                      >
+                        {flag.displayName}
                       </Badge>
                     ))}
                   </ul>
                 }
               >
-                <div className={cn(badgeVariants(), "w-fit font-normal")}>
+                <div
+                  className={cn(
+                    badgeVariants({ variant: "accent" }),
+                    "w-fit rounded-md font-normal",
+                  )}
+                >
                   {project.flags.length - 1}+
                 </div>
               </WithTooltip>
             </>
           ) : (
             project.flags.map((flag) => (
-              <Badge className="w-fit" key={flag.id}>
-                {flag.title}
+              <Badge variant="accent" className="w-40 rounded-md" key={flag.id}>
+                {flag.displayName}
               </Badge>
             ))
           )}
@@ -250,7 +267,7 @@ export function useAllProjectsColumns({
             e.original.project.specialTechnicalRequirements,
             e.original.supervisor.name,
             e.original.supervisor.email,
-            e.original.project.flags.map((f) => f.title).join("; "),
+            e.original.project.flags.map((f) => f.displayName).join("; "),
             e.original.project.tags.map((t) => t.title).join("; "),
           ]);
 

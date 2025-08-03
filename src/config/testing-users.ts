@@ -1,5 +1,8 @@
 import { Role } from "@/db/types";
 
+/**
+ * @deprecated define users as env variable instead
+ */
 export const testUserEmails = [
   { ord: 0, email: "petros.kitazos@glasgow.ac.uk", roles: [Role.ADMIN] },
   { ord: 1, email: "william.pettersson@glasgow.ac.uk", roles: [Role.ADMIN] },

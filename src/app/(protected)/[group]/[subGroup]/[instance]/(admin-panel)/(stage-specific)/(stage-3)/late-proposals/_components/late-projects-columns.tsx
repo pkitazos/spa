@@ -8,10 +8,11 @@ import {
 import Link from "next/link";
 import { z } from "zod";
 
-import { type ProjectDTO } from "@/dto";
+import { INSTITUTION } from "@/config/institution";
+
+import { flagDtoSchema, type ProjectDTO } from "@/dto";
 
 import { useInstancePath } from "@/components/params-context";
-import { tagTypeSchema } from "@/components/tag/tag-input";
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionColumnLabel } from "@/components/ui/data-table/action-column-label";
@@ -49,7 +50,7 @@ export function useLateProjectColumns({
       id: "ID",
       accessorFn: ({ id }) => id,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="ID" canFilter />
+        <DataTableColumnHeader column={column} title="ID" />
       ),
       cell: ({ row: { original: project } }) => (
         <WithTooltip
@@ -83,11 +84,14 @@ export function useLateProjectColumns({
       ),
     },
     {
-      id: "Supervisor GUID",
+      id: `Supervisor ${INSTITUTION.ID_NAME}`,
       accessorFn: ({ supervisorId }) => supervisorId,
       header: ({ column }) => (
         <div className="w-28 py-1">
-          <DataTableColumnHeader column={column} title="Supervisor GUID" />
+          <DataTableColumnHeader
+            column={column}
+            title={`Supervisor ${INSTITUTION.ID_NAME}`}
+          />
         </div>
       ),
       cell: ({
@@ -101,9 +105,13 @@ export function useLateProjectColumns({
       accessorFn: (row) => row.flags,
       header: () => <div className="text-center">Flags</div>,
       filterFn: (row, columnId, value) => {
-        const ids = value as string[];
-        const rowFlags = z.array(tagTypeSchema).parse(row.getValue(columnId));
-        return rowFlags.some((e) => ids.includes(e.id));
+        const selectedFilters = z.array(z.string()).parse(value);
+        const rowFlags = z.array(flagDtoSchema).parse(row.getValue(columnId));
+
+        return (
+          new Set(rowFlags.map((f) => f.id)).size > 0 &&
+          selectedFilters.some((f) => rowFlags.some((rf) => rf.id === f))
+        );
       },
       cell: ({
         row: {
@@ -113,30 +121,43 @@ export function useLateProjectColumns({
         <div className="flex flex-col gap-2">
           {flags.length > 2 ? (
             <>
-              <Badge className="w-fit" key={flags[0].id}>
-                {flags[0].title}
+              <Badge
+                variant="accent"
+                className="w-40 rounded-md"
+                key={flags[0].id}
+              >
+                {flags[0].displayName}
               </Badge>
               <WithTooltip
                 side="right"
                 tip={
                   <ul className="flex list-disc flex-col gap-1 p-2 pl-1">
                     {flags.slice(1).map((flag) => (
-                      <Badge className="w-max max-w-40" key={flag.id}>
-                        {flag.title}
+                      <Badge
+                        variant="accent"
+                        className="w-40 rounded-md"
+                        key={flag.id}
+                      >
+                        {flag.displayName}
                       </Badge>
                     ))}
                   </ul>
                 }
               >
-                <div className={cn(badgeVariants(), "w-fit font-normal")}>
+                <div
+                  className={cn(
+                    badgeVariants({ variant: "accent" }),
+                    "w-fit rounded-md font-normal",
+                  )}
+                >
                   {flags.length - 1}+
                 </div>
               </WithTooltip>
             </>
           ) : (
             flags.map((flag) => (
-              <Badge className="w-max max-w-40" key={flag.id}>
-                {flag.title}
+              <Badge variant="accent" className="w-40 rounded-md" key={flag.id}>
+                {flag.displayName}
               </Badge>
             ))
           )}

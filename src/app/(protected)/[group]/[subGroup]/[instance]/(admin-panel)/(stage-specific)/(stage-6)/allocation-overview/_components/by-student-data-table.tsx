@@ -14,7 +14,6 @@ export function ByStudentDataTable({
   return (
     <div className="w-full">
       <DataTable
-        searchableColumn={{ id: "Student Name", displayName: "Student Names" }}
         columns={byStudentColumns}
         data={data}
       />

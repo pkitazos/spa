@@ -4,7 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { type ProjectDTO, type SupervisorDTO } from "@/dto";
+import {
+  type TagDTO,
+  type FlagDTO,
+  type ProjectDTO,
+  type SupervisorDTO,
+} from "@/dto";
 
 import { type PreferenceType, type Role } from "@/db/types";
 
@@ -15,12 +20,11 @@ import {
 import { ToastSuccessCard } from "@/components/toast-success-card";
 import { buttonVariants } from "@/components/ui/button";
 import DataTable from "@/components/ui/data-table/data-table";
-import { useDataTableProjectFilters } from "@/components/ui/data-table/data-table-context";
 
+import { type User } from "@/lib/auth/types";
 import { api } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import { toPP3 } from "@/lib/utils/general/instance-params";
-import { type User } from "@/lib/validations/auth";
 import { type StudentPreferenceType } from "@/lib/validations/student-preference";
 
 import { useAllProjectsColumns } from "./all-projects-columns";
@@ -31,12 +35,14 @@ export function AllProjectsDataTable({
   roles,
   projectPreferences,
   hasSelfDefinedProject,
+  projectDescriptors,
 }: {
   data: { project: ProjectDTO; supervisor: SupervisorDTO }[];
   user: User;
   roles: Set<Role>;
   projectPreferences: Record<string, PreferenceType>;
   hasSelfDefinedProject: boolean;
+  projectDescriptors: { flags: FlagDTO[]; tags: TagDTO[] };
 }) {
   const params = useInstanceParams();
   const instancePath = useInstancePath();
@@ -140,7 +146,22 @@ export function AllProjectsDataTable({
     );
   }
 
-  const filters = useDataTableProjectFilters();
+  const filters = [
+    {
+      columnId: "Flags",
+      options: projectDescriptors.flags.map((flag) => ({
+        id: flag.id,
+        title: flag.displayName,
+      })),
+    },
+    {
+      columnId: "Keywords",
+      options: projectDescriptors.tags.map((tag) => ({
+        id: tag.id,
+        title: tag.title,
+      })),
+    },
+  ];
 
   const columns = useAllProjectsColumns({
     user,
@@ -155,7 +176,6 @@ export function AllProjectsDataTable({
 
   return (
     <DataTable
-      searchableColumn={{ id: "Title", displayName: "Project Titles" }}
       className="w-full"
       columns={columns}
       filters={filters}

@@ -17,6 +17,7 @@ import { CopyButton } from "@/components/copy-button";
 import { CopyEmailsButton } from "@/components/copy-emails-button";
 import { ExportCSVButton } from "@/components/export-csv";
 import { useInstanceParams } from "@/components/params-context";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
 import { Input } from "@/components/ui/input";
@@ -136,7 +137,7 @@ export function MarkingOverviewTable({
           header={[
             "studentGUID",
             "studentName",
-            "studentLevel",
+            "studentFlag",
             "studentEmail",
             "projectTitle",
 
@@ -228,7 +229,11 @@ export function MarkingOverviewTable({
                 <TableCell colSpan={1}>
                   <span>{row.original.project.title}</span>
                 </TableCell>
-                <TableCell>{row.original.student.level}</TableCell>
+                <TableCell>
+                  <Badge variant="accent" className="rounded-md">
+                    {row.original.student.flag.displayName}
+                  </Badge>
+                </TableCell>
                 <TableCell colSpan={1}>
                   <div className="text-sm text-muted-foreground">
                     {row.original.student.name} ({row.original.student.id}{" "}

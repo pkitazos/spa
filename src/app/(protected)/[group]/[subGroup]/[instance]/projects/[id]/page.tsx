@@ -7,7 +7,7 @@ import { PAGES } from "@/config/pages";
 
 import { type ProjectDTO, type StudentDTO, type SupervisorDTO } from "@/dto";
 
-import { type PreferenceType, Role, Stage } from "@/db/types";
+import { Role, Stage } from "@/db/types";
 
 import { AccessControl } from "@/components/access-control";
 import { Heading, SubHeading } from "@/components/heading";
@@ -58,7 +58,7 @@ export default async function Project({ params }: { params: PageParams }) {
 
   const instancePath = formatParamsAsPath(params);
 
-  const userAccess = await api.project.getUserAccess({ params: toPP1(params) });
+  const userAccess = await api.ac.projectAccess({ params: toPP1(params) });
 
   if (!userAccess.access) {
     return (
@@ -92,6 +92,9 @@ export default async function Project({ params }: { params: PageParams }) {
   const allocatedStudent = await api.project.getAllocation({
     params: toPP1(params),
   });
+
+  const projectDescriptors =
+    await api.institution.instance.getAllProjectDescriptors({ params });
 
   return (
     <PanelWrapper>
@@ -170,7 +173,7 @@ export default async function Project({ params }: { params: PageParams }) {
             />
           </section>
         )}
-        {/* TODO: fix type errors */}
+        {/* // TODO: fix type errors */}
         {/* <section className="mb-16 flex flex-col">
           <SectionHeading>Special Circumstances</SectionHeading>
           <SpecialCircumstancesPage
@@ -195,14 +198,8 @@ export default async function Project({ params }: { params: PageParams }) {
         <section className="mt-16 flex flex-col gap-8">
           <SubHeading>Student Preferences</SubHeading>
           <StudentPreferenceDataTable
-            data={studentPreferences.map((s) => ({
-              id: s.student.id,
-              name: s.student.name,
-              level: s.student.level,
-              // TODO: fix data table display for submitted projects
-              type: s.preference.type as PreferenceType,
-              rank: s.preference.rank! ?? NaN,
-            }))}
+            data={studentPreferences}
+            projectDescriptors={projectDescriptors}
           />
         </section>
       </AccessControl>
@@ -219,7 +216,7 @@ async function ProjectDetailsCard({
 }) {
   const user = await api.user.get();
   return (
-    <Card className="w-full max-w-sm border-none bg-accent">
+    <Card className="w-full max-w-sm">
       <CardContent className="flex flex-col gap-10 pt-5">
         <AccessControl
           allowedRoles={[Role.ADMIN, Role.STUDENT]}
@@ -258,8 +255,8 @@ async function ProjectDetailsCard({
           </div>
           <div className="flex flex-wrap gap-2">
             {projectData.project.flags.map((flag, i) => (
-              <Badge className="w-max" variant="outline" key={i}>
-                {flag.title}
+              <Badge className="rounded-md" variant="accent" key={i}>
+                {flag.displayName}
               </Badge>
             ))}
           </div>

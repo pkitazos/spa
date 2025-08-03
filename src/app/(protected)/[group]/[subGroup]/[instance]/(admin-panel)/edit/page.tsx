@@ -19,12 +19,15 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 }
 
 export default async function Page({ params }: { params: InstanceParams }) {
-  const data = await api.institution.instance.getEditFormDetails({ params });
+  const instance = await api.institution.instance.get({ params });
+
+  const { flags, tags } =
+    await api.institution.instance.getAllProjectDescriptors({ params });
 
   return (
     <PanelWrapper>
       <Heading>Edit {spacesLabels.instance.short} Details</Heading>
-      <WizardSection formDetails={data} />
+      <WizardSection formDetails={{ instance, flags, tags }} />
     </PanelWrapper>
   );
 }

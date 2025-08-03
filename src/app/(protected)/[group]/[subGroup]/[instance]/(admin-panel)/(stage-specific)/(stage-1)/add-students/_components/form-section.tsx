@@ -1,8 +1,13 @@
 import { useForm } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus } from "lucide-react";
+import { Plus, TextCursorInputIcon } from "lucide-react";
 
+import { INSTITUTION } from "@/config/institution";
+
+import { type FlagDTO } from "@/dto";
+
+import { SectionHeading } from "@/components/heading";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -12,26 +17,32 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-
 import {
-  type NewStudent,
-  newStudentSchema,
-} from "@/lib/validations/add-users/new-user";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+import { type NewStudent, buildNewStudentSchema } from "./new-student-schema";
 
 const blankStudentForm = {
   fullName: "",
   institutionId: "",
   email: "",
-  level: NaN,
+  flagId: "",
 };
 
 export function FormSection({
   handleAddStudent,
+  flags,
 }: {
   handleAddStudent: (newStudent: NewStudent) => Promise<void>;
+  flags: FlagDTO[];
 }) {
   const form = useForm<NewStudent>({
-    resolver: zodResolver(newStudentSchema),
+    resolver: zodResolver(buildNewStudentSchema(flags)),
     defaultValues: blankStudentForm,
   });
 
@@ -47,7 +58,10 @@ export function FormSection({
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex w-full flex-col items-start gap-3"
       >
-        <h3 className="text-xl">Manually create Student</h3>
+        <SectionHeading className="mb-2 flex items-center">
+          <TextCursorInputIcon className="mr-2 h-6 w-6 text-indigo-500" />
+          <span>Manually create Student</span>
+        </SectionHeading>
         <div className="flex w-full items-center justify-start gap-5">
           <FormField
             control={form.control}
@@ -67,7 +81,7 @@ export function FormSection({
             render={({ field }) => (
               <FormItem className="w-1/6">
                 <FormControl>
-                  <Input placeholder="GUID" {...field} />
+                  <Input placeholder={INSTITUTION.ID_NAME} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -87,12 +101,26 @@ export function FormSection({
           />
           <FormField
             control={form.control}
-            name="level"
+            name="flagId"
             render={({ field }) => (
-              <FormItem className="w-1/6">
-                <FormControl>
-                  <Input placeholder="Student Level" {...field} />
-                </FormControl>
+              <FormItem className="w-1/4">
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select flag" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {flags.map((flag) => (
+                      <SelectItem key={flag.id} value={flag.id}>
+                        {flag.displayName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

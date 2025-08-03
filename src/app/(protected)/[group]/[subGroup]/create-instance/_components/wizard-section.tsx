@@ -5,14 +5,9 @@ import { toast } from "sonner";
 
 import { spacesLabels } from "@/config/spaces";
 
-import {
-  type FlagDTO,
-  type InstanceDTO,
-  type NewUnitOfAssessmentDTO,
-  type TagDTO,
-} from "@/dto";
+import { type InstanceDTO } from "@/dto";
 
-import { MarkerType, type New, Stage } from "@/db/types";
+import { Stage } from "@/db/types";
 
 import {
   InstanceWizard,
@@ -56,33 +51,13 @@ export function WizardSection({
       studentAllocationAccess: false,
     } satisfies Omit<InstanceDTO, "instance">;
 
-    const flags = data.flags.map((f) => ({
-      title: f.flag,
-      description: f.description,
-      unitsOfAssessment: f.units_of_assessment.map((a) => ({
-        title: a.title,
-        weight: a.weight,
-        studentSubmissionDeadline: a.student_submission_deadline,
-        markerSubmissionDeadline: a.marker_submission_deadline,
-        isOpen: false,
-        allowedMarkerTypes: a.allowed_marker_types.map((t) =>
-          t === "supervisor" ? MarkerType.SUPERVISOR : MarkerType.READER,
-        ),
-        components: a.assessment_criteria.flatMap((x, i) => ({
-          description: x.description,
-          title: x.title,
-          weight: x.weight,
-          layoutIndex: i + 1,
-        })),
-      })),
-    })) satisfies (New<FlagDTO> & {
-      unitsOfAssessment: NewUnitOfAssessmentDTO[];
-    })[];
-
-    const tags = data.tags satisfies New<TagDTO>[];
-
     void toast.promise(
-      createInstanceAsync({ params, newInstance, flags, tags }).then(() => {
+      createInstanceAsync({
+        params,
+        newInstance,
+        flags: data.flags,
+        tags: data.tags,
+      }).then(() => {
         const newPath = formatParamsAsPath({
           group: params.group,
           subGroup: params.subGroup,

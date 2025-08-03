@@ -7,13 +7,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { INSTITUTION } from "@/config/institution";
 import { PAGES } from "@/config/pages";
 
 import { type InstanceUserDTO } from "@/dto";
 
 import { ExportCSVButton } from "@/components/export-csv";
+import { usePathInInstance } from "@/components/params-context";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionColumnLabel } from "@/components/ui/data-table/action-column-label";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { getSelectColumn } from "@/components/ui/data-table/select-column";
@@ -30,6 +32,8 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
 
 export function useSupervisorInvitesColumns(): ColumnDef<InstanceUserDTO>[] {
+  const { getPath } = usePathInInstance();
+
   const selectCol = getSelectColumn<InstanceUserDTO>();
 
   const baseCols: ColumnDef<InstanceUserDTO>[] = [
@@ -39,12 +43,24 @@ export function useSupervisorInvitesColumns(): ColumnDef<InstanceUserDTO>[] {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
       ),
+      cell: ({
+        row: {
+          original: { id, name },
+        },
+      }) => (
+        <Link
+          className={buttonVariants({ variant: "link" })}
+          href={getPath(`${PAGES.allSupervisors.href}/${id}`)}
+        >
+          {name}
+        </Link>
+      ),
     },
     {
-      id: "GUID",
+      id: INSTITUTION.ID_NAME,
       accessorFn: (s) => s.id,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="GUID" canFilter />
+        <DataTableColumnHeader column={column} title={INSTITUTION.ID_NAME} />
       ),
     },
     {
@@ -182,6 +198,7 @@ export function useSupervisorInvitesColumns(): ColumnDef<InstanceUserDTO>[] {
                   <span>Edit supervisor details</span>
                 </Link>
               </DropdownMenuItem>
+              {/* // TODO: make the actual email be click-copyable instead */}
               <DropdownMenuItem className="group/item">
                 <button
                   className="flex items-center gap-2 text-sm text-primary underline-offset-4 group-hover/item:underline hover:underline"

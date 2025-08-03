@@ -1,11 +1,11 @@
-import { FilePlus2Icon } from "lucide-react";
+import { FilePlus2Icon, FolderIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
-import { Heading, SubHeading } from "@/components/heading";
+import { Heading, SectionHeading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { buttonVariants } from "@/components/ui/button";
 import { UserDetailsCard } from "@/components/user-details-card";
@@ -47,6 +47,9 @@ export default async function Page({ params }: { params: PageParams }) {
     supervisorId,
   });
 
+  const projectDescriptors =
+    await api.institution.instance.getAllProjectDescriptors({ params });
+
   return (
     <PanelWrapper>
       <Heading
@@ -62,7 +65,10 @@ export default async function Page({ params }: { params: PageParams }) {
         <InstanceDetailsCard supervisor={supervisor} />
       </div>
       <div className="-mb-2 mt-6 flex items-center justify-between">
-        <SubHeading>All Projects</SubHeading>
+        <SectionHeading className="mb-2 flex items-center">
+          <FolderIcon className="mr-2 h-6 w-6 text-indigo-500" />
+          <span>All Projects</span>
+        </SectionHeading>
         <Link
           className={cn(
             buttonVariants({ variant: "secondary" }),
@@ -74,7 +80,10 @@ export default async function Page({ params }: { params: PageParams }) {
           <p>{PAGES.newSupervisorProject.title}</p>
         </Link>
       </div>
-      <SupervisorProjectsDataTable data={projects} />
+      <SupervisorProjectsDataTable
+        data={projects}
+        projectDescriptors={projectDescriptors}
+      />
     </PanelWrapper>
   );
 }

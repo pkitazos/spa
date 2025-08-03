@@ -21,7 +21,6 @@ import {
 } from "@/components/ui/table";
 
 import { cn } from "@/lib/utils";
-import { type SearchableColumn } from "@/lib/validations/table";
 
 import { useRowSelectionSearchParams } from "./hooks/row-selection";
 
@@ -37,8 +36,6 @@ import {
 
 interface DataTableProps<TData, TValue> {
   className?: string;
-  // @deprecated dont use this
-  searchableColumn?: SearchableColumn; // <- this makes no sense
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   filters?: TableFilter[];

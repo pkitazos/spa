@@ -21,7 +21,6 @@ export function ProjectSubmissionsDataTable({
   return (
     <DataTable
       className="w-full"
-      searchableColumn={{ id: "Name", displayName: "Names" }}
       columns={columns}
       filters={[
         {

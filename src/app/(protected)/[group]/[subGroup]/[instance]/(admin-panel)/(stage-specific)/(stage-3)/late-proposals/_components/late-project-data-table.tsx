@@ -3,18 +3,23 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { type ProjectDTO } from "@/dto";
+import { type FlagDTO, type TagDTO, type ProjectDTO } from "@/dto";
 
 import { useInstanceParams } from "@/components/params-context";
 import DataTable from "@/components/ui/data-table/data-table";
-import { useDataTableProjectFilters } from "@/components/ui/data-table/data-table-context";
 
 import { api } from "@/lib/trpc/client";
 import { toPP3 } from "@/lib/utils/general/instance-params";
 
 import { useLateProjectColumns } from "./late-projects-columns";
 
-export function LateProjectDataTable({ data }: { data: ProjectDTO[] }) {
+export function LateProjectDataTable({
+  data,
+  projectDescriptors,
+}: {
+  data: ProjectDTO[];
+  projectDescriptors: { flags: FlagDTO[]; tags: TagDTO[] };
+}) {
   const params = useInstanceParams();
   const router = useRouter();
 
@@ -46,19 +51,27 @@ export function LateProjectDataTable({ data }: { data: ProjectDTO[] }) {
     );
   }
 
-  const filters = useDataTableProjectFilters();
+  const filters = [
+    {
+      columnId: "Flags",
+      options: projectDescriptors.flags.map((flag) => ({
+        id: flag.id,
+        title: flag.displayName,
+      })),
+    },
+    {
+      columnId: "Keywords",
+      options: projectDescriptors.tags.map((tag) => ({
+        id: tag.id,
+        title: tag.title,
+      })),
+    },
+  ];
 
   const columns = useLateProjectColumns({
     deleteProject: handleDelete,
     deleteSelectedProjects: handleDeleteSelected,
   });
 
-  return (
-    <DataTable
-      searchableColumn={{ id: "Project Title", displayName: "Project Titles" }}
-      columns={columns}
-      filters={filters}
-      data={data}
-    />
-  );
+  return <DataTable columns={columns} filters={filters} data={data} />;
 }

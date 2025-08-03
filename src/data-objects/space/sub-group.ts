@@ -1,7 +1,6 @@
 import {
   type InstanceDTO,
   type FlagDTO,
-  type NewUnitOfAssessmentDTO,
   type TagDTO,
   builtInAlgorithms,
   type SubGroupDTO,
@@ -49,7 +48,7 @@ export class AllocationSubGroup extends DataObject {
     tags,
   }: {
     newInstance: Omit<InstanceDTO, "instance">;
-    flags: (New<FlagDTO> & { unitsOfAssessment: NewUnitOfAssessmentDTO[] })[];
+    flags: FlagDTO[];
     tags: New<TagDTO>[];
   }) {
     const instanceSlug = slugify(newInstance.displayName);
@@ -64,14 +63,15 @@ export class AllocationSubGroup extends DataObject {
       const flagData = await tx.flag.createManyAndReturn({
         data: flags.map((f) => ({
           ...expand(params),
-          title: f.title,
+          id: f.id,
+          displayName: f.displayName,
           description: f.description,
         })),
         skipDuplicates: true,
       });
 
-      const flagTitleToId = flagData.reduce(
-        (acc, val) => ({ ...acc, [val.title]: val.id }),
+      const _flagDisplayNameToId = flagData.reduce(
+        (acc, val) => ({ ...acc, [val.displayName]: val.id }),
         {} as Record<string, string>,
       );
 
@@ -83,39 +83,39 @@ export class AllocationSubGroup extends DataObject {
         data: builtInAlgorithms.map((alg) => ({ ...expand(params), ...alg })),
       });
 
-      const units = await tx.unitOfAssessment.createManyAndReturn({
-        data: flags.flatMap((f) =>
-          f.unitsOfAssessment.map((a) => ({
-            ...expand(params),
-            flagId: flagTitleToId[f.title],
-            title: a.title,
-            weight: a.weight,
-            studentSubmissionDeadline: a.studentSubmissionDeadline,
-            markerSubmissionDeadline: a.markerSubmissionDeadline,
-            allowedMarkerTypes: a.allowedMarkerTypes,
-          })),
-        ),
-      });
+      // const units = await tx.unitOfAssessment.createManyAndReturn({
+      //   data: flags.flatMap((f) =>
+      //     f.unitsOfAssessment.map((a) => ({
+      //       ...expand(params),
+      //       flagId: flagDisplayNameToId[f.displayName],
+      //       title: a.title,
+      //       weight: a.weight,
+      //       studentSubmissionDeadline: a.studentSubmissionDeadline,
+      //       markerSubmissionDeadline: a.markerSubmissionDeadline,
+      //       allowedMarkerTypes: a.allowedMarkerTypes,
+      //     })),
+      //   ),
+      // });
 
-      const unitTitleToId = units.reduce(
-        (acc, val) => ({ ...acc, [`${val.flagId}${val.title}`]: val.id }),
-        {} as Record<string, string>,
-      );
+      // const unitTitleToId = units.reduce(
+      //   (acc, val) => ({ ...acc, [`${val.flagId}${val.title}`]: val.id }),
+      //   {} as Record<string, string>,
+      // );
 
-      await tx.assessmentCriterion.createMany({
-        data: flags.flatMap((f) =>
-          f.unitsOfAssessment.flatMap((u) =>
-            u.components.map((c) => ({
-              unitOfAssessmentId:
-                unitTitleToId[`${flagTitleToId[f.title]}${u.title}`],
-              title: c.title,
-              description: c.description,
-              weight: c.weight,
-              layoutIndex: c.layoutIndex,
-            })),
-          ),
-        ),
-      });
+      // await tx.assessmentCriterion.createMany({
+      //   data: flags.flatMap((f) =>
+      //     f.unitsOfAssessment.flatMap((u) =>
+      //       u.components.map((c) => ({
+      //         unitOfAssessmentId:
+      //           unitTitleToId[`${flagTitleToId[f.displayName]}${u.title}`],
+      //         title: c.title,
+      //         description: c.description,
+      //         weight: c.weight,
+      //         layoutIndex: c.layoutIndex,
+      //       })),
+      //     ),
+      //   ),
+      // });
     });
   }
 

@@ -19,7 +19,6 @@ export type {
   FinalGrade as DB_FinalGrade,
   Flag as DB_Flag,
   FlagOnProject as DB_FlagOnProject,
-  FlagOnStudent as DB_FlagOnStudent,
   UnitOfAssessment as DB_UnitOfAssessment,
   GroupAdmin as DB_GroupAdmin,
   MarkingSubmission as DB_MarkingSubmission,
@@ -134,6 +133,16 @@ export const preferenceTypeSchema = z.enum([
   PreferenceType.SHORTLIST,
   PreferenceType.PREFERENCE,
 ]);
+
+export const extendedPreferenceTypeSchema = z.enum([
+  PreferenceType.SHORTLIST,
+  PreferenceType.PREFERENCE,
+  "SUBMITTED",
+]);
+
+export type ExtendedPreferenceType = z.infer<
+  typeof extendedPreferenceTypeSchema
+>;
 
 export {
   AlgorithmFlag,

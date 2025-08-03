@@ -3,6 +3,7 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 
+import { INSTITUTION } from "@/config/institution";
 import { PAGES } from "@/config/pages";
 
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -17,7 +18,7 @@ export const byProjectColumns: ColumnDef<AllocationByProjectDto>[] = [
     id: "Project ID",
     accessorFn: ({ project }) => project.id,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Project ID" canFilter />
+      <DataTableColumnHeader column={column} title="Project ID" />
     ),
     cell: ({
       row: {
@@ -93,11 +94,7 @@ export const byProjectColumns: ColumnDef<AllocationByProjectDto>[] = [
     id: "Supervisor Name",
     accessorFn: ({ supervisor }) => supervisor.name,
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title="Supervisor Name"
-        canFilter
-      />
+      <DataTableColumnHeader column={column} title="Supervisor Name" />
     ),
     cell: ({
       row: {
@@ -116,10 +113,13 @@ export const byProjectColumns: ColumnDef<AllocationByProjectDto>[] = [
     ),
   },
   {
-    id: "Student GUID",
+    id: `Student ${INSTITUTION.ID_NAME}`,
     accessorFn: ({ student }) => student.id,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Student GUID" canFilter />
+      <DataTableColumnHeader
+        column={column}
+        title={`Student ${INSTITUTION.ID_NAME}`}
+      />
     ),
     cell: ({
       row: {
@@ -131,7 +131,7 @@ export const byProjectColumns: ColumnDef<AllocationByProjectDto>[] = [
     id: "Student Name",
     accessorFn: ({ student }) => student.name,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Student Name" canFilter />
+      <DataTableColumnHeader column={column} title="Student Name" />
     ),
     cell: ({
       row: {

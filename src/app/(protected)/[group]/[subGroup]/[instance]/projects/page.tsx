@@ -26,6 +26,9 @@ export default async function Projects({ params }: { params: InstanceParams }) {
   const roles = await api.user.roles({ params });
   const projectData = await api.project.getAllForUser({ params });
 
+  const projectDescriptors =
+    await api.institution.instance.getUsedProjectDescriptors({ params });
+
   // TODO: fix this it's kinda janky
   let projectPreferences: Record<string, PreferenceType> = {};
 
@@ -48,6 +51,7 @@ export default async function Projects({ params }: { params: InstanceParams }) {
         data={projectData}
         projectPreferences={projectPreferences}
         hasSelfDefinedProject={hasSelfDefinedProject}
+        projectDescriptors={projectDescriptors}
       />
     </PanelWrapper>
   );

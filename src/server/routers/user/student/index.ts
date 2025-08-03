@@ -106,17 +106,6 @@ export const studentRouter = createTRPCRouter({
     },
   ),
 
-  // MOVE to instance router (a lot of these operations should really be on the instance object)
-  // they can also be on the student object and just use the same underlying dal methods
-  // maybe not
-  updateLevel: procedure.instance.subGroupAdmin
-    .input(z.object({ studentId: z.string(), level: z.number() }))
-    .output(studentDtoSchema)
-    .mutation(async ({ ctx: { instance }, input: { studentId, level } }) => {
-      const student = await instance.getStudent(studentId);
-      return student.setStudentLevel(level);
-    }),
-
   // Can anyone see this?
   latestSubmission: procedure.instance.user
     .input(z.object({ studentId: z.string() }))
@@ -126,7 +115,6 @@ export const studentRouter = createTRPCRouter({
       return student.getLatestSubmissionDateTime();
     }),
 
-  // BREAKING output type
   isPreAllocated: procedure.instance.student
     .output(z.boolean())
     .query(async ({ ctx: { user } }) => await user.hasSelfDefinedProject()),
@@ -235,7 +223,7 @@ export const studentRouter = createTRPCRouter({
     .output(z.array(projectDtoSchema))
     .query(async ({ ctx: { instance }, input: { studentId } }) => {
       const student = await instance.getStudent(studentId);
-      const { flags } = await student.get();
+      const { flag: studentFlag } = await student.get();
       const preferences = await student.getAllDraftPreferences();
       const preferenceIds = new Set(preferences.map(({ project: p }) => p.id));
 
@@ -244,9 +232,7 @@ export const studentRouter = createTRPCRouter({
       return projectData
         .filter((p) => {
           if (preferenceIds.has(p.project.id)) return false;
-          const projectFlags = new Set(p.project.flags.map((f) => f.title));
-          const studentFlags = new Set(flags.map((f) => f.title));
-          return studentFlags.intersection(projectFlags).size !== 0;
+          return p.project.flags.map((f) => f.id).includes(studentFlag.id);
         })
         .map(({ project }) => project);
     }),
