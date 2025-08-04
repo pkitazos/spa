@@ -10,7 +10,7 @@ Flags are categories used to classify both students and projects in the system. 
 
 ### How Flags Work
 
-1. **Student Classification**: Each student is assigned one or more flags based on their program/level
+1. **Student Classification**: Each student is assigned one flag based on their program/level
 2. **Project Classification**: Supervisors mark their projects with appropriate flags
 3. **Matching**: Students only see projects that share at least one flag with them
 
