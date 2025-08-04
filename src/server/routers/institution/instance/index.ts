@@ -639,8 +639,8 @@ export const instanceRouter = createTRPCRouter({
       );
 
       return allProjects
-        .map(({ project, supervisor, allocatedTo }) => {
-          if (!allAllocationsMap[project.id]) {
+        .map(({ project, supervisor, allocatedStudent }) => {
+          if (!allAllocationsMap[project.id] || !allocatedStudent) {
             return {
               project,
               supervisor: supervisor,
@@ -649,17 +649,11 @@ export const instanceRouter = createTRPCRouter({
             };
           }
 
-          if (allocatedTo.length !== 1) {
-            throw new Error(
-              `Project ${project.id} should have exactly one allocated student, but has ${allocatedTo.length ?? 0}`,
-            );
-          }
-
           return {
             project,
             supervisor: supervisor,
             status: allAllocationsMap[project.id],
-            studentId: allocatedTo[0],
+            studentId: allocatedStudent.id,
           };
         })
         .sort((a, b) => a.project.title.localeCompare(b.project.title))

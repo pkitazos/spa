@@ -25,7 +25,7 @@ export function KanbanBoardSection({ studentId }: { studentId: string }) {
   const { mutateAsync: reorderAsync } =
     api.user.student.preference.makeReorder.useMutation();
 
-  const { mutateAsync: updatePreferenceAsync } =
+  const { mutateAsync: api_updatePreferenceAsync } =
     api.user.student.preference.makeUpdate.useMutation();
 
   async function reorderPreference(
@@ -54,7 +54,7 @@ export function KanbanBoardSection({ studentId }: { studentId: string }) {
 
   async function deletePreference(projectId: string) {
     void toast.promise(
-      updatePreferenceAsync({
+      api_updatePreferenceAsync({
         params,
         studentId,
         projectId,

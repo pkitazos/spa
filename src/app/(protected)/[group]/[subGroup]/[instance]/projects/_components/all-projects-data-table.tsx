@@ -15,7 +15,7 @@ import { type PreferenceType, type Role } from "@/db/types";
 
 import {
   useInstanceParams,
-  useInstancePath,
+  usePathInInstance,
 } from "@/components/params-context";
 import { ToastSuccessCard } from "@/components/toast-success-card";
 import { buttonVariants } from "@/components/ui/button";
@@ -45,16 +45,23 @@ export function AllProjectsDataTable({
   projectDescriptors: { flags: FlagDTO[]; tags: TagDTO[] };
 }) {
   const params = useInstanceParams();
-  const instancePath = useInstancePath();
+  const { getPath } = usePathInInstance();
   const router = useRouter();
 
-  const { mutateAsync: deleteAsync } = api.project.delete.useMutation();
-  const { mutateAsync: deleteAllAsync } =
+  const { mutateAsync: api_deleteAsync } = api.project.delete.useMutation();
+
+  const { mutateAsync: api_deleteAllAsync } =
     api.project.deleteSelected.useMutation();
+
+  const { mutateAsync: api_changePreferenceAsync } =
+    api.user.student.preference.update.useMutation();
+
+  const { mutateAsync: api_changeSelectedPreferencesAsync } =
+    api.user.student.preference.updateSelected.useMutation();
 
   async function handleDelete(projectId: string) {
     void toast.promise(
-      deleteAsync({ params: toPP3(params, projectId) }).then(() =>
+      api_deleteAsync({ params: toPP3(params, projectId) }).then(() =>
         router.refresh(),
       ),
       {
@@ -67,7 +74,7 @@ export function AllProjectsDataTable({
 
   async function handleDeleteSelected(projectIds: string[]) {
     void toast.promise(
-      deleteAllAsync({ params, projectIds }).then(() => router.refresh()),
+      api_deleteAllAsync({ params, projectIds }).then(() => router.refresh()),
       {
         loading: "Deleting selected projects...",
         error: "Something went wrong",
@@ -76,19 +83,13 @@ export function AllProjectsDataTable({
     );
   }
 
-  const { mutateAsync: changePreferenceAsync } =
-    api.user.student.preference.update.useMutation();
-
-  const { mutateAsync: changeSelectedPreferencesAsync } =
-    api.user.student.preference.updateSelected.useMutation();
-
   async function handleChangePreference(
     preferenceType: StudentPreferenceType,
     projectId: string,
   ) {
     void toast.promise(
-      changePreferenceAsync({ params, preferenceType, projectId }).then(() =>
-        router.refresh(),
+      api_changePreferenceAsync({ params, preferenceType, projectId }).then(
+        () => router.refresh(),
       ),
       {
         loading: "Updating project preference...",
@@ -98,7 +99,7 @@ export function AllProjectsDataTable({
             message="Successfully updated project preference"
             action={
               <Link
-                href={`${instancePath}/my-preferences`}
+                href={getPath("my-preferences")}
                 className={cn(
                   buttonVariants({ variant: "outline" }),
                   "flex h-full w-max items-center gap-2 self-end py-3 text-xs",
@@ -118,7 +119,7 @@ export function AllProjectsDataTable({
     projectIds: string[],
   ) {
     void toast.promise(
-      changeSelectedPreferencesAsync({
+      api_changeSelectedPreferencesAsync({
         params,
         preferenceType,
         projectIds,
@@ -131,7 +132,7 @@ export function AllProjectsDataTable({
             message={`Successfully updated ${projectIds.length} project preferences`}
             action={
               <Link
-                href={`${instancePath}/my-preferences`}
+                href={getPath("my-preferences")}
                 className={cn(
                   buttonVariants({ variant: "outline" }),
                   "flex h-full w-max items-center gap-2 self-end py-3 text-xs",

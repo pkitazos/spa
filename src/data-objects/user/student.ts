@@ -5,8 +5,6 @@ import {
   type ReaderDTO,
 } from "@/dto";
 
-import { updateManyPreferenceTransaction } from "@/db/transactions/update-many-preferences";
-import { updatePreferenceTransaction } from "@/db/transactions/update-preference";
 import { Transformers as T } from "@/db/transformers";
 import { AllocationMethod, PreferenceType } from "@/db/types";
 import { type DB } from "@/db/types";
@@ -215,12 +213,48 @@ export class Student extends User {
     projectId: string,
     preferenceType: PreferenceType | undefined,
   ): Promise<void> {
-    // TODO fix
-    return await updatePreferenceTransaction(this.db, {
-      userId: this.id,
-      projectId,
-      preferenceType,
-      params: this.instance.params,
+    return await this.db.$transaction(async (tx) => {
+      if (!preferenceType) {
+        await tx.studentDraftPreference.delete({
+          where: {
+            draftPreferenceId: {
+              userId: this.id,
+              projectId,
+              ...expand(this.instance.params),
+            },
+          },
+        });
+        return;
+      }
+
+      const preferences = await tx.studentDraftPreference.aggregate({
+        where: {
+          userId: this.id,
+          type: preferenceType,
+          ...expand(this.instance.params),
+        },
+        _max: { score: true },
+      });
+
+      const nextScore = (preferences._max?.score ?? 0) + 1;
+
+      await tx.studentDraftPreference.upsert({
+        where: {
+          draftPreferenceId: {
+            projectId,
+            userId: this.id,
+            ...expand(this.instance.params),
+          },
+        },
+        create: {
+          ...expand(this.instance.params),
+          projectId,
+          userId: this.id,
+          type: preferenceType,
+          score: nextScore,
+        },
+        update: { type: preferenceType, score: nextScore },
+      });
     });
   }
 
@@ -261,12 +295,48 @@ export class Student extends User {
     projectIds: string[],
     preferenceType: PreferenceType | undefined,
   ): Promise<void> {
-    // TODO fix
-    return await updateManyPreferenceTransaction(this.db, {
-      userId: this.id,
-      params: this.instance.params,
-      projectIds,
-      preferenceType,
+    return await this.db.$transaction(async (tx) => {
+      if (!preferenceType) {
+        // user wants to remove all projects from their preferences
+        await tx.studentDraftPreference.deleteMany({
+          where: {
+            userId: this.id,
+            projectId: { in: projectIds },
+            ...expand(this.instance.params),
+          },
+        });
+        return;
+      }
+
+      // delete all existing preferences for these projects to avoid residuals
+      await tx.studentDraftPreference.deleteMany({
+        where: {
+          userId: this.id,
+          projectId: { in: projectIds },
+          ...expand(this.instance.params),
+        },
+      });
+
+      const preferences = await tx.studentDraftPreference.aggregate({
+        where: {
+          userId: this.id,
+          type: preferenceType,
+          ...expand(this.instance.params),
+        },
+        _max: { score: true },
+      });
+
+      const startingScore = (preferences._max?.score ?? 0) + 1;
+
+      await tx.studentDraftPreference.createMany({
+        data: projectIds.map((projectId, index) => ({
+          projectId,
+          userId: this.id,
+          type: preferenceType,
+          score: startingScore + index,
+          ...expand(this.instance.params),
+        })),
+      });
     });
   }
 
