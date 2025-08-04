@@ -16,7 +16,9 @@ import { Role, roleSchema } from "@/db/types";
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
+import { auth } from "@/lib/auth";
 import { relativeComplement } from "@/lib/utils/general/set-difference";
+import { nubsById } from "@/lib/utils/list-unique";
 
 import { markerRouter } from "./marker";
 import { studentRouter } from "./student";
@@ -152,7 +154,12 @@ export const userRouter = createTRPCRouter({
         where: { email: { in: testUserEmails.map((x) => x.email) } },
       });
 
-      return users.sort((a, b) => {
+      const { real: realUser, mask: maskUser } = await auth();
+
+      users.unshift(realUser);
+      users.unshift(maskUser);
+
+      return users.filter(nubsById).sort((a, b) => {
         const aOrd =
           testUserEmails.find((x) => x.email === a.email)?.ord ??
           Number.MAX_SAFE_INTEGER;
