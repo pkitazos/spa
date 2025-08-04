@@ -103,7 +103,7 @@ export function useNewStudentColumns({
           original: { flag },
         },
       }) => (
-        <div className="grid w-28 place-items-center">
+        <div className="grid w-40 place-items-center">
           <Badge variant="accent" className="rounded-md">
             {flag.displayName}
           </Badge>
