@@ -95,6 +95,14 @@ export const PAGES = {
     allowedRoles: [Role.ADMIN],
     hasSubRoute: false,
   },
+  createProject: {
+    title: "Create Project",
+    href: "create-project",
+    icon: "file-plus-2",
+    level: 3,
+    allowedRoles: [Role.ADMIN],
+    hasSubRoute: false,
+  },
 
   // pin
   allReaders: {

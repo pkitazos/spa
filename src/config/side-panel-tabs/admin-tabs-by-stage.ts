@@ -13,6 +13,7 @@ export const ADMIN_TABS_BY_STAGE: Record<Stage, TabType[]> = {
     PAGES.preAllocatedProjects,
     PAGES.addStudents,
     PAGES.addSupervisors,
+    PAGES.createProject,
   ],
   [Stage.STUDENT_BIDDING]: [
     PAGES.studentInvites,
@@ -21,6 +22,7 @@ export const ADMIN_TABS_BY_STAGE: Record<Stage, TabType[]> = {
     PAGES.preAllocatedProjects,
     PAGES.addStudents,
     PAGES.addSupervisors,
+    PAGES.createProject,
   ],
   [Stage.PROJECT_ALLOCATION]: [
     PAGES.algorithms,
@@ -28,6 +30,7 @@ export const ADMIN_TABS_BY_STAGE: Record<Stage, TabType[]> = {
     PAGES.preferenceStatistics,
     PAGES.preferenceSubmissions,
     PAGES.preAllocatedProjects,
+    PAGES.createProject,
   ],
   [Stage.ALLOCATION_ADJUSTMENT]: [
     PAGES.manualAllocations,
@@ -36,6 +39,7 @@ export const ADMIN_TABS_BY_STAGE: Record<Stage, TabType[]> = {
     PAGES.preferenceStatistics,
     PAGES.preferenceSubmissions,
     PAGES.preAllocatedProjects,
+    PAGES.createProject,
   ],
   [Stage.ALLOCATION_PUBLICATION]: [
     PAGES.manageUserAccess,
