@@ -3,15 +3,12 @@ import { z } from "zod";
 
 import { userDtoSchema } from "@/dto";
 
-import type { User, AllocationInstance } from "@/data-objects";
-
 import { Role } from "@/db/types";
 import { PreferenceType, Stage } from "@/db/types";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
-import { stageGte, stageIn } from "@/lib/utils/permissions/stage-check";
 import { projectPreferenceCardDtoSchema } from "@/lib/validations/board";
 import { studentPreferenceSchema } from "@/lib/validations/student-preference";
 
@@ -71,9 +68,8 @@ export const preferenceRouter = createTRPCRouter({
       }));
     }),
 
-  // BREAKING
   getByProject: procedure.instance.student
-    .output(z.record(z.string(), z.nativeEnum(PreferenceType)))
+    .output(z.record(z.string(), z.enum(PreferenceType)))
     .query(async ({ ctx: { user } }) => {
       const draftPreferences = await user.getAllDraftPreferences();
 
@@ -83,11 +79,14 @@ export const preferenceRouter = createTRPCRouter({
       );
     }),
 
-  // ? weird name... what's the difference between this and "update"?
-  // Not immediately clear
-  // From what I can tell, this is a updateById vs updateCurrentUser
-  makeUpdate: procedure.instance.user
-    .input(
+  // move - this is a sub-group admin operation so it should probably be elsewhere and possibly renamed `updateStudentPreference`
+  // todo: standardise error reporting
+  /**
+   * Sub-group admin updating a student's preference over a particular project
+   */
+  makeUpdate: procedure.instance
+    .inStage([Stage.STUDENT_BIDDING])
+    .subGroupAdmin.input(
       z.object({
         studentId: z.string(),
         projectId: z.string(),
@@ -102,30 +101,41 @@ export const preferenceRouter = createTRPCRouter({
     )
     .mutation(
       async ({
-        ctx: { user, instance },
+        ctx: { instance, audit },
         input: { studentId, projectId, preferenceType },
       }) => {
-        const { ok, message } = await accessControl({
-          user,
-          instance,
-          allowedRoles: [Role.ADMIN, Role.STUDENT],
-          stageCheck: (s) => s === Stage.STUDENT_BIDDING,
+        audit("Attempting to update student preference", {
+          studentId,
+          projectId,
+          preferenceType,
         });
-        if (!ok) throw new Error(message);
 
         const student = await instance.getStudent(studentId);
 
         if (await student.hasSelfDefinedProject()) {
+          audit("Student has self-defined a project, aborting update", {
+            studentId,
+          });
           throw new Error("Student has self-defined a project");
         }
 
         const newPreferenceType = convertPreferenceType(preferenceType);
+        audit("Updating draft preference type", {
+          studentId,
+          projectId,
+          newPreferenceType,
+        });
+
         await student.updateDraftPreferenceType(projectId, newPreferenceType);
 
+        audit("Fetching updated preference board state", { studentId });
         return await student.getPreferenceBoardState();
       },
     ),
 
+  /**
+   * Student updating their own preference over a particular project
+   */
   update: procedure.instance
     .inStage([Stage.STUDENT_BIDDING])
     .student.input(
@@ -136,16 +146,44 @@ export const preferenceRouter = createTRPCRouter({
     )
     .output(z.void())
     .mutation(
-      async ({ ctx: { user }, input: { projectId, preferenceType } }) => {
-        if (await user.hasSelfDefinedProject()) return;
+      async ({
+        ctx: { user, instance, audit },
+        input: { projectId, preferenceType },
+      }) => {
+        audit("Updating preference for project:", {
+          studentId: user.id,
+          projectId,
+        });
+
+        if (await user.hasSelfDefinedProject()) {
+          audit(
+            "Student has self-defined a project, skipping preference update",
+          );
+          return;
+        }
+        audit("not self-defined, checking flags");
+
+        const { flag: studentFlag } = await user.get();
+        const projectFlags = await instance.getProject(projectId).getFlags();
+
+        if (!projectFlags.map((f) => f.id).includes(studentFlag.id)) {
+          audit("Project is not suitable for student", {
+            projectFlags,
+            studentFlag,
+          });
+          return;
+        }
 
         const newPreferenceType = convertPreferenceType(preferenceType);
+
         await user.updateDraftPreferenceType(projectId, newPreferenceType);
+        audit("Preference updated successfully");
       },
     ),
 
-  // ? Yet a third name for an update method; this one is updateMany i think
-  // Imagine seeing these three in an autocomplete list and being asked what the difference is
+  /**
+   * Student updating their own preference over multiple projects
+   */
   updateSelected: procedure.instance
     .inStage([Stage.STUDENT_BIDDING])
     .student.input(
@@ -156,86 +194,176 @@ export const preferenceRouter = createTRPCRouter({
     )
     .output(z.void())
     .mutation(
-      async ({ ctx: { user }, input: { projectIds, preferenceType } }) => {
+      async ({
+        ctx: { user, instance, audit },
+        input: { projectIds, preferenceType },
+      }) => {
         if (await user.hasSelfDefinedProject()) return;
+        audit("not self-defined, checking flags");
+
+        const { flag: studentFlag } = await user.get();
+
+        const allProjectsCompatible = await Promise.all(
+          projectIds.map((projectId) =>
+            instance.getProject(projectId).getFlags(),
+          ),
+        ).then((projects) =>
+          projects.every((p) => p.map((f) => f.id).includes(studentFlag.id)),
+        );
+
+        if (!allProjectsCompatible) {
+          audit("One or more projects are not suitable for student", {
+            studentFlag,
+          });
+          return;
+        }
 
         const newPreferenceType = convertPreferenceType(preferenceType);
+
         await user.updateManyDraftPreferenceTypes(
           projectIds,
           newPreferenceType,
         );
+        audit("Preferences updated successfully");
       },
     ),
 
-  makeReorder: procedure.instance.user
-    .input(
+  // move - also maybe rename?
+  /**
+   * Sub-group admin reordering a student's preferences
+   */
+  makeReorder: procedure.instance
+    .inStage([Stage.STUDENT_BIDDING])
+    .subGroupAdmin.input(
       z.object({
         studentId: z.string(),
         projectId: z.string(),
-        preferenceType: z.nativeEnum(PreferenceType),
+        preferenceType: z.enum(PreferenceType),
         updatedRank: z.number(),
       }),
     )
     .output(z.void())
     .mutation(
       async ({
-        ctx: { instance, user },
+        ctx: { instance, audit },
         input: { studentId, projectId, preferenceType, updatedRank },
       }) => {
-        const { ok, message } = await accessControl({
-          instance,
-          user,
-          allowedRoles: [Role.ADMIN, Role.STUDENT],
-          stageCheck: (s) => s === Stage.STUDENT_BIDDING,
+        audit("Attempting to reorder student preference", {
+          studentId,
+          projectId,
+          preferenceType,
+          updatedRank,
         });
-        if (!ok) throw new Error(message);
 
         const student = await instance.getStudent(studentId);
-        if (await student.hasSelfDefinedProject()) return;
+
+        audit("Checking if student has self-defined project", { studentId });
+        if (await student.hasSelfDefinedProject()) {
+          audit("Student has self-defined a project, skipping reorder", {
+            studentId,
+          });
+
+          return;
+        }
+        audit("not self-defined, checking flags");
+        const { flag: studentFlag } = await student.get();
+        const projectFlags = await instance.getProject(projectId).getFlags();
+
+        if (!projectFlags.map((f) => f.id).includes(studentFlag.id)) {
+          audit("Project is not suitable for student", {
+            projectFlags,
+            studentFlag,
+          });
+          return;
+        }
 
         await student.updateDraftPreferenceRank(
           projectId,
           updatedRank,
           preferenceType,
         );
+        audit("Draft preference rank updated successfully", {
+          studentId,
+          projectId,
+          updatedRank,
+        });
       },
     ),
 
-  reorder: procedure.instance.student
-    .input(
+  /**
+   * Student reordering their own preference over a project
+   */
+  reorder: procedure.instance
+    .inStage([Stage.STUDENT_BIDDING])
+    .student.input(
       z.object({
         projectId: z.string(),
-        preferenceType: z.nativeEnum(PreferenceType),
+        preferenceType: z.enum(PreferenceType),
         updatedRank: z.number(),
       }),
     )
     .output(z.void())
     .mutation(
       async ({
-        ctx: { instance, user },
+        ctx: { instance, user, audit },
         input: { projectId, preferenceType, updatedRank },
       }) => {
-        const { stage } = await instance.get();
-        if (stageGte(stage, Stage.PROJECT_ALLOCATION)) return;
+        audit("Attempting to reorder preference for project:", {
+          studentId: user.id,
+          projectId,
+          preferenceType,
+          updatedRank,
+        });
 
-        if (await user.hasSelfDefinedProject()) return;
+        if (await user.hasSelfDefinedProject()) {
+          audit("Student has self-defined a project, skipping reorder", {
+            studentId: user.id,
+          });
+          return;
+        }
+
+        audit("not self-defined, checking flags");
+        const { flag: studentFlag } = await user.get();
+        const projectFlags = await instance.getProject(projectId).getFlags();
+
+        if (!projectFlags.map((f) => f.id).includes(studentFlag.id)) {
+          audit("Project is not suitable for student", {
+            projectFlags,
+            studentFlag,
+          });
+          return;
+        }
+
+        audit("Updating draft preference rank", {
+          studentId: user.id,
+          projectId,
+          updatedRank,
+          preferenceType,
+        });
 
         await user.updateDraftPreferenceRank(
           projectId,
           updatedRank,
           preferenceType,
         );
+        audit("Draft preference rank updated successfully", {
+          studentId: user.id,
+          projectId,
+          updatedRank,
+        });
       },
     ),
 
+  // todo: standardise MaybePreferenceType
   getForProject: procedure.instance.student
     .input(z.object({ projectId: z.string() }))
-    .output(z.nativeEnum(PreferenceType).or(z.literal("None")))
+    .output(z.enum(PreferenceType).or(z.literal("None")))
     .query(
       async ({ ctx: { user }, input: { projectId } }) =>
         (await user.getDraftPreference(projectId)) ?? "None",
     ),
 
+  // todo: standardise error reporting
   submit: procedure.instance
     .withRoles([Role.ADMIN, Role.STUDENT])
     .input(z.object({ studentId: z.string() }))
@@ -254,7 +382,9 @@ export const preferenceRouter = createTRPCRouter({
       return await student.submitPreferences();
     }),
 
-  initialBoardState: procedure.instance.user
+  initialBoardState: procedure.instance
+    .inStage([Stage.STUDENT_BIDDING, Stage.ALLOCATION_ADJUSTMENT])
+    .withRoles([Role.ADMIN, Role.STUDENT])
     .input(z.object({ studentId: z.string() }))
     .output(
       z.object({
@@ -264,21 +394,15 @@ export const preferenceRouter = createTRPCRouter({
         }),
       }),
     )
-    .query(async ({ ctx: { instance, user }, input: { studentId } }) => {
-      const { ok, message } = await accessControl({
-        instance,
-        user,
-        allowedRoles: [Role.ADMIN, Role.STUDENT],
-        stageCheck: (s) =>
-          stageIn(s, [Stage.STUDENT_BIDDING, Stage.ALLOCATION_ADJUSTMENT]),
-      });
-      if (!ok) throw new Error(message);
-
+    .query(async ({ ctx: { instance, audit }, input: { studentId } }) => {
       const student = await instance.getStudent(studentId);
+
+      audit("Fetching initial board state for student", { studentId });
 
       return { initialProjects: await student.getPreferenceBoardState() };
     }),
 
+  // pin - review
   change: procedure.instance.subGroupAdmin
     .input(
       z.object({
@@ -290,12 +414,24 @@ export const preferenceRouter = createTRPCRouter({
     .output(z.void())
     .mutation(
       async ({
-        ctx: { instance },
+        ctx: { instance, audit },
         input: { studentId, projectId, newPreferenceType },
       }) => {
+        audit("Changing student preference", {
+          studentId,
+          projectId,
+          newPreferenceType,
+        });
         const student = await instance.getStudent(studentId);
+
         const preferenceType = convertPreferenceType(newPreferenceType);
+
         await student.updateDraftPreferenceType(projectId, preferenceType);
+        audit("Student preference updated successfully", {
+          studentId,
+          projectId,
+          newPreferenceType,
+        });
       },
     ),
 
@@ -303,59 +439,38 @@ export const preferenceRouter = createTRPCRouter({
     .input(
       z.object({
         studentId: z.string(),
-        newPreferenceType: z.nativeEnum(PreferenceType).or(z.literal("None")),
+        newPreferenceType: z.enum(PreferenceType).or(z.literal("None")),
         projectIds: z.array(z.string()),
       }),
     )
     .output(z.void())
     .mutation(
       async ({
-        ctx: { instance },
+        ctx: { instance, audit },
         input: { studentId, newPreferenceType, projectIds },
       }) => {
+        audit("Changing student preferences for multiple projects", {
+          studentId,
+          newPreferenceType,
+          projectIds,
+        });
         const student = await instance.getStudent(studentId);
         const preferenceType = convertPreferenceType(newPreferenceType);
+
         await student.updateManyDraftPreferenceTypes(
           projectIds,
           preferenceType,
         );
+        audit("Student preferences updated successfully", {
+          studentId,
+          newPreferenceType,
+          projectIds,
+        });
       },
     ),
 });
 
-// MOVE
-async function accessControl({
-  user,
-  instance,
-  allowedRoles,
-  stageCheck,
-}: {
-  user: User;
-  instance: AllocationInstance;
-  allowedRoles: Role[];
-  stageCheck: (s: Stage) => boolean;
-}) {
-  const userRoles = await user.getRolesInInstance(instance.params);
-  const roleOk = allowedRoles.some((role) => userRoles.has(role));
-
-  if (!roleOk) {
-    return {
-      ok: false,
-      message: `User ${user.id} does not have permission to access this resource, as ${Array.from(userRoles).toString()} does not sufficiently overlap with ${allowedRoles.toString()}.`,
-    };
-  }
-
-  const stageOk = await instance.get().then(({ stage }) => stageCheck(stage));
-  if (!stageOk) {
-    return {
-      ok: false,
-      message: `User ${user.id} cannot access this resource at this stage.`,
-    };
-  }
-
-  return { ok: true, message: "User can access this resource." };
-}
-
+// TODO: this is a bit silly, fix this later
 function convertPreferenceType(preferenceType: PreferenceType | "None") {
   return preferenceType === "None" ? undefined : preferenceType;
 }

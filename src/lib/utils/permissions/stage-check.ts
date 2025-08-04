@@ -78,11 +78,11 @@ export function stageRange(minStage: Stage, maxStage: Stage): Stage[] {
  * @param currentStage the current stage
  * @param minStage the minimum stage to compare against
  * @param maxStage the maximum stages to compare against
- * @returns true if the current stage is between the minimum and maximum stages
+ * @returns true if the current stage is between the minimum and maximum stages inclusive
  */
 export function stageIn(
   currentStage: Stage,
   [minStage, maxStage]: [Stage, Stage],
 ) {
-  return stageGte(currentStage, minStage) && stageLt(currentStage, maxStage);
+  return stageGte(currentStage, minStage) && stageLte(currentStage, maxStage);
 }

@@ -71,7 +71,7 @@ export function NewPreferenceButton({
     defaultValues: { preferenceType: PreferenceType.PREFERENCE },
   });
 
-  const { mutateAsync: updatePreferencesAsync } =
+  const { mutateAsync: api_updatePreferencesAsync } =
     api.user.student.preference.makeUpdate.useMutation();
 
   function onSubmit(data: NewProjectPreferenceDto) {
@@ -81,7 +81,7 @@ export function NewPreferenceButton({
         : "shortlist";
 
     void toast.promise(
-      updatePreferencesAsync({
+      api_updatePreferencesAsync({
         params,
         studentId: params.id,
         projectId: data.projectId,

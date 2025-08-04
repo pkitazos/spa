@@ -203,12 +203,25 @@ export class AllocationInstance extends DataObject {
   }
 
   public async getProjectDetails(): Promise<
-    { project: ProjectDTO; supervisor: SupervisorDTO; allocatedTo: string[] }[]
+    {
+      project: ProjectDTO;
+      supervisor: SupervisorDTO;
+      allocatedStudent?: StudentDTO;
+    }[]
   > {
     const projectData = await this.db.project.findMany({
       where: expand(this.params),
       include: {
-        studentAllocations: true,
+        studentAllocations: {
+          include: {
+            student: {
+              include: {
+                userInInstance: { include: { user: true } },
+                studentFlag: true,
+              },
+            },
+          },
+        },
         supervisor: {
           include: { userInInstance: { include: { user: true } } },
         },
@@ -221,6 +234,9 @@ export class AllocationInstance extends DataObject {
       project: T.toProjectDTO(p),
       supervisor: T.toSupervisorDTO(p.supervisor),
       allocatedTo: p.studentAllocations.map((a) => a.userId),
+      allocatedStudent: !!p.studentAllocations.at(0)
+        ? T.toStudentDTO(p.studentAllocations[0].student)
+        : undefined,
     }));
   }
 

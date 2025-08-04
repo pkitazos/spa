@@ -24,10 +24,10 @@ export function StudentPreferenceDataTable({
   const params = useInstanceParams();
   const router = useRouter();
 
-  const { mutateAsync: changePreferenceAsync } =
+  const { mutateAsync: api_changePreferenceAsync } =
     api.user.student.preference.change.useMutation();
 
-  const { mutateAsync: changeSelectedPreferencesAsync } =
+  const { mutateAsync: api_changeSelectedPreferencesAsync } =
     api.user.student.preference.changeSelected.useMutation();
 
   async function changePreference(
@@ -35,7 +35,7 @@ export function StudentPreferenceDataTable({
     projectId: string,
   ) {
     void toast.promise(
-      changePreferenceAsync({
+      api_changePreferenceAsync({
         params,
         newPreferenceType,
         projectId,
@@ -54,7 +54,7 @@ export function StudentPreferenceDataTable({
     projectIds: string[],
   ) {
     void toast.promise(
-      changeSelectedPreferencesAsync({
+      api_changeSelectedPreferencesAsync({
         params,
         newPreferenceType,
         studentId,
@@ -73,11 +73,5 @@ export function StudentPreferenceDataTable({
     changeSelectedPreferences,
   });
 
-  return (
-    <DataTable
-      className="w-full"
-      columns={columns}
-      data={data}
-    />
-  );
+  return <DataTable className="w-full" columns={columns} data={data} />;
 }

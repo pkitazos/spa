@@ -116,7 +116,7 @@ export function useAllStudentsColumns({
           original: { student },
         },
       }) => (
-        <div className="grid w-20 place-items-center">
+        <div className="grid w-40 place-items-center">
           <Badge variant="accent" className="rounded-md">
             {student.flag.displayName}
           </Badge>

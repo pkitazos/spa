@@ -38,8 +38,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
 
   const { mask: user } = await auth();
 
-  const preAllocatedTitle = await api.user.student.isPreAllocated({ params });
-  if (preAllocatedTitle !== null) {
+  const isPreAllocated = await api.user.student.isPreAllocated({ params });
+  if (isPreAllocated) {
     return (
       <Unauthorised message="You have a self-defined project and may not submit any other preferences" />
     );
