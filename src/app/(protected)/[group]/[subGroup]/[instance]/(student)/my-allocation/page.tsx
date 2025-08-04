@@ -40,6 +40,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
     studentId: user.id,
   });
 
+  // TODO: this should tell the student if their project was allocated by a different method (e.g. self-defined, random allocation)
+
   return (
     <PanelWrapper className="gap-10">
       <Heading>{PAGES.myAllocation.title}</Heading>
@@ -49,7 +51,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
           <p>You have not been allocated a project</p>
         </div>
       ) : (
-        <div className="mt-16 flex flex-col gap-8">
+        <div className="flex flex-col gap-8">
           <Card className="mb-8">
             <CardContent className="pt-6">
               <SectionHeading className="flex items-center text-2xl no-underline">

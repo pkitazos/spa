@@ -1,14 +1,19 @@
 import { format } from "date-fns";
+import { Clock10Icon, ListTodoIcon, ListCheckIcon } from "lucide-react";
+
+import { PAGES } from "@/config/pages";
 
 import { Stage } from "@/db/types";
 
-import { SubHeading } from "@/components/heading";
+import { SectionHeading } from "@/components/heading";
 import { Calendar } from "@/components/ui/calendar";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
 import { stageGte } from "@/lib/utils/permissions/stage-check";
 import { type InstanceParams } from "@/lib/validations/params";
+
+import { InstanceLink } from "../instance-link";
 
 export async function SupervisorInstanceHome({
   params,
@@ -30,14 +35,20 @@ export async function SupervisorInstanceHome({
       <div className="mt-9 flex justify-between">
         <div className="flex flex-col justify-start">
           <div className="flex flex-col gap-4">
-            <SubHeading>Project Upload Deadline</SubHeading>
+            <SectionHeading className="mb-2 flex items-center">
+              <Clock10Icon className="mr-2 h-6 w-6 text-indigo-500" />
+              <span>Project Upload Deadline</span>
+            </SectionHeading>
             <p className="flex gap-2 text-xl">
               {format(deadline, "dd MMM yyyy - HH:mm")}
               <span className="text-muted-foreground">{timeZoneOffset}</span>
             </p>
           </div>
           <div className="mt-16 flex flex-col gap-4">
-            <SubHeading>Task List</SubHeading>
+            <SectionHeading className="mb-2 flex items-center">
+              <ListTodoIcon className="mr-2 h-6 w-6 text-indigo-500" />
+              <span>Task List</span>
+            </SectionHeading>
             <ul className="ml-6 list-disc [&>li]:mt-2">
               {submissionTarget > 0 && (
                 <li>
@@ -73,7 +84,10 @@ export async function SupervisorInstanceHome({
   ) {
     return (
       <div className="mt-9 flex flex-col gap-4">
-        <SubHeading>Task List</SubHeading>
+        <SectionHeading className="mb-2 flex items-center">
+          <ListTodoIcon className="mr-2 h-6 w-6 text-indigo-500" />
+          <span>Task List</span>
+        </SectionHeading>
         <p>Nothing to do at this stage</p>
       </div>
     );
@@ -82,10 +96,16 @@ export async function SupervisorInstanceHome({
   if (stage === Stage.ALLOCATION_PUBLICATION && allocationAccess) {
     return (
       <div className="mt-9 flex flex-col gap-4">
-        <SubHeading>Allocations Released</SubHeading>
+        <SectionHeading className="mb-2 flex items-center">
+          <ListCheckIcon className="mr-2 h-6 w-6 text-indigo-500" />
+          <span>Allocations Released</span>
+        </SectionHeading>
         <p className="text-lg">
-          Check the &ldquo;My Allocations&rdquo; page to view your allocated
-          projects
+          Check the{" "}
+          <InstanceLink href={PAGES.mySupervisions.href}>
+            {PAGES.mySupervisions.title}
+          </InstanceLink>{" "}
+          page to view your allocated projects
         </p>
       </div>
     );
@@ -94,10 +114,16 @@ export async function SupervisorInstanceHome({
   if (stageGte(stage, Stage.READER_BIDDING)) {
     return (
       <div className="mt-9 flex flex-col gap-4">
-        <SubHeading>Marking Allocations Released</SubHeading>
+        <SectionHeading className="mb-2 flex items-center">
+          <ListCheckIcon className="mr-2 h-6 w-6 text-indigo-500" />
+          <span>Marking Allocations Released</span>
+        </SectionHeading>
         <p className="text-lg">
-          Check the &ldquo;My Marking&rdquo; page to view the projects you have
-          to mark
+          Check the{" "}
+          <InstanceLink href={PAGES.myMarking.href}>
+            {PAGES.myMarking.title}
+          </InstanceLink>{" "}
+          page to view the projects you have to mark
         </p>
       </div>
     );

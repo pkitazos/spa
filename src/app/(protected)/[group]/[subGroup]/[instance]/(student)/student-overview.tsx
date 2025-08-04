@@ -1,11 +1,15 @@
 import { type ReactNode } from "react";
 
 import { format } from "date-fns";
+import { Clock10Icon, ListCheckIcon, ListTodoIcon } from "lucide-react";
 import Link from "next/link";
+
+import { PAGES } from "@/config/pages";
 
 import { Stage } from "@/db/types";
 
-import { Heading, SubHeading } from "@/components/heading";
+import { Heading, SectionHeading } from "@/components/heading";
+import { InstanceLink } from "@/components/instance-link";
 import { JoinInstance } from "@/components/join-instance";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { buttonVariants } from "@/components/ui/button";
@@ -46,7 +50,10 @@ export async function StudentOverview({ params }: { params: InstanceParams }) {
           <div className="mt-9 flex justify-between">
             <div className="flex flex-col justify-start">
               <div className="flex flex-col gap-4">
-                <SubHeading>Task List</SubHeading>
+                <SectionHeading className="mb-2 flex items-center">
+                  <ListTodoIcon className="mr-2 h-6 w-6 text-indigo-500" />
+                  <span>Task List</span>
+                </SectionHeading>
                 <p>
                   You are allocated to your self-defined project and do not need
                   to submit preferences.
@@ -81,14 +88,20 @@ export async function StudentOverview({ params }: { params: InstanceParams }) {
         <div className="mt-9 flex justify-between">
           <div className="flex flex-col justify-start">
             <div className="flex flex-col gap-4">
-              <SubHeading>Preference List Submission Deadline</SubHeading>
+              <SectionHeading className="mb-2 flex items-center">
+                <Clock10Icon className="mr-2 h-6 w-6 text-indigo-500" />
+                <span>Preference List Submission Deadline</span>
+              </SectionHeading>
               <p className="flex gap-2 text-xl">
                 {format(deadline, "dd MMM yyyy - HH:mm")}
                 <span className="text-muted-foreground">{timeZoneOffset}</span>
               </p>
             </div>
             <div className="mt-16 flex flex-col gap-4">
-              <SubHeading>Task List</SubHeading>
+              <SectionHeading className="mb-2 flex items-center">
+                <ListTodoIcon className="mr-2 h-6 w-6 text-indigo-500" />
+                <span>Task List</span>
+              </SectionHeading>
               <ul className="ml-6 list-disc [&>li]:mt-2">
                 <li>
                   Submit your preference list{" "}
@@ -120,7 +133,10 @@ export async function StudentOverview({ params }: { params: InstanceParams }) {
     return (
       <ThinLayout pageName={displayName} params={params}>
         <div className="mt-9 flex flex-col gap-4">
-          <SubHeading>Task List</SubHeading>
+          <SectionHeading className="mb-2 flex items-center">
+            <ListTodoIcon className="mr-2 h-6 w-6 text-indigo-500" />
+            <span>Task List</span>
+          </SectionHeading>
           <p>Nothing to do at this stage</p>
         </div>
       </ThinLayout>
@@ -131,10 +147,17 @@ export async function StudentOverview({ params }: { params: InstanceParams }) {
     return (
       <ThinLayout pageName={displayName} params={params}>
         <div className="mt-9 flex flex-col gap-4">
-          <SubHeading>Allocations Released</SubHeading>
+          <SectionHeading className="mb-2 flex items-center">
+            <ListCheckIcon className="mr-2 h-6 w-6 text-indigo-500" />
+            <span>Allocations Released</span>
+          </SectionHeading>
+
           <p className="text-lg">
-            Check the &ldquo;My Allocation&rdquo; page to view your allocated
-            projects
+            Check the{" "}
+            <InstanceLink href={PAGES.myAllocation.href}>
+              {PAGES.myAllocation.title}
+            </InstanceLink>{" "}
+            page to view your allocated project
           </p>
         </div>
       </ThinLayout>
