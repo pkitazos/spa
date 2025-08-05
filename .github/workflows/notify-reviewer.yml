@@ -13,15 +13,15 @@ jobs:
       - name: Send Discord Notification to Jake
         run: |
           curl -X POST -H "Content-Type: application/json" \
-          -d '{
-            "content": "Hey <@${{ secrets.DEV_DISCORD_ID__JAKE }}>! A review has been requested from you.",
-            "embeds": [{
-              "title": "New Review Request: ${{ github.event.pull_request.title }}",
-              "url": "${{ github.event.pull_request.html_url }}",
-              "description": "Repository: `${{ github.event.repository.full_name }}`\nRequested by: `${{ github.event.sender.login }}`",
-              "color": 15258703
+          -d "{
+            \"content\": \"Hey <@${{ secrets.DEV_DISCORD_ID__JAKE }}>! A review has been requested from you.\",
+            \"embeds\": [{
+              \"title\": \"New Review Request: ${{ github.event.pull_request.title }}\",
+              \"url\": \"${{ github.event.pull_request.html_url }}\",
+              \"description\": \"Repository: \`${{ github.event.repository.full_name }}\`\\nRequested by: \`${{ github.event.sender.login }}\`\",
+              \"color\": 15258703
             }]
-          }' \
+          }" \
           ${{ secrets.DISCORD_WEBHOOK_URL }}
 
   notify_me:
@@ -29,16 +29,16 @@ jobs:
     if: github.event.requested_reviewer.login == 'pkitazos'
     runs-on: ubuntu-latest
     steps:
-      - name: Send Discord Notification to Me
+      - name: Send Discord Notification to Petros
         run: |
           curl -X POST -H "Content-Type: application/json" \
-          -d '{
-            "content": "Hey <@${{ secrets.DEV_DISCORD_ID__PETROS }}>! You have a new review request.",
-            "embeds": [{
-              "title": "New Review Request: ${{ github.event.pull_request.title }}",
-              "url": "${{ github.event.pull_request.html_url }}",
-              "description": "Repository: `${{ github.event.repository.full_name }}`\nRequested by: `${{ github.event.sender.login }}`",
-              "color": 5763719
+          -d "{
+            \"content\": \"Hey <@${{ secrets.DEV_DISCORD_ID__PETROS }}>! A review has been requested from you.\",
+            \"embeds\": [{
+              \"title\": \"New Review Request: ${{ github.event.pull_request.title }}\",
+              \"url\": \"${{ github.event.pull_request.html_url }}\",
+              \"description\": \"Repository: \`${{ github.event.repository.full_name }}\`\\nRequested by: \`${{ github.event.sender.login }}\`\",
+              \"color\": 15258703
             }]
-          }' \
+          }" \
           ${{ secrets.DISCORD_WEBHOOK_URL }}
