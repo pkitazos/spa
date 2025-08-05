@@ -295,34 +295,34 @@ export class User extends DataObject {
     const [group, subGroup, instance, staticSegment, id, modifier] = segments;
     const res: { segment: string; access: boolean }[] = [];
 
+    const addSegment = (segment: string | undefined, access: boolean) => {
+      if (segment && typeof segment === "string") {
+        res.push({ segment, access });
+      }
+    };
+
     if (group === PAGES.me.href) {
-      res.push({ segment: group, access: true });
+      addSegment(group, true);
       if (subGroup) throw new Error("Unknown Segment");
       return res;
     }
 
     if (group === PAGES.superAdminPanel.href) {
       const isSuperAdmin = await this.isSuperAdmin();
-      res.push({ segment: group, access: isSuperAdmin });
+      addSegment(group, isSuperAdmin);
 
       if (subGroup === PAGES.newGroup.href) {
-        res.push({ segment: subGroup, access: isSuperAdmin });
+        addSegment(subGroup, isSuperAdmin);
       } else if (subGroup) throw new Error("Unknown Segment");
 
       return res;
     }
 
     if (group) {
-      res.push({
-        segment: group,
-        access: await this.isGroupAdminOrBetter({ group }),
-      });
+      addSegment(group, await this.isGroupAdminOrBetter({ group }));
 
       if (subGroup === PAGES.newSubGroup.href) {
-        res.push({
-          segment: subGroup,
-          access: await this.isGroupAdminOrBetter({ group }),
-        });
+        addSegment(subGroup, await this.isGroupAdminOrBetter({ group }));
 
         if (instance) throw new Error("Unknown Segment");
         return res;
@@ -330,16 +330,16 @@ export class User extends DataObject {
     }
 
     if (group && subGroup) {
-      res.push({
-        segment: subGroup,
-        access: await this.isSubGroupAdminOrBetter({ group, subGroup }),
-      });
+      addSegment(
+        subGroup,
+        await this.isSubGroupAdminOrBetter({ group, subGroup }),
+      );
 
       if (instance === PAGES.newInstance.href) {
-        res.push({
-          segment: instance,
-          access: await this.isSubGroupAdminOrBetter({ group, subGroup }),
-        });
+        addSegment(
+          instance,
+          await this.isSubGroupAdminOrBetter({ group, subGroup }),
+        );
 
         if (staticSegment) throw new Error("Unknown Segment");
         return res;
@@ -347,16 +347,13 @@ export class User extends DataObject {
     }
 
     if (group && subGroup && instance) {
-      res.push({
-        segment: instance,
-        access: await this.isMember({ group, subGroup, instance }),
-      });
+      addSegment(instance, await this.isMember({ group, subGroup, instance }));
     }
 
     if (staticSegment) {
       if (!UrlSegment.isStaticValid(staticSegment)) {
-        res.push({ segment: staticSegment, access: false });
-        res.push({ segment: id, access: false });
+        addSegment(staticSegment, false);
+        addSegment(id, false);
         return res;
       }
 
@@ -369,10 +366,10 @@ export class User extends DataObject {
 
       const staticSegmentAccess = userRoles.intersection(segmentRoles).size > 0;
 
-      res.push({ segment: staticSegment, access: staticSegmentAccess });
+      addSegment(staticSegment, staticSegmentAccess);
 
       if (id && UrlSegment.hasSubRoute(staticSegment)) {
-        res.push({ segment: id, access: staticSegmentAccess });
+        addSegment(id, staticSegmentAccess);
       } else if (id && !UrlSegment.hasSubRoute(staticSegment)) {
         throw new Error("Unknown Segment");
       }
@@ -383,7 +380,7 @@ export class User extends DataObject {
       };
 
       if (allowedModifiers[staticSegment] === modifier) {
-        res.push({ segment: modifier, access: staticSegmentAccess });
+        addSegment(modifier, staticSegmentAccess);
       } else if (modifier) {
         throw new Error("Unknown Segment");
       }
