@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { projectDtoSchema } from "@/dto";
+// move - colocate with data table columns
 
 export const allocationByStudentDtoSchema = z.object({
   student: z.object({
@@ -47,13 +47,4 @@ export const allocationBySupervisorDtoSchema = z.object({
 
 export type AllocationBySupervisorDto = z.infer<
   typeof allocationBySupervisorDtoSchema
->;
-
-export const studentProjectAllocationDtoSchema = z.object({
-  project: projectDtoSchema,
-  rank: z.number(),
-});
-
-export type StudentProjectAllocationDto = z.infer<
-  typeof studentProjectAllocationDtoSchema
 >;

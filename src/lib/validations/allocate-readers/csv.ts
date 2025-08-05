@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+/**
+ * @deprecated infer from schema
+ */
 export const allocateReadersCsvHeaders = [
   "student_guid",
   "reader_guid",
@@ -7,6 +10,7 @@ export const allocateReadersCsvHeaders = [
   "reader_email",
 ];
 
+// move - co-locate with form-section
 export const allocateReadersCsvRowSchema = z.object({
   student_guid: z.string({ error: "a valid GUID" }),
   reader_guid: z.string({ error: "a valid GUID" }),
