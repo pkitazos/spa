@@ -56,6 +56,7 @@ export function FormSection({
           <span>Manually create Supervisor</span>
         </SectionHeading>
         <div className="flex w-full items-center justify-start gap-5">
+          {/* // TODO: don't allow special characters */}
           <FormField
             control={form.control}
             name="fullName"

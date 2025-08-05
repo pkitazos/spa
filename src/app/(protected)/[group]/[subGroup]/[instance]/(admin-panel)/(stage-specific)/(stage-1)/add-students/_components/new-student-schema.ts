@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { INSTITUTION } from "@/config/institution";
+
 import { type FlagDTO } from "@/dto";
 
 // MOVE - maybe co-locate these with the CSV parsing logic, it's the only place they are used
@@ -9,8 +11,8 @@ export const baseNewStudentSchema = z.object({
     .string("Please enter a valid name")
     .min(1, "Please enter a valid name"),
   institutionId: z.coerce
-    .string<string>("Please enter a valid institution ID")
-    .min(1, "Please enter a valid institution ID"),
+    .string<string>(`Please enter a valid ${INSTITUTION.ID_NAME}`)
+    .min(1, `Please enter a valid ${INSTITUTION.ID_NAME}`),
   email: z
     .email("Please enter a valid email address")
     .min(1, "Please enter a valid email address"),

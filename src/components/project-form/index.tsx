@@ -396,7 +396,8 @@ export function ProjectForm({
           )}
 
           {/* Student Selection */}
-          {/* TODO Consider variant where field is omitted */}
+          {/* // TODO: Consider variant where field is omitted */}
+          {/* // TODO: should filter student list on the fly based on selected flags */}
           <FormField
             control={form.control}
             name="preAllocatedStudentId"

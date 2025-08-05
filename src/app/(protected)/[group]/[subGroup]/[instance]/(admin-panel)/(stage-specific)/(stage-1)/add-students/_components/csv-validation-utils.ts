@@ -1,3 +1,5 @@
+import { INSTITUTION } from "@/config/institution";
+
 import { type FlagDTO } from "@/dto";
 
 import { buildNewStudentSchema, type NewStudent } from "./new-student-schema";
@@ -83,7 +85,7 @@ export function filterDuplicatesWithinCSV(
     if (seen.has(row.institutionId)) {
       errors.push({
         field: "institutionId",
-        message: `Duplicate institution ID '${row.institutionId}' found in CSV`,
+        message: `Duplicate ${INSTITUTION.ID_NAME} '${row.institutionId}' found in CSV`,
       });
     }
 

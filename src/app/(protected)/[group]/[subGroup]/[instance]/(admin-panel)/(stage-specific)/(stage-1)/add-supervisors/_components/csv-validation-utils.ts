@@ -1,3 +1,5 @@
+import { INSTITUTION } from "@/config/institution";
+
 import {
   csvSupervisorSchema,
   type NewSupervisor,
@@ -80,7 +82,7 @@ export function filterDuplicatesWithinCSV(
     if (seen.has(row.institutionId)) {
       errors.push({
         field: "institutionId",
-        message: `Duplicate institution ID '${row.institutionId}' found in CSV`,
+        message: `Duplicate ${INSTITUTION.ID_NAME} '${row.institutionId}' found in CSV`,
       });
     }
 
