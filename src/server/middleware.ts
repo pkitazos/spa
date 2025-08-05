@@ -11,6 +11,8 @@ import {
   MatchingAlgorithm,
 } from "@/data-objects";
 
+import { HttpMatchingService } from "@/lib/services/matching";
+
 import { Role, type Stage } from "@/db/types";
 
 import {
@@ -100,7 +102,8 @@ const algorithmMiddleware = t.middleware(
     const { params, algId } = z
       .object({ params: instanceParamsSchema, algId: z.string() })
       .parse(input);
-    const alg = new MatchingAlgorithm(db, { algConfigId: algId, ...params });
+    const matchingService = new HttpMatchingService();
+    const alg = new MatchingAlgorithm(db, { algConfigId: algId, ...params }, matchingService);
     return next({ ctx: { alg } });
   },
 );

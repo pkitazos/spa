@@ -4,8 +4,11 @@ import { AlgorithmRunResult } from "@/dto/result/algorithm-run-result";
 import { Transformers as T } from "@/db/transformers";
 import { type DB } from "@/db/types";
 
-import { executeMatchingAlgorithm } from "@/server/routers/institution/instance/algorithm/_utils/execute-matching-algorithm";
-
+import {
+  type IMatchingService,
+  MatchingServiceError,
+  type MatchingServiceResponse,
+} from "@/lib/services/matching";
 import { expand, toAlgID } from "@/lib/utils/general/instance-params";
 import {
   type MatchingResultDTO,
@@ -23,7 +26,11 @@ export class MatchingAlgorithm extends DataObject {
   private _instance: InstanceDTO | undefined;
   private _results: MatchingResultDTO | undefined;
 
-  constructor(db: DB, params: AlgorithmInstanceParams) {
+  constructor(
+    db: DB,
+    params: AlgorithmInstanceParams,
+    private matchingService: IMatchingService,
+  ) {
     super(db);
     this.params = params;
   }
@@ -43,16 +50,41 @@ export class MatchingAlgorithm extends DataObject {
   }
 
   public async run(matchingData: MatchingDataDTO): Promise<AlgorithmRunResult> {
-    const alg = await this.get();
-    const res = await executeMatchingAlgorithm(alg, matchingData);
+    const algorithm = await this.get();
 
-    if (res.status !== AlgorithmRunResult.OK) return res.status;
+    try {
+      const serviceResponse = await this.matchingService.executeAlgorithm(
+        algorithm,
+        matchingData,
+      );
 
-    const { data } = res;
+      if (serviceResponse.status !== AlgorithmRunResult.OK) {
+        return serviceResponse.status;
+      }
 
-    // TODO: fix discriminated union
-    if (!data) throw new Error("No data returned from algorithm");
+      const { data } = serviceResponse;
+      if (!data) {
+        throw new Error("No data returned from algorithm");
+      }
 
+      await this.processAndPersistResults(data);
+
+      return AlgorithmRunResult.OK;
+    } catch (error) {
+      if (error instanceof MatchingServiceError) {
+        console.error(
+          `[MatchingAlgorithm] Service error: ${error.message}`,
+          error,
+        );
+        return AlgorithmRunResult.ERR;
+      }
+      throw error;
+    }
+  }
+
+  private async processAndPersistResults(
+    data: NonNullable<MatchingServiceResponse["data"]>,
+  ) {
     const matchingResult = {
       profile: data.profile,
       degree: data.degree,
@@ -93,8 +125,6 @@ export class MatchingAlgorithm extends DataObject {
     ]);
 
     this._results = { ...matchingResult, matching: matchingPairs };
-
-    return AlgorithmRunResult.OK;
   }
 
   /**
