@@ -1,45 +1,38 @@
+import { type z } from "zod";
+
 import { type AlgorithmDTO } from "@/dto";
 import { type AlgorithmRunResult } from "@/dto/result/algorithm-run-result";
 
 import {
   type MatchingDataDTO,
-  type MatchingDataWithArgs,
+  type matchingServiceResponseSchema,
 } from "@/lib/validations/matching";
+
+type MatchingServiceResponseData = z.infer<
+  typeof matchingServiceResponseSchema
+>["data"];
 
 export interface MatchingServiceResponse {
   status: AlgorithmRunResult;
-  data?: {
-    profile: number[];
-    degree: number;
-    size: number;
-    weight: number;
-    cost: number;
-    costSq: number;
-    maxLecAbsDiff: number;
-    sumLecAbsDiff: number;
-    ranks: number[];
-    matching: Array<{
-      student_id: string;
-      project_id: string;
-      project_capacities: { lower_bound: number; upper_bound: number };
-      preference_rank: number;
-      supervisor_id: string;
-      supervisor_capacities: {
-        lower_bound: number;
-        target: number;
-        upper_bound: number;
-      };
-    }>;
-  };
+  data?: MatchingServiceResponseData;
   error?: string;
 }
 
 export interface IMatchingService {
   executeAlgorithm(
     algorithm: AlgorithmDTO,
-    matchingData: MatchingDataDTO | MatchingDataWithArgs,
+    matchingData: MatchingDataDTO,
   ): Promise<MatchingServiceResponse>;
 }
+
+export const MatchingServiceErrorCode = {
+  CONNECTION_FAILED: "CONNECTION_FAILED",
+  INVALID_RESPONSE: "INVALID_RESPONSE",
+  ALGORITHM_FAILED: "ALGORITHM_FAILED",
+} as const;
+
+export type MatchingServiceErrorCode =
+  (typeof MatchingServiceErrorCode)[keyof typeof MatchingServiceErrorCode];
 
 export class MatchingServiceError extends Error {
   constructor(
@@ -51,12 +44,3 @@ export class MatchingServiceError extends Error {
     this.name = "MatchingServiceError";
   }
 }
-
-export const MatchingServiceErrorCode = {
-  CONNECTION_FAILED: "CONNECTION_FAILED",
-  INVALID_RESPONSE: "INVALID_RESPONSE",
-  ALGORITHM_FAILED: "ALGORITHM_FAILED",
-} as const;
-
-export type MatchingServiceErrorCode =
-  (typeof MatchingServiceErrorCode)[keyof typeof MatchingServiceErrorCode];
