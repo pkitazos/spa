@@ -20,7 +20,7 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD}
 
       DEV_ENV: "staging"
-      AMPS_MODE: "staging"
+      AMPS_MODE: "testing"
       VALIDATE_ENV_VARS: "true"
       AUTH_FROM_HEADERS: "ON"
 
