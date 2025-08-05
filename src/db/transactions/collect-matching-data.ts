@@ -9,6 +9,7 @@ import {
   adjustUpperBound,
 } from "@/lib/utils/algorithm/modifiers";
 import { expand } from "@/lib/utils/general/instance-params";
+import { type MatchingDataDTO } from "@/lib/validations/matching";
 
 import { Transformers as T } from "../transformers";
 
@@ -16,21 +17,7 @@ export async function collectMatchingData(
   db: DB,
   instanceData: InstanceDTO,
   algorithm: MatchingAlgorithm,
-): Promise<{
-  students: { id: string; preferences: string[] }[];
-  projects: {
-    id: string;
-    lowerBound: number;
-    upperBound: number;
-    supervisorId: string;
-  }[];
-  supervisors: {
-    id: string;
-    lowerBound: number;
-    target: number;
-    upperBound: number;
-  }[];
-}> {
+): Promise<MatchingDataDTO> {
   const { maxRank, targetModifier, upperBoundModifier } = await db.algorithm
     .findFirstOrThrow({ where: { id: algorithm.params.algConfigId } })
     .then((x) => T.toAlgorithmDTO(x));

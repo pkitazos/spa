@@ -108,7 +108,7 @@ export class MatchingAlgorithm extends DataObject {
 
     await this.db.$transaction([
       this.db.matchingPair.deleteMany({
-        where: { matchingResult: { algorithm: toAlgID(this.params) } },
+        where: { matchingResult: toAlgID(this.params) },
       }),
 
       this.db.matchingResult.upsert({
