@@ -80,7 +80,19 @@ export class AllocationSubGroup extends DataObject {
       });
 
       await tx.algorithm.createMany({
-        data: builtInAlgorithms.map((alg) => ({ ...expand(params), ...alg })),
+        data: builtInAlgorithms.map((alg) => ({
+          ...expand(params),
+          displayName: alg.displayName,
+          description: alg.description,
+          flag1: alg.flag1,
+          createdAt: alg.createdAt,
+          builtIn: alg.builtIn,
+          flag2: alg.flag2,
+          flag3: alg.flag3,
+          targetModifier: alg.targetModifier,
+          upperBoundModifier: alg.upperBoundModifier,
+          maxRank: alg.maxRank,
+        })),
       });
 
       // const units = await tx.unitOfAssessment.createManyAndReturn({
