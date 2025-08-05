@@ -1,14 +1,20 @@
 import { env } from "@/env";
 import axios from "axios";
 
-import { type AlgorithmDTO, builtInAlgorithms } from "@/dto";
+import {
+  GenerousAlgorithm,
+  GreedyAlgorithm,
+  GreedyGenAlgorithm,
+  MinCostAlgorithm,
+} from "@/config/algorithms";
+
+import { type AlgorithmDTO } from "@/dto";
 import { AlgorithmRunResult } from "@/dto/result/algorithm-run-result";
 
 import { type AlgorithmFlag } from "@/db/types";
 
 import {
   type MatchingDataDTO,
-  type MatchingDataWithArgs,
   matchingServiceResponseSchema,
 } from "@/lib/validations/matching";
 
@@ -20,18 +26,31 @@ import {
 } from "./types";
 
 export class HttpMatchingService implements IMatchingService {
+  private readonly builtInEndpoints: Record<string, string> = {
+    [GenerousAlgorithm.displayName]: GenerousAlgorithm.matchingServiceEndpoint,
+    [GreedyAlgorithm.displayName]: GreedyAlgorithm.matchingServiceEndpoint,
+    [MinCostAlgorithm.displayName]: MinCostAlgorithm.matchingServiceEndpoint,
+    [GreedyGenAlgorithm.displayName]:
+      GreedyGenAlgorithm.matchingServiceEndpoint,
+  };
+
   async executeAlgorithm(
     algorithm: AlgorithmDTO,
-    matchingData: MatchingDataDTO | MatchingDataWithArgs,
+    matchingData: MatchingDataDTO,
   ): Promise<MatchingServiceResponse> {
     try {
-      let endpoint = algorithm.id;
-      let requestData = matchingData;
+      let endpoint: string;
+      let requestData: MatchingDataDTO = matchingData;
 
-      if (
-        !algorithm.builtIn &&
-        !builtInAlgorithms.find((a) => a.displayName === algorithm.displayName)
-      ) {
+      if (algorithm.builtIn) {
+        if (!(algorithm.displayName in this.builtInEndpoints)) {
+          throw new MatchingServiceError(
+            MatchingServiceErrorCode.ALGORITHM_FAILED,
+            `Unknown built-in algorithm: ${algorithm.displayName}`,
+          );
+        }
+        endpoint = this.builtInEndpoints[algorithm.displayName]!;
+      } else {
         endpoint = "";
         requestData = { ...matchingData, args: this.generateArgs(algorithm) };
       }
