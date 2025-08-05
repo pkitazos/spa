@@ -78,7 +78,7 @@ export class HttpMatchingService implements IMatchingService {
       if (!data) {
         return {
           status: AlgorithmRunResult.EMPTY,
-          error: "Matching server did not return any data",
+          error: "Matching result is empty",
         };
       }
 

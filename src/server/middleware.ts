@@ -11,10 +11,9 @@ import {
   MatchingAlgorithm,
 } from "@/data-objects";
 
-import { HttpMatchingService } from "@/lib/services/matching";
-
 import { Role, type Stage } from "@/db/types";
 
+import { HttpMatchingService } from "@/lib/services/matching";
 import {
   groupParamsSchema,
   instanceParamsSchema,
@@ -23,12 +22,6 @@ import {
 } from "@/lib/validations/params";
 
 import { t } from "./trpc";
-
-// We should re-imagine how our middleware works
-
-// First, I'm re-writing the space middlewares, as so:
-// Note that each type of space gets its own DTO, which you can find in:
-//      `data-objects/spaces`
 
 const institutionMiddleware = t.middleware(async ({ ctx: { db }, next }) => {
   const institution = new Institution(db);
@@ -66,8 +59,6 @@ const instanceMiddleware = t.middleware(
   },
 );
 
-// * NEW!
-// Stage middleware
 /**
  * @requires a preceding `.input(z.object({params: instanceParamsSchema}))`
  * Adds a check to ensure the provided instance is in a set of allowed stages
@@ -97,22 +88,23 @@ const projectMiddleware = t.middleware(async ({ ctx: { db }, input, next }) => {
   return next({ ctx: { project } });
 });
 
+/**
+ * @requires a preceding `.input(z.object({ params: instanceParamsSchema, algId: z.string() }))`
+ */
 const algorithmMiddleware = t.middleware(
   async ({ ctx: { db }, input, next }) => {
     const { params, algId } = z
       .object({ params: instanceParamsSchema, algId: z.string() })
       .parse(input);
     const matchingService = new HttpMatchingService();
-    const alg = new MatchingAlgorithm(db, { algConfigId: algId, ...params }, matchingService);
+    const alg = new MatchingAlgorithm(
+      db,
+      { algConfigId: algId, ...params },
+      matchingService,
+    );
     return next({ ctx: { alg } });
   },
 );
-
-// Next, Lets consider the authenticated (permission protected) middlewares:
-// DTOs should be created for different kinds of users. These are in:
-//      `data-objects/users`
-
-// We can use this as follows:
 
 const authedMiddleware = t.middleware(({ ctx: { db, session }, next }) => {
   if (!session?.user) {
@@ -124,8 +116,6 @@ const authedMiddleware = t.middleware(({ ctx: { db, session }, next }) => {
   const user = new User(db, session.user.id);
   return next({ ctx: { user } });
 });
-
-// this already lets us write more powerful stuff like this:
 
 const SuperAdminMiddleware = authedMiddleware.unstable_pipe(
   async ({ ctx: { user }, next }) => {
@@ -139,8 +129,6 @@ const SuperAdminMiddleware = authedMiddleware.unstable_pipe(
     return next({ ctx: { user: await user.toSuperAdmin() } });
   },
 );
-
-// Note now it reveals the below requirement:
 
 /**
  * @requires a preceding `.input(z.object({ params: groupParamsSchema }))` or better
@@ -159,8 +147,6 @@ const GroupAdminMiddleware = authedMiddleware.unstable_pipe(
     return next({ ctx: { user: await user.toGroupAdmin(params) } });
   },
 );
-
-// A group-admin procedure will require you to specify which group you're working in - and thus a corresponding .input() call.
 
 /**
  * @requires a preceding `.input(z.object({ params: subGroupParamsSchema }))` or better
@@ -276,11 +262,6 @@ function mkRoleMiddleware(allowedRoles: Role[]) {
     },
   );
 }
-
-// Note that the logic of determining weather a user is a group admin is isolated to the data object
-// the business logic is not tied up with our tRPC - uncle bob would be proud.
-
-// now we can write the proper procedures:
 
 // Primitives (DO NOT EXPORT)
 const institutionProcedure = t.procedure.use(institutionMiddleware);

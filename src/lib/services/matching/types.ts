@@ -1,7 +1,6 @@
 import { type z } from "zod";
 
 import { type AlgorithmDTO } from "@/dto";
-import { type AlgorithmRunResult } from "@/dto/result/algorithm-run-result";
 
 import {
   type MatchingDataDTO,
@@ -12,11 +11,9 @@ type MatchingServiceResponseData = z.infer<
   typeof matchingServiceResponseSchema
 >["data"];
 
-export interface MatchingServiceResponse {
-  status: AlgorithmRunResult;
-  data?: MatchingServiceResponseData;
-  error?: string;
-}
+export type MatchingServiceResponse =
+  | { status: "OK"; data: MatchingServiceResponseData; error?: never }
+  | { status: "INFEASIBLE" | "EMPTY" | "ERR"; data?: never; error: string };
 
 export interface IMatchingService {
   executeAlgorithm(
