@@ -57,21 +57,21 @@ export function useAllProjectsColumns({
   projectPreferences,
   hasSelfDefinedProject,
   deleteProject,
-  deleteSelectedProjects,
+  deleteMultipleProjects,
   changePreference,
-  changeSelectedPreferences,
+  changeMultiplePreferences,
 }: {
   user: User;
   roles: Set<Role>;
   projectPreferences: Record<string, PreferenceType>;
   hasSelfDefinedProject: boolean;
   deleteProject: (id: string) => Promise<void>;
-  deleteSelectedProjects: (ids: string[]) => Promise<void>;
+  deleteMultipleProjects: (ids: string[]) => Promise<void>;
   changePreference: (
     newType: StudentPreferenceType,
     projectId: string,
   ) => Promise<void>;
-  changeSelectedPreferences: (
+  changeMultiplePreferences: (
     newType: StudentPreferenceType,
     projectIds: string[],
   ) => Promise<void>;
@@ -283,7 +283,7 @@ export function useAllProjectsColumns({
                 </DropdownMenuTrigger>
                 <YesNoActionContainer
                   action={async () =>
-                    void deleteSelectedProjects(selectedProjectIds)
+                    void deleteMultipleProjects(selectedProjectIds)
                   }
                   title={`Delete ${selectedProjectIds.length} Projects`}
                   description={`You are about to delete ${selectedProjectIds.length} projects from the ${spacesLabels.instance.short}. Do you wish to proceed?`}
@@ -313,7 +313,7 @@ export function useAllProjectsColumns({
                     >
                       <StudentPreferenceActionSubMenu
                         changePreference={async (t) =>
-                          void changeSelectedPreferences(t, selectedProjectIds)
+                          void changeMultiplePreferences(t, selectedProjectIds)
                         }
                       />
                     </AccessControl>

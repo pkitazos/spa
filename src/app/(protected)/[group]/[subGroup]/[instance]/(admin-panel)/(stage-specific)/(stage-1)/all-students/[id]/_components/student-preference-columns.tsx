@@ -41,13 +41,13 @@ export type PreferenceData = {
 
 export function useStudentPreferencesColumns({
   changePreference,
-  changeSelectedPreferences,
+  changeMultiplePreferences,
 }: {
   changePreference: (
     newType: StudentPreferenceType,
     id: string,
   ) => Promise<void>;
-  changeSelectedPreferences: (
+  changeMultiplePreferences: (
     newType: StudentPreferenceType,
     ids: string[],
   ) => Promise<void>;
@@ -176,7 +176,7 @@ export function useStudentPreferencesColumns({
       async function handleSelectedPreferenceChange(
         newPreferenceType: StudentPreferenceType,
       ) {
-        void changeSelectedPreferences(
+        void changeMultiplePreferences(
           newPreferenceType,
           selectedProjectIds,
         ).then(() => {

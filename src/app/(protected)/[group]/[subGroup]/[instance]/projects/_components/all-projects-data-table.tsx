@@ -48,20 +48,20 @@ export function AllProjectsDataTable({
   const { getPath } = usePathInInstance();
   const router = useRouter();
 
-  const { mutateAsync: api_deleteAsync } = api.project.delete.useMutation();
+  const { mutateAsync: api_delete } = api.project.delete.useMutation();
 
-  const { mutateAsync: api_deleteAllAsync } =
+  const { mutateAsync: api_deleteMultiple } =
     api.project.deleteSelected.useMutation();
 
-  const { mutateAsync: api_changePreferenceAsync } =
+  const { mutateAsync: api_changePreference } =
     api.user.student.preference.update.useMutation();
 
-  const { mutateAsync: api_changeSelectedPreferencesAsync } =
+  const { mutateAsync: api_changeMultiplePreferences } =
     api.user.student.preference.updateSelected.useMutation();
 
   async function handleDelete(projectId: string) {
     void toast.promise(
-      api_deleteAsync({ params: toPP3(params, projectId) }).then(() =>
+      api_delete({ params: toPP3(params, projectId) }).then(() =>
         router.refresh(),
       ),
       {
@@ -72,9 +72,9 @@ export function AllProjectsDataTable({
     );
   }
 
-  async function handleDeleteSelected(projectIds: string[]) {
+  async function handleDeleteMultiple(projectIds: string[]) {
     void toast.promise(
-      api_deleteAllAsync({ params, projectIds }).then(() => router.refresh()),
+      api_deleteMultiple({ params, projectIds }).then(() => router.refresh()),
       {
         loading: "Deleting selected projects...",
         error: "Something went wrong",
@@ -88,8 +88,8 @@ export function AllProjectsDataTable({
     projectId: string,
   ) {
     void toast.promise(
-      api_changePreferenceAsync({ params, preferenceType, projectId }).then(
-        () => router.refresh(),
+      api_changePreference({ params, preferenceType, projectId }).then(() =>
+        router.refresh(),
       ),
       {
         loading: "Updating project preference...",
@@ -114,12 +114,12 @@ export function AllProjectsDataTable({
     );
   }
 
-  async function handleChangeSelectedPreferences(
+  async function handleChangeMultiplePreferences(
     preferenceType: StudentPreferenceType,
     projectIds: string[],
   ) {
     void toast.promise(
-      api_changeSelectedPreferencesAsync({
+      api_changeMultiplePreferences({
         params,
         preferenceType,
         projectIds,
@@ -170,9 +170,9 @@ export function AllProjectsDataTable({
     projectPreferences,
     hasSelfDefinedProject,
     deleteProject: handleDelete,
-    deleteSelectedProjects: handleDeleteSelected,
+    deleteMultipleProjects: handleDeleteMultiple,
     changePreference: handleChangePreference,
-    changeSelectedPreferences: handleChangeSelectedPreferences,
+    changeMultiplePreferences: handleChangeMultiplePreferences,
   });
 
   return (
