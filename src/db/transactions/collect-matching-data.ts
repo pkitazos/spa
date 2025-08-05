@@ -1,5 +1,7 @@
 import { type InstanceDTO } from "@/dto";
 
+import { type MatchingAlgorithm } from "@/data-objects";
+
 import { type DB } from "@/db/types";
 
 import {
@@ -10,13 +12,27 @@ import { expand } from "@/lib/utils/general/instance-params";
 
 import { Transformers as T } from "../transformers";
 
-export async function collectMatchingData(db: DB, instanceData: InstanceDTO) {
-  if (!instanceData.selectedAlgConfigId) {
-    throw new Error("No algorithm selected");
-  }
-
+export async function collectMatchingData(
+  db: DB,
+  instanceData: InstanceDTO,
+  algorithm: MatchingAlgorithm,
+): Promise<{
+  students: { id: string; preferences: string[] }[];
+  projects: {
+    id: string;
+    lowerBound: number;
+    upperBound: number;
+    supervisorId: string;
+  }[];
+  supervisors: {
+    id: string;
+    lowerBound: number;
+    target: number;
+    upperBound: number;
+  }[];
+}> {
   const { maxRank, targetModifier, upperBoundModifier } = await db.algorithm
-    .findFirstOrThrow({ where: { id: instanceData.selectedAlgConfigId } })
+    .findFirstOrThrow({ where: { id: algorithm.params.algConfigId } })
     .then((x) => T.toAlgorithmDTO(x));
 
   const preAllocations = await db.project

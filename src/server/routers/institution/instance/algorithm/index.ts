@@ -32,8 +32,13 @@ export const algorithmRouter = createTRPCRouter({
   run: procedure.algorithm.subGroupAdmin
     .input(z.object({ algId: z.string() }))
     .output(z.object({ total: z.number(), matched: z.number() }))
-    .mutation(async ({ ctx: { alg, instance } }) => {
-      const matchingData = await instance.getMatchingData();
+    .mutation(async ({ ctx: { alg, instance }, input }) => {
+      const matchingData = await instance.getMatchingData(alg);
+
+      if (!matchingData) {
+        throw new Error("No matching data found");
+      }
+
       const res = await alg.run(matchingData);
 
       if (res !== AlgorithmRunResult.OK) {
@@ -41,12 +46,16 @@ export const algorithmRouter = createTRPCRouter({
         throw new Error("Algorithm failed to run");
       }
 
-      const matchingResults = await alg.getResults();
+      try {
+        const matchingResults = await alg.getResults();
 
-      return {
-        total: matchingData.students.length,
-        matched: matchingResults.matching.length,
-      };
+        return {
+          total: matchingData.students.length,
+          matched: matchingResults.matching.length,
+        };
+      } catch (_error) {
+        throw new Error("No matching results found");
+      }
     }),
 
   // BREAKING return type is now set

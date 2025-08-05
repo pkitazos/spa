@@ -35,6 +35,7 @@ import { type TabType } from "@/lib/validations/tabs";
 
 import { DataObject } from "../data-object";
 import { MatchingAlgorithm } from "../matching-algorithm";
+import { HttpMatchingService } from "@/lib/services/matching";
 import {
   StudentProjectAllocationData,
   type StudentProjectAllocationDTO,
@@ -167,9 +168,9 @@ export class AllocationInstance extends DataObject {
       .then((x) => T.toAlgorithmDTO(x));
   }
 
-  public async getMatchingData() {
+  public async getMatchingData(algorithm: MatchingAlgorithm) {
     const instanceData = await this.get();
-    return await collectMatchingData(this.db, instanceData);
+    return await collectMatchingData(this.db, instanceData, algorithm);
   }
 
   public async getAllAlgorithms(): Promise<AlgorithmDTO[]> {
@@ -182,7 +183,8 @@ export class AllocationInstance extends DataObject {
   }
 
   public getAlgorithm(algConfigId: string): MatchingAlgorithm {
-    return new MatchingAlgorithm(this.db, { algConfigId, ...this.params });
+    const matchingService = new HttpMatchingService();
+    return new MatchingAlgorithm(this.db, { algConfigId, ...this.params }, matchingService);
   }
 
   // TODO review the nullish behaviour here
@@ -190,7 +192,8 @@ export class AllocationInstance extends DataObject {
     const { selectedAlgConfigId: algConfigId } = await this.get();
 
     if (!algConfigId) return undefined;
-    return new MatchingAlgorithm(this.db, { algConfigId, ...this.params });
+    const matchingService = new HttpMatchingService();
+    return new MatchingAlgorithm(this.db, { algConfigId, ...this.params }, matchingService);
   }
 
   // ---------------------------------------------------------------------------
