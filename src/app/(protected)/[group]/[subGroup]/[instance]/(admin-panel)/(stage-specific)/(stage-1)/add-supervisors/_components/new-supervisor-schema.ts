@@ -1,13 +1,15 @@
 import { z } from "zod";
 
+import { INSTITUTION } from "@/config/institution";
+
 export const newSupervisorSchema = z
   .object({
     fullName: z
       .string("Please enter a valid name")
       .min(1, "Please enter a valid name"),
     institutionId: z
-      .string("Please enter a valid institution ID")
-      .min(1, "Please enter a valid institution ID"),
+      .string(`Please enter a valid ${INSTITUTION.ID_NAME}`)
+      .min(1, `Please enter a valid ${INSTITUTION.ID_NAME}`),
     email: z
       .email("Please enter a valid email address")
       .min(1, "Please enter a valid email address"),
