@@ -67,7 +67,7 @@ export function ProjectForm({
   children,
   isSubmitting = false,
 }: ProjectFormProps) {
-  const { takenTitles, flags, tags, studentIds, supervisorIds } =
+  const { takenTitles, flags, tags, students, supervisors } =
     formInitialisationData;
 
   const projectFormInternalStateSchema =
@@ -123,8 +123,8 @@ export function ProjectForm({
     onSubmit(submissionData);
   };
 
-  const availableStudents = studentIds.map((id) => ({ id, title: id }));
-  const availableSupervisors = supervisorIds.map((id) => ({ id, title: id }));
+  const availableStudents = students;
+  const availableSupervisors = supervisors;
 
   const isAdmin = userRole === Role.ADMIN;
 
@@ -150,16 +150,31 @@ export function ProjectForm({
                         role="combobox"
                         disabled={isSubmitting}
                         className={cn(
-                          "w-[300px] justify-between",
+                          "w-[400px] justify-between",
                           !field.value && "text-muted-foreground",
                         )}
                       >
-                        {field.value ?? "Select supervisor..."}
+                        {field.value ? (
+                          <div className="flex flex-col items-start text-left">
+                            <span className="text-sm font-medium">
+                              {availableSupervisors.find(
+                                (s) => s.id === field.value,
+                              )?.name ?? field.value}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {availableSupervisors.find(
+                                (s) => s.id === field.value,
+                              )?.email ?? field.value}
+                            </span>
+                          </div>
+                        ) : (
+                          "Select supervisor..."
+                        )}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[300px] p-0">
+                  <PopoverContent className="w-[400px] p-0">
                     <Command>
                       <CommandInput placeholder="Search supervisors..." />
                       <CommandEmpty>No supervisor found.</CommandEmpty>
@@ -167,20 +182,30 @@ export function ProjectForm({
                         {availableSupervisors.map((supervisor) => (
                           <CommandItem
                             key={supervisor.id}
-                            value={supervisor.id}
+                            value={`${supervisor.id} ${supervisor.name} ${supervisor.email}`}
                             onSelect={() => {
                               form.setValue("supervisorId", supervisor.id);
                             }}
                           >
                             <Check
                               className={cn(
-                                "mr-2 h-4 w-4",
+                                "mr-2 h-4 w-4 shrink-0",
                                 supervisor.id === field.value
                                   ? "opacity-100"
                                   : "opacity-0",
                               )}
                             />
-                            {supervisor.title}
+                            <div className="flex flex-col items-start flex-1 min-w-0">
+                              <span className="text-sm font-medium truncate w-full">
+                                {supervisor.name}
+                              </span>
+                              <span className="text-xs text-muted-foreground truncate w-full">
+                                {supervisor.email}
+                              </span>
+                              <span className="text-xs text-muted-foreground/70">
+                                ID: {supervisor.id}
+                              </span>
+                            </div>
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -397,7 +422,6 @@ export function ProjectForm({
 
           {/* Student Selection */}
           {/* // TODO: Consider variant where field is omitted */}
-          {/* // TODO: should filter student list on the fly based on selected flags */}
           <FormField
             control={form.control}
             name="preAllocatedStudentId"
@@ -418,41 +442,74 @@ export function ProjectForm({
                         variant="outline"
                         role="combobox"
                         className={cn(
-                          "w-[200px] justify-between overflow-hidden",
+                          "w-[400px] justify-between overflow-hidden",
                           !field.value && "text-slate-400",
                         )}
                       >
-                        {field.value ?? "Enter Student GUID"}
+                        {field.value ? (
+                          <div className="flex flex-col items-start text-left">
+                            <span className="text-sm font-medium">
+                              {availableStudents.find(
+                                (s) => s.id === field.value,
+                              )?.name ?? field.value}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {availableStudents.find(
+                                (s) => s.id === field.value,
+                              )?.email ?? field.value}
+                            </span>
+                          </div>
+                        ) : (
+                          "Select student..."
+                        )}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </FormControl>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[200px] p-0">
+                  <PopoverContent className="w-[400px] p-0">
                     <Command>
                       <CommandGroup className="max-h-60 overflow-y-auto">
-                        {availableStudents.map((student) => (
-                          <CommandItem
-                            className="overflow-hidden"
-                            value={student.id}
-                            key={student.id}
-                            onSelect={() => {
-                              form.setValue(
-                                "preAllocatedStudentId",
-                                student.id,
-                              );
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                student.id === field.value
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                            {student.id}
-                          </CommandItem>
-                        ))}
+                        {availableStudents
+                          .filter((s) => {
+                            const studentFlagId = s.flag.id;
+                            const projectFlagIds = form
+                              .getValues("flags")
+                              .map((f) => f.id);
+                            return projectFlagIds.includes(studentFlagId);
+                          })
+                          .map((student) => (
+                            <CommandItem
+                              className="overflow-hidden"
+                              value={`${student.id} ${student.name} ${student.email}`}
+                              key={student.id}
+                              onSelect={() => {
+                                form.setValue(
+                                  "preAllocatedStudentId",
+                                  student.id,
+                                );
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4 shrink-0",
+                                  student.id === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0",
+                                )}
+                              />
+                              <div className="flex flex-col items-start flex-1 min-w-0">
+                                <span className="text-sm font-medium truncate w-full">
+                                  {student.name}
+                                </span>
+                                <span className="text-xs text-muted-foreground truncate w-full">
+                                  {student.email}
+                                </span>
+                                <span className="text-xs text-muted-foreground/70">
+                                  ID: {student.id}
+                                </span>
+                              </div>
+                            </CommandItem>
+                          ))}
                       </CommandGroup>
                       <CommandInput
                         placeholder="Search student..."

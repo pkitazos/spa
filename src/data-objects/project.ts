@@ -1,4 +1,4 @@
-import { type ProjectDTO, type FlagDTO } from "@/dto";
+import { type ProjectDTO, type FlagDTO, type StudentDTO } from "@/dto";
 
 import { Transformers as T } from "@/db/transformers";
 import { type DB } from "@/db/types";
@@ -79,6 +79,39 @@ export class Project extends DataObject {
       })),
       skipDuplicates: true,
     });
+  }
+
+  public async hasPreAllocatedStudent(): Promise<boolean> {
+    const project = await this.get();
+    return !!project.preAllocatedStudentId;
+  }
+
+  public async getPreAllocatedStudent(): Promise<StudentDTO> {
+    const { preAllocatedStudentId } = await this.get();
+    if (!preAllocatedStudentId) {
+      throw new Error("This project has no pre-allocated student");
+    }
+
+    const project = await this.db.project.findFirstOrThrow({
+      where: {
+        id: this.params.projectId,
+        preAllocatedStudent: { isNot: null },
+      },
+      include: {
+        preAllocatedStudent: {
+          include: {
+            userInInstance: { include: { user: true } },
+            studentFlag: true,
+          },
+        },
+      },
+    });
+
+    if (!project.preAllocatedStudent) {
+      throw new Error("This project has no pre-allocated student");
+    }
+
+    return T.toStudentDTO(project.preAllocatedStudent);
   }
 
   public async clearPreAllocation(): Promise<void> {

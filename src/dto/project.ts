@@ -3,6 +3,7 @@ import { z } from "zod";
 import { AllocationMethod } from "@/db/types";
 
 import { flagDtoSchema, tagDtoSchema } from "./flag-tag";
+import { studentDtoSchema, supervisorDtoSchema } from "./user";
 
 export const projectDtoSchema = z.object({
   id: z.string(),
@@ -119,8 +120,8 @@ const initialisationSchema = z.object({
     }),
   ),
   tags: z.array(z.object({ id: z.string(), title: z.string() })),
-  studentIds: z.array(z.string()),
-  supervisorIds: z.array(z.string()),
+  students: z.array(studentDtoSchema),
+  supervisors: z.array(supervisorDtoSchema),
 
   takenTitles: z.set(z.string()),
 
