@@ -32,7 +32,7 @@ export const algorithmRouter = createTRPCRouter({
   run: procedure.algorithm.subGroupAdmin
     .input(z.object({ algId: z.string() }))
     .output(z.object({ total: z.number(), matched: z.number() }))
-    .mutation(async ({ ctx: { alg, instance }, input }) => {
+    .mutation(async ({ ctx: { alg, instance } }) => {
       const matchingData = await instance.getMatchingData(alg);
 
       if (!matchingData) {

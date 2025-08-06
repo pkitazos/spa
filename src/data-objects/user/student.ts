@@ -200,7 +200,13 @@ export class Student extends User {
             ...expand(this.instance.params),
           },
         },
-        data: { studentFlag: { connect: { id: flagId } } },
+        data: {
+          studentFlag: {
+            connect: {
+              flagId: { ...expand(this.instance.params), id: flagId },
+            },
+          },
+        },
         include: {
           studentFlag: true,
           userInInstance: { include: { user: true } },
