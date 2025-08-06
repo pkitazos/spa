@@ -17,7 +17,7 @@ model UnitOfAssessment {
   allocationSubGroupId        String                       @map("allocation_sub_group_id")
   allocationInstanceId        String                       @map("allocation_instance_id")
   // ---
-  flag                        Flag                         @relation(fields: [flagId], references: [id], onDelete: Cascade, map: "unit_flag")
+  flag                        Flag                         @relation(fields: [flagId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [id, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, map: "unit_flag")
   allocationInstance          AllocationInstance           @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "unit_instance")
   assessmentCriteria          AssessmentCriterion[]
   markerSubmissions           MarkingSubmission[]

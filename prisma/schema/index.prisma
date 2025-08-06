@@ -79,6 +79,7 @@ model AllocationInstance {
   finalGrades                         FinalGrade[]
   matchingPairs                       MatchingPair[]
   unitsOfAssessment                   UnitOfAssessment[]
+  FlagOnProject                       FlagOnProject[]
 
   @@id([allocationGroupId, allocationSubGroupId, id], name: "instanceId", map: "instance_id")
   @@unique([displayName, allocationGroupId, allocationSubGroupId])
@@ -86,7 +87,7 @@ model AllocationInstance {
 }
 
 model Flag {
-  id                   String             @id
+  id                   String
   displayName          String             @map("display_name")
   description          String
   // ---
@@ -99,6 +100,7 @@ model Flag {
   unitsOfAssessment    UnitOfAssessment[]
   students             StudentDetails[]
 
+  @@id([id, allocationGroupId, allocationSubGroupId, allocationInstanceId], name: "flagId", map: "flag_id")
   @@unique([displayName, allocationGroupId, allocationSubGroupId, allocationInstanceId])
   @@map("flag")
 }

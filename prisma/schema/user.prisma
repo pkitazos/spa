@@ -22,7 +22,7 @@ model StudentDetails {
   // ---
   userInInstance           UserInInstance               @relation("student_details", fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, map: "student_user")
   flagId                   String
-  studentFlag              Flag                         @relation(fields: [flagId], references: [id], onDelete: Cascade, map: "student_flag")
+  studentFlag              Flag                         @relation(fields: [flagId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [id, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, map: "student_flag")
   draftPreferences         StudentDraftPreference[]
   submittedPreferences     StudentSubmittedPreference[]
   matchingPairs            MatchingPair[]

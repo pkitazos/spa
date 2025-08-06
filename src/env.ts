@@ -13,6 +13,7 @@ export const env = createEnv({
     /** URL for the frontend (this site) */
     FRONTEND_SERVER_URL: z.string(),
 
+    // pin - this doesn't seem to be used anywhere
     DEV_ENV: z.string().optional(),
 
     /** Fallback user ID for when AUTH_FROM_HEADERSis off (usually used for local testing) */
@@ -43,6 +44,12 @@ export const env = createEnv({
     AUTH_WHITELIST_ENABLED: switchSchema.default("OFF"),
     /** comma-separated list of whitelisted user emails */
     AUTH_WHITELIST_EMAILS: z
+      .string()
+      .default("")
+      .transform((x) => x.split(",")),
+
+    /** Comma-separated list of test user emails */
+    TEST_USER_EMAILS: z
       .string()
       .default("")
       .transform((x) => x.split(",")),
