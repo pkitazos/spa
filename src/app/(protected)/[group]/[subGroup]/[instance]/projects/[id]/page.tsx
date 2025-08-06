@@ -137,15 +137,6 @@ export default async function Project({ params }: { params: PageParams }) {
               <MarkdownRenderer source={project.description} />
             </div>
           </section>
-          <section
-            className={cn(
-              "flex flex-col",
-              project.specialTechnicalRequirements === "" && "hidden",
-            )}
-          >
-            <SubHeading>Special Technical Requirements</SubHeading>
-            <p className="mt-6">{project.specialTechnicalRequirements}</p>
-          </section>
         </div>
         <div className="w-1/4">
           <ProjectDetailsCard
@@ -173,22 +164,6 @@ export default async function Project({ params }: { params: PageParams }) {
             />
           </section>
         )}
-        {/* // TODO: fix type errors */}
-        {/* <section className="mb-16 flex flex-col">
-          <SectionHeading>Special Circumstances</SectionHeading>
-          <SpecialCircumstancesPage
-            formInternalData={{
-              specialCircumstances:
-                allocatedStudent?.specialCircumstances ?? "",
-            }}
-            studentId={allocatedStudent!.id}
-            project={{
-              id: projectId,
-              specialCircumstances:
-                allocatedStudent?.specialCircumstances ?? "",
-            }}
-          />
-        </section> */}
         <Separator />
       </AccessControl>
       <AccessControl

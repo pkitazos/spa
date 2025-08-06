@@ -7,7 +7,6 @@ export const allocationCsvDataSchema = z.object({
     id: z.string(),
     title: z.string(),
     description: z.string(),
-    specialTechnicalRequirements: z.string(),
   }),
   student: z.object({
     id: z.string(),

@@ -198,8 +198,6 @@ export class Transformers {
       id: data.id,
       title: data.title,
       description: data.description,
-      specialTechnicalRequirements:
-        data.specialTechnicalRequirements ?? undefined,
       preAllocatedStudentId: data.preAllocatedStudentId ?? undefined,
       latestEditDateTime: data.latestEditDateTime,
       capacityLowerBound: data.capacityLowerBound,

@@ -144,7 +144,6 @@ export class StudentProjectAllocationData extends DataObject {
           title: p.title,
           description: p.description,
           supervisor: supervisor,
-          specialTechnicalRequirements: p.specialTechnicalRequirements ?? "",
         },
         student: {
           id: student.id,
