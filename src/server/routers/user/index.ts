@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { testUserEmails } from "@/config/testing-users";
-
 import {
   adminPanelPathSchema,
   instanceDisplayDataSchema,
@@ -19,6 +17,7 @@ import { createTRPCRouter } from "@/server/trpc";
 import { auth } from "@/lib/auth";
 import { relativeComplement } from "@/lib/utils/general/set-difference";
 import { nubsById } from "@/lib/utils/list-unique";
+import { getTestUsers } from "@/lib/utils/test-users";
 
 import { markerRouter } from "./marker";
 import { studentRouter } from "./student";
@@ -150,8 +149,14 @@ export const userRouter = createTRPCRouter({
   getTestUsers: procedure.user
     .output(z.array(userDtoSchema))
     .query(async ({ ctx: { db } }) => {
+      const testUsers = getTestUsers();
+
+      if (testUsers.length === 0) {
+        return [];
+      }
+
       const users = await db.user.findMany({
-        where: { email: { in: testUserEmails.map((x) => x.email) } },
+        where: { email: { in: testUsers.map((u) => u.email) } },
       });
 
       const { real: realUser, mask: maskUser } = await auth();
@@ -161,13 +166,11 @@ export const userRouter = createTRPCRouter({
 
       return users.filter(nubsById).sort((a, b) => {
         const aOrd =
-          testUserEmails.find((x) => x.email === a.email)?.ord ??
+          testUsers.find((x) => x.email === a.email)?.ord ??
           Number.MAX_SAFE_INTEGER;
-
         const bOrd =
-          testUserEmails.find((x) => x.email === b.email)?.ord ??
+          testUsers.find((x) => x.email === b.email)?.ord ??
           Number.MAX_SAFE_INTEGER;
-
         return aOrd - bOrd;
       });
     }),

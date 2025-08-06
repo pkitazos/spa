@@ -17,7 +17,6 @@ model Project {
   id                            String                       @id @default(uuid())
   title                         String
   description                   String
-  specialTechnicalRequirements  String?                      @map("special_technical_requirements")
   extraInformation              String?                      @map("extra_information")
   latestEditDateTime            DateTime                     @default(now()) @map("latest_edit_date_time")
   capacityLowerBound            Int                          @map("capacity_lower_bound")
@@ -150,10 +149,16 @@ model ReaderProjectAllocation {
 }
 
 model FlagOnProject {
-  flag      Flag    @relation(fields: [flagId], references: [id], onDelete: Cascade, map: "flag_project_flag")
+  flag      Flag    @relation(fields: [flagId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [id, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, map: "flag_project_flag")
   flagId    String  @map("flag_id")
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade, map: "flag_project_project")
   projectId String  @map("project_id")
+
+  allocationGroupId    String             @map("allocation_group_id")
+  allocationSubGroupId String             @map("allocation_sub_group_id")
+  allocationInstanceId String             @map("allocation_instance_id")
+  // ---
+  allocationInstance   AllocationInstance @relation(map: "allocation_instance", fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
 
   @@id([flagId, projectId], name: "flagOnProjectId", map: "flag_on_project_id")
   @@map("flag_on_project")
