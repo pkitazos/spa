@@ -42,7 +42,6 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 
 import { cn } from "@/lib/utils";
 
@@ -79,7 +78,6 @@ export function ProjectForm({
     defaultValues: {
       title: "",
       description: "",
-      specialTechnicalRequirements: "",
       flags: [],
       tags: [],
       capacityUpperBound: 1,
@@ -107,7 +105,6 @@ export function ProjectForm({
     const submissionData: ProjectFormSubmissionDTO = {
       title: internalData.title,
       description: internalData.description,
-      specialTechnicalRequirements: internalData.specialTechnicalRequirements,
       flags: internalData.flags,
       tags: internalData.tags,
       capacityUpperBound: internalData.capacityUpperBound,
@@ -238,29 +235,6 @@ export function ProjectForm({
               </FormControl>
               <FormDescription>
                 Please add a description for this project
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="specialTechnicalRequirements"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-2xl">
-                Special Technical Requirements
-              </FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Type the project technical requirements here."
-                  disabled={isSubmitting}
-                  {...field}
-                />
-              </FormControl>
-              <FormDescription>
-                Please add any special technical requirements for this project
               </FormDescription>
               <FormMessage />
             </FormItem>

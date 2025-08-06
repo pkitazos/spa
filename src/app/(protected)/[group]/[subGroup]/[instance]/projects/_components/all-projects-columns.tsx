@@ -264,7 +264,6 @@ export function useAllProjectsColumns({
           .rows.map((e) => [
             e.original.project.title,
             e.original.project.description,
-            e.original.project.specialTechnicalRequirements,
             e.original.supervisor.name,
             e.original.supervisor.email,
             e.original.project.flags.map((f) => f.displayName).join("; "),
@@ -298,7 +297,6 @@ export function useAllProjectsColumns({
                         header={[
                           "Title",
                           "Description",
-                          "Special Technical Requirements",
                           "Supervisor Name",
                           "Supervisor Email",
                           "Flags",

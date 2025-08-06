@@ -8,7 +8,6 @@ export const projectDtoSchema = z.object({
   id: z.string(),
   title: z.string(),
   description: z.string(),
-  specialTechnicalRequirements: z.string().optional(),
   preAllocatedStudentId: z.string().optional(),
   latestEditDateTime: z.date(),
   capacityLowerBound: z.number(),
@@ -48,7 +47,6 @@ const formInternalStateSchema = z
   .object({
     title: z.string().min(4, "Please enter a longer title"),
     description: z.string().min(10, "Please enter a longer description"),
-    specialTechnicalRequirements: z.string().optional(),
     flags: z
       .array(
         z.object({
@@ -82,7 +80,6 @@ type ProjectFormInternalStateDTO = z.infer<typeof formInternalStateSchema>;
 const submissionSchema = z.object({
   title: z.string(),
   description: z.string(),
-  specialTechnicalRequirements: z.string().optional(),
 
   flags: z.array(flagDtoSchema),
   tags: z.array(tagDtoSchema),
@@ -97,7 +94,6 @@ type ProjectFormSubmissionDTO = z.infer<typeof submissionSchema>;
 const createApiInputSchema = z.object({
   title: z.string(),
   description: z.string(),
-  specialTechnicalRequirements: z.string().optional(),
 
   flagIds: z.array(z.string()),
   tagIds: z.array(z.string()),
@@ -156,7 +152,6 @@ export const formToApiTransformations = {
   ): ProjectFormCreateApiInputDTO => ({
     title: data.title,
     description: data.description,
-    specialTechnicalRequirements: data.specialTechnicalRequirements,
 
     capacityUpperBound: data.capacityUpperBound,
     preAllocatedStudentId: data.preAllocatedStudentId,
@@ -184,7 +179,6 @@ export const formToApiTransformations = {
     return {
       title: currentProject.title,
       description: currentProject.description,
-      specialTechnicalRequirements: currentProject.specialTechnicalRequirements,
       supervisorId: currentProject.supervisorId,
 
       flags: initialisationData.flags.filter((flag) =>

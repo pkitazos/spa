@@ -3,34 +3,6 @@ import { AllocationMethod, type TX } from "@/db/types";
 import { expand } from "@/lib/utils/general/instance-params";
 import { type ProjectParams } from "@/lib/validations/params";
 
-// move
-export async function linkProjectFlags(
-  db: TX,
-  params: ProjectParams,
-
-  flagTitles: string[],
-) {
-  await db.flagOnProject.deleteMany({
-    where: {
-      projectId: params.projectId,
-      flag: { displayName: { notIn: flagTitles } },
-    },
-  });
-
-  const existingFlags = await db.flag.findMany({
-    where: { ...expand(params), displayName: { in: flagTitles } },
-    select: { id: true, displayName: true },
-  });
-
-  await db.flagOnProject.createMany({
-    data: existingFlags.map(({ id }) => ({
-      projectId: params.projectId,
-      flagId: id,
-    })),
-    skipDuplicates: true,
-  });
-}
-
 export async function linkProjectFlagIds(
   db: TX,
   params: ProjectParams,
@@ -41,25 +13,11 @@ export async function linkProjectFlagIds(
   });
 
   await db.flagOnProject.createMany({
-    data: flagsIds.map((id) => ({ projectId: params.projectId, flagId: id })),
-    skipDuplicates: true,
-  });
-}
-
-export async function linkProjectTags(
-  db: TX,
-  params: ProjectParams,
-  tagTitles: string[],
-) {
-  const tags = await db.tag.createManyAndReturn({
-    data: tagTitles.map((tag) => ({ ...expand(params), title: tag })),
-    skipDuplicates: true,
-  });
-
-  await db.tagOnProject.deleteMany({ where: { projectId: params.projectId } });
-
-  await db.tagOnProject.createMany({
-    data: tags.map(({ id }) => ({ projectId: params.projectId, tagId: id })),
+    data: flagsIds.map((id) => ({
+      ...expand(params),
+      projectId: params.projectId,
+      flagId: id,
+    })),
     skipDuplicates: true,
   });
 }

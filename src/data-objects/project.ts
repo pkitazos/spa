@@ -3,7 +3,7 @@ import { type ProjectDTO, type FlagDTO } from "@/dto";
 import { Transformers as T } from "@/db/transformers";
 import { type DB } from "@/db/types";
 
-import { toPP2 } from "@/lib/utils/general/instance-params";
+import { expand, toPP2 } from "@/lib/utils/general/instance-params";
 import { type ProjectParams } from "@/lib/validations/params";
 
 import { AllocationGroup } from "./space/group";
@@ -75,6 +75,7 @@ export class Project extends DataObject {
       data: flags.map((flag) => ({
         projectId: this.params.projectId,
         flagId: flag.id,
+        ...expand(this.instance.params),
       })),
       skipDuplicates: true,
     });

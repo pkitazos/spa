@@ -47,7 +47,6 @@ export const projectRouter = createTRPCRouter({
             description,
             capacityUpperBound,
             preAllocatedStudentId,
-            specialTechnicalRequirements,
             supervisorId,
             tagIds,
             flagIds,
@@ -64,7 +63,6 @@ export const projectRouter = createTRPCRouter({
               supervisorId,
               preAllocatedStudentId: preAllocatedStudentId ?? null,
               latestEditDateTime: new Date(),
-              specialTechnicalRequirements,
             },
           });
 
@@ -333,8 +331,6 @@ export const projectRouter = createTRPCRouter({
             capacityLowerBound: 0,
             capacityUpperBound: newProject.capacityUpperBound,
             preAllocatedStudentId: newProject.preAllocatedStudentId ?? null,
-            specialTechnicalRequirements:
-              newProject.specialTechnicalRequirements ?? null,
             latestEditDateTime: new Date(),
             supervisorId: newProject.supervisorId,
           },

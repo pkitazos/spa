@@ -126,20 +126,6 @@ export const columns: ColumnDef<AllocationCsvData>[] = [
     }) => <p className="line-clamp-6">{project.description}</p>,
   },
   {
-    id: "Project Special Technical Requirements",
-    accessorFn: (row) => row.project.specialTechnicalRequirements,
-    header: () => (
-      <div className="w-40 py-1">Project Special Technical Requirements</div>
-    ),
-    cell: ({
-      row: {
-        original: { project },
-      },
-    }) => (
-      <p className="line-clamp-6">{project.specialTechnicalRequirements}</p>
-    ),
-  },
-  {
     id: "Student Ranking",
     accessorFn: (row) => row.student.ranking,
     header: ({ column }) => (
