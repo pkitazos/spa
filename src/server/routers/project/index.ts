@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { flagDtoSchema, tagDtoSchema } from "@/dto";
+import { flagDtoSchema, type SupervisorDTO, tagDtoSchema } from "@/dto";
 import { projectDtoSchema } from "@/dto";
 import { studentDtoSchema } from "@/dto";
 import { supervisorDtoSchema } from "@/dto";
@@ -371,44 +371,40 @@ export const projectRouter = createTRPCRouter({
         takenTitles: z.set(z.string()),
         flags: z.array(flagDtoSchema),
         tags: z.array(tagDtoSchema),
-        studentIds: z.array(z.string()),
-        supervisorIds: z.array(z.string()),
+        students: z.array(studentDtoSchema),
+        supervisors: z.array(supervisorDtoSchema),
       }),
     )
     .query(async ({ ctx: { instance, user }, input: { projectId } }) => {
-      // make sure only students with the correct data are returned
-      // (big asterisk considering you can change the flags on a project)
-      // so instead get all unallocated students and filter them on the client based on the selected flags
-
       const allProjects = await instance.getProjectDetails();
       const takenTitles = new Set(allProjects.map(({ project: p }) => p.title));
 
-      const studentIds = await instance
-        .getUnallocatedStudents()
-        .then((students) => students.map((s) => s.id));
+      const students = await instance.getUnallocatedStudents();
 
       if (projectId) {
-        const project = await instance.getProject(projectId).get();
-        takenTitles.delete(project.title);
+        const project = instance.getProject(projectId);
+
+        const { title } = await project.get();
+        takenTitles.delete(title);
 
         // if the project has a pre-allocated student, we should allow them to be re-selected
-        if (project.preAllocatedStudentId) {
-          studentIds.push(project.preAllocatedStudentId);
+        if (await project.hasPreAllocatedStudent()) {
+          const preAllocatedStudent = await project.getPreAllocatedStudent();
+          students.push(preAllocatedStudent);
         }
       }
 
-      let supervisorIds: string[] = [];
+      let supervisors: SupervisorDTO[] = [];
       if (await user.isSubGroupAdminOrBetter(instance.params)) {
-        const supervisors = await instance.getSupervisors();
-        supervisorIds = supervisors.map((s) => s.id);
+        supervisors = await instance.getSupervisors();
       }
 
       return {
         takenTitles,
         flags: await instance.getFlags(),
         tags: await instance.getTags(),
-        studentIds,
-        supervisorIds,
+        students,
+        supervisors,
       };
     }),
 
