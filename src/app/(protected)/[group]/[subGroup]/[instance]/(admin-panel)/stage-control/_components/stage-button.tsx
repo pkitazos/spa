@@ -27,8 +27,8 @@ export function StageButton({
       <button
         onClick={() => handleSelection(num)}
         className={cn(
-          "flex h-16 w-16 items-center justify-center rounded-full bg-accent text-lg font-medium shadow-sm",
-          selectedIdx === num && "outline outline-4 outline-sky-500",
+          "flex h-16 w-16 items-center justify-center rounded-full bg-accent text-lg font-medium shadow-xs",
+          selectedIdx === num && "outline-solid outline-4 outline-sky-500",
           confirmedIdx >= num && "bg-primary text-primary-foreground",
         )}
       >
