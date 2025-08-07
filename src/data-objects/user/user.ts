@@ -312,11 +312,14 @@ export class User extends DataObject {
       const isSuperAdmin = await this.isSuperAdmin();
       addSegment(group, isSuperAdmin);
 
-      if (
-        subGroup === PAGES.newGroup.href ||
-        subGroup === PAGES.userManagement.href
-      ) {
+      if (subGroup === PAGES.newGroup.href) {
         addSegment(subGroup, isSuperAdmin);
+      } else if (subGroup === PAGES.userManagement.href) {
+        addSegment(subGroup, isSuperAdmin);
+        if (instance) {
+          addSegment(instance, isSuperAdmin);
+          if (staticSegment) throw new Error("Unknown Segment");
+        }
       } else if (subGroup) throw new Error("Unknown Segment");
 
       return res;
