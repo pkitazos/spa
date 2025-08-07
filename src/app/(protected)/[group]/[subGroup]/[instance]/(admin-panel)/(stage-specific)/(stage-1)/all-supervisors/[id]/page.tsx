@@ -1,21 +1,21 @@
-import { FilePlus2Icon } from "lucide-react";
+import { FilePlus2Icon, FolderIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { Heading, SubHeading } from "@/components/heading";
-import { PageWrapper } from "@/components/page-wrapper";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
+import { Heading, SectionHeading } from "@/components/heading";
+import { PanelWrapper } from "@/components/panel-wrapper";
 import { buttonVariants } from "@/components/ui/button";
 import { UserDetailsCard } from "@/components/user-details-card";
 
 import { api } from "@/lib/trpc/server";
 import { cn } from "@/lib/utils";
-import { PageParams } from "@/lib/validations/params";
+import { type PageParams } from "@/lib/validations/params";
 
 import { InstanceDetailsCard } from "./_components/instance-details-card";
 import { SupervisorProjectsDataTable } from "./_components/supervisor-projects-data-table";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: PageParams }) {
   const { displayName } = await api.institution.instance.get({ params });
@@ -33,16 +33,25 @@ export async function generateMetadata({ params }: { params: PageParams }) {
 
 export default async function Page({ params }: { params: PageParams }) {
   const supervisorId = params.id;
+
   const exists = await api.user.supervisor.exists({ params, supervisorId });
   if (!exists) notFound();
 
-  const { supervisor, projects } = await api.user.supervisor.instanceData({
+  const supervisor = await api.user.supervisor.getById({
     params,
     supervisorId,
   });
 
+  const projects = await api.user.supervisor.instanceProjects({
+    params,
+    supervisorId,
+  });
+
+  const projectDescriptors =
+    await api.institution.instance.getAllProjectDescriptors({ params });
+
   return (
-    <PageWrapper>
+    <PanelWrapper>
       <Heading
         className={cn(
           "flex items-center justify-between gap-2",
@@ -56,29 +65,25 @@ export default async function Page({ params }: { params: PageParams }) {
         <InstanceDetailsCard supervisor={supervisor} />
       </div>
       <div className="-mb-2 mt-6 flex items-center justify-between">
-        <SubHeading>All Projects</SubHeading>
+        <SectionHeading className="mb-2 flex items-center">
+          <FolderIcon className="mr-2 h-6 w-6 text-indigo-500" />
+          <span>All Projects</span>
+        </SectionHeading>
         <Link
           className={cn(
             buttonVariants({ variant: "secondary" }),
             "flex items-center justify-center gap-2 text-nowrap",
           )}
-          href={`../${PAGES.allSupervisors.href}/${supervisorId}/new-project`}
+          href={`../${PAGES.allSupervisors.href}/${supervisorId}/${PAGES.newSupervisorProject.href}`}
         >
           <FilePlus2Icon className="h-4 w-4" />
-          <p>New Project</p>
+          <p>{PAGES.newSupervisorProject.title}</p>
         </Link>
       </div>
       <SupervisorProjectsDataTable
-        data={projects.map((p) => ({
-          id: p.id,
-          title: p.title,
-          supervisorId: p.supervisorId,
-          preAllocatedStudentId: p.preAllocatedStudentId,
-          allocatedStudents: p.allocatedStudents,
-          flags: p.flags,
-          tags: p.tags,
-        }))}
+        data={projects}
+        projectDescriptors={projectDescriptors}
       />
-    </PageWrapper>
+    </PanelWrapper>
   );
 }

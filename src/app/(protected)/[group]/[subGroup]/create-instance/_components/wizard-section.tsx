@@ -1,17 +1,23 @@
 "use client";
-import { api } from "@/lib/trpc/client";
+
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
+import { spacesLabels } from "@/config/spaces";
+
+import { type InstanceDTO } from "@/dto";
+
+import { Stage } from "@/db/types";
+
 import {
   InstanceWizard,
-  WizardFormData,
+  type WizardFormData,
 } from "@/components/instance-wizard/instance-wizard";
-import { toast } from "sonner";
-import { spacesLabels } from "@/config/spaces";
-import { SubGroupParams } from "@/lib/validations/params";
-import { MarkerType, New, Stage } from "@/db/types";
-import { FlagDTO, InstanceDTO, NewUnitOfAssessmentDTO, TagDTO } from "@/dto";
-import { useRouter } from "next/navigation";
-import { slugify } from "@/lib/utils/general/slugify";
+
+import { api } from "@/lib/trpc/client";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
+import { slugify } from "@/lib/utils/general/slugify";
+import { type SubGroupParams } from "@/lib/validations/params";
 
 export function WizardSection({
   takenNames,
@@ -45,33 +51,13 @@ export function WizardSection({
       studentAllocationAccess: false,
     } satisfies Omit<InstanceDTO, "instance">;
 
-    const flags = data.flags.map((f) => ({
-      title: f.flag,
-      description: f.description,
-      unitsOfAssessment: f.units_of_assessment.map((a) => ({
-        title: a.title,
-        weight: a.weight,
-        studentSubmissionDeadline: a.student_submission_deadline,
-        markerSubmissionDeadline: a.marker_submission_deadline,
-        isOpen: false,
-        allowedMarkerTypes: a.allowed_marker_types.map((t) =>
-          t === "supervisor" ? MarkerType.SUPERVISOR : MarkerType.READER,
-        ),
-        components: a.assessment_criteria.flatMap((x, i) => ({
-          description: x.description,
-          title: x.title,
-          weight: x.weight,
-          layoutIndex: i + 1,
-        })),
-      })),
-    })) satisfies (New<FlagDTO> & {
-      unitsOfAssessment: NewUnitOfAssessmentDTO[];
-    })[];
-
-    const tags = data.tags satisfies New<TagDTO>[];
-
     void toast.promise(
-      createInstanceAsync({ params, newInstance, flags, tags }).then(() => {
+      createInstanceAsync({
+        params,
+        newInstance,
+        flags: data.flags,
+        tags: data.tags,
+      }).then(() => {
         const newPath = formatParamsAsPath({
           group: params.group,
           subGroup: params.subGroup,

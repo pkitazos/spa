@@ -22,7 +22,9 @@ interface DataTablePaginationProps<TData> {
 export function DataTablePagination<TData>({
   table,
 }: DataTablePaginationProps<TData>) {
-  const pageSizes = [10, 20, 30, 40, 50];
+  const pageSizes = [
+    ...new Set([10, 20, 30, 40, 50, table.getState().pagination.pageSize]),
+  ].toSorted((a, b) => a - b);
 
   let rowCount = table.getRowCount();
   if (pageSizes.includes(rowCount)) rowCount += 1;

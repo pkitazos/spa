@@ -1,9 +1,34 @@
 "use client";
+
+import { Fragment, useCallback, useEffect, useState } from "react";
+import { type Control, useForm } from "react-hook-form";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, ChevronsUpDown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Form, FormDescription, FormLabel } from "@/components/ui/form";
+
+import { Grade, GRADES } from "@/config/grades";
+import { PAGES } from "@/config/pages";
+
+import {
+  type AssessmentCriterionDTO,
+  type PartialMarkingSubmissionDTO,
+  type MarkingSubmissionDTO,
+  markingSubmissionDtoSchema,
+} from "@/dto";
+
 import { useInstanceParams } from "@/components/params-context";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Form, FormDescription, FormLabel } from "@/components/ui/form";
 import {
   FormControl,
   FormField,
@@ -15,33 +40,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-import { cn } from "@/lib/utils";
-import { Check, ChevronsUpDown } from "lucide-react";
-
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { api } from "@/lib/trpc/client";
-import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
-import {
-  AssessmentCriterionDTO,
-  PartialMarkingSubmissionDTO,
-  MarkingSubmissionDTO,
-  markingSubmissionDtoSchema,
-} from "@/dto";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Control, useForm } from "react-hook-form";
-import { Grade, GRADES } from "@/config/grades";
-import { Fragment, useCallback, useEffect, useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { YesNoAction } from "@/components/yes-no-action";
-import { PAGES } from "@/config/pages";
+
+import { api } from "@/lib/trpc/client";
+import { cn } from "@/lib/utils";
+import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 
 export function MarkingSection({
   markingCriteria,

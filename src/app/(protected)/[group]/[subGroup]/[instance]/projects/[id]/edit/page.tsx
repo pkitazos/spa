@@ -1,18 +1,29 @@
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
+import { type ProjectFormInitialisationDTO } from "@/dto/project";
+
+import { Role, Stage } from "@/db/types";
+
 import { Heading } from "@/components/heading";
-import { PageWrapper } from "@/components/page-wrapper";
+import { PanelWrapper } from "@/components/panel-wrapper";
+import { EditProjectForm } from "@/components/project-form/edit-project";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
 import { toPP1 } from "@/lib/utils/general/instance-params";
-import { makeRequiredFlags } from "@/lib/utils/general/make-required-flags";
 import { stageGte } from "@/lib/utils/permissions/stage-check";
-import { InstanceParams } from "@/lib/validations/params";
-
-import { EditProjectForm } from "./_components/edit-project-form";
-
-import { Role, Stage } from "@/db/types";
+import { type InstanceParams } from "@/lib/validations/params";
 
 type PageParams = InstanceParams & { id: string };
+
+export async function generateMetadata({ params }: { params: InstanceParams }) {
+  const { displayName } = await api.institution.instance.get({ params });
+
+  return {
+    title: metadataTitle([PAGES.editProject.title, displayName, app.name]),
+  };
+}
 
 export default async function Page({ params }: { params: PageParams }) {
   const projectId = params.id;
@@ -37,35 +48,34 @@ export default async function Page({ params }: { params: PageParams }) {
     );
   }
 
-  const formInternalData = await api.project.getFormDetails({
+  const formInitData = await api.project.getFormInitialisationData({
     params,
     projectId,
   });
 
-  const projectDetails = {
-    ...project,
-    flagTitles: project.flags.map((f) => f.title),
-    capacityUpperBound: project.capacityUpperBound,
-    preAllocatedStudentId: project.preAllocatedStudentId ?? "",
-    isPreAllocated:
-      project.preAllocatedStudentId !== undefined &&
-      project.preAllocatedStudentId !== "",
+  const formInitialisationData: ProjectFormInitialisationDTO = {
+    ...formInitData,
+    currentProject: {
+      id: project.id,
+      title: project.title,
+      description: project.description,
+      flagIds: project.flags.map((flag) => flag.id),
+      tagIds: project.tags.map((tag) => tag.id),
+      supervisorId: supervisor.id,
+      capacityUpperBound: project.capacityUpperBound,
+      preAllocatedStudentId: project.preAllocatedStudentId,
+    },
   };
 
-  const isForked = await api.project.getIsForked({ params: toPP1(params) });
-
-  const instanceFlags = await api.institution.instance.getFlags({ params });
-  const requiredFlags = makeRequiredFlags(instanceFlags);
-
   return (
-    <PageWrapper>
-      <Heading>Edit Project</Heading>
+    <PanelWrapper>
+      <Heading>{PAGES.editProject.title}</Heading>
       <EditProjectForm
-        formInternalData={formInternalData}
-        project={projectDetails}
-        isForked={isForked}
-        requiredFlags={requiredFlags}
+        formInitialisationData={formInitialisationData}
+        userRole={roles.has(Role.ADMIN) ? Role.ADMIN : Role.SUPERVISOR}
+        currentUserId={user.id}
+        projectId={projectId}
       />
-    </PageWrapper>
+    </PanelWrapper>
   );
 }

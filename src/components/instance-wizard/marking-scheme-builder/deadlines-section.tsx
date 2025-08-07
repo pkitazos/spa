@@ -1,3 +1,9 @@
+import { useForm } from "react-hook-form";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { differenceInCalendarISOWeeks } from "date-fns";
+import { z } from "zod";
+
 import { DateTimePicker } from "@/components/date-time-picker";
 import {
   Form,
@@ -8,11 +14,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-
-import { differenceInCalendarISOWeeks } from "date-fns";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 
 const deadlinesSchema = z
   .object({

@@ -1,9 +1,15 @@
 "use client";
 
-import { ProjectDTO, StudentDTO, UnitOfAssessmentDTO } from "@/dto";
-import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
-import { MarkerType } from "@prisma/client";
 import type { ColumnDef } from "@tanstack/react-table";
+
+import {
+  type ProjectDTO,
+  type StudentDTO,
+  type UnitOfAssessmentDTO,
+} from "@/dto";
+import { type MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
+
+import { type MarkerType } from "@/db/types";
 
 export type SubmissionTableRow = {
   project: ProjectDTO;

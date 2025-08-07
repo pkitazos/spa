@@ -1,6 +1,8 @@
 "use client";
-import { ReactNode } from "react";
-import { Stage } from "@prisma/client";
+
+import { type ReactNode } from "react";
+
+import { type Stage } from "@/db/types";
 
 import { api } from "@/lib/trpc/client";
 

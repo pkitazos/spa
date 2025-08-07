@@ -1,29 +1,32 @@
-import { ReactElement } from "react";
+import { type ReactElement } from "react";
+
+import { PAUL_EMAIL, tag_coordinator } from "@/config/emails";
 
 import {
-  AssessmentCriterionDTO,
-  CriterionScoreDTO,
-  MarkingSubmissionDTO,
-  ProjectDTO,
-  ReaderDTO,
-  StudentDTO,
-  SupervisorDTO,
-  UnitOfAssessmentDTO,
-  UserDTO,
+  type AssessmentCriterionDTO,
+  type CriterionScoreDTO,
+  type MarkingSubmissionDTO,
+  type ProjectDTO,
+  type ReaderDTO,
+  type StudentDTO,
+  type SupervisorDTO,
+  type UnitOfAssessmentDTO,
+  type UserDTO,
 } from "@/dto";
-import SupervisorNegotiate1 from "./messages/negotiation/supervisor";
-import ReaderNegotiate1 from "./messages/negotiation/reader";
-import CoordinatorModeration from "./messages/moderation/coordinator";
-import { InstanceParams } from "@/lib/validations/params";
+
+import { type InstanceParams } from "@/lib/validations/params";
+
 import MarkingComplete from "./messages/marking-complete";
-import CoordinatorNegotiation from "./messages/negotiation/coordinator";
-import MarkingSubmitted from "./messages/marking-submitted";
-import NegotiationResolved from "./messages/negotiation-resolved";
-import { PAUL_EMAIL, tag_coordinator } from "@/config/emails";
-import SupervisorNegotiationOverdue from "./messages/negotation-overdue/supervisor";
-import ReaderNegotiationOverdue from "./messages/negotation-overdue/reader";
 import MarkingOverdueGeneric from "./messages/marking-overdue-generic";
+import MarkingSubmitted from "./messages/marking-submitted";
+import CoordinatorModeration from "./messages/moderation/coordinator";
+import ReaderNegotiationOverdue from "./messages/negotation-overdue/reader";
+import SupervisorNegotiationOverdue from "./messages/negotation-overdue/supervisor";
 import NegotiationOverdueGeneric from "./messages/negotiation-overdue-generic";
+import NegotiationResolved from "./messages/negotiation-resolved";
+import CoordinatorNegotiation from "./messages/negotiation/coordinator";
+import ReaderNegotiate1 from "./messages/negotiation/reader";
+import SupervisorNegotiate1 from "./messages/negotiation/supervisor";
 
 export type SendMail = ({
   message,

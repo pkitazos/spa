@@ -1,4 +1,5 @@
 "use client";
+
 import { useInstanceParams } from "@/components/params-context";
 import { StudentSavedPreferenceDataTable } from "@/components/student-saved-preferences/data-table";
 import { Skeleton } from "@/components/ui/skeleton";

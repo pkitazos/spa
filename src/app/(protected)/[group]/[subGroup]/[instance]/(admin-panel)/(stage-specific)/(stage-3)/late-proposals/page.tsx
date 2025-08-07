@@ -1,15 +1,15 @@
 import { DatabaseIcon } from "lucide-react";
 
-import { SectionHeading, SubHeading } from "@/components/heading";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
+import { SectionHeading, Heading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import { LateProjectDataTable } from "./_components/late-project-data-table";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
@@ -21,16 +21,21 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 
 export default async function Page({ params }: { params: InstanceParams }) {
   const projects = await api.project.getAllLateProposals({ params });
+  const projectDescriptors =
+    await api.institution.instance.getAllProjectDescriptors({ params });
 
   return (
-    <PanelWrapper className="mt-10 flex flex-col items-start gap-16 px-12">
-      <SubHeading className="mb-4">{PAGES.lateProposals.title}</SubHeading>
+    <PanelWrapper className="gap-16">
+      <Heading className="mb-4">{PAGES.lateProposals.title}</Heading>
       <section className="flex w-full flex-col gap-5">
         <SectionHeading className="flex items-center">
           <DatabaseIcon className="mr-2 h-6 w-6 text-indigo-500" />
           <span>All data</span>
         </SectionHeading>
-        <LateProjectDataTable data={projects} />
+        <LateProjectDataTable
+          data={projects}
+          projectDescriptors={projectDescriptors}
+        />
       </section>
     </PanelWrapper>
   );

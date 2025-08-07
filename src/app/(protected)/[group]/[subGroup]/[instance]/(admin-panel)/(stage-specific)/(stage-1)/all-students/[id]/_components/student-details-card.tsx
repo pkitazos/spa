@@ -1,74 +1,65 @@
 "use client";
+
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ClassValue } from "clsx";
-import { GraduationCapIcon, HashIcon, PenIcon, UserIcon } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+import { type ClassValue } from "clsx";
+import {
+  Check,
+  ChevronsUpDown,
+  GraduationCapIcon,
+  HashIcon,
+  UserIcon,
+} from "lucide-react";
 import { toast } from "sonner";
+
+import { type StudentDTO } from "@/dto";
 
 import { useInstanceParams } from "@/components/params-context";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { WithTooltip } from "@/components/ui/tooltip-wrapper";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 import { api } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { User } from "@/lib/validations/auth";
-import {
-  StudentInstanceDetails,
-  studentInstanceDetailsSchema,
-} from "@/lib/validations/dto/student";
-import { studentLevelSchema } from "@/lib/validations/student-level";
-
-import { spacesLabels } from "@/config/spaces";
 
 export function StudentDetailsCard({
   student,
+  flags,
   className,
 }: {
-  student: User & { level: number };
+  student: StudentDTO;
+  flags: Array<{ id: string; displayName: string }>;
   className?: ClassValue;
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const editMode = searchParams.get("edit") ?? false;
-
   const params = useInstanceParams();
-  const [studentLevel, setStudentLevel] = useState(student.level);
+  const [studentFlag, setStudentFlag] = useState(student.flag.id);
+  const [open, setOpen] = useState(false);
 
-  const form = useForm<StudentInstanceDetails>({
-    resolver: zodResolver(studentInstanceDetailsSchema),
-    defaultValues: { level: studentLevelSchema.parse(student.level) },
-  });
+  const selectedFlag = flags.find((flag) => flag.id === studentFlag);
 
-  function changeEditMode(newMode: boolean) {
-    if (!newMode) router.push(pathname);
-    else router.push(`${pathname}?edit=true`);
-  }
+  const { mutateAsync: updateFlagAsync } =
+    api.institution.instance.updateStudentFlag.useMutation();
 
-  const { mutateAsync } = api.user.student.updateLevel.useMutation();
-
-  function onSubmit(data: StudentInstanceDetails) {
+  function onFlagChange(flagId: string) {
     void toast.promise(
-      mutateAsync({ params, studentId: student.id, level: data.level }).then(
-        (s) => {
-          setStudentLevel(s.level);
-          changeEditMode(false);
-        },
-      ),
+      updateFlagAsync({ params, studentId: student.id, flagId }).then((s) => {
+        setStudentFlag(s.flag.id);
+      }),
       {
-        loading: `Updating student ${spacesLabels.instance.short} level...`,
-        success: `Successfully updated student ${spacesLabels.instance.short} level`,
+        loading: `Updating student flag...`,
+        success: `Successfully updated student flag`,
         error: "Something went wrong",
       },
     );
@@ -76,22 +67,7 @@ export function StudentDetailsCard({
 
   return (
     <Card className={cn(className)}>
-      <CardHeader className="pb-4">
-        <CardTitle className="group text-xl hover:cursor-pointer hover:text-primary">
-          <WithTooltip tip="Edit Student Level">
-            <button
-              className="flex items-center gap-3 "
-              onClick={() => changeEditMode(!editMode)}
-            >
-              <p className="group-hover:underline group-hover:underline-offset-2">
-                User Info
-              </p>
-              <PenIcon className="h-4 w-4" />
-            </button>
-          </WithTooltip>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <div className="flex flex-col justify-evenly gap-4">
           <div className="flex items-center">
             <UserIcon className="mr-2 h-4 w-4 opacity-70" />
@@ -103,46 +79,56 @@ export function StudentDetailsCard({
             <span className="mr-2 font-semibold">Email:</span>
             {student.email}
           </div>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
-              <FormField
-                control={form.control}
-                name="level"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <div className="flex items-center">
-                        <GraduationCapIcon className="mr-2 h-4 w-4 opacity-70" />
-                        <span className="mr-2 font-semibold">Level:</span>
-                        {editMode ? (
-                          <Input className="w-10" {...field} />
-                        ) : (
-                          <p>{studentLevel}</p>
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {editMode && (
-                <div className="flex w-full items-center justify-center gap-2">
-                  <Button
-                    className="w-full"
-                    variant="outline"
-                    type="button"
-                    onClick={() => changeEditMode(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button className="w-full" type="submit">
-                    Submit
-                  </Button>
-                </div>
-              )}
-            </form>
-          </Form>
+          <div className="flex items-center">
+            <GraduationCapIcon className="mr-2 h-4 w-4 opacity-70" />
+            <span className="mr-2 font-semibold">Flag:</span>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="justify-between"
+                >
+                  {selectedFlag ? selectedFlag.displayName : "Select flag..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="p-0">
+                <Command>
+                  <CommandInput placeholder="Search flags..." />
+                  <CommandList>
+                    <CommandEmpty>No flag found.</CommandEmpty>
+                    <CommandGroup>
+                      {flags.map((flag) => (
+                        <CommandItem
+                          key={flag.id}
+                          value={flag.id}
+                          onSelect={(currentValue) => {
+                            if (currentValue !== studentFlag) {
+                              setStudentFlag(flag.id);
+                              onFlagChange(flag.id);
+                            }
+                            setOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              studentFlag === flag.id
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                          {flag.displayName}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       </CardContent>
     </Card>

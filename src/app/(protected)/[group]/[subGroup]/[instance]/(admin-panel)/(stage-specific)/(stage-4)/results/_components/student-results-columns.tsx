@@ -1,13 +1,16 @@
 "use client";
-import { ColumnDef } from "@tanstack/react-table";
+
+import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
+
+import { INSTITUTION } from "@/config/institution";
+import { PAGES } from "@/config/pages";
+
+import { type ProjectDTO, type StudentDTO } from "@/dto";
 
 import { buttonVariants } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
-
-import { ProjectDTO, StudentDTO } from "@/dto";
-import { PAGES } from "@/config/pages";
 
 export const studentResultsColumns: ColumnDef<{
   student: StudentDTO;
@@ -15,10 +18,10 @@ export const studentResultsColumns: ColumnDef<{
   studentRanking: number;
 }>[] = [
   {
-    id: "GUID",
+    id: INSTITUTION.ID_NAME,
     accessorFn: ({ student }) => student.id,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="GUID" canFilter />
+      <DataTableColumnHeader column={column} title={INSTITUTION.ID_NAME} />
     ),
     cell: ({
       row: {
@@ -30,7 +33,7 @@ export const studentResultsColumns: ColumnDef<{
     id: "Student Name",
     accessorFn: ({ student }) => student.name,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Student Name" canFilter />
+      <DataTableColumnHeader column={column} title="Student Name" />
     ),
     cell: ({
       row: {
@@ -49,7 +52,7 @@ export const studentResultsColumns: ColumnDef<{
     id: "Project ID",
     accessorFn: ({ project }) => project.id,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Project ID" canFilter />
+      <DataTableColumnHeader column={column} title="Project ID" />
     ),
     cell: ({
       row: {
@@ -68,7 +71,7 @@ export const studentResultsColumns: ColumnDef<{
     id: "Project title",
     accessorFn: ({ project }) => project.title,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Project Title" canFilter />
+      <DataTableColumnHeader column={column} title="Project Title" />
     ),
     cell: ({
       row: {

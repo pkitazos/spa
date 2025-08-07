@@ -1,9 +1,13 @@
 "use client";
+
 import { useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { spacesLabels } from "@/config/spaces";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,9 +24,7 @@ import { Separator } from "@/components/ui/separator";
 
 import { api } from "@/lib/trpc/client";
 import { slugify } from "@/lib/utils/general/slugify";
-import { GroupParams } from "@/lib/validations/params";
-
-import { spacesLabels } from "@/config/spaces";
+import { type GroupParams } from "@/lib/validations/params";
 
 export function FormSection({
   takenNames,
@@ -51,10 +53,7 @@ export function FormSection({
 
   const onSubmit = ({ subGroupName }: { subGroupName: string }) => {
     void toast.promise(
-      createSubGroupAsync({
-        params,
-        name: subGroupName,
-      }).then(() => {
+      createSubGroupAsync({ params, name: subGroupName }).then(() => {
         router.push(`/${params.group}/${slugify(subGroupName)}`);
         router.refresh();
       }),

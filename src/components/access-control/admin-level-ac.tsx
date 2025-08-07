@@ -1,11 +1,14 @@
 "use client";
-import { ReactNode } from "react";
+
+import { type ReactNode } from "react";
+
 import { useParams } from "next/navigation";
+
+import { AdminLevel } from "@/db/types";
 
 import { api } from "@/lib/trpc/client";
 import { permissionCheck } from "@/lib/utils/permissions/permission-check";
-import { RefinedSpaceParams } from "@/lib/validations/params";
-import { AdminLevel } from "@/db/types";
+import { type RefinedSpaceParams } from "@/lib/validations/params";
 
 export function AdminLevelAC({
   children,

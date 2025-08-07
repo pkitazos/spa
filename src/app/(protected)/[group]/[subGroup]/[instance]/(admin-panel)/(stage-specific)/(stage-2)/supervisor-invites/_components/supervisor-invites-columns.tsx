@@ -1,4 +1,4 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CopyIcon,
   CornerDownRightIcon,
@@ -7,9 +7,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { INSTITUTION } from "@/config/institution";
+import { PAGES } from "@/config/pages";
+
+import { type InstanceUserDTO } from "@/dto";
+
 import { ExportCSVButton } from "@/components/export-csv";
+import { usePathInInstance } from "@/components/params-context";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionColumnLabel } from "@/components/ui/data-table/action-column-label";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { getSelectColumn } from "@/components/ui/data-table/select-column";
@@ -24,25 +30,37 @@ import {
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
-import { SupervisorInviteDto } from "@/lib/validations/dto/supervisor";
-import { PAGES } from "@/config/pages";
 
-export function useSupervisorInvitesColumns(): ColumnDef<SupervisorInviteDto>[] {
-  const selectCol = getSelectColumn<SupervisorInviteDto>();
+export function useSupervisorInvitesColumns(): ColumnDef<InstanceUserDTO>[] {
+  const { getPath } = usePathInInstance();
 
-  const baseCols: ColumnDef<SupervisorInviteDto>[] = [
+  const selectCol = getSelectColumn<InstanceUserDTO>();
+
+  const baseCols: ColumnDef<InstanceUserDTO>[] = [
     {
       id: "Name",
       accessorFn: (s) => s.name,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
       ),
+      cell: ({
+        row: {
+          original: { id, name },
+        },
+      }) => (
+        <Link
+          className={buttonVariants({ variant: "link" })}
+          href={getPath(`${PAGES.allSupervisors.href}/${id}`)}
+        >
+          {name}
+        </Link>
+      ),
     },
     {
-      id: "GUID",
+      id: INSTITUTION.ID_NAME,
       accessorFn: (s) => s.id,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="GUID" canFilter />
+        <DataTableColumnHeader column={column} title={INSTITUTION.ID_NAME} />
       ),
     },
     {
@@ -70,7 +88,7 @@ export function useSupervisorInvitesColumns(): ColumnDef<SupervisorInviteDto>[] 
         ),
       filterFn: (row, columnId, value) => {
         const selectedFilters = value as ("joined" | "invited")[];
-        const rowValue = row.getValue(columnId) as boolean;
+        const rowValue = row.getValue(columnId);
         const joined = rowValue ? "joined" : "invited";
         return selectedFilters.includes(joined);
       },
@@ -180,6 +198,7 @@ export function useSupervisorInvitesColumns(): ColumnDef<SupervisorInviteDto>[] 
                   <span>Edit supervisor details</span>
                 </Link>
               </DropdownMenuItem>
+              {/* // TODO: make the actual email be click-copyable instead */}
               <DropdownMenuItem className="group/item">
                 <button
                   className="flex items-center gap-2 text-sm text-primary underline-offset-4 group-hover/item:underline hover:underline"

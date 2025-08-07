@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 
 /**
@@ -10,7 +11,7 @@ import { useEffect, useState } from "react";
  * @param delay - The delay in milliseconds.
  * @returns The debounced value.
  */
-export function useDebounce<T>(value: T, delay: number): T {
+export function useDebounce<T>(value: T, delay = 100): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {

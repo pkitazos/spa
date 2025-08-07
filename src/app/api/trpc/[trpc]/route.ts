@@ -1,10 +1,11 @@
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { NextRequest } from "next/server";
-
-import { auth } from "@/lib/auth";
+import { type NextRequest } from "next/server";
 
 import { appRouter } from "@/server/root";
 import { createTRPCContext } from "@/server/trpc";
+
+import { auth } from "@/lib/auth";
+
 /**
  * Configure basic CORS headers
  * You should extend this to match your needs
@@ -17,24 +18,19 @@ function setCorsHeaders(res: Response) {
 }
 
 export function OPTIONS() {
-  const response = new Response(null, {
-    status: 204,
-  });
+  const response = new Response(null, { status: 204 });
   setCorsHeaders(response);
   return response;
 }
 
 const handler = async (req: NextRequest) => {
-  const user = await auth();
+  const { mask: user } = await auth();
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
     router: appRouter,
     req,
     createContext: () =>
-      createTRPCContext({
-        session: { user },
-        headers: req.headers,
-      }),
+      createTRPCContext({ session: { user }, headers: req.headers }),
     onError({ error, path }) {
       console.error(`>>> tRPC Error on '${path}'`, error);
     },

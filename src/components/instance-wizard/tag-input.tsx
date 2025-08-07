@@ -1,21 +1,25 @@
 "use client";
 
-import { useState, type KeyboardEvent } from "react";
+import { useState, type KeyboardEvent, type ClipboardEvent } from "react";
+import { useFormContext } from "react-hook-form";
+
 import { X, Plus, Tag } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   FormField,
   FormItem,
   FormControl,
   FormMessage,
 } from "@/components/ui/form";
-import { useFormContext } from "react-hook-form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { cn } from "@/lib/utils";
-import { WizardFormData } from "./instance-wizard";
+
+import { type WizardFormData } from "./instance-wizard";
 
 interface TagInputProps {
   label?: string;
@@ -79,6 +83,38 @@ export default function TagInput({
             }
           };
 
+          const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
+            const pastedText = e.clipboardData.getData("text");
+
+            // check if the pasted text contains newlines
+            if (pastedText.includes("\n")) {
+              e.preventDefault();
+
+              // split by newlines and filter out empty strings
+              const lines = pastedText
+                .split("\n")
+                .map((line) => line.trim())
+                .filter((line) => line.length > 0);
+
+              if (lines.length > 1) {
+                // multiple lines detected, add them as separate tags
+                const existingTitles = field.value.map((t) => t.title);
+                const newTagsToAdd = lines
+                  .filter((line) => !existingTitles.includes(line))
+                  .map((line) => ({ title: line }));
+
+                if (newTagsToAdd.length > 0) {
+                  const newTags = [...field.value, ...newTagsToAdd];
+                  field.onChange(newTags);
+                  setInputValue(""); // clear input after pasting multiple tags
+                }
+              } else if (lines.length === 1) {
+                // single line, just set it as input value
+                setInputValue(lines[0]);
+              }
+            }
+          };
+
           return (
             <FormItem
               onClick={focusInput}
@@ -97,6 +133,7 @@ export default function TagInput({
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={handleKeyDown}
+                    onPaste={handlePaste}
                     placeholder={placeholder}
                     className="flex-1 border-0 p-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
                   />

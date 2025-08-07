@@ -1,4 +1,4 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
   LucideMoreHorizontal as MoreIcon,
@@ -6,11 +6,23 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
+import { z } from "zod";
+
+import { PAGES } from "@/config/pages";
+
+import {
+  flagDtoSchema,
+  ProjectAllocationStatus,
+  type ProjectDTO,
+  type StudentDTO,
+} from "@/dto";
+
+import { Stage } from "@/db/types";
 
 import { AccessControl } from "@/components/access-control";
 import { CircleCheckSolidIcon } from "@/components/icons/circle-check";
 import { useInstancePath, useInstanceStage } from "@/components/params-context";
-import { TagType } from "@/components/tag/tag-input";
+import { tagTypeSchema } from "@/components/tag/tag-input";
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionColumnLabel } from "@/components/ui/data-table/action-column-label";
@@ -31,16 +43,17 @@ import {
 } from "@/components/yes-no-action";
 
 import { cn } from "@/lib/utils";
+import { setIntersection } from "@/lib/utils/general/set-intersection";
 import {
   previousStages,
   stageGte,
   stageLt,
 } from "@/lib/utils/permissions/stage-check";
-import { SupervisorProjectDto } from "@/lib/validations/dto/project";
 
-import { Stage } from "@/db/types";
-import { PAGES } from "@/config/pages";
-import { setIntersection } from "@/lib/utils/general/set-intersection";
+type ProjectWithAllocation = {
+  project: ProjectDTO;
+  allocatedStudent?: StudentDTO;
+};
 
 export function useSupervisorProjectsColumns({
   deleteProject,
@@ -48,20 +61,24 @@ export function useSupervisorProjectsColumns({
 }: {
   deleteProject: (id: string) => Promise<void>;
   deleteSelectedProjects: (ids: string[]) => Promise<void>;
-}): ColumnDef<SupervisorProjectDto>[] {
+}): ColumnDef<ProjectWithAllocation>[] {
   const stage = useInstanceStage();
   const instancePath = useInstancePath();
 
-  const selectCol = getSelectColumn<SupervisorProjectDto>();
+  const selectCol = getSelectColumn<ProjectWithAllocation>();
 
-  const userCols: ColumnDef<SupervisorProjectDto>[] = [
+  const userCols: ColumnDef<ProjectWithAllocation>[] = [
     {
       id: "ID",
-      accessorFn: ({ id }) => id,
+      accessorFn: ({ project }) => project.id,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="ID" canFilter />
+        <DataTableColumnHeader column={column} title="ID" />
       ),
-      cell: ({ row: { original: project } }) => (
+      cell: ({
+        row: {
+          original: { project },
+        },
+      }) => (
         <div className="text-left">
           <WithTooltip tip={project.id}>
             <Button variant="ghost" className="cursor-default">
@@ -73,13 +90,13 @@ export function useSupervisorProjectsColumns({
     },
     {
       id: "Title",
-      accessorFn: ({ title }) => title,
+      accessorFn: ({ project }) => project.title,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Title" />
       ),
       cell: ({
         row: {
-          original: { id, title },
+          original: { project },
         },
       }) => (
         <Link
@@ -87,53 +104,70 @@ export function useSupervisorProjectsColumns({
             buttonVariants({ variant: "link" }),
             "inline-block h-max w-60 px-0 text-start",
           )}
-          href={`${instancePath}/projects/${id}`}
+          href={`${instancePath}/projects/${project.id}`}
         >
-          {title}
+          {project.title}
         </Link>
       ),
     },
     {
       id: "Flags",
-      accessorFn: (row) => row.flags,
+      accessorFn: ({ project }) => project.flags,
       header: () => <div className="text-center">Flags</div>,
       filterFn: (row, columnId, value) => {
-        const ids = value as string[];
-        const rowFlags = row.getValue(columnId) as TagType[];
-        return rowFlags.some((f) => ids.includes(f.id));
+        const selectedFilters = z.array(z.string()).parse(value);
+        const rowFlags = z.array(flagDtoSchema).parse(row.getValue(columnId));
+
+        return (
+          new Set(rowFlags.map((f) => f.id)).size > 0 &&
+          selectedFilters.some((f) => rowFlags.some((rf) => rf.id === f))
+        );
       },
       cell: ({
         row: {
-          original: { flags },
+          original: { project },
         },
       }) => (
         <div className="flex flex-col gap-2">
-          {flags.length > 2 ? (
+          {project.flags.length > 2 ? (
             <>
-              <Badge className="w-fit" key={flags[0].id}>
-                {flags[0].title}
+              <Badge
+                variant="accent"
+                className="w-40 rounded-md"
+                key={project.flags[0].id}
+              >
+                {project.flags[0].displayName}
               </Badge>
               <WithTooltip
                 side="right"
                 tip={
                   <ul className="flex list-disc flex-col gap-1 p-2 pl-1">
-                    {flags.slice(1).map((flag) => (
-                      <Badge className="w-fit" key={flag.id}>
-                        {flag.title}
+                    {project.flags.slice(1).map((flag) => (
+                      <Badge
+                        variant="accent"
+                        className="w-40 rounded-md"
+                        key={flag.id}
+                      >
+                        {flag.displayName}
                       </Badge>
                     ))}
                   </ul>
                 }
               >
-                <div className={cn(badgeVariants(), "w-fit font-normal")}>
-                  {flags.length - 1}+
+                <div
+                  className={cn(
+                    badgeVariants({ variant: "accent" }),
+                    "w-fit rounded-md font-normal",
+                  )}
+                >
+                  {project.flags.length - 1}+
                 </div>
               </WithTooltip>
             </>
           ) : (
-            flags.map((flag) => (
-              <Badge className="w-fit" key={flag.id}>
-                {flag.title}
+            project.flags.map((flag) => (
+              <Badge variant="accent" className="w-40 rounded-md" key={flag.id}>
+                {flag.displayName}
               </Badge>
             ))
           )}
@@ -142,31 +176,35 @@ export function useSupervisorProjectsColumns({
     },
     {
       id: "Keywords",
-      accessorFn: (row) => row.tags,
+      accessorFn: ({ project }) => project.tags,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Keywords" />
       ),
       filterFn: (row, columnId, value) => {
         const ids = value as string[];
-        const rowTags = row.getValue(columnId) as TagType[];
+        const rowTags = z.array(tagTypeSchema).parse(row.getValue(columnId));
         return rowTags.some((t) => ids.includes(t.id));
       },
       cell: ({
         row: {
-          original: { tags },
+          original: { project },
         },
       }) => (
         <div className="flex flex-col gap-2">
-          {tags.length > 2 ? (
+          {project.tags.length > 2 ? (
             <>
-              <Badge variant="outline" className="w-fit" key={tags[0].id}>
-                {tags[0].title}
+              <Badge
+                variant="outline"
+                className="w-fit"
+                key={project.tags[0].id}
+              >
+                {project.tags[0].title}
               </Badge>
               <WithTooltip
                 side="right"
                 tip={
                   <ul className="flex list-disc flex-col gap-1 p-2 pl-1">
-                    {tags.slice(1).map((tag) => (
+                    {project.tags.slice(1).map((tag) => (
                       <Badge variant="outline" className="w-fit" key={tag.id}>
                         {tag.title}
                       </Badge>
@@ -180,12 +218,12 @@ export function useSupervisorProjectsColumns({
                     "w-fit font-normal",
                   )}
                 >
-                  {tags.length - 1}+
+                  {project.tags.length - 1}+
                 </div>
               </WithTooltip>
             </>
           ) : (
-            tags.map((tag) => (
+            project.tags.map((tag) => (
               <Badge variant="outline" className="w-fit" key={tag.id}>
                 {tag.title}
               </Badge>
@@ -195,7 +233,7 @@ export function useSupervisorProjectsColumns({
       ),
     },
     {
-      accessorFn: (p) => p.preAllocatedStudentId,
+      accessorFn: ({ project }) => project.preAllocatedStudentId,
       id: "Student",
       header: ({ column }) => (
         <DataTableColumnHeader
@@ -206,76 +244,52 @@ export function useSupervisorProjectsColumns({
       ),
       cell: ({
         row: {
-          original: { allocatedStudents, preAllocatedStudentId },
+          original: { project, allocatedStudent },
         },
       }) => {
-        if (allocatedStudents.length > 0) {
-          return (
-            <div className=" flex w-28 flex-col items-start gap-1.5">
-              {allocatedStudents.map((student) => (
-                <Link
-                  key={student.id}
-                  className={cn(
-                    buttonVariants({ variant: "link" }),
-                    "flex items-center gap-2",
-                  )}
-                  href={`../${PAGES.allStudents.href}/${student.id}`}
-                >
-                  <span>{student.id}</span>
-                  {student.id === preAllocatedStudentId && (
-                    <WithTooltip tip={"This is a pre-allocated project"}>
-                      <div className="flex items-center justify-center">
-                        <CircleCheckSolidIcon className="h-4 w-4 fill-blue-500" />
-                      </div>
-                    </WithTooltip>
-                  )}
-                </Link>
-              ))}
-            </div>
-          );
-        }
-
-        if (preAllocatedStudentId) {
+        if (allocatedStudent) {
           return (
             <Link
-              className={buttonVariants({ variant: "link" })}
-              href={`../${PAGES.allStudents.href}/${preAllocatedStudentId}`}
+              className={cn(
+                buttonVariants({ variant: "link" }),
+                "items-center gap-2",
+              )}
+              href={`../${PAGES.allStudents.href}/${allocatedStudent.id}`}
             >
-              {preAllocatedStudentId}
+              <span>{allocatedStudent.id}</span>
+              {allocatedStudent.id === project.preAllocatedStudentId && (
+                <WithTooltip tip={"This is a pre-allocated project"}>
+                  <div className="flex items-center justify-center">
+                    <CircleCheckSolidIcon className="h-4 w-4 fill-blue-500" />
+                  </div>
+                </WithTooltip>
+              )}
             </Link>
           );
         }
       },
-      filterFn: ({ original: p }, _, value) => {
-        const filters = [...value] as ("0" | "1" | "2" | "3")[];
-        if (filters.includes("3")) filters.push("1", "2");
-        const selectedFilters = new Set(filters) as Set<"0" | "1" | "2" | "3">; // selected filters
+      filterFn: ({ original: { project, allocatedStudent } }, _, value) => {
+        const filters = z.array(z.enum(ProjectAllocationStatus)).parse(value);
 
-        const allocationStatus: Set<"0" | "1" | "2" | "3"> = new Set(); // default to unallocated
+        const allocationStatus = new Set<ProjectAllocationStatus>(); // default to unallocated
 
-        if (!p.preAllocatedStudentId && p.allocatedStudents.length === 0) {
-          allocationStatus.add("0");
-        } else {
-          if (p.preAllocatedStudentId) {
-            allocationStatus.add("2");
-          }
-          if (p.allocatedStudents.length !== 0 && !p.preAllocatedStudentId) {
-            allocationStatus.add("1");
-          }
+        if (!project.preAllocatedStudentId && !allocatedStudent) {
+          allocationStatus.add(ProjectAllocationStatus.UNALLOCATED);
+        } else if (project.preAllocatedStudentId) {
+          allocationStatus.add(ProjectAllocationStatus.PRE_ALLOCATED);
+        } else if (!!allocatedStudent && !project.preAllocatedStudentId) {
+          allocationStatus.add(ProjectAllocationStatus.ALGORITHMIC);
         }
 
         return (
-          setIntersection(
-            Array.from(selectedFilters),
-            Array.from(allocationStatus),
-            (x) => x,
-          ).length > 0
+          setIntersection(filters, Array.from(allocationStatus), (x) => x)
+            .length > 0
         );
       },
     },
   ];
 
-  const actionsCol: ColumnDef<SupervisorProjectDto> = {
+  const actionsCol: ColumnDef<ProjectWithAllocation> = {
     id: "actions",
     header: ({ table }) => {
       const someSelected =
@@ -283,7 +297,7 @@ export function useSupervisorProjectsColumns({
 
       const selectedProjectIds = table
         .getSelectedRowModel()
-        .rows.map((e) => e.original.id);
+        .rows.map(({ original: { project } }) => project.id);
 
       if (someSelected && stageLt(stage, Stage.PROJECT_ALLOCATION)) {
         return (
@@ -327,7 +341,12 @@ export function useSupervisorProjectsColumns({
       }
       return <ActionColumnLabel />;
     },
-    cell: ({ row: { original: project }, table }) => {
+    cell: ({
+      row: {
+        original: { project },
+      },
+      table,
+    }) => {
       async function handleDelete() {
         await deleteProject(project.id).then(() => {
           table.toggleAllRowsSelected(false);

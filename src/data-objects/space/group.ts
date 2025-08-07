@@ -1,12 +1,16 @@
+import { type SubGroupDTO, type GroupDTO, type UserDTO } from "@/dto";
+
 import { Transformers as T } from "@/db/transformers";
-import { DB } from "@/db/types";
-import { SubGroupDTO, GroupDTO, UserDTO } from "@/dto";
+import { type DB } from "@/db/types";
+
 import { slugify } from "@/lib/utils/general/slugify";
 import { uniqueById } from "@/lib/utils/list-unique";
-import { GroupParams } from "@/lib/validations/params";
+import { type GroupParams } from "@/lib/validations/params";
+
 import { DataObject } from "../data-object";
-import { Institution } from "./institution";
 import { User } from "../user";
+
+import { Institution } from "./institution";
 
 export class AllocationGroup extends DataObject {
   public params: GroupParams;
@@ -99,7 +103,7 @@ export class AllocationGroup extends DataObject {
   }
 
   get institution() {
-    if (!this._institution) this._institution = new Institution(this.db);
+    this._institution ??= new Institution(this.db);
     return this._institution;
   }
 }

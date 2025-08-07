@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+
 import { type VariantProps } from "class-variance-authority";
 import { toast } from "sonner";
 import { v4 as uuid } from "uuid";
@@ -9,7 +10,7 @@ import { z } from "zod";
 import { CommandInput } from "@/components/ui/command";
 
 import { Autocomplete } from "./autocomplete";
-import { tagVariants } from "./tag";
+import { type tagVariants } from "./tag";
 import { TagList } from "./tag-list";
 
 export enum Delimiter {
@@ -22,10 +23,7 @@ type OmittedInputProps = Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
   "size" | "value"
 >;
-export const tagTypeSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-});
+export const tagTypeSchema = z.object({ id: z.string(), title: z.string() });
 export type TagType = z.infer<typeof tagTypeSchema>;
 
 export interface TagInputProps
@@ -106,7 +104,8 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>((props) => {
     if (
       delimiterList
         ? delimiterList.includes(e.key)
-        : e.key === delimiter || e.key === Delimiter.Enter
+        : // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+          e.key === delimiter || e.key === Delimiter.Enter
     ) {
       e.preventDefault();
       const newTagText = inputValue.trim();
@@ -137,7 +136,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>((props) => {
 
   const removeTag = (idToRemove: string) => {
     setTags(tags.filter((tag) => tag.id !== idToRemove));
-    onTagRemove?.(tags.find((tag) => tag.id === idToRemove)?.title || "");
+    onTagRemove?.(tags.find((tag) => tag.id === idToRemove)?.title ?? "");
   };
 
   const filteredAutocompleteOptions = autocompleteFilter
@@ -186,7 +185,7 @@ const TagInput = React.forwardRef<HTMLInputElement, TagInputProps>((props) => {
         <Autocomplete
           tags={tags}
           setTags={setTags}
-          autocompleteOptions={filteredAutocompleteOptions as TagType[]}
+          autocompleteOptions={filteredAutocompleteOptions}
           onTagAdd={onTagAdd}
         >
           <CommandInput

@@ -7,8 +7,8 @@ In async functions, you should destructure values before returning them. For exa
 > [!tip] OK:
 >
 > ```ts
-> const { parentInstanceId } = await instance.get();
-> return parentInstanceId;
+> const { displayName } = await instance.get();
+> return displayName;
 > ```
 
 Not this:
@@ -16,7 +16,7 @@ Not this:
 > [!tip] BAD:
 >
 > ```ts
-> return (await instance.get()).parentInstanceId;
+> return (await instance.get()).displayName;
 > ```
 
 You don't have to do this if you don't need the await. For example:

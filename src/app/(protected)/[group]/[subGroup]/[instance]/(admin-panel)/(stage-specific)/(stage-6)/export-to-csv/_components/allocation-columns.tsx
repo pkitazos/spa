@@ -1,17 +1,19 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
+
+import { INSTITUTION } from "@/config/institution";
 
 import { buttonVariants } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
-import { AllocationCsvData } from "@/lib/validations/allocation-csv-data";
+import { type AllocationCsvData } from "@/lib/validations/allocation-csv-data";
 
 export const columns: ColumnDef<AllocationCsvData>[] = [
   {
     id: "Project ID",
     accessorFn: (row) => row.project.id,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Project ID" canFilter />
+      <DataTableColumnHeader column={column} title="Project ID" />
     ),
     cell: ({
       row: {
@@ -26,10 +28,13 @@ export const columns: ColumnDef<AllocationCsvData>[] = [
     ),
   },
   {
-    id: "Student GUID",
+    id: `Student ${INSTITUTION.ID_NAME}`,
     accessorFn: (row) => row.student.id,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Student GUID" canFilter />
+      <DataTableColumnHeader
+        column={column}
+        title={`Student ${INSTITUTION.ID_NAME}`}
+      />
     ),
     cell: ({
       row: {
@@ -47,7 +52,7 @@ export const columns: ColumnDef<AllocationCsvData>[] = [
     id: "Student Name",
     accessorFn: (row) => row.student.name,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Student Name" canFilter />
+      <DataTableColumnHeader column={column} title="Student Name" />
     ),
     cell: ({
       row: {
@@ -65,11 +70,7 @@ export const columns: ColumnDef<AllocationCsvData>[] = [
     id: "Student Matric.",
     accessorFn: (row) => row.student.matric,
     header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title="Student Matric."
-        canFilter
-      />
+      <DataTableColumnHeader column={column} title="Student Matric." />
     ),
     cell: ({
       row: {
@@ -98,16 +99,16 @@ export const columns: ColumnDef<AllocationCsvData>[] = [
     }) => <p className="text-center">{student.email}</p>,
   },
   {
-    id: "Student Level",
-    accessorFn: (row) => row.student.level,
+    id: "Student Flag",
+    accessorFn: (row) => row.student.flag.id,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Student Level" />
+      <DataTableColumnHeader column={column} title="Student Flag" />
     ),
     cell: ({
       row: {
         original: { student },
       },
-    }) => <div className="text-center">{student.level}</div>,
+    }) => <div className="text-center">{student.flag.displayName}</div>,
   },
   {
     id: "Project Title",
@@ -125,20 +126,6 @@ export const columns: ColumnDef<AllocationCsvData>[] = [
     }) => <p className="line-clamp-6">{project.description}</p>,
   },
   {
-    id: "Project Special Technical Requirements",
-    accessorFn: (row) => row.project.specialTechnicalRequirements,
-    header: () => (
-      <div className="w-40 py-1">Project Special Technical Requirements</div>
-    ),
-    cell: ({
-      row: {
-        original: { project },
-      },
-    }) => (
-      <p className="line-clamp-6">{project.specialTechnicalRequirements}</p>
-    ),
-  },
-  {
     id: "Student Ranking",
     accessorFn: (row) => row.student.ranking,
     header: ({ column }) => (
@@ -151,10 +138,13 @@ export const columns: ColumnDef<AllocationCsvData>[] = [
     }) => <p className="text-center">{student.ranking}</p>,
   },
   {
-    id: "Supervisor GUID",
+    id: `Supervisor ${INSTITUTION.ID_NAME}`,
     accessorFn: (row) => row.supervisor.id,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Supervisor GUID" />
+      <DataTableColumnHeader
+        column={column}
+        title={`Supervisor ${INSTITUTION.ID_NAME}`}
+      />
     ),
     cell: ({
       row: {

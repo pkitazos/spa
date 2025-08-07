@@ -1,11 +1,16 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CopyIcon,
   CornerDownRightIcon,
   MoreHorizontalIcon as MoreIcon,
-  PenIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { z } from "zod";
+
+import { INSTITUTION } from "@/config/institution";
+import { PAGES } from "@/config/pages";
+
+import { type StudentDTO } from "@/dto";
 
 import { ExportCSVButton } from "@/components/export-csv";
 import { Badge } from "@/components/ui/badge";
@@ -25,13 +30,11 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { cn } from "@/lib/utils";
 import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
-import { StudentInviteDto } from "@/lib/validations/dto/student";
-import { PAGES } from "@/config/pages";
 
-export function useStudentInvitesColumns(): ColumnDef<StudentInviteDto>[] {
-  const selectCol = getSelectColumn<StudentInviteDto>();
+export function useStudentInvitesColumns(): ColumnDef<StudentDTO>[] {
+  const selectCol = getSelectColumn<StudentDTO>();
 
-  const baseCols: ColumnDef<StudentInviteDto>[] = [
+  const baseCols: ColumnDef<StudentDTO>[] = [
     {
       id: "Name",
       accessorFn: (s) => s.name,
@@ -52,14 +55,13 @@ export function useStudentInvitesColumns(): ColumnDef<StudentInviteDto>[] {
       ),
     },
     {
-      id: "GUID",
+      id: INSTITUTION.ID_NAME,
       accessorFn: (s) => s.id,
       header: ({ column }) => (
         <DataTableColumnHeader
           className="w-36"
           column={column}
-          title="GUID"
-          canFilter
+          title={INSTITUTION.ID_NAME}
         />
       ),
       cell: ({ row }) => (
@@ -77,26 +79,25 @@ export function useStudentInvitesColumns(): ColumnDef<StudentInviteDto>[] {
       ),
     },
     {
-      id: "Level",
-      accessorFn: ({ level }) => level,
+      id: "Flag",
+      accessorFn: ({ flag }) => flag.displayName,
       header: ({ column }) => (
-        <DataTableColumnHeader className="w-20" column={column} title="Level" />
+        <DataTableColumnHeader className="w-20" column={column} title="Flag" />
       ),
       cell: ({
         row: {
-          original: { level },
+          original: { flag },
         },
       }) => (
         <div className="grid w-20 place-items-center">
-          <Badge variant="accent">{level}</Badge>
+          <Badge variant="accent" className="rounded-md">
+            {flag.displayName}
+          </Badge>
         </div>
       ),
       filterFn: (row, columnId, value) => {
-        const selectedFilters = value as ("4" | "5")[];
-        const rowValue = row.getValue(columnId) as 4 | 5;
-        console.log({ selectedFilters });
-        const studentLevel = rowValue.toString() as "4" | "5";
-        return selectedFilters.includes(studentLevel);
+        const selectedFilters = z.array(z.string()).parse(value);
+        return selectedFilters.includes(row.getValue<string>(columnId));
       },
     },
     {
@@ -125,7 +126,7 @@ export function useStudentInvitesColumns(): ColumnDef<StudentInviteDto>[] {
         ),
       filterFn: (row, columnId, value) => {
         const selectedFilters = value as ("joined" | "invited")[];
-        const rowValue = row.getValue(columnId) as boolean;
+        const rowValue = row.getValue(columnId);
         const joined = rowValue ? "joined" : "invited";
         return selectedFilters.includes(joined);
       },
@@ -226,15 +227,7 @@ export function useStudentInvitesColumns(): ColumnDef<StudentInviteDto>[] {
                   <span>View student details</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="group/item">
-                <Link
-                  className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./${PAGES.allStudents.href}/${id}?edit=true`}
-                >
-                  <PenIcon className="h-4 w-4" />
-                  <span>Edit student details</span>
-                </Link>
-              </DropdownMenuItem>
+              {/* // TODO: make the actual email be click-copyable instead */}
               <DropdownMenuItem className="group/item">
                 <button
                   className="flex items-center gap-2 text-sm text-primary underline-offset-4 group-hover/item:underline hover:underline"

@@ -27,7 +27,7 @@ model Algorithm {
   allocationGroupId    String             @map("allocation_group_id")
   allocationSubGroupId String             @map("allocation_sub_group_id")
   allocationInstanceId String             @map("allocation_instance_id")
-  AllocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade)
+  AllocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "algorithm_instance")
 
   @@map("algorithm")
 }
@@ -52,8 +52,8 @@ model MatchingResult {
   allocationInstanceId String             @map("allocation_instance_id")
   algorithmId          String             @unique @map("algorithm_config_id")
   // ---
-  allocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "allocation_instance")
-  algorithm            Algorithm          @relation(fields: [algorithmId], references: [id], map: "algorithm")
+  allocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "matching_instance")
+  algorithm            Algorithm          @relation(fields: [algorithmId], references: [id], onDelete: Cascade, map: "matching_algorithm")
 
   @@map("matching_result")
 }
@@ -63,16 +63,16 @@ model MatchingPair {
   projectId            String             @map("project_id")
   studentRanking       Int                @map("student_ranking")
   // ---
-  student              StudentDetails     @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade)
-  project              Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  student              StudentDetails     @relation(fields: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [userId, allocationGroupId, allocationSubGroupId, allocationInstanceId], onDelete: Cascade, map: "matching_pair_student")
+  project              Project            @relation(fields: [projectId], references: [id], onDelete: Cascade, map: "matching_pair_project")
   // ---
   matchingResultId     String             @map("matching_result_id")
   allocationGroupId    String             @map("allocation_group_id")
   allocationSubGroupId String             @map("allocation_sub_group_id")
   allocationInstanceId String             @map("allocation_instance_id")
   // ---
-  allocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "allocation_instance")
-  matchingResult       MatchingResult     @relation(fields: [matchingResultId], references: [id], onDelete: Cascade)
+  allocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "matching_pair_instance")
+  matchingResult       MatchingResult     @relation(fields: [matchingResultId], references: [id], onDelete: Cascade, map: "matching_pair_matching")
 
   @@id([userId, matchingResultId], name: "matchingPairId")
   @@map("matching_pair")

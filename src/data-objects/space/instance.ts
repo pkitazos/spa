@@ -1,41 +1,56 @@
 import { PAGES } from "@/config/pages";
 import { ADMIN_TABS_BY_STAGE } from "@/config/side-panel-tabs/admin-tabs-by-stage";
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
+
+import {
+  type UnitOfAssessmentDTO,
+  type AssessmentCriterionDTO,
+  type FlagDTO,
+  type InstanceDTO,
+  type InstanceDisplayData,
+  type AlgorithmDTO,
+  type TagDTO,
+  type ProjectDTO,
+  type SupervisorDTO,
+  type UserDTO,
+  type StudentDTO,
+  type ReaderDTO,
+} from "@/dto";
+
 import { collectMatchingData } from "@/db/transactions/collect-matching-data";
 import { Transformers as T } from "@/db/transformers";
-import { DB, New } from "@/db/types";
 import {
-  UnitOfAssessmentDTO,
-  AssessmentCriterionDTO,
-  FlagDTO,
-  InstanceDTO,
-  InstanceDisplayData,
-  AlgorithmDTO,
-  TagDTO,
-  ProjectDTO,
-  SupervisorDTO,
-  UserDTO,
-  StudentDTO,
-  ReaderDTO,
-  NewUnitOfAssessmentDTO,
-} from "@/dto";
+  type DB,
+  Stage,
+  type New,
+  AllocationMethod,
+  type PreferenceType,
+} from "@/db/types";
+
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { setDiff } from "@/lib/utils/general/set-difference";
-import { RandomAllocationDto } from "@/lib/validations/allocation/data-table-dto";
-import { InstanceParams } from "@/lib/validations/params";
-import { SupervisorProjectSubmissionDetails } from "@/lib/validations/supervisor-project-submission-details";
-import { TabType } from "@/lib/validations/tabs";
-import { Stage } from "@prisma/client";
+import { nubsById } from "@/lib/utils/list-unique";
+import { type InstanceParams } from "@/lib/validations/params";
+import { type TabType } from "@/lib/validations/tabs";
 
-import { MatchingAlgorithm } from "../matching-algorithm";
-import { Project } from "..";
 import { DataObject } from "../data-object";
+import { MatchingAlgorithm } from "../matching-algorithm";
+import { HttpMatchingService } from "@/lib/services/matching";
+import {
+  StudentProjectAllocationData,
+  type StudentProjectAllocationDTO,
+} from "../student-project-allocation-data";
+import { User, type Student, type Supervisor } from "../user";
+
+import { Project } from "..";
+
 import { AllocationGroup } from "./group";
 import { AllocationSubGroup } from "./sub-group";
-import { User, Student, Supervisor } from "../user";
-import { StudentProjectAllocationData } from "../StudentProjectAllocationData";
 
 export const byTitle = <T extends { title: string }>({ title }: T) => title;
+export const byDisplayName = <T extends { displayName: string }>({
+  displayName,
+}: T) => displayName;
 
 export class AllocationInstance extends DataObject {
   async getUnitOfAssessment(
@@ -46,7 +61,7 @@ export class AllocationInstance extends DataObject {
         where: { id: unitOfAssessmentId },
         include: { flag: true, assessmentCriteria: true },
       })
-      .then(T.toUnitOfAssessmentDTO);
+      .then((x) => T.toUnitOfAssessmentDTO(x));
   }
 
   public async getCriteria(
@@ -57,7 +72,7 @@ export class AllocationInstance extends DataObject {
       orderBy: { layoutIndex: "asc" },
     });
 
-    return data.map(T.toAssessmentCriterionDTO);
+    return data.map((x) => T.toAssessmentCriterionDTO(x));
   }
 
   public async getFlagsWithAssessmentDetails(): Promise<
@@ -74,7 +89,9 @@ export class AllocationInstance extends DataObject {
 
     return flagData.map((f) => ({
       ...T.toFlagDTO(f),
-      unitsOfAssessment: f.unitsOfAssessment.map(T.toUnitOfAssessmentDTO),
+      unitsOfAssessment: f.unitsOfAssessment.map((x) =>
+        T.toUnitOfAssessmentDTO(x),
+      ),
     }));
   }
 
@@ -120,7 +137,7 @@ export class AllocationInstance extends DataObject {
     if (refetch || !this._data) {
       this._data = await this.db.allocationInstance
         .findFirstOrThrow({ where: toInstanceId(this.params) })
-        .then(T.toAllocationInstanceDTO);
+        .then((x) => T.toAllocationInstanceDTO(x));
     }
 
     return this._data!;
@@ -130,37 +147,6 @@ export class AllocationInstance extends DataObject {
     return await StudentProjectAllocationData.fromDB(this.db, this.params);
   }
 
-  public async getParentInstance(): Promise<AllocationInstance> {
-    const { parentInstanceId } = await this.get();
-
-    if (!parentInstanceId) throw new Error("No parent instance found");
-
-    return new AllocationInstance(this.db, {
-      ...this.params,
-      instance: parentInstanceId,
-    });
-  }
-
-  public async getChildInstance(): Promise<AllocationInstance | undefined> {
-    const childData = await this.db.allocationInstance.findFirst({
-      where: {
-        parentInstanceId: this.params.instance,
-        allocationGroupId: this.params.group,
-        allocationSubGroupId: this.params.subGroup,
-      },
-    });
-
-    if (!childData) return undefined;
-
-    const childInstance = new AllocationInstance(this.db, {
-      ...this.params,
-      instance: childData.id,
-    });
-
-    childInstance._data = T.toAllocationInstanceDTO(childData);
-
-    return childInstance;
-  }
   // ---------------------------------------------------------------------------
   public async createAlgorithm(
     data: Omit<AlgorithmDTO, "id">,
@@ -179,12 +165,12 @@ export class AllocationInstance extends DataObject {
           upperBoundModifier: data.upperBoundModifier,
         },
       })
-      .then(T.toAlgorithmDTO);
+      .then((x) => T.toAlgorithmDTO(x));
   }
 
-  public async getMatchingData() {
+  public async getMatchingData(algorithm: MatchingAlgorithm) {
     const instanceData = await this.get();
-    return await collectMatchingData(this.db, instanceData);
+    return await collectMatchingData(this.db, instanceData, algorithm);
   }
 
   public async getAllAlgorithms(): Promise<AlgorithmDTO[]> {
@@ -193,11 +179,12 @@ export class AllocationInstance extends DataObject {
       orderBy: { createdAt: "asc" },
     });
 
-    return algs.map(T.toAlgorithmDTO);
+    return algs.map((x) => T.toAlgorithmDTO(x));
   }
 
   public getAlgorithm(algConfigId: string): MatchingAlgorithm {
-    return new MatchingAlgorithm(this.db, { algConfigId, ...this.params });
+    const matchingService = new HttpMatchingService();
+    return new MatchingAlgorithm(this.db, { algConfigId, ...this.params }, matchingService);
   }
 
   // TODO review the nullish behaviour here
@@ -205,7 +192,8 @@ export class AllocationInstance extends DataObject {
     const { selectedAlgConfigId: algConfigId } = await this.get();
 
     if (!algConfigId) return undefined;
-    return new MatchingAlgorithm(this.db, { algConfigId, ...this.params });
+    const matchingService = new HttpMatchingService();
+    return new MatchingAlgorithm(this.db, { algConfigId, ...this.params }, matchingService);
   }
 
   // ---------------------------------------------------------------------------
@@ -218,12 +206,25 @@ export class AllocationInstance extends DataObject {
   }
 
   public async getProjectDetails(): Promise<
-    { project: ProjectDTO; supervisor: SupervisorDTO; allocatedTo: string[] }[]
+    {
+      project: ProjectDTO;
+      supervisor: SupervisorDTO;
+      allocatedStudent?: StudentDTO;
+    }[]
   > {
     const projectData = await this.db.project.findMany({
       where: expand(this.params),
       include: {
-        studentAllocations: true,
+        studentAllocations: {
+          include: {
+            student: {
+              include: {
+                userInInstance: { include: { user: true } },
+                studentFlag: true,
+              },
+            },
+          },
+        },
         supervisor: {
           include: { userInInstance: { include: { user: true } } },
         },
@@ -236,8 +237,49 @@ export class AllocationInstance extends DataObject {
       project: T.toProjectDTO(p),
       supervisor: T.toSupervisorDTO(p.supervisor),
       allocatedTo: p.studentAllocations.map((a) => a.userId),
+      allocatedStudent: !!p.studentAllocations.at(0)
+        ? T.toStudentDTO(p.studentAllocations[0].student)
+        : undefined,
     }));
   }
+
+  public async getProjectAllocations(): Promise<
+    {
+      project: ProjectDTO;
+      supervisor: SupervisorDTO;
+      student: StudentDTO;
+      method: AllocationMethod;
+    }[]
+  > {
+    const data = await this.db.studentProjectAllocation.findMany({
+      where: expand(this.params),
+      include: {
+        project: {
+          include: {
+            supervisor: {
+              include: { userInInstance: { include: { user: true } } },
+            },
+            flagsOnProject: { include: { flag: true } },
+            tagsOnProject: { include: { tag: true } },
+          },
+        },
+        student: {
+          include: {
+            userInInstance: { include: { user: true } },
+            studentFlag: true,
+          },
+        },
+      },
+    });
+
+    return data.map((a) => ({
+      project: T.toProjectDTO(a.project),
+      supervisor: T.toSupervisorDTO(a.project.supervisor),
+      student: T.toStudentDTO(a.student),
+      method: a.allocationMethod,
+    }));
+  }
+
   /**
    * Creates a userInInstance object linking the specified user to this instance;
    * Should not be run on its own - follow with appropriate calls to linkSupervisor, linkStudent, or linkReader
@@ -294,7 +336,7 @@ export class AllocationInstance extends DataObject {
       data: newStudents.map((s) => ({
         ...expand(this.params),
         userId: s.id,
-        studentLevel: s.level,
+        flagId: s.flag.id,
       })),
       skipDuplicates: true,
     });
@@ -306,30 +348,70 @@ export class AllocationInstance extends DataObject {
       include: { userInInstance: { include: { user: true } } },
     });
 
-    return supervisorData.map(T.toSupervisorDTO);
+    return supervisorData.map((x) => T.toSupervisorDTO(x));
   }
 
-  public async getSupervisorProjectDetails() {
-    const supervisors = await this.db.supervisorDetails.findMany({
+  public async getSupervisorProjectDetails(): Promise<
+    { supervisor: SupervisorDTO; projects: ProjectDTO[] }[]
+  > {
+    const supervisorData = await this.db.supervisorDetails.findMany({
       where: expand(this.params),
       include: {
         userInInstance: { include: { user: true } },
-        projects: { include: { studentAllocations: true } },
+        projects: {
+          include: {
+            flagsOnProject: { include: { flag: true } },
+            tagsOnProject: { include: { tag: true } },
+            studentAllocations: true,
+          },
+        },
       },
     });
 
-    return supervisors.map(({ userInInstance, ...s }) => ({
-      institutionId: userInInstance.user.id,
-      fullName: userInInstance.user.name,
-      email: userInInstance.user.email,
-      joined: userInInstance.joined,
-      projectTarget: s.projectAllocationTarget,
-      projectUpperQuota: s.projectAllocationUpperBound,
-      projects: s.projects.map((p) => ({
-        id: p.id,
-        title: p.title,
-        allocatedTo: p.studentAllocations.map((a) => a.userId),
-      })),
+    return supervisorData.map((s) => ({
+      supervisor: T.toSupervisorDTO(s),
+      projects: s.projects.map((p) => T.toProjectDTO(p)),
+    }));
+  }
+
+  public async getSupervisorAllocationDetails(): Promise<
+    {
+      supervisor: SupervisorDTO;
+      allocations: { project: ProjectDTO; student: StudentDTO }[];
+    }[]
+  > {
+    const supervisorData = await this.db.supervisorDetails.findMany({
+      where: expand(this.params),
+      include: {
+        userInInstance: { include: { user: true } },
+        projects: {
+          where: { studentAllocations: { some: {} } },
+          include: {
+            flagsOnProject: { include: { flag: true } },
+            tagsOnProject: { include: { tag: true } },
+            studentAllocations: {
+              include: {
+                student: {
+                  include: {
+                    studentFlag: true,
+                    userInInstance: { include: { user: true } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return supervisorData.map((s) => ({
+      supervisor: T.toSupervisorDTO(s),
+      allocations: s.projects.flatMap((p) =>
+        p.studentAllocations.map((a) => ({
+          project: T.toProjectDTO(p),
+          student: T.toStudentDTO(a.student),
+        })),
+      ),
     }));
   }
 
@@ -357,25 +439,33 @@ export class AllocationInstance extends DataObject {
       include: { userInInstance: { include: { user: true } } },
     });
 
-    return readers.map(T.toReaderDTO);
+    return readers.map((x) => T.toReaderDTO(x));
   }
 
-  public async getStudentPreferenceDetails() {
-    const students = await this.db.studentDetails.findMany({
+  // TODO: standardise return type
+  public async getStudentPreferenceDetails(): Promise<
+    {
+      student: StudentDTO;
+      draftPreferences: {
+        projectId: string;
+        score: number;
+        type: PreferenceType;
+      }[];
+      submittedPreferences: { projectId: string; rank: number }[];
+    }[]
+  > {
+    const studentData = await this.db.studentDetails.findMany({
       where: expand(this.params),
       include: {
         userInInstance: { include: { user: true } },
         draftPreferences: true,
         submittedPreferences: true,
+        studentFlag: true,
       },
     });
 
-    return students.map((u) => ({
-      institutionId: u.userId,
-      fullName: u.userInInstance.user.name,
-      email: u.userInInstance.user.email,
-      joined: u.userInInstance.joined,
-      level: u.studentLevel,
+    return studentData.map((u) => ({
+      student: T.toStudentDTO(u),
       draftPreferences: u.draftPreferences,
       submittedPreferences: u.submittedPreferences,
     }));
@@ -387,7 +477,7 @@ export class AllocationInstance extends DataObject {
     const students = await this.db.studentDetails.findMany({
       where: expand(this.params),
       include: {
-        studentFlags: { include: { flag: true } },
+        studentFlag: true,
         userInInstance: { include: { user: true } },
         projectAllocation: {
           include: {
@@ -410,6 +500,76 @@ export class AllocationInstance extends DataObject {
     }));
   }
 
+  public async getStudentAllocation(
+    studentId: string,
+  ): Promise<StudentProjectAllocationDTO | undefined> {
+    const allocation = await this.db.studentProjectAllocation.findFirst({
+      where: { userId: studentId, ...expand(this.params) },
+      include: {
+        project: {
+          include: {
+            supervisor: {
+              include: { userInInstance: { include: { user: true } } },
+            },
+            flagsOnProject: { include: { flag: true } },
+            tagsOnProject: { include: { tag: true } },
+          },
+        },
+        student: {
+          include: {
+            userInInstance: { include: { user: true } },
+            studentFlag: true,
+          },
+        },
+      },
+    });
+
+    if (!allocation) return undefined;
+
+    return {
+      student: T.toStudentDTO(allocation.student),
+      project: T.toProjectDTO(allocation.project),
+      supervisor: T.toSupervisorDTO(allocation.project.supervisor),
+      ranking: allocation.studentRanking,
+      allocationMethod: allocation.allocationMethod,
+    };
+  }
+
+  public async getProjectAllocation(
+    projectId: string,
+  ): Promise<StudentDTO | undefined> {
+    const allocation = await this.db.studentProjectAllocation.findFirst({
+      where: { projectId, ...expand(this.params) },
+      include: {
+        student: {
+          include: {
+            studentFlag: true,
+            userInInstance: { include: { user: true } },
+          },
+        },
+      },
+    });
+
+    if (!allocation) return undefined;
+
+    return T.toStudentDTO(allocation.student);
+  }
+
+  public async createManualAllocation(
+    studentId: string,
+    projectId: string,
+  ): Promise<void> {
+    await this.db.studentProjectAllocation.create({
+      data: {
+        ...expand(this.params),
+        userId: studentId,
+        projectId,
+        studentRanking: 1,
+        allocationMethod: AllocationMethod.MANUAL,
+      },
+    });
+  }
+
   public async getSummaryResults() {
     const algorithmData = await this.db.algorithm.findMany({
       where: expand(this.params),
@@ -427,32 +587,27 @@ export class AllocationInstance extends DataObject {
 
   public async getStudentSuitableProjects(
     userId: string,
-  ): Promise<{ id: string; title: string; flag: FlagDTO[] }[]> {
-    const { studentFlags } = await this.db.studentDetails.findFirstOrThrow({
+  ): Promise<ProjectDTO[]> {
+    const { studentFlag } = await this.db.studentDetails.findFirstOrThrow({
       where: { ...expand(this.params), userId },
-      include: { studentFlags: true },
+      include: { studentFlag: true },
     });
 
     const suitableProjects = await this.db.project.findMany({
       where: {
         ...expand(this.params),
-        flagsOnProject: {
-          some: { flagId: { in: studentFlags.map((f) => f.flagId) } },
-        },
+        flagsOnProject: { some: { flagId: studentFlag.id } },
       },
       include: {
-        flagsOnProject: { select: { flag: true } },
+        flagsOnProject: { include: { flag: true } },
+        tagsOnProject: { include: { tag: true } },
         studentAllocations: true,
       },
     });
 
     return suitableProjects
       .filter((p) => p.studentAllocations.length === 0)
-      .map((p) => ({
-        id: p.id,
-        title: p.title,
-        flag: p.flagsOnProject.map((f) => T.toFlagDTO(f.flag)),
-      }));
+      .map(T.toProjectDTO);
   }
 
   public async getSubmittedPreferences() {
@@ -477,7 +632,7 @@ export class AllocationInstance extends DataObject {
     const studentData = await this.db.studentDetails.findMany({
       where: { ...expand(this.params), projectAllocation: { is: null } },
       include: {
-        studentFlags: { include: { flag: true } },
+        studentFlag: true,
         userInInstance: { include: { user: true } },
       },
     });
@@ -485,50 +640,40 @@ export class AllocationInstance extends DataObject {
     return studentData.map((s) => T.toStudentDTO(s));
   }
 
-  // BREAKING
-  public async getStudentsForRandomAllocation(): Promise<
-    RandomAllocationDto[]
-  > {
-    const { selectedAlgConfigId } = await this.get();
-
-    const students = await this.db.studentDetails
-      .findMany({
-        where: expand(this.params),
-        include: {
-          userInInstance: { select: { user: true } },
-          projectAllocation: { select: { project: true } },
+  public async getAllocatedStudentsByMethods(
+    methods: AllocationMethod[],
+  ): Promise<{ student: StudentDTO; project: ProjectDTO }[]> {
+    const studentData = await this.db.studentProjectAllocation.findMany({
+      where: { ...expand(this.params), allocationMethod: { in: methods } },
+      include: {
+        student: {
+          include: {
+            userInInstance: { include: { user: true } },
+            studentFlag: true,
+          },
         },
-      })
-      .then((d) =>
-        d.map((s) => ({
-          student: { ...s.userInInstance.user, level: s.studentLevel },
-          project: s.projectAllocation?.project
-            ? {
-                id: s.projectAllocation?.project.id,
-                title: s.projectAllocation?.project.title,
-              }
-            : undefined,
-        })),
-      );
+        project: {
+          include: {
+            flagsOnProject: { include: { flag: true } },
+            tagsOnProject: { include: { tag: true } },
+          },
+        },
+      },
+    });
 
-    const matchedStudentIds = await this.db.matchingResult
-      .findFirstOrThrow({
-        where: { ...expand(this.params), algorithmId: selectedAlgConfigId },
-        include: { matching: true },
-      })
-      .then((x) => new Set(x.matching.map((m) => m.userId)));
-
-    return students.filter((s) => !matchedStudentIds.has(s.student.id));
+    return studentData.map((s) => ({
+      student: T.toStudentDTO(s.student),
+      project: T.toProjectDTO(s.project),
+    }));
   }
 
   get group() {
-    if (!this._group) this._group = new AllocationGroup(this.db, this.params);
+    this._group ??= new AllocationGroup(this.db, this.params);
     return this._group;
   }
 
   get subGroup() {
-    if (!this._subgroup)
-      this._subgroup = new AllocationSubGroup(this.db, this.params);
+    this._subgroup ??= new AllocationSubGroup(this.db, this.params);
     return this._subgroup;
   }
 
@@ -595,7 +740,7 @@ export class AllocationInstance extends DataObject {
     const students = await this.db.studentDetails.findMany({
       where: expand(this.params),
       include: {
-        studentFlags: { include: { flag: true } },
+        studentFlag: true,
         userInInstance: { include: { user: true } },
       },
     });
@@ -605,21 +750,8 @@ export class AllocationInstance extends DataObject {
 
   // --- side panel tab methods
   public async getAdminTabs() {
-    const { stage, parentInstanceId } = await this.get();
-    const stageTabs = ADMIN_TABS_BY_STAGE[stage];
-
-    if (stage === Stage.ALLOCATION_PUBLICATION) {
-      if (parentInstanceId) {
-        return stageTabs.toSpliced(3, 0, PAGES.mergeInstance);
-      }
-
-      const notForked = !(await this.getChildInstance());
-      if (notForked) {
-        return stageTabs.toSpliced(3, 0, PAGES.forkInstance);
-      }
-    }
-
-    return stageTabs;
+    const { stage } = await this.get();
+    return ADMIN_TABS_BY_STAGE[stage];
   }
 
   public async getStudentTabs(canStudentBid: boolean) {
@@ -648,37 +780,36 @@ export class AllocationInstance extends DataObject {
     const { stage, supervisorAllocationAccess } = await this.get();
 
     const allocationsTab = supervisorAllocationAccess
-      ? [PAGES.myAllocations]
+      ? [PAGES.mySupervisions]
       : [];
 
     const tabs = {
       [Stage.SETUP]: [],
-      [Stage.PROJECT_SUBMISSION]: [PAGES.myProjects, PAGES.newProject],
-      [Stage.STUDENT_BIDDING]: [PAGES.myProjects, PAGES.newProject],
-      [Stage.PROJECT_ALLOCATION]: [PAGES.myProjects],
-      [Stage.ALLOCATION_ADJUSTMENT]: [PAGES.myProjects],
+      [Stage.PROJECT_SUBMISSION]: [PAGES.myProposedProjects, PAGES.newProject],
+      [Stage.STUDENT_BIDDING]: [PAGES.myProposedProjects, PAGES.newProject],
+      [Stage.PROJECT_ALLOCATION]: [PAGES.myProposedProjects],
+      [Stage.ALLOCATION_ADJUSTMENT]: [PAGES.myProposedProjects],
       [Stage.ALLOCATION_PUBLICATION]: [
-        PAGES.myProjects,
-        PAGES.myMarking,
+        PAGES.myProposedProjects,
         ...allocationsTab,
       ],
       [Stage.READER_BIDDING]: [
-        PAGES.myProjects,
+        PAGES.myProposedProjects,
         ...allocationsTab,
         PAGES.myMarking,
       ],
       [Stage.READER_ALLOCATION]: [
-        PAGES.myProjects,
+        PAGES.myProposedProjects,
         ...allocationsTab,
         PAGES.myMarking,
       ],
       [Stage.MARK_SUBMISSION]: [
-        PAGES.myProjects,
+        PAGES.myProposedProjects,
         ...allocationsTab,
         PAGES.myMarking,
       ],
       [Stage.GRADE_PUBLICATION]: [
-        PAGES.myProjects,
+        PAGES.myProposedProjects,
         ...allocationsTab,
         PAGES.myMarking,
       ],
@@ -689,7 +820,13 @@ export class AllocationInstance extends DataObject {
 
   // ---
   public async getSupervisorSubmissionDetails(): Promise<
-    SupervisorProjectSubmissionDetails[]
+    {
+      supervisor: SupervisorDTO;
+      submittedProjectsCount: number;
+      allocatedCount: number;
+      submissionTarget: number;
+      targetMet: boolean;
+    }[]
   > {
     const data = await this.db.supervisorDetails.findMany({
       where: expand(this.params),
@@ -700,22 +837,22 @@ export class AllocationInstance extends DataObject {
       orderBy: { userId: "asc" },
     });
 
-    return data.map(({ projects, projectAllocationTarget, ...s }) => {
+    return data.map(({ projects, ...s }) => {
       const allocatedCount = projects
         .map((p) => p.studentAllocations.length)
         .reduce((a, b) => a + b, 0);
 
+      const submissionTarget = computeProjectSubmissionTarget(
+        s.projectAllocationTarget,
+        allocatedCount,
+      );
+
       return {
-        userId: s.userInInstance.user.id,
-        name: s.userInInstance.user.name,
-        email: s.userInInstance.user.email,
-        projectAllocationTarget,
+        supervisor: T.toSupervisorDTO(s),
         allocatedCount,
         submittedProjectsCount: projects.length,
-        submissionTarget: computeProjectSubmissionTarget(
-          projectAllocationTarget,
-          allocatedCount,
-        ),
+        submissionTarget,
+        targetMet: projects.length >= submissionTarget,
       };
     });
   }
@@ -776,7 +913,10 @@ export class AllocationInstance extends DataObject {
       include: { flag: true },
     });
 
-    return flagData.map((f) => T.toFlagDTO(f.flag));
+    return flagData
+      .map((f) => T.toFlagDTO(f.flag))
+      .filter(nubsById)
+      .sort((a, b) => a.displayName.localeCompare(b.displayName));
   }
 
   public async getTagsOnProjects(): Promise<TagDTO[]> {
@@ -785,7 +925,10 @@ export class AllocationInstance extends DataObject {
       include: { tag: true },
     });
 
-    return tagData.map(({ tag }) => T.toTagDTO(tag));
+    return tagData
+      .map(({ tag }) => T.toTagDTO(tag))
+      .filter(nubsById)
+      .sort((a, b) => a.title.localeCompare(b.title));
   }
 
   public getProject(projectId: string): Project {
@@ -809,7 +952,7 @@ export class AllocationInstance extends DataObject {
       },
     });
 
-    return projectData.map(T.toProjectDTO);
+    return projectData.map((x) => T.toProjectDTO(x));
   }
 
   public async edit({
@@ -821,7 +964,7 @@ export class AllocationInstance extends DataObject {
       InstanceDTO,
       "stage" | "supervisorAllocationAccess" | "studentAllocationAccess"
     >;
-    flags: (New<FlagDTO> & { unitsOfAssessment: NewUnitOfAssessmentDTO[] })[];
+    flags: FlagDTO[];
     tags: New<TagDTO>[];
   }) {
     const currentInstanceFlags = await this.db.flag.findMany({
@@ -830,8 +973,8 @@ export class AllocationInstance extends DataObject {
 
     const newInstanceFlags = setDiff(
       flags,
-      currentInstanceFlags as New<FlagDTO>[],
-      byTitle,
+      currentInstanceFlags,
+      byDisplayName,
     );
 
     const currentInstanceTags = await this.db.tag.findMany({
@@ -846,7 +989,7 @@ export class AllocationInstance extends DataObject {
     ).map(byTitle);
 
     await this.db.$transaction(async (tx) => {
-      await this.db.allocationInstance.update({
+      await tx.allocationInstance.update({
         where: { instanceId: toInstanceId(this.params) },
         data: {
           projectSubmissionDeadline: instance.projectSubmissionDeadline,
@@ -866,10 +1009,11 @@ export class AllocationInstance extends DataObject {
         },
       });
 
-      await this.db.flag.createMany({
+      await tx.flag.createMany({
         data: newInstanceFlags.map((f) => ({
           ...expand(this.params),
-          title: f.title,
+          id: f.id,
+          displayName: f.displayName,
           description: f.description,
         })),
         skipDuplicates: true,
@@ -879,53 +1023,55 @@ export class AllocationInstance extends DataObject {
         where: expand(this.params),
       });
 
-      const flagTitleToId = flagData.reduce(
-        (acc, val) => ({ ...acc, [val.title]: val.id }),
+      const _flagDisplayNameToId = flagData.reduce(
+        (acc, val) => ({ ...acc, [val.displayName]: val.id }),
         {} as Record<string, string>,
       );
 
-      const units = await tx.unitOfAssessment.createManyAndReturn({
-        data: flags.flatMap((f) =>
-          f.unitsOfAssessment.map((a) => ({
-            ...expand(this.params),
-            flagId: flagTitleToId[f.title],
-            title: a.title,
-            weight: a.weight,
-            studentSubmissionDeadline: a.studentSubmissionDeadline,
-            markerSubmissionDeadline: a.markerSubmissionDeadline,
-            allowedMarkerTypes: a.allowedMarkerTypes,
-          })),
-        ),
-      });
+      // const units = await tx.unitOfAssessment.createManyAndReturn({
+      //   data: flags.flatMap((f) =>
+      //     f.unitsOfAssessment.map((a) => ({
+      //       ...expand(this.params),
+      //       flagId: flagDisplayNameToId[f.displayName],
+      //       title: a.title,
+      //       weight: a.weight,
+      //       studentSubmissionDeadline: a.studentSubmissionDeadline,
+      //       markerSubmissionDeadline: a.markerSubmissionDeadline,
+      //       allowedMarkerTypes: a.allowedMarkerTypes,
+      //     })),
+      //   ),
+      // });
 
-      const unitTitleToId = units.reduce(
-        (acc, val) => ({ ...acc, [`${val.flagId}${val.title}`]: val.id }),
-        {} as Record<string, string>,
-      );
+      // const unitTitleToId = units.reduce(
+      //   (acc, val) => ({ ...acc, [`${val.flagId}${val.title}`]: val.id }),
+      //   {} as Record<string, string>,
+      // );
 
-      await tx.assessmentCriterion.createMany({
-        data: flags.flatMap((f) =>
-          f.unitsOfAssessment.flatMap((u) =>
-            u.components.map((c) => ({
-              unitOfAssessmentId:
-                unitTitleToId[`${flagTitleToId[f.title]}${u.title}`],
-              title: c.title,
-              description: c.description,
-              weight: c.weight,
-              layoutIndex: c.layoutIndex,
-            })),
-          ),
-        ),
-      });
+      // await tx.assessmentCriterion.createMany({
+      //   data: flags.flatMap((f) =>
+      //     f.unitsOfAssessment.flatMap((u) =>
+      //       u.components.map((c) => ({
+      //         unitOfAssessmentId:
+      //           unitTitleToId[
+      //             `${flagDisplayNameToId[f.displayName]}${u.title}`
+      //           ],
+      //         title: c.title,
+      //         description: c.description,
+      //         weight: c.weight,
+      //         layoutIndex: c.layoutIndex,
+      //       })),
+      //     ),
+      //   ),
+      // });
 
-      await this.db.tag.deleteMany({
+      await tx.tag.deleteMany({
         where: {
           ...expand(this.params),
           title: { in: staleInstanceTagTitles },
         },
       });
 
-      await this.db.tag.createMany({
+      await tx.tag.createMany({
         data: newInstanceTags.map((t) => ({
           ...expand(this.params),
           title: t.title,
@@ -1057,12 +1203,9 @@ export class AllocationInstance extends DataObject {
   }
 
   public async deleteStudentAllocation(userId: string): Promise<void> {
-    const spaId = { ...expand(this.params), userId };
-
-    await this.db.$transaction([
-      this.db.studentProjectAllocation.deleteMany({ where: spaId }),
-      this.db.studentSubmittedPreference.deleteMany({ where: spaId }),
-    ]);
+    await this.db.studentProjectAllocation.deleteMany({
+      where: { ...expand(this.params), userId },
+    });
   }
 
   public async deleteProjects(projectIds: string[]) {

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+// move - co-locate with form-section
+
 const baseSchema = z.object({
   groupName: z.string().min(1, "Please enter a name"),
 });
@@ -12,10 +14,7 @@ export function buildNewAllocationGroupFormSchema(
       const nameAllowed = !takenGroupNames.has(groupName);
       return nameAllowed;
     },
-    {
-      message: "This name is already taken",
-      path: ["groupName"],
-    },
+    { message: "This name is already taken", path: ["groupName"] },
   );
 }
 

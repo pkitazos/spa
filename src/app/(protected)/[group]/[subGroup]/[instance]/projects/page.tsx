@@ -1,15 +1,16 @@
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
+import { type PreferenceType, Role } from "@/db/types";
+
 import { Heading } from "@/components/heading";
-import { PageWrapper } from "@/components/page-wrapper";
+import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { auth } from "@/lib/auth";
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import { AllProjectsDataTable } from "./_components/all-projects-data-table";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
-import { PreferenceType, Role } from "@/db/types";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
@@ -20,9 +21,13 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 }
 
 export default async function Projects({ params }: { params: InstanceParams }) {
-  const user = await auth();
+  const { mask: user } = await auth();
+
   const roles = await api.user.roles({ params });
-  const projects = await api.project.getAllForUser({ params });
+  const projectData = await api.project.getAllForUser({ params });
+
+  const projectDescriptors =
+    await api.institution.instance.getUsedProjectDescriptors({ params });
 
   // TODO: fix this it's kinda janky
   let projectPreferences: Record<string, PreferenceType> = {};
@@ -38,24 +43,16 @@ export default async function Projects({ params }: { params: InstanceParams }) {
   });
 
   return (
-    <PageWrapper>
+    <PanelWrapper>
       <Heading>{PAGES.allProjects.title}</Heading>
       <AllProjectsDataTable
         user={user}
         roles={roles}
-        data={projects.map((p) => ({
-          id: p.project.id,
-          description: p.project.description,
-          title: p.project.title,
-          specialTechnicalRequirements:
-            p.project.specialTechnicalRequirements ?? "",
-          flags: p.project.flags,
-          tags: p.project.tags,
-          supervisor: p.supervisor,
-        }))}
+        data={projectData}
         projectPreferences={projectPreferences}
         hasSelfDefinedProject={hasSelfDefinedProject}
+        projectDescriptors={projectDescriptors}
       />
-    </PageWrapper>
+    </PanelWrapper>
   );
 }

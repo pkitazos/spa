@@ -1,4 +1,4 @@
-import { ClassValue } from "clsx";
+import { type ClassValue } from "clsx";
 import { PlusIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";

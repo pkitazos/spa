@@ -1,5 +1,6 @@
-import { stageSchema } from "@/db/types";
 import { z } from "zod";
+
+import { stageSchema } from "@/db/types";
 
 export const groupDtoSchema = z.object({
   group: z.string(),
@@ -24,7 +25,6 @@ export const instanceDtoSchema = z.object({
   displayName: z.string(),
   stage: stageSchema,
   selectedAlgConfigId: z.string().optional(),
-  parentInstanceId: z.string().optional(),
   projectSubmissionDeadline: z.date(),
   supervisorAllocationAccess: z.boolean(),
   minStudentPreferences: z.number(),
@@ -39,7 +39,6 @@ export const instanceDtoSchema = z.object({
 
 export type InstanceDTO = z.infer<typeof instanceDtoSchema>;
 
-// TODO consider inlining this one...
 export const instanceDisplayDataSchema = z.object({
   group: z.object({ id: z.string(), displayName: z.string() }),
   subGroup: z.object({ id: z.string(), displayName: z.string() }),
@@ -47,3 +46,12 @@ export const instanceDisplayDataSchema = z.object({
 });
 
 export type InstanceDisplayData = z.infer<typeof instanceDisplayDataSchema>;
+
+export const adminPanelPathSchema = z.object({
+  displayName: z.string(),
+  path: z.string(),
+  group: z.object({ id: z.string(), displayName: z.string() }).optional(),
+  subGroup: z.object({ id: z.string(), displayName: z.string() }).optional(),
+});
+
+export type AdminPanelPath = z.infer<typeof adminPanelPathSchema>;

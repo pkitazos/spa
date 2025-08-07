@@ -1,4 +1,4 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CopyIcon,
   CornerDownRightIcon,
@@ -8,9 +8,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { PAGES } from "@/config/pages";
+
+import { type SupervisorDTO } from "@/dto";
+
 import { ExportCSVButton } from "@/components/export-csv";
 import { CircleCheckSolidIcon } from "@/components/icons/circle-check";
 import { CircleXIcon } from "@/components/icons/circle-x";
+import { usePathInInstance } from "@/components/params-context";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionColumnLabel } from "@/components/ui/data-table/action-column-label";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
@@ -26,35 +31,41 @@ import {
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
-import { ProjectSubmissionDto } from "@/lib/validations/dto/project";
-import { PAGES } from "@/config/pages";
+
+type ProjectSubmissionDto = {
+  supervisor: SupervisorDTO;
+  submittedProjectsCount: number;
+  submissionTarget: number;
+  targetMet: boolean;
+};
 
 export function useProjectSubmissionColumns(): ColumnDef<ProjectSubmissionDto>[] {
+  const { getPath } = usePathInInstance();
   const selectCol = getSelectColumn<ProjectSubmissionDto>();
 
   const baseCols: ColumnDef<ProjectSubmissionDto>[] = [
     {
       id: "Name",
-      accessorFn: (s) => s.name,
+      accessorFn: (s) => s.supervisor.name,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
       ),
       cell: ({
         row: {
-          original: { userId, name },
+          original: { supervisor },
         },
       }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`./${PAGES.allSupervisors.href}/${userId}`}
+          href={getPath(`${PAGES.allSupervisors.href}/${supervisor.id}`)}
         >
-          {name}
+          {supervisor.name}
         </Link>
       ),
     },
     {
       id: "Email",
-      accessorFn: (s) => s.email,
+      accessorFn: (s) => s.supervisor.email,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Email" />
       ),
@@ -167,7 +178,7 @@ export function useProjectSubmissionColumns(): ColumnDef<ProjectSubmissionDto>[]
       ),
       filterFn: (row, columnId, value) => {
         const selectedFilters = value as ("yes" | "no")[];
-        const rowValue = row.getValue(columnId) as boolean;
+        const rowValue = row.getValue(columnId);
         const targetMet = rowValue ? "yes" : "no";
         return selectedFilters.includes(targetMet);
       },
@@ -182,8 +193,8 @@ export function useProjectSubmissionColumns(): ColumnDef<ProjectSubmissionDto>[]
         const data = table
           .getSelectedRowModel()
           .rows.map(({ original: r }) => [
-            r.name,
-            r.email,
+            r.supervisor.name,
+            r.supervisor.email,
             r.submittedProjectsCount,
             r.submissionTarget,
             r.targetMet ? 1 : 0,
@@ -225,7 +236,7 @@ export function useProjectSubmissionColumns(): ColumnDef<ProjectSubmissionDto>[]
       },
       cell: ({
         row: {
-          original: { userId, name, email },
+          original: { supervisor },
         },
       }) => (
         <div className="flex w-14 items-center justify-center">
@@ -239,13 +250,17 @@ export function useProjectSubmissionColumns(): ColumnDef<ProjectSubmissionDto>[]
             <DropdownMenuContent align="center" side="bottom">
               <DropdownMenuLabel>
                 Actions
-                <span className="ml-2 text-muted-foreground">for {name}</span>
+                <span className="ml-2 text-muted-foreground">
+                  for {supervisor.name}
+                </span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./${PAGES.allSupervisors.href}/${userId}`}
+                  href={getPath(
+                    `${PAGES.allSupervisors.href}/${supervisor.id}`,
+                  )}
                 >
                   <CornerDownRightIcon className="h-4 w-4" />
                   <span>View supervisor details</span>
@@ -254,7 +269,9 @@ export function useProjectSubmissionColumns(): ColumnDef<ProjectSubmissionDto>[]
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./${PAGES.allSupervisors.href}/${userId}?edit=true`}
+                  href={getPath(
+                    `${PAGES.allSupervisors.href}/${supervisor.id}?edit=true`,
+                  )}
                 >
                   <PenIcon className="h-4 w-4" />
                   <span>Edit supervisor details</span>
@@ -263,7 +280,7 @@ export function useProjectSubmissionColumns(): ColumnDef<ProjectSubmissionDto>[]
               <DropdownMenuItem className="group/item">
                 <button
                   className="flex items-center gap-2 text-sm text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  onClick={async () => await copyToClipboard(email)}
+                  onClick={async () => await copyToClipboard(supervisor.email)}
                 >
                   <CopyIcon className="h-4 w-4" />
                   <span>Copy email</span>
@@ -272,7 +289,9 @@ export function useProjectSubmissionColumns(): ColumnDef<ProjectSubmissionDto>[]
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./${PAGES.allSupervisors.href}/${userId}/new-project`}
+                  href={getPath(
+                    `${PAGES.allSupervisors.href}/${supervisor.id}/new-project`,
+                  )}
                 >
                   <FilePlus2 className="h-4 w-4" />
                   <span>Create new project</span>

@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
-import { WizardStep } from ".";
+
+import { type WizardStep } from ".";
 
 export function StepIndicator<T>({
   steps,

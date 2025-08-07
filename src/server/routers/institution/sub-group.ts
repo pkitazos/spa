@@ -1,12 +1,8 @@
 import { z } from "zod";
 
-import { procedure } from "@/server/middleware";
-import { createTRPCRouter } from "@/server/trpc";
-
 import {
   flagDtoSchema,
   instanceDtoSchema,
-  newUnitOfAssessmentSchema,
   subGroupDtoSchema,
   tagDtoSchema,
   userDtoSchema,
@@ -15,6 +11,10 @@ import {
   LinkUserResult,
   LinkUserResultSchema,
 } from "@/dto/result/link-user-result";
+
+import { procedure } from "@/server/middleware";
+import { createTRPCRouter } from "@/server/trpc";
+
 import { slugify } from "@/lib/utils/general/slugify";
 
 export const subGroupRouter = createTRPCRouter({
@@ -60,11 +60,7 @@ export const subGroupRouter = createTRPCRouter({
     .input(
       z.object({
         newInstance: instanceDtoSchema.omit({ instance: true }),
-        flags: z.array(
-          flagDtoSchema
-            .omit({ id: true })
-            .extend({ unitsOfAssessment: z.array(newUnitOfAssessmentSchema) }),
-        ),
+        flags: z.array(flagDtoSchema),
         tags: z.array(tagDtoSchema.omit({ id: true })),
       }),
     )
@@ -109,7 +105,7 @@ export const subGroupRouter = createTRPCRouter({
         }
 
         const userExists = await institution.userExists(id);
-        if (!userExists) institution.createUser(newAdmin);
+        if (!userExists) await institution.createUser(newAdmin);
 
         await subGroup.linkAdmin(id);
 

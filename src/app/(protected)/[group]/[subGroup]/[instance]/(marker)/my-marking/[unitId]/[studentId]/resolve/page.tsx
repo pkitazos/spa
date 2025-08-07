@@ -1,13 +1,12 @@
 import { Heading, SubHeading } from "@/components/heading";
-import { PageWrapper } from "@/components/page-wrapper";
-
-import { cn } from "@/lib/utils";
-
-import { InstanceParams } from "@/lib/validations/params";
+import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { auth } from "@/lib/auth";
-import { ResolutionForm } from "./_components/resolution-form";
 import { api } from "@/lib/trpc/server";
+import { cn } from "@/lib/utils";
+import { type InstanceParams } from "@/lib/validations/params";
+
+import { ResolutionForm } from "./_components/resolution-form";
 
 type PageParams = InstanceParams & { unitId: string; studentId: string };
 
@@ -51,13 +50,13 @@ export default async function ResolvePage({
 
   if (!project) return <div>unknown student</div>;
 
-  const user = await auth();
+  const { mask: user } = await auth();
   if (project.supervisor.id !== user.id) {
     return <div>Only the project supervisor can resolve marks</div>;
   }
 
   return (
-    <PageWrapper>
+    <PanelWrapper className="gap-10">
       <Heading
         className={cn(
           "flex items-center justify-between gap-2 text-4xl",
@@ -76,6 +75,6 @@ export default async function ResolvePage({
           unitOfAssessmentId={unitOfAssessmentId}
         />
       </div>
-    </PageWrapper>
+    </PanelWrapper>
   );
 }

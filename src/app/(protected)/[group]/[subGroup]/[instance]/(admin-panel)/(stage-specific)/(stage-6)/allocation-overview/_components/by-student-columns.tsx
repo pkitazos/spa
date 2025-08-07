@@ -1,21 +1,27 @@
 "use client";
-import { ColumnDef } from "@tanstack/react-table";
+
+import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
+
+import { INSTITUTION } from "@/config/institution";
+import { PAGES } from "@/config/pages";
 
 import { buttonVariants } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { cn } from "@/lib/utils";
-import { AllocationByStudentDto } from "@/lib/validations/allocation/data-table-dto";
-import { PAGES } from "@/config/pages";
+import { type AllocationByStudentDto } from "@/lib/validations/allocation/data-table-dto";
 
 export const byStudentColumns: ColumnDef<AllocationByStudentDto>[] = [
   {
-    id: "Student GUID",
+    id: `Student ${INSTITUTION.ID_NAME}`,
     accessorFn: ({ student }) => student.id,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Student GUID" canFilter />
+      <DataTableColumnHeader
+        column={column}
+        title={`Student ${INSTITUTION.ID_NAME}`}
+      />
     ),
     cell: ({
       row: {

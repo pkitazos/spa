@@ -1,6 +1,9 @@
-import { DB } from "@/db/types";
-import { SubGroupParams } from "@/lib/validations/params";
+import { type DB } from "@/db/types";
+
+import { type SubGroupParams } from "@/lib/validations/params";
+
 import { AllocationSubGroup } from "../space/sub-group";
+
 import { User } from ".";
 
 export class SubGroupAdmin extends User {

@@ -1,6 +1,6 @@
 {
   "version": "0.2",
-  "language": "en",
+  "language": "en,en-GB",
   "words": [
     "aggr",
     "Algs",
@@ -11,6 +11,7 @@
     "cmdk",
     "datasource",
     "DEPR",
+    "dotenvx",
     "DTOs",
     "efgh",
     "Guids",
@@ -29,10 +30,12 @@
     "MINSQCOST",
     "nocompatible",
     "Normalised",
+    "nuqs",
     "papaparse",
     "pkitazos",
     "prjkt",
     "rehype",
+    "Selectables",
     "SEYP",
     "shib",
     "socs",

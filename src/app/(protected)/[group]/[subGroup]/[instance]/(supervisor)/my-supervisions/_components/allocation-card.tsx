@@ -1,5 +1,8 @@
 "use client";
+
 import { HashIcon, MailIcon, User2Icon } from "lucide-react";
+
+import { type ProjectDTO, type StudentDTO } from "@/dto";
 
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
@@ -8,27 +11,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
 
-type StudentInfo = {
-  id: string;
-  name: string;
-  email: string;
-  rank: number;
-  level: number;
-};
-
-// TODO: standardise prop types
 export function AllocationCard({
-  title,
+  project,
   student,
+  allocationRank,
 }: {
-  title: string;
-  student: StudentInfo;
+  project: ProjectDTO;
+  student: StudentDTO;
+  allocationRank: number;
 }) {
   return (
     <Card className="w-full overflow-hidden">
       <CardHeader className="bg-accent p-4">
         <CardTitle className="text-wrap text-lg font-semibold leading-tight">
-          {title}
+          {project.title}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4">
@@ -41,8 +37,8 @@ export function AllocationCard({
           <div className="flex items-center gap-2">
             <User2Icon className="h-4 w-4 text-muted-foreground" />
             <span className="text-base">{student.name}</span>{" "}
-            <Badge variant="accent" className="bg-indigo-50 text-indigo-700">
-              Level {student.level}
+            <Badge variant="accent" className="rounded-md">
+              {student.flag.displayName}
             </Badge>
           </div>
           <div className="flex items-center gap-2">
@@ -59,7 +55,7 @@ export function AllocationCard({
           </div>
           <div className="flex items-center gap-2">
             <HashIcon className="h-4 w-4 text-indigo-500" />
-            <span className="text-base">Rank: {student.rank}</span>
+            <span className="text-base">Rank: {allocationRank}</span>
           </div>
         </div>
       </CardContent>

@@ -1,20 +1,37 @@
 import { notFound } from "next/navigation";
 
+import { metadataTitle, app } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
+import { Stage } from "@/db/types";
+
 import { AccessControl } from "@/components/access-control";
 import { Heading } from "@/components/heading";
-import { PageWrapper } from "@/components/page-wrapper";
 import { LatestSubmissionDataTable } from "@/components/pages/student-preferences/latest-submission-data-table";
 import { SubmissionArea } from "@/components/pages/student-preferences/submission-area";
+import { PanelWrapper } from "@/components/panel-wrapper";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
-import { PageParams } from "@/lib/validations/params";
+import { type PageParams } from "@/lib/validations/params";
 
 import { CurrentBoardState } from "./_components/current-board-state";
 
-import { Stage } from "@/db/types";
+export async function generateMetadata({ params }: { params: PageParams }) {
+  const { displayName } = await api.institution.instance.get({ params });
+  const { name } = await api.user.getById({ userId: params.id });
+
+  return {
+    title: metadataTitle([
+      name,
+      `${PAGES.studentPreferences.title} for ${PAGES.allStudents.title}`,
+      displayName,
+      app.name,
+    ]),
+  };
+}
 
 export default async function Page({ params }: { params: PageParams }) {
   const studentId = params.id;
@@ -41,15 +58,15 @@ export default async function Page({ params }: { params: PageParams }) {
     params,
   });
 
-  const availableProjects = await api.project.getAllForStudentPreferences({
+  const availableProjects = await api.user.student.getSuitableProjects({
     params,
     studentId,
   });
 
   return (
-    <PageWrapper>
+    <PanelWrapper>
       <Heading className="flex items-baseline gap-6">
-        <p>Preferences</p>
+        <p>{PAGES.studentPreferences.title}</p>
         <p className="text-3xl text-muted-foreground">for {student.name}</p>
       </Heading>
       <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
@@ -89,6 +106,6 @@ export default async function Page({ params }: { params: PageParams }) {
           <LatestSubmissionDataTable studentId={studentId} />
         </TabsContent>
       </Tabs>
-    </PageWrapper>
+    </PanelWrapper>
   );
 }

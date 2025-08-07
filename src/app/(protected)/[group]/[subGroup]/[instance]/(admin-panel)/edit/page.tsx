@@ -1,11 +1,13 @@
-import { SubHeading } from "@/components/heading";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+import { spacesLabels } from "@/config/spaces";
+
+import { Heading } from "@/components/heading";
+import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
-import { app, metadataTitle } from "@/config/meta";
-import { spacesLabels } from "@/config/spaces";
-import { PAGES } from "@/config/pages";
 import { WizardSection } from "./_components/wizard-section";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
@@ -17,12 +19,15 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
 }
 
 export default async function Page({ params }: { params: InstanceParams }) {
-  const data = await api.institution.instance.getEditFormDetails({ params });
+  const instance = await api.institution.instance.get({ params });
+
+  const { flags, tags } =
+    await api.institution.instance.getAllProjectDescriptors({ params });
 
   return (
-    <div className="mb-40 mt-6 flex h-max w-full max-w-5xl flex-col gap-10 px-6 pb-20">
-      <SubHeading>Edit {spacesLabels.instance.full} Details</SubHeading>
-      <WizardSection formDetails={data} />
-    </div>
+    <PanelWrapper>
+      <Heading>Edit {spacesLabels.instance.short} Details</Heading>
+      <WizardSection formDetails={{ instance, flags, tags }} />
+    </PanelWrapper>
   );
 }

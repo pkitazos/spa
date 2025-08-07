@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-import { studentPreferenceSubmissionDto } from "@/lib/validations/dto/preference";
-import { instanceParamsSchema } from "@/lib/validations/params";
-
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
+
+import { studentPreferenceSubmissionDto } from "@/lib/validations/dto/preference";
+import { instanceParamsSchema } from "@/lib/validations/params";
 
 import {
   csvDataSchema,
@@ -26,19 +26,20 @@ export const preferenceRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx: { instance } }) => {
-      const preAllocatedStudentIds = await instance.getPreAllocatedStudentIds();
+      const preAllocationData = await instance.getPreAllocations();
+
+      const preAllocatedStudentIds = new Set(
+        preAllocationData.map((p) => p.student.id),
+      );
 
       const students = await instance
         .getStudentPreferenceDetails()
         .then((students) =>
           students.map((s) => ({
-            id: s.institutionId,
-            name: s.fullName,
-            email: s.email,
-            level: s.level,
+            student: s.student,
             submissionCount: s.submittedPreferences.length,
             submitted: s.submittedPreferences.length !== 0,
-            preAllocated: preAllocatedStudentIds.has(s.institutionId),
+            preAllocated: preAllocatedStudentIds.has(s.student.id),
           })),
         );
 

@@ -1,9 +1,9 @@
-import { PageWrapper } from "@/components/page-wrapper";
+import { PanelWrapper } from "@/components/panel-wrapper";
 import { InstanceHomeRedirectButton } from "@/components/params-context";
 
 export default async function NotFound() {
   return (
-    <PageWrapper className="flex h-full flex-col items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
+    <PanelWrapper className="flex h-full flex-col items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-md text-center">
         <div className="mx-auto h-12 w-12 text-primary" />
         <h1 className="mt-4 text-4xl font-bold tracking-tight text-foreground sm:text-4xl">
@@ -16,6 +16,6 @@ export default async function NotFound() {
           <InstanceHomeRedirectButton />
         </div>
       </div>
-    </PageWrapper>
+    </PanelWrapper>
   );
 }

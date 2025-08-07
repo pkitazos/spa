@@ -1,16 +1,26 @@
 "use client";
 
+import { Fragment, useCallback, useMemo, useState } from "react";
+
 import {
-  ColumnFiltersState,
+  type ColumnFiltersState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ProjectMarkingOverview } from "./row";
-import { Fragment, useCallback, useMemo, useState } from "react";
-import { columns, StatusBox } from "./marking-overview-columns";
+import { ChevronDown, ChevronRight, Send } from "lucide-react";
+import { toast } from "sonner";
+
+import { CopyButton } from "@/components/copy-button";
+import { CopyEmailsButton } from "@/components/copy-emails-button";
+import { ExportCSVButton } from "@/components/export-csv";
+import { useInstanceParams } from "@/components/params-context";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -19,18 +29,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, Send } from "lucide-react";
-import { CopyButton } from "@/components/copy-button";
-import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
-import { Input } from "@/components/ui/input";
-import { CopyEmailsButton } from "@/components/copy-emails-button";
 import { YesNoAction } from "@/components/yes-no-action";
+
 import { api } from "@/lib/trpc/client";
-import { useInstanceParams } from "@/components/params-context";
-import { toast } from "sonner";
-import { ExportCSVButton } from "@/components/export-csv";
+
+import { columns, StatusBox } from "./marking-overview-columns";
 import { prepCSV } from "./prep-csv";
+import { type ProjectMarkingOverview } from "./row";
 
 export function MarkingOverviewTable({
   data,
@@ -89,7 +94,7 @@ export function MarkingOverviewTable({
         error: `Failed to send emails`,
       },
     );
-  }, [overdueMarkerEmails, params, sendOverdueReminder]);
+  }, [params, requiresNegotiationEmails, sendNegotiationReminder]);
 
   return (
     <Fragment>
@@ -132,7 +137,7 @@ export function MarkingOverviewTable({
           header={[
             "studentGUID",
             "studentName",
-            "studentLevel",
+            "studentFlag",
             "studentEmail",
             "projectTitle",
 
@@ -166,7 +171,7 @@ export function MarkingOverviewTable({
             "overallGrade",
             "penalty",
           ]}
-          data={prepCSV(data)}
+          data={prepCSV(data)} /* */
           filename={"marking"}
           text="Download as CSV"
         />
@@ -224,7 +229,11 @@ export function MarkingOverviewTable({
                 <TableCell colSpan={1}>
                   <span>{row.original.project.title}</span>
                 </TableCell>
-                <TableCell>{row.original.student.level}</TableCell>
+                <TableCell>
+                  <Badge variant="accent" className="rounded-md">
+                    {row.original.student.flag.displayName}
+                  </Badge>
+                </TableCell>
                 <TableCell colSpan={1}>
                   <div className="text-sm text-muted-foreground">
                     {row.original.student.name} ({row.original.student.id}{" "}
@@ -244,8 +253,8 @@ export function MarkingOverviewTable({
                   <TableCell colSpan={5}>
                     <Table className="">
                       {row.original.units.map((u) => (
-                        <Fragment>
-                          <TableRow key={u.unit.id}>
+                        <Fragment key={u.unit.id}>
+                          <TableRow>
                             <TableCell />
                             <TableCell>
                               {/* <Link
@@ -262,7 +271,7 @@ export function MarkingOverviewTable({
                             </TableCell>
                           </TableRow>
                           {u.markers.map((e) => (
-                            <TableRow>
+                            <TableRow key={e.marker.id}>
                               <TableCell />
                               <TableCell />
                               <TableCell>{e.markerType}</TableCell>
@@ -298,33 +307,22 @@ export function MarkingOverviewTable({
 }
 
 function getOverdueMarkerEmails(data: ProjectMarkingOverview[]) {
-  let log: any = [];
   const emailSet = new Set(
-    data.flatMap(({ units, project }) =>
+    data.flatMap(({ units }) =>
       units.flatMap(({ markers }) =>
         markers
           .filter((m) => m.status.status === "PENDING")
-          .map((m) => {
-            log.push({
-              projectTitle: project.title,
-              markerName: m.marker.name,
-              type: m.markerType,
-            });
-            return m.marker.email;
-          }),
+          .map((m) => m.marker.email),
       ),
     ),
   );
-
-  console.log("overdue submissions:", log);
 
   return Array.from(emailSet).map((email) => ({ email }));
 }
 
 function getRequiresNegotiationEmails(data: ProjectMarkingOverview[]) {
-  let log: any[] = [];
   const emailSet = new Set(
-    data.flatMap(({ units, project }) =>
+    data.flatMap(({ units }) =>
       units
         .filter(
           (unit) =>
@@ -332,17 +330,9 @@ function getRequiresNegotiationEmails(data: ProjectMarkingOverview[]) {
             unit.status.status === "PENDING" &&
             unit.markers.length === 2,
         )
-        .flatMap((unit) => {
-          log.push({
-            title: project.title,
-            markers: unit.markers.map((m) => m.marker.name),
-          });
-          return unit.markers.map((m) => m.marker.email);
-        }),
+        .flatMap((unit) => unit.markers.map((m) => m.marker.email)),
     ),
   );
-
-  console.log("pending negotiation:", log);
 
   return Array.from(emailSet).map((email) => ({ email }));
 }

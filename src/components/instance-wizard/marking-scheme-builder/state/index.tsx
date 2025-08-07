@@ -1,8 +1,14 @@
 "use client";
 
 import { type ReactNode, createContext, useRef, useContext } from "react";
+
 import { useStore } from "zustand";
-import { createMarkingSchemeStore, MarkingSchemeStore, State } from "./store";
+
+import {
+  createMarkingSchemeStore,
+  type MarkingSchemeStore,
+  type State,
+} from "./store";
 
 export type MarkingSchemeStoreAPI = ReturnType<typeof createMarkingSchemeStore>;
 
@@ -18,9 +24,7 @@ export const MarkingSchemeStoreProvider = ({
   initialState: State;
 }) => {
   const storeRef = useRef<MarkingSchemeStoreAPI>();
-  if (!storeRef.current) {
-    storeRef.current = createMarkingSchemeStore(initialState);
-  }
+  storeRef.current ??= createMarkingSchemeStore(initialState);
 
   return (
     <MarkingSchemeContext.Provider value={storeRef.current}>

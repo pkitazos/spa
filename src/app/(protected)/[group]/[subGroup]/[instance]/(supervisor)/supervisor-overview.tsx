@@ -4,7 +4,7 @@ import { SupervisorInstanceHome } from "@/components/pages/supervisor-instance-h
 import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import Layout from "./layout";
 

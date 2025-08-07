@@ -1,20 +1,24 @@
-import {
-  MarkerStatusSummary,
-  ProjectMarkingOverview,
-  UnitGradingStatus,
-  UnitMarkingSummary,
-} from "./row";
-import { MarkerType } from "@/db/types";
 import { Grade } from "@/config/grades";
+
+import { MarkerType } from "@/db/types";
+
+import {
+  type MarkerStatusSummary,
+  type ProjectMarkingOverview,
+  type UnitGradingStatus,
+  type UnitMarkingSummary,
+} from "./row";
+
+// TODO: this file needs jesus a little bit
 
 interface CSVRow {
   studentGUID: string;
   studentName: string;
-  studentLevel: number;
+  studentFlag: string;
   studentEmail: string;
   projectTitle: string;
 
-  supervsorName: string;
+  supervisorName: string;
   supervisorEmail: string;
   readerName: string;
   readerEmail: string;
@@ -52,9 +56,9 @@ export function prepCSV(data: ProjectMarkingOverview[]): CSVRow[] {
       {} as Record<string, UnitMarkingSummary>,
     );
 
-    const dissertation = unitMap["Dissertation"];
-    const presentation = unitMap["Presentation"];
-    const conduct = unitMap["Conduct"];
+    const dissertation = unitMap.Dissertation;
+    const presentation = unitMap.Presentation;
+    const conduct = unitMap.Conduct;
 
     const markerMap = dissertation.markers.reduce(
       (acc, val) => ({ ...acc, [val.markerType]: val }),
@@ -65,8 +69,6 @@ export function prepCSV(data: ProjectMarkingOverview[]): CSVRow[] {
     const reader = markerMap[MarkerType.READER];
     const supervisorDissertationGrade = statusToString(supervisor.status);
     const readerDissertationGrade = statusToString(reader.status);
-
-    // console.log(supervisor.status);
 
     const supervisorDissertationComments =
       supervisor.status.status === "MARKED" ? supervisor.status.comment : "";
@@ -88,21 +90,18 @@ export function prepCSV(data: ProjectMarkingOverview[]): CSVRow[] {
 
     const requiredModeration =
       dissStatus.status === "MODERATE" ||
-      (dissGrade &&
-        Grade.checkExtremes(Grade.toLetter(dissGrade)).status === "MODERATE") ||
-      false;
-
-    // @ts-ignore
-    console.log(presentation.markers[0].status.comment);
+      ((!!dissGrade &&
+        Grade.checkExtremes(Grade.toLetter(dissGrade)).status === "MODERATE") ??
+        false);
 
     return {
       studentGUID: student.id,
       studentName: student.name,
-      studentLevel: student.level,
+      studentFlag: student.flag.displayName,
       studentEmail: student.email,
       projectTitle: project.title,
 
-      supervsorName: supervisor.marker.name,
+      supervisorName: supervisor.marker.name,
       supervisorEmail: supervisor.marker.email,
       readerName: reader.marker.name,
       readerEmail: reader.marker.email,

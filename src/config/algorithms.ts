@@ -1,8 +1,9 @@
-import { AlgorithmDTO } from "@/dto";
+import { type AlgorithmDTO } from "@/dto";
 
-import { AlgorithmFlag, New } from "@/db/types";
+import { AlgorithmFlag, type New } from "@/db/types";
 
 export const GenerousAlgorithm = {
+  matchingServiceEndpoint: "generous",
   displayName: "Generous",
   createdAt: new Date("2024-08-01T00:00:00.000Z"),
   description:
@@ -14,9 +15,10 @@ export const GenerousAlgorithm = {
   targetModifier: 0,
   upperBoundModifier: 0,
   maxRank: -1,
-} as const satisfies New<AlgorithmDTO>;
+} as const satisfies New<AlgorithmDTO> & { matchingServiceEndpoint: string };
 
 export const GreedyAlgorithm = {
+  matchingServiceEndpoint: "greedy",
   displayName: "Greedy",
   createdAt: new Date("2024-08-01T00:01:00.000Z"),
   description:
@@ -28,9 +30,10 @@ export const GreedyAlgorithm = {
   targetModifier: 0,
   upperBoundModifier: 0,
   maxRank: -1,
-} as const satisfies New<AlgorithmDTO>;
+} as const satisfies New<AlgorithmDTO> & { matchingServiceEndpoint: string };
 
 export const MinCostAlgorithm = {
+  matchingServiceEndpoint: "minimum-cost",
   displayName: "Minimum Cost",
   createdAt: new Date("2024-08-01T00:02:00.000Z"),
   description:
@@ -42,9 +45,10 @@ export const MinCostAlgorithm = {
   targetModifier: 0,
   upperBoundModifier: 0,
   maxRank: -1,
-} as const satisfies New<AlgorithmDTO>;
+} as const satisfies New<AlgorithmDTO> & { matchingServiceEndpoint: string };
 
 export const GreedyGenAlgorithm = {
+  matchingServiceEndpoint: "greedy-generous",
   displayName: "Greedy-Generous",
   createdAt: new Date("2024-08-01T00:03:00.000Z"),
   description:
@@ -56,4 +60,4 @@ export const GreedyGenAlgorithm = {
   targetModifier: 0,
   upperBoundModifier: 0,
   maxRank: -1,
-} as const satisfies New<AlgorithmDTO>;
+} as const satisfies New<AlgorithmDTO> & { matchingServiceEndpoint: string };

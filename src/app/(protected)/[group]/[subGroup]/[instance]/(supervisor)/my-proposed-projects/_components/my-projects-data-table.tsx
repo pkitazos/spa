@@ -9,7 +9,7 @@ import DataTable from "@/components/ui/data-table/data-table";
 import { api } from "@/lib/trpc/client";
 
 import {
-  SupervisorProjectDataDto,
+  type SupervisorProjectDataDto,
   useMyProjectColumns,
 } from "./my-projects-columns";
 
@@ -56,7 +56,7 @@ export function MyProjectsDataTable({
 
   return (
     <DataTable
-      searchableColumn={{ id: "Project Title", displayName: "Project Titles" }}
+      className="w-full"
       columns={columns}
       data={projects}
     />

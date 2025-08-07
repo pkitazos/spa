@@ -1,0 +1,10 @@
+[Unit]
+Description=Amps-app startup service
+
+[Service]
+EnvironmentFile=/etc/environment
+Type=exec
+ExecStart=/usr/local/bin/amps start
+
+[Install]
+WantedBy=multi-user.target

@@ -1,15 +1,16 @@
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
+import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
+
 import { Heading, SubHeading } from "@/components/heading";
-import { PageWrapper } from "@/components/page-wrapper";
+import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
 import { cn } from "@/lib/utils";
+import { type InstanceParams } from "@/lib/validations/params";
 
-import { InstanceParams } from "@/lib/validations/params";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
 import { MarkingSection } from "./_components/marking-section";
-import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
 
 type PageParams = InstanceParams & { unitId: string; studentId: string };
 
@@ -66,28 +67,28 @@ export default async function MarksPage({
 
   if (status === MarkingSubmissionStatus.CLOSED) {
     return (
-      <PageWrapper>
+      <PanelWrapper>
         <div className="grid place-items-center py-20">
           <h1 className="text-3xl italic">
             This unit is not yet open for marking
           </h1>
         </div>
-      </PageWrapper>
+      </PanelWrapper>
     );
   }
 
   if (status === MarkingSubmissionStatus.SUBMITTED) {
     return (
-      <PageWrapper>
+      <PanelWrapper>
         <div className="grid place-items-center py-20">
           <h1 className="text-3xl italic">This unit has been submitted</h1>
         </div>
-      </PageWrapper>
+      </PanelWrapper>
     );
   }
 
   return (
-    <PageWrapper>
+    <PanelWrapper>
       <Heading
         className={cn(
           "flex items-center justify-between gap-2 text-4xl",
@@ -106,6 +107,6 @@ export default async function MarksPage({
           initialState={submission}
         />
       </div>
-    </PageWrapper>
+    </PanelWrapper>
   );
 }

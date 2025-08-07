@@ -9,12 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-type InvitedUser = {
-  id: string;
-  name: string;
-  email: string;
-  joined: boolean;
-};
+type InvitedUser = { id: string; name: string; email: string; joined: boolean };
 
 export function InviteTable({ users }: { users: InvitedUser[] }) {
   const totalJoined = users.reduce(

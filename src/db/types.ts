@@ -1,7 +1,7 @@
-import { PreferenceType, PrismaClient, Stage } from "@prisma/client";
+import { PreferenceType, type PrismaClient, Stage } from "@prisma/client";
 import { z } from "zod";
 
-export type PrismaTransactionClient = Omit<
+type PrismaTransactionClient = Omit<
   PrismaClient,
   "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
 >;
@@ -19,7 +19,6 @@ export type {
   FinalGrade as DB_FinalGrade,
   Flag as DB_Flag,
   FlagOnProject as DB_FlagOnProject,
-  FlagOnStudent as DB_FlagOnStudent,
   UnitOfAssessment as DB_UnitOfAssessment,
   GroupAdmin as DB_GroupAdmin,
   MarkingSubmission as DB_MarkingSubmission,
@@ -57,6 +56,26 @@ export const roleSchema = z.enum([
   Role.SUPERVISOR,
   Role.READER,
   Role.STUDENT,
+]);
+
+export const ExpandedRole = {
+  SUPER_ADMIN: "SUPER_ADMIN",
+  GROUP_ADMIN: "GROUP_ADMIN",
+  SUB_GROUP_ADMIN: "SUB_GROUP_ADMIN",
+  SUPERVISOR: Role.SUPERVISOR,
+  READER: Role.READER,
+  STUDENT: Role.STUDENT,
+};
+
+export type ExpandedRole = (typeof ExpandedRole)[keyof typeof ExpandedRole];
+
+export const expandedRoleSchema = z.enum([
+  ExpandedRole.SUPER_ADMIN,
+  ExpandedRole.GROUP_ADMIN,
+  ExpandedRole.SUB_GROUP_ADMIN,
+  ExpandedRole.SUPERVISOR,
+  ExpandedRole.READER,
+  ExpandedRole.STUDENT,
 ]);
 
 export const stageOrd = {
@@ -115,11 +134,22 @@ export const preferenceTypeSchema = z.enum([
   PreferenceType.PREFERENCE,
 ]);
 
+export const extendedPreferenceTypeSchema = z.enum([
+  PreferenceType.SHORTLIST,
+  PreferenceType.PREFERENCE,
+  "SUBMITTED",
+]);
+
+export type ExtendedPreferenceType = z.infer<
+  typeof extendedPreferenceTypeSchema
+>;
+
 export {
   AlgorithmFlag,
   PreferenceType,
   Stage,
   MarkerType,
+  AllocationMethod,
 } from "@prisma/client";
 
 export type New<T> = Omit<T, "id">;

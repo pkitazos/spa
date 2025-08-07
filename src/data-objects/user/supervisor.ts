@@ -1,8 +1,16 @@
+import {
+  type SupervisorDTO,
+  type UserDTO,
+  type ProjectDTO,
+  type StudentDTO,
+} from "@/dto";
+
 import { Transformers as T } from "@/db/transformers";
-import { DB } from "@/db/types";
-import { SupervisorDTO, UserDTO, ProjectDTO, StudentDTO } from "@/dto";
+import { type DB } from "@/db/types";
+
 import { expand } from "@/lib/utils/general/instance-params";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
+
 import { Marker } from ".";
 
 export class Supervisor extends Marker {
@@ -16,7 +24,7 @@ export class Supervisor extends Marker {
         where: { userId: this.id, ...expand(this.instance.params) },
         include: { userInInstance: { include: { user: true } } },
       })
-      .then(T.toSupervisorDTO);
+      .then((x) => T.toSupervisorDTO(x));
   }
 
   public async get(): Promise<UserDTO> {
@@ -46,7 +54,7 @@ export class Supervisor extends Marker {
           },
           student: {
             include: {
-              studentFlags: { include: { flag: true } },
+              studentFlag: true,
               userInInstance: { include: { user: true } },
             },
           },
@@ -87,7 +95,7 @@ export class Supervisor extends Marker {
           include: {
             student: {
               include: {
-                studentFlags: { include: { flag: true } },
+                studentFlag: true,
                 userInInstance: { include: { user: true } },
               },
             },
@@ -104,7 +112,9 @@ export class Supervisor extends Marker {
     }));
   }
 
-  public async getProjectsWithDetails() {
+  public async getProjectsWithStudentAllocation(): Promise<
+    { project: ProjectDTO; allocatedStudent?: StudentDTO }[]
+  > {
     const { projects: projectData } =
       await this.db.supervisorDetails.findFirstOrThrow({
         where: { userId: this.id, ...expand(this.instance.params) },
@@ -114,7 +124,10 @@ export class Supervisor extends Marker {
               studentAllocations: {
                 include: {
                   student: {
-                    include: { userInInstance: { include: { user: true } } },
+                    include: {
+                      userInInstance: { include: { user: true } },
+                      studentFlag: true,
+                    },
                   },
                 },
               },
@@ -127,27 +140,10 @@ export class Supervisor extends Marker {
 
     return projectData.map((data) => ({
       project: T.toProjectDTO(data),
-      // TODO remove below
-      ...T.toProjectDTO(data),
-      allocatedStudents: data.studentAllocations.map((u) => ({
-        level: u.student.studentLevel,
-        ...u.student.userInInstance.user,
-      })),
-      flags: data.flagsOnProject.map((f) => T.toFlagDTO(f.flag)),
-      tags: data.tagsOnProject.map((t) => T.toTagDTO(t.tag)),
+      allocatedStudent: data.studentAllocations
+        .map(({ student }) => T.toStudentDTO(student))
+        .at(0),
     }));
-  }
-
-  // Probably a bad access path
-  public async countAllocationsInParent(parentInstanceId: string) {
-    const parentInstanceParams = {
-      ...this.instance.params,
-      instance: parentInstanceId,
-    };
-
-    return await new Supervisor(this.db, this.id, parentInstanceParams)
-      .getSupervisionAllocations()
-      .then((allocations) => allocations.length);
   }
 
   public async countAllocations() {

@@ -17,16 +17,16 @@ export type SupervisorProjectSubmissionDetails = z.infer<
 export const supervisorCapacitiesSchema = z
   .object({
     projectTarget: z.coerce
-      .number({
-        required_error: "Required",
-        invalid_type_error: "Invalid integer",
+      .number<number>({
+        error: (issue) =>
+          issue.input === undefined ? "Required" : "Invalid integer",
       })
       .int("Please enter an integer for the project target")
       .nonnegative("Project target must be a non-negative integer"),
     projectUpperQuota: z.coerce
-      .number({
-        required_error: "Required",
-        invalid_type_error: "Invalid integer",
+      .number<number>({
+        error: (issue) =>
+          issue.input === undefined ? "Required" : "Invalid integer",
       })
       .int("Please enter an integer for the project upper quota")
       .positive("Project upper quota must be a positive integer"),
@@ -35,7 +35,7 @@ export const supervisorCapacitiesSchema = z
     ({ projectTarget, projectUpperQuota }) =>
       projectTarget <= projectUpperQuota,
     {
-      message: "Project target can't be greater than the project upper quota",
+      error: "Project target can't be greater than the project upper quota",
       path: ["projectTarget"],
     },
   );

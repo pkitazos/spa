@@ -1,10 +1,11 @@
 import { cache } from "react";
-import { headers } from "next/headers";
 
-import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 import { createCaller } from "@/server/root";
 import { createTRPCContext } from "@/server/trpc";
+
+import { auth } from "@/lib/auth";
 
 /**
  * This wraps the `createTRPCContext` helper and provides the required context for the tRPC API when
@@ -13,11 +14,8 @@ import { createTRPCContext } from "@/server/trpc";
 const createContext = cache(async () => {
   const heads = new Headers(headers());
   heads.set("x-trpc-source", "rsc");
-  const user = await auth();
-  return createTRPCContext({
-    session: { user },
-    headers: heads,
-  });
+  const { mask: user } = await auth();
+  return createTRPCContext({ session: { user }, headers: heads });
 });
 
 export const api = createCaller(createContext);

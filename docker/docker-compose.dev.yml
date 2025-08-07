@@ -1,0 +1,36 @@
+name: "amps"
+
+services:
+  db:
+    image: postgres:16
+    ports:
+      - "127.0.0.1:6565:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_HOST_AUTH_METHOD: "md5"
+
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    volumes:
+      - amps-db-data:/var/lib/postgresql/data/
+    networks:
+      - amps-network
+
+  matching-service:
+    image: ghcr.io/pkitazos/matching-service:latest
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks:
+      - amps-network
+
+networks:
+  amps-network:
+
+volumes:
+  amps-db-data:

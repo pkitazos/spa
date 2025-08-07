@@ -1,5 +1,6 @@
 "use client";
-import { ClassValue } from "clsx";
+
+import { type ClassValue } from "clsx";
 import { Trash2Icon } from "lucide-react";
 
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
@@ -20,6 +21,7 @@ import {
   DestructiveActionVerificationTypeIn,
 } from "./ui/destructive-action";
 import { Label } from "./ui/label";
+
 import { SectionHeading } from "./heading";
 
 export function DangerZone({

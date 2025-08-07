@@ -12,12 +12,14 @@ FROM node:22-alpine AS runner
 LABEL org.opencontainers.image.source="https://github.com/pkitazos/spa"
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
-
 ENV NODE_ENV=production \ 
     NEXT_TELEMETRY_DISABLED=1
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
+
+RUN mkdir logs
+RUN chown nextjs:nodejs /app/logs
 
 COPY --from=builder /app/next.config.js ./
 COPY --from=builder /app/public ./public

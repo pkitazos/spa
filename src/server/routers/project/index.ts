@@ -1,36 +1,34 @@
-import { PreferenceType, Stage } from "@prisma/client";
 import { z } from "zod";
 
-import { expand, toPP2 } from "@/lib/utils/general/instance-params";
-
-import {
-  previousStages,
-  subsequentStages,
-} from "@/lib/utils/permissions/stage-check";
-import { updatedProjectSchema } from "@/lib/validations/project-form";
-
-import { procedure } from "@/server/middleware";
-import { createTRPCRouter } from "@/server/trpc";
-
-import { computeProjectSubmissionTarget } from "@/config/submission-target";
-import {
-  linkPreallocatedStudent,
-  linkProjectFlags,
-  linkProjectTags,
-} from "@/db/transactions/project-flags";
-import { flagDtoSchema, tagDtoSchema } from "@/dto";
-import { projectDtoSchema, updateProjectSchema } from "@/dto";
+import { flagDtoSchema, type SupervisorDTO, tagDtoSchema } from "@/dto";
+import { projectDtoSchema } from "@/dto";
 import { studentDtoSchema } from "@/dto";
 import { supervisorDtoSchema } from "@/dto";
-import { Transformers as T } from "@/db/transformers";
-import { Role } from "@/db/types";
+import { projectForm } from "@/dto/project";
 import {
   PermissionResult,
   permissionResultSchema,
 } from "@/dto/result/permission-result";
 
+import {
+  linkPreAllocatedStudent,
+  linkProjectFlagIds,
+  linkProjectTagIds,
+} from "@/db/transactions/project-flags";
+import { Transformers as T } from "@/db/transformers";
+import { PreferenceType, Stage } from "@/db/types";
+import { Role } from "@/db/types";
+
+import { procedure } from "@/server/middleware";
+import { createTRPCRouter } from "@/server/trpc";
+
+import { expand, toPP2 } from "@/lib/utils/general/instance-params";
+import {
+  previousStages,
+  subsequentStages,
+} from "@/lib/utils/permissions/stage-check";
+
 export const projectRouter = createTRPCRouter({
-  // ok
   exists: procedure.project.user
     .output(z.boolean())
     .query(async ({ ctx: { project } }) => await project.exists()),
@@ -38,22 +36,20 @@ export const projectRouter = createTRPCRouter({
   edit: procedure.project
     .inStage(previousStages(Stage.STUDENT_BIDDING))
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
-    .input(z.object({ updatedProject: updateProjectSchema }))
+    .input(z.object({ updatedProject: projectForm.editApiInputSchema }))
     .output(z.void())
     .mutation(
       async ({
         ctx: { db, project },
         input: {
           updatedProject: {
-            id,
             title,
             description,
             capacityUpperBound,
             preAllocatedStudentId,
-            isPreAllocated,
-            specialTechnicalRequirements,
-            tags,
-            flags,
+            supervisorId,
+            tagIds,
+            flagIds,
           },
         },
       }) => {
@@ -64,21 +60,15 @@ export const projectRouter = createTRPCRouter({
               title,
               description,
               capacityUpperBound,
-              preAllocatedStudentId:
-                isPreAllocated && preAllocatedStudentId
-                  ? preAllocatedStudentId
-                  : null,
+              supervisorId,
+              preAllocatedStudentId: preAllocatedStudentId ?? null,
               latestEditDateTime: new Date(),
-              specialTechnicalRequirements,
             },
           });
 
-          if (
-            isPreAllocated &&
-            preAllocatedStudentId &&
-            preAllocatedStudentId.trim() !== ""
-          ) {
-            await linkPreallocatedStudent(
+          if (preAllocatedStudentId && preAllocatedStudentId.trim() !== "") {
+            // ! would just override another pre-allocated student - bad probably
+            await linkPreAllocatedStudent(
               tx,
               project.params,
               preAllocatedStudentId,
@@ -95,53 +85,17 @@ export const projectRouter = createTRPCRouter({
             }
           }
 
-          if (flags) {
-            await linkProjectFlags(tx, project.params, flags);
+          if (flagIds.length > 0) {
+            await linkProjectFlagIds(tx, project.params, flagIds);
           }
 
-          if (tags) {
-            await linkProjectTags(tx, project.params, tags);
+          if (tagIds.length > 0) {
+            await linkProjectTagIds(tx, project.params, tagIds);
           }
         });
       },
     ),
 
-  // TODO rename + review output type
-  getAllForStudentPreferences: procedure.instance.user
-    .input(z.object({ studentId: z.string() }))
-    .output(
-      z.array(
-        z.object({
-          id: z.string(),
-          title: z.string(),
-          flags: z.array(flagDtoSchema),
-        }),
-      ),
-    )
-    .query(async ({ ctx: { instance }, input: { studentId } }) => {
-      const projectData = await instance.getProjectDetails();
-
-      const student = await instance.getStudent(studentId);
-      const studentData = await student.get();
-      const preferences = await student.getAllDraftPreferences();
-
-      const preferenceIds = new Set(preferences.map(({ project: p }) => p.id));
-
-      return projectData
-        .filter((p) => {
-          if (preferenceIds.has(p.project.id)) return false;
-          const projectFlags = new Set(p.project.flags.map((f) => f.title));
-          const studentFlags = new Set(studentData.flags.map((f) => f.title));
-          return studentFlags.intersection(projectFlags).size !== 0;
-        })
-        .map((p) => ({
-          id: p.project.id,
-          title: p.project.title,
-          flags: p.project.flags,
-        }));
-    }),
-
-  // BREAKING input/output type
   getAllForUser: procedure.instance.user
     .output(
       z.array(
@@ -159,14 +113,16 @@ export const projectRouter = createTRPCRouter({
 
       if (await user.isStudent(instance.params)) {
         const student = await user.toStudent(instance.params);
-        const studentData = await student.get();
+        const { flag: studentFlag } = await student.get();
 
+        // TODO: add pre-allocated project to top of list if such a project exists
+        // otherwise, sort in alphabetical order
         return projectData
-          .filter((p) => {
-            const projectFlags = new Set(p.project.flags.map((f) => f.title));
-            const studentFlags = new Set(studentData.flags.map((f) => f.title));
-            return studentFlags.intersection(projectFlags).size !== 0;
-          })
+          .filter(
+            (p) =>
+              p.project.flags.map((f) => f.id).includes(studentFlag.id) &&
+              (!p.allocatedStudent || p.allocatedStudent?.id === student.id),
+          )
           .map((p) => ({
             project: p.project,
             supervisor: p.supervisor,
@@ -180,13 +136,10 @@ export const projectRouter = createTRPCRouter({
       }));
     }),
 
-  // BREAKING output type
   getAllLateProposals: procedure.instance.subGroupAdmin
     .output(z.array(projectDtoSchema))
     .query(async ({ ctx: { instance } }) => await instance.getLateProjects()),
 
-  // ok
-  // BREAKING output type
   getAllPreAllocated: procedure.instance
     .inStage(subsequentStages(Stage.PROJECT_SUBMISSION))
     .subGroupAdmin.output(
@@ -200,7 +153,6 @@ export const projectRouter = createTRPCRouter({
     )
     .query(async ({ ctx: { instance } }) => await instance.getPreAllocations()),
 
-  // ok
   getById: procedure.project.user
     .output(projectDtoSchema)
     .query(async ({ ctx: { db, project } }) => {
@@ -242,73 +194,14 @@ export const projectRouter = createTRPCRouter({
       };
     }),
 
-  // ok
-  getIsForked: procedure.project.user.query(
-    async ({
-      ctx: { instance, db },
-      input: {
-        params: { projectId },
-      },
-    }) => {
-      const { parentInstanceId } = await instance.get();
-
-      const projects = await db.project.findMany({
-        where: {
-          id: projectId,
-          OR: [
-            expand(instance.params),
-            expand(instance.params, parentInstanceId),
-          ],
-        },
-      });
-
-      return projects.length === 2;
-    },
-  ),
-
-  // MOVE to ac
-  // ok
-  getUserAccess: procedure.project.user
-    .output(
-      z.discriminatedUnion("access", [
-        z.object({ access: z.literal(true) }),
-        z.object({ access: z.literal(false), error: z.string() }),
-      ]),
-    )
-    .query(async ({ ctx: { user, instance, project } }) => {
-      if (await user.isStaff(instance.params)) {
-        return { access: true };
-      } else if (await user.isStudent(instance.params)) {
-        const student = await user.toStudent(instance.params);
-
-        const { flags: studentFlags } = await student.get();
-        const studentFlagSet = new Set(studentFlags);
-
-        const projectFlags = await project.getFlags();
-        const projectFlagsSet = new Set(projectFlags);
-
-        if (studentFlagSet.intersection(projectFlagsSet).size !== 0) {
-          return { access: true };
-        } else {
-          return {
-            access: false,
-            error: "Student not eligible for this project",
-          };
-        }
-      }
-
-      return { access: false, error: "Not a member of this instance" };
-    }),
-
-  // ok
-  //getStudentPreferencesForId
+  // TODO: rename maybe? getStudentPreferencesForId
   getAllStudentPreferences: procedure.project.user
     .output(
       z.array(
         z.object({
           student: studentDtoSchema,
           preference: z.object({
-            type: z.nativeEnum(PreferenceType).or(z.literal("SUBMITTED")),
+            type: z.enum(PreferenceType).or(z.literal("SUBMITTED")),
             rank: z.number().optional(),
           }),
         }),
@@ -324,7 +217,7 @@ export const projectRouter = createTRPCRouter({
             .filter((x) => x.type === PreferenceType.PREFERENCE)
             .map((x) => x.projectId);
 
-          return { ...acc, [val.institutionId]: draft };
+          return { ...acc, [val.student.id]: draft };
         },
         {} as Record<string, string[]>,
       );
@@ -336,7 +229,7 @@ export const projectRouter = createTRPCRouter({
             include: {
               student: {
                 include: {
-                  studentFlags: { include: { flag: true } },
+                  studentFlag: true,
                   userInInstance: { include: { user: true } },
                 },
               },
@@ -346,7 +239,7 @@ export const projectRouter = createTRPCRouter({
             include: {
               student: {
                 include: {
-                  studentFlags: { include: { flag: true } },
+                  studentFlag: true,
                   userInInstance: { include: { user: true } },
                 },
               },
@@ -370,7 +263,7 @@ export const projectRouter = createTRPCRouter({
             type: x.type,
             rank:
               x.type === PreferenceType.PREFERENCE
-                ? studentPreferenceMap[x.student.userId]!.indexOf(projectId) + 1
+                ? studentPreferenceMap[x.student.userId].indexOf(projectId) + 1
                 : undefined,
           },
         };
@@ -379,8 +272,6 @@ export const projectRouter = createTRPCRouter({
       return [...submittedPreferences, ...draftPreferences];
     }),
 
-  // ok
-  // BREAKING output type changed
   delete: procedure.project
     .inStage(previousStages(Stage.PROJECT_ALLOCATION))
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
@@ -399,8 +290,6 @@ export const projectRouter = createTRPCRouter({
       return PermissionResult.UNAUTHORISED;
     }),
 
-  // ok
-  // BREAKING output type changed
   deleteSelected: procedure.instance
     .inStage(previousStages(Stage.PROJECT_ALLOCATION))
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
@@ -427,88 +316,55 @@ export const projectRouter = createTRPCRouter({
       );
     }),
 
-  // ok
-  // MOVE to instance
-  details: procedure.instance.user
-    .output(
-      z.object({ flags: z.array(flagDtoSchema), tags: z.array(tagDtoSchema) }),
-    )
-    .query(async ({ ctx: { instance } }) => ({
-      flags: await instance.getFlagsOnProjects(),
-      tags: await instance.getTagsOnProjects(),
-    })),
-
-  // ok
-  // TODO: change input type
   create: procedure.instance
     .inStage([Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING])
-    .user.input(
-      z.object({ newProject: updatedProjectSchema, supervisorId: z.string() }),
-    )
-    .output(z.void())
-    .mutation(
-      async ({
-        ctx: { instance, db },
-        input: { supervisorId, newProject },
-      }) => {
-        await db.$transaction(async (tx) => {
-          const project = await tx.project.create({
-            data: {
-              ...expand(instance.params),
-              title: newProject.title,
-              description: newProject.description,
-              capacityLowerBound: 0,
-              capacityUpperBound: newProject.capacityUpperBound,
-              preAllocatedStudentId:
-                newProject.isPreAllocated && newProject.preAllocatedStudentId
-                  ? newProject.preAllocatedStudentId
-                  : null,
-              specialTechnicalRequirements:
-                newProject.specialTechnicalRequirements ?? null,
-              latestEditDateTime: new Date(),
-              supervisorId,
-            },
-          });
+    .withRoles([Role.ADMIN, Role.SUPERVISOR])
+    .input(z.object({ newProject: projectForm.createApiInputSchema }))
+    .output(z.string())
+    .mutation(async ({ ctx: { instance, db }, input: { newProject } }) => {
+      return await db.$transaction(async (tx) => {
+        const project = await tx.project.create({
+          data: {
+            ...expand(instance.params),
+            title: newProject.title,
+            description: newProject.description,
+            capacityLowerBound: 0,
+            capacityUpperBound: newProject.capacityUpperBound,
+            preAllocatedStudentId: newProject.preAllocatedStudentId ?? null,
+            latestEditDateTime: new Date(),
+            supervisorId: newProject.supervisorId,
+          },
+        });
 
-          if (
-            newProject.isPreAllocated &&
-            newProject.preAllocatedStudentId &&
-            newProject.preAllocatedStudentId.trim() !== ""
-          ) {
-            await linkPreallocatedStudent(
-              tx,
-              { ...instance.params, projectId: project.id },
-              newProject.preAllocatedStudentId,
-            );
-
-            await tx.studentProjectAllocation.create({
-              data: {
-                ...expand(instance.params),
-                userId: newProject.preAllocatedStudentId,
-                projectId: project.id,
-                studentRanking: 1,
-              },
-            });
-          }
-
-          await linkProjectFlags(
+        if (
+          newProject.preAllocatedStudentId &&
+          newProject.preAllocatedStudentId.trim() !== ""
+        ) {
+          // ! would just override another pre-allocated student - bad probably
+          await linkPreAllocatedStudent(
             tx,
             { ...instance.params, projectId: project.id },
-            newProject.flagTitles,
+            newProject.preAllocatedStudentId,
           );
+        }
 
-          await tx.tagOnProject.createMany({
-            data: newProject.tags.map(({ id: tagId }) => ({
-              tagId,
-              projectId: project.id,
-            })),
-          });
-        });
-      },
-    ),
+        await linkProjectFlagIds(
+          tx,
+          { ...instance.params, projectId: project.id },
+          newProject.flagIds,
+        );
 
-  // BREAKING output type
-  getFormDetails: procedure.instance.user
+        await linkProjectTagIds(
+          tx,
+          { ...instance.params, projectId: project.id },
+          newProject.tagIds,
+        );
+
+        return project.id;
+      });
+    }),
+
+  getFormInitialisationData: procedure.instance.user
     .input(z.object({ projectId: z.string().optional() }))
     .output(
       z.object({
@@ -516,30 +372,42 @@ export const projectRouter = createTRPCRouter({
         flags: z.array(flagDtoSchema),
         tags: z.array(tagDtoSchema),
         students: z.array(studentDtoSchema),
+        supervisors: z.array(supervisorDtoSchema),
       }),
     )
-    .query(async ({ ctx: { instance }, input: { projectId } }) => {
-      // make sure only students with the correct data are returned
-      // (big asterisk considering you can change the flags on a project)
-      // so instead get all unallocated students and filter them on the client based on the selected flags
-
+    .query(async ({ ctx: { instance, user }, input: { projectId } }) => {
       const allProjects = await instance.getProjectDetails();
       const takenTitles = new Set(allProjects.map(({ project: p }) => p.title));
 
+      const students = await instance.getUnallocatedStudents();
+
       if (projectId) {
-        const project = await instance.getProject(projectId).get();
-        takenTitles.delete(project.title);
+        const project = instance.getProject(projectId);
+
+        const { title } = await project.get();
+        takenTitles.delete(title);
+
+        // if the project has a pre-allocated student, we should allow them to be re-selected
+        if (await project.hasPreAllocatedStudent()) {
+          const preAllocatedStudent = await project.getPreAllocatedStudent();
+          students.push(preAllocatedStudent);
+        }
+      }
+
+      let supervisors: SupervisorDTO[] = [];
+      if (await user.isSubGroupAdminOrBetter(instance.params)) {
+        supervisors = await instance.getSupervisors();
       }
 
       return {
         takenTitles,
-        students: await instance.getUnallocatedStudents(),
         flags: await instance.getFlags(),
         tags: await instance.getTags(),
+        students,
+        supervisors,
       };
     }),
 
-  // ok
   getAllocation: procedure.project.user
     .output(
       z.object({ student: studentDtoSchema, rank: z.number() }).optional(),
@@ -551,7 +419,7 @@ export const projectRouter = createTRPCRouter({
           student: {
             include: {
               userInInstance: { include: { user: true } },
-              studentFlags: { include: { flag: true } },
+              studentFlag: true,
             },
           },
         },
@@ -565,60 +433,20 @@ export const projectRouter = createTRPCRouter({
       };
     }),
 
-  // ok
-  // TODO: change output type
   supervisorSubmissionInfo: procedure.instance.subGroupAdmin
     .output(
       z.array(
         z.object({
-          email: z.string(),
-          name: z.string(),
-          userId: z.string(),
+          supervisor: supervisorDtoSchema,
           submittedProjectsCount: z.number(),
-          projectAllocationTarget: z.number(),
           allocatedCount: z.number(),
           submissionTarget: z.number(),
           targetMet: z.boolean(),
         }),
       ),
     )
-    .query(async ({ ctx: { instance } }) => {
-      const instanceData = await instance.get();
-
-      const currentInstanceSubmissionDetails =
-        await instance.getSupervisorSubmissionDetails();
-
-      if (!instanceData.parentInstanceId) {
-        return currentInstanceSubmissionDetails.map((c) => ({
-          ...c,
-          targetMet: c.submittedProjectsCount >= c.submissionTarget,
-        }));
-      }
-
-      const parent = await instance.getParentInstance();
-      const parentInstanceSubmissionDetails =
-        await parent.getSupervisorSubmissionDetails();
-
-      const parentAllocationMap = parentInstanceSubmissionDetails.reduce(
-        (acc, val) => ({ ...acc, [val.userId]: val.submittedProjectsCount }),
-        {} as Record<string, number>,
-      );
-
-      return currentInstanceSubmissionDetails.map((f) => {
-        const newAllocatedCount =
-          f.allocatedCount + (parentAllocationMap[f.userId] ?? 0);
-
-        const newSubmissionTarget = computeProjectSubmissionTarget(
-          f.projectAllocationTarget,
-          newAllocatedCount,
-        );
-
-        return {
-          ...f,
-          allocatedCount: newAllocatedCount,
-          submissionTarget: newSubmissionTarget,
-          targetMet: f.submittedProjectsCount >= newSubmissionTarget,
-        };
-      });
-    }),
+    .query(
+      async ({ ctx: { instance } }) =>
+        await instance.getSupervisorSubmissionDetails(),
+    ),
 });

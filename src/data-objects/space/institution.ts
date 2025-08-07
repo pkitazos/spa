@@ -1,8 +1,19 @@
+import {
+  type GroupDTO,
+  type SuperAdminDTO,
+  type InstanceDTO,
+  type UserDTO,
+} from "@/dto";
+
 import { Transformers as T } from "@/db/transformers";
-import { DB } from "@/db/types";
-import { GroupDTO, SuperAdminDTO, InstanceDTO, UserDTO } from "@/dto";
+import { type DB } from "@/db/types";
+
+import { toInstanceId } from "@/lib/utils/general/instance-params";
 import { slugify } from "@/lib/utils/general/slugify";
+import { type InstanceParams } from "@/lib/validations/params";
+
 import { DataObject } from "../data-object";
+import { User } from "../user";
 
 export class Institution extends DataObject {
   constructor(db: DB) {
@@ -35,12 +46,29 @@ export class Institution extends DataObject {
     return instances.map(T.toAllocationInstanceDTO);
   }
 
-  public async createUser(data: UserDTO): Promise<void> {
-    this.db.user.create({ data });
+  public async instanceExists(params: InstanceParams): Promise<boolean> {
+    return !!(await this.db.allocationInstance.findFirst({
+      where: toInstanceId(params),
+    }));
   }
 
-  public async createUsers(users: UserDTO[]): Promise<void> {
-    this.db.user.createMany({ data: users, skipDuplicates: true });
+  public async createUser({ id, name, email }: UserDTO): Promise<UserDTO> {
+    return await this.db.user.create({ data: { id, name, email } });
+  }
+
+  public async createUsers(users: UserDTO[]): Promise<UserDTO[]> {
+    return await this.db.user.createManyAndReturn({
+      data: users,
+      skipDuplicates: true,
+    });
+  }
+
+  public async updateUser({ id, name, email }: UserDTO): Promise<UserDTO> {
+    return await this.db.user.update({ where: { id }, data: { name, email } });
+  }
+
+  public getUserObjectById(userId: string): User {
+    return new User(this.db, userId);
   }
 
   public async userExists(id: string): Promise<boolean> {
@@ -49,5 +77,9 @@ export class Institution extends DataObject {
 
   public async getUsers(): Promise<UserDTO[]> {
     return await this.db.user.findMany();
+  }
+
+  public async deleteUser(id: string): Promise<UserDTO> {
+    return await this.db.user.delete({ where: { id } });
   }
 }

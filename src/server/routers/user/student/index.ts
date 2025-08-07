@@ -1,18 +1,19 @@
-import { Stage } from "@prisma/client";
 import { z } from "zod";
 
-import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
-import { stageGte } from "@/lib/utils/permissions/stage-check";
-import { randomAllocationDtoSchema } from "@/lib/validations/allocation/data-table-dto";
+import { studentDtoSchema } from "@/dto";
+import { projectDtoSchema, supervisorDtoSchema } from "@/dto";
+
+import { Supervisor } from "@/data-objects";
+
+import { Stage } from "@/db/types";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
-import { preferenceRouter } from "./preference";
+import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
+import { stageGte } from "@/lib/utils/permissions/stage-check";
 
-import { Supervisor } from "@/data-objects";
-import { studentDtoSchema } from "@/dto";
-import { projectDtoSchema, supervisorDtoSchema } from "@/dto";
+import { preferenceRouter } from "./preference";
 
 export const studentRouter = createTRPCRouter({
   preference: preferenceRouter,
@@ -105,17 +106,6 @@ export const studentRouter = createTRPCRouter({
     },
   ),
 
-  // MOVE to instance router (a lot of these operations should really be on the instance object)
-  // they can also be on the student object and just use the same underlying dal methods
-  // maybe not
-  updateLevel: procedure.instance.subGroupAdmin
-    .input(z.object({ studentId: z.string(), level: z.number() }))
-    .output(studentDtoSchema)
-    .mutation(async ({ ctx: { instance }, input: { studentId, level } }) => {
-      const student = await instance.getStudent(studentId);
-      return student.setStudentLevel(level);
-    }),
-
   // Can anyone see this?
   latestSubmission: procedure.instance.user
     .input(z.object({ studentId: z.string() }))
@@ -125,7 +115,6 @@ export const studentRouter = createTRPCRouter({
       return student.getLatestSubmissionDateTime();
     }),
 
-  // BREAKING output type
   isPreAllocated: procedure.instance.student
     .output(z.boolean())
     .query(async ({ ctx: { user } }) => await user.hasSelfDefinedProject()),
@@ -229,12 +218,22 @@ export const studentRouter = createTRPCRouter({
       await instance.unlinkStudents(studentIds);
     }),
 
-  // MOVE to instance router
-  getUnallocated: procedure.instance.subGroupAdmin
-    .output(z.array(randomAllocationDtoSchema).optional())
-    .query(async ({ ctx: { instance } }) => {
-      const { selectedAlgConfigId } = await instance.get();
-      if (!selectedAlgConfigId) return;
-      return await instance.getStudentsForRandomAllocation();
+  getSuitableProjects: procedure.instance.subGroupAdmin
+    .input(z.object({ studentId: z.string() }))
+    .output(z.array(projectDtoSchema))
+    .query(async ({ ctx: { instance }, input: { studentId } }) => {
+      const student = await instance.getStudent(studentId);
+      const { flag: studentFlag } = await student.get();
+      const preferences = await student.getAllDraftPreferences();
+      const preferenceIds = new Set(preferences.map(({ project: p }) => p.id));
+
+      const projectData = await instance.getProjectDetails();
+
+      return projectData
+        .filter((p) => {
+          if (preferenceIds.has(p.project.id)) return false;
+          return p.project.flags.map((f) => f.id).includes(studentFlag.id);
+        })
+        .map(({ project }) => project);
     }),
 });

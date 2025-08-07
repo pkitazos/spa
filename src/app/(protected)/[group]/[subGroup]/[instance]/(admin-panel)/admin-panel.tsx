@@ -1,23 +1,42 @@
-import { InstanceParams } from "@/lib/validations/params";
+import { STAGES } from "@/config/stages";
+
+import { Heading } from "@/components/heading";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import { api } from "@/lib/trpc/server";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import Layout from "./layout";
-import { api } from "@/lib/trpc/server";
 
 export default async function AdminPanel({
   params,
 }: {
   params: InstanceParams;
 }) {
-  const instance = await api.institution.instance.get({ params });
-  // TODO use parallel routes for home page
+  const { displayName, stage } = await api.institution.instance.get({ params });
+  const stageInfo = STAGES[stage];
+
   return (
     <Layout params={params}>
-      <div className="grid h-full w-full place-items-center">
-        <p>
-          This instance is in stage:{" "}
-          <span className="font-bold">{instance.stage}</span>
-        </p>
-      </div>
+      <Heading>{displayName}</Heading>
+      <Card className="grid h-full w-full place-items-center">
+        <CardHeader>
+          <CardTitle className="text-2xl font-semibold">Admin Panel</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <p>
+              <span className="text-muted-foreground">Stage:</span>{" "}
+              <span>
+                {stageInfo.number} - {stageInfo.name}
+              </span>
+            </p>
+            <p>
+              <span>{stageInfo.description}</span>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </Layout>
   );
 }

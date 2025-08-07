@@ -1,9 +1,12 @@
 "use client";
+
 import { useState } from "react";
-import { PreferenceType } from "@prisma/client";
+
 import { format } from "date-fns";
 import { AlertCircleIcon, ClockIcon } from "lucide-react";
 import { toast } from "sonner";
+
+import { PreferenceType } from "@/db/types";
 
 import { getSubmissionErrors } from "@/components/pages/student-preferences/get-submission-errors";
 import { useInstanceParams } from "@/components/params-context";
@@ -12,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { api } from "@/lib/trpc/client";
-import { PreferenceBoard } from "@/lib/validations/board";
+import { type PreferenceBoard } from "@/lib/validations/board";
 
 export function SubmissionArea({
   title,

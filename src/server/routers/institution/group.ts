@@ -1,13 +1,13 @@
 import { z } from "zod";
 
-import { procedure } from "@/server/middleware";
-import { createTRPCRouter } from "@/server/trpc";
-
 import { groupDtoSchema, subGroupDtoSchema, userDtoSchema } from "@/dto";
 import {
   LinkUserResult,
   LinkUserResultSchema,
 } from "@/dto/result/link-user-result";
+
+import { procedure } from "@/server/middleware";
+import { createTRPCRouter } from "@/server/trpc";
 
 export const groupRouter = createTRPCRouter({
   exists: procedure.group.user
@@ -66,25 +66,21 @@ export const groupRouter = createTRPCRouter({
   addAdmin: procedure.group.superAdmin
     .input(z.object({ newAdmin: userDtoSchema }))
     .output(LinkUserResultSchema)
-    .mutation(
-      async ({ ctx: { group, institution, audit }, input: { newAdmin } }) => {
-        // audit("Added group admin", { result, user: newAdmin });
+    .mutation(async ({ ctx: { group, institution }, input: { newAdmin } }) => {
+      const { id } = newAdmin;
+      const userIsGroupAdmin = await group.isGroupAdmin(id);
 
-        const { id } = newAdmin;
-        const userIsGroupAdmin = await group.isGroupAdmin(id);
+      if (userIsGroupAdmin) return LinkUserResult.PRE_EXISTING;
 
-        if (userIsGroupAdmin) return LinkUserResult.PRE_EXISTING;
+      const userExists = await institution.userExists(id);
+      if (!userExists) await institution.createUser(newAdmin);
 
-        const userExists = await institution.userExists(id);
-        if (!userExists) institution.createUser(newAdmin);
+      await group.linkAdmin(id);
 
-        await group.linkAdmin(id);
+      if (!userExists) return LinkUserResult.CREATED_NEW;
 
-        if (!userExists) return LinkUserResult.CREATED_NEW;
-
-        return LinkUserResult.OK;
-      },
-    ),
+      return LinkUserResult.OK;
+    }),
 
   removeAdmin: procedure.group.superAdmin
     .input(z.object({ userId: z.string() }))

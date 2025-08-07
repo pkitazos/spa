@@ -1,10 +1,16 @@
 "use client";
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowUpToLineIcon, PenIcon, TargetIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+
+import { spacesLabels } from "@/config/spaces";
+
+import { type SupervisorDTO } from "@/dto";
 
 import { useInstanceParams } from "@/components/params-context";
 import { Badge } from "@/components/ui/badge";
@@ -22,9 +28,6 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { api } from "@/lib/trpc/client";
 import { supervisorCapacitiesSchema } from "@/lib/validations/supervisor-project-submission-details";
-
-import { spacesLabels } from "@/config/spaces";
-import { SupervisorDTO } from "@/dto";
 
 type SupervisorInstanceCapacities = {
   projectTarget: number;
@@ -49,7 +52,6 @@ export function InstanceDetailsCard({
 
   const form = useForm<SupervisorInstanceCapacities>({
     resolver: zodResolver(supervisorCapacitiesSchema),
-    defaultValues: capacities,
   });
 
   function changeEditMode(newMode: boolean) {

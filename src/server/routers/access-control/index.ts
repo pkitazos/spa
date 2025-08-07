@@ -1,34 +1,19 @@
 import { z } from "zod";
 
-import { relativeComplement } from "@/lib/utils/general/set-difference";
+import { readerStages, studentStages, supervisorStages } from "@/config/stages";
+
+import { AdminLevel } from "@/db/types";
+import { adminLevelSchema } from "@/db/types";
+
+import { procedure } from "@/server/middleware";
+import { createTRPCRouter } from "@/server/trpc";
+
 import {
   instanceParamsSchema,
   refinedSpaceParamsSchema,
 } from "@/lib/validations/params";
 
-import { procedure } from "@/server/middleware";
-import { createTRPCRouter } from "@/server/trpc";
-
-import { AdminLevel } from "@/db/types";
-import { adminLevelSchema } from "@/db/types";
-import { readerStages, studentStages, supervisorStages } from "@/config/stages";
-
 export const accessControlRouter = createTRPCRouter({
-  allAdminPanels: procedure.user.query(async ({ ctx: { user } }) => {
-    if (await user.isSuperAdmin()) return [{ title: "Admin", href: "/admin" }];
-
-    const allGroups = await user.getManagedGroups();
-    const allSubGroups = await user.getManagedSubGroups();
-
-    const uniqueSubGroups = relativeComplement(
-      allSubGroups,
-      allGroups,
-      (sg, g) => sg.path.startsWith(g.path),
-    );
-
-    return [...allGroups, ...uniqueSubGroups];
-  }),
-
   adminInInstance: procedure.instance.user
     .output(z.boolean())
     .query(
@@ -94,4 +79,44 @@ export const accessControlRouter = createTRPCRouter({
 
       return false;
     }),
+
+  projectAccess: procedure.project.user
+    .output(
+      z.discriminatedUnion("access", [
+        z.object({ access: z.literal(true) }),
+        z.object({ access: z.literal(false), error: z.string() }),
+      ]),
+    )
+    .query(async ({ ctx: { user, instance, project } }) => {
+      if (await user.isStaff(instance.params)) {
+        return { access: true };
+      }
+
+      if (await user.isStudent(instance.params)) {
+        const student = await user.toStudent(instance.params);
+
+        const { flag: studentFlag } = await student.get();
+
+        const projectFlags = await project.getFlags();
+
+        if (projectFlags.map((f) => f.id).includes(studentFlag.id)) {
+          return { access: true };
+        } else {
+          return {
+            access: false,
+            error: "Student not eligible for this project",
+          };
+        }
+      }
+
+      return { access: false, error: "Not a member of this instance" };
+    }),
+
+  breadcrumbs: procedure.user
+    .input(z.object({ segments: z.array(z.string()) }))
+    .output(z.array(z.object({ segment: z.string(), access: z.boolean() })))
+    .query(
+      async ({ ctx: { user }, input: { segments } }) =>
+        await user.authoriseBreadcrumbs(segments),
+    ),
 });

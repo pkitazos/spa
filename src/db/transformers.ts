@@ -1,47 +1,45 @@
 // MOVE these to some other file
-
 import {
-  AssessmentCriterionDTO,
-  CriterionScoreDTO,
-  MarkingSubmissionDTO,
-  UnitOfAssessmentDTO,
-  UserDTO,
+  type AssessmentCriterionDTO,
+  type CriterionScoreDTO,
+  type MarkingSubmissionDTO,
+  type UnitOfAssessmentDTO,
+  type UserDTO,
 } from "@/dto";
 import {
-  DB_Algorithm,
-  DB_AllocationGroup,
-  DB_AllocationInstance,
-  DB_AllocationSubGroup,
-  DB_AssessmentCriterion,
-  DB_Flag,
-  DB_FlagOnProject,
-  DB_FlagOnStudent,
-  DB_UnitOfAssessment,
-  DB_Project,
-  DB_ReaderDetails,
-  DB_StudentDetails,
-  DB_SupervisorDetails,
-  DB_Tag,
-  DB_TagOnProject,
-  DB_User,
-  DB_UserInInstance,
-  DB_CriterionScore,
-  DB_MarkingSubmission,
+  type AlgorithmDTO,
+  type FlagDTO,
+  type GroupDTO,
+  type InstanceDTO,
+  type InstanceUserDTO,
+  type ProjectDTO,
+  type ReaderDTO,
+  type StudentDTO,
+  type SubGroupDTO,
+  type SupervisorDTO,
+  type TagDTO,
+} from "@/dto";
+
+import {
+  type DB_Algorithm,
+  type DB_AllocationGroup,
+  type DB_AllocationInstance,
+  type DB_AllocationSubGroup,
+  type DB_AssessmentCriterion,
+  type DB_Flag,
+  type DB_FlagOnProject,
+  type DB_UnitOfAssessment,
+  type DB_Project,
+  type DB_ReaderDetails,
+  type DB_StudentDetails,
+  type DB_SupervisorDetails,
+  type DB_Tag,
+  type DB_TagOnProject,
+  type DB_User,
+  type DB_UserInInstance,
+  type DB_CriterionScore,
+  type DB_MarkingSubmission,
 } from "./types";
-
-import {
-  AlgorithmDTO,
-  FlagDTO,
-  GroupDTO,
-  InstanceDTO,
-  InstanceUserDTO,
-  ProjectDTO,
-  ReaderDTO,
-  StudentDTO,
-  SubGroupDTO,
-  SupervisorDTO,
-  TagDTO,
-} from "@/dto";
 
 export class Transformers {
   static toUserDTO({
@@ -57,6 +55,7 @@ export class Transformers {
   }
 
   public static toMarkingSubmissionDTO(
+    this: void,
     data: DB_MarkingSubmission & { criterionScores?: DB_CriterionScore[] },
   ): MarkingSubmissionDTO {
     return {
@@ -67,7 +66,7 @@ export class Transformers {
       marks: (data.criterionScores ?? []).reduce(
         (acc, val) => ({
           ...acc,
-          [val.assessmentCriterionId]: this.toScoreDTO(val),
+          [val.assessmentCriterionId]: Transformers.toScoreDTO(val),
         }),
         {},
       ),
@@ -80,11 +79,15 @@ export class Transformers {
     return { mark: data.grade, justification: data.justification };
   }
 
-  public static toAllocationGroupDTO(data: DB_AllocationGroup): GroupDTO {
+  public static toAllocationGroupDTO(
+    this: void,
+    data: DB_AllocationGroup,
+  ): GroupDTO {
     return { group: data.id, displayName: data.displayName };
   }
 
   public static toAllocationSubGroupDTO(
+    this: void,
     data: DB_AllocationSubGroup,
   ): SubGroupDTO {
     return {
@@ -95,6 +98,7 @@ export class Transformers {
   }
 
   public static toAllocationInstanceDTO(
+    this: void,
     data: DB_AllocationInstance,
   ): InstanceDTO {
     return {
@@ -104,7 +108,6 @@ export class Transformers {
       displayName: data.displayName,
       stage: data.stage,
       selectedAlgConfigId: data.selectedAlgId ?? undefined,
-      parentInstanceId: data.parentInstanceId ?? undefined,
       projectSubmissionDeadline: data.projectSubmissionDeadline,
       supervisorAllocationAccess: data.supervisorAllocationAccess,
       minStudentPreferences: data.minStudentPreferences,
@@ -122,6 +125,7 @@ export class Transformers {
   }
 
   public static toInstanceUserDTO(
+    this: void,
     data: DB_UserInInstance & { user: DB_User },
   ): InstanceUserDTO {
     return {
@@ -133,9 +137,10 @@ export class Transformers {
   }
 
   public static toStudentDTO(
+    this: void,
     data: DB_StudentDetails & {
       userInInstance: DB_UserInInstance & { user: DB_User };
-      studentFlags: (DB_FlagOnStudent & { flag: DB_Flag })[];
+      studentFlag: DB_Flag;
     },
   ): StudentDTO {
     return {
@@ -143,13 +148,13 @@ export class Transformers {
       name: data.userInInstance.user.name,
       email: data.userInInstance.user.email,
       joined: data.userInInstance.joined,
-      level: data.studentLevel,
       latestSubmission: data.latestSubmissionDateTime ?? undefined,
-      flags: data.studentFlags.map((f) => f.flag),
+      flag: data.studentFlag,
     };
   }
 
   public static toReaderDTO(
+    this: void,
     data: DB_ReaderDetails & {
       userInInstance: DB_UserInInstance & { user: DB_User };
     },
@@ -166,6 +171,7 @@ export class Transformers {
   }
 
   public static toSupervisorDTO(
+    this: void,
     data: DB_SupervisorDetails & {
       userInInstance: DB_UserInInstance & { user: DB_User };
     },
@@ -182,6 +188,7 @@ export class Transformers {
   }
 
   public static toProjectDTO(
+    this: void,
     data: DB_Project & {
       flagsOnProject: (DB_FlagOnProject & { flag: DB_Flag })[];
       tagsOnProject: (DB_TagOnProject & { tag: DB_Tag })[];
@@ -191,8 +198,6 @@ export class Transformers {
       id: data.id,
       title: data.title,
       description: data.description,
-      specialTechnicalRequirements:
-        data.specialTechnicalRequirements ?? undefined,
       preAllocatedStudentId: data.preAllocatedStudentId ?? undefined,
       latestEditDateTime: data.latestEditDateTime,
       capacityLowerBound: data.capacityLowerBound,
@@ -203,15 +208,19 @@ export class Transformers {
     };
   }
 
-  public static toTagDTO(data: DB_Tag): TagDTO {
+  public static toTagDTO(this: void, data: DB_Tag): TagDTO {
     return { id: data.id, title: data.title };
   }
 
-  public static toFlagDTO(data: DB_Flag): FlagDTO {
-    return { id: data.id, title: data.title, description: data.description };
+  public static toFlagDTO(this: void, data: DB_Flag): FlagDTO {
+    return {
+      id: data.id,
+      displayName: data.displayName,
+      description: data.description,
+    };
   }
 
-  public static toAlgorithmDTO(a: DB_Algorithm): AlgorithmDTO {
+  public static toAlgorithmDTO(this: void, a: DB_Algorithm): AlgorithmDTO {
     return {
       id: a.id,
       displayName: a.displayName,
@@ -228,6 +237,7 @@ export class Transformers {
   }
 
   public static toAssessmentCriterionDTO(
+    this: void,
     data: DB_AssessmentCriterion,
   ): AssessmentCriterionDTO {
     return {
@@ -241,6 +251,7 @@ export class Transformers {
   }
 
   public static toUnitOfAssessmentDTO(
+    this: void,
     data: DB_UnitOfAssessment & {
       flag: DB_Flag;
       assessmentCriteria: DB_AssessmentCriterion[];
@@ -250,14 +261,29 @@ export class Transformers {
       id: data.id,
       title: data.title,
       flag: Transformers.toFlagDTO(data.flag),
-      components: data.assessmentCriteria.map(
-        Transformers.toAssessmentCriterionDTO,
+      components: data.assessmentCriteria.map((x) =>
+        Transformers.toAssessmentCriterionDTO(x),
       ),
       studentSubmissionDeadline: data.studentSubmissionDeadline,
       markerSubmissionDeadline: data.markerSubmissionDeadline,
       weight: data.weight,
       isOpen: data.open,
       allowedMarkerTypes: data.allowedMarkerTypes,
+    };
+  }
+
+  public static toGroupDTO(this: void, group: DB_AllocationGroup): GroupDTO {
+    return { group: group.id, displayName: group.displayName };
+  }
+
+  public static toSubGroupDTO(
+    this: void,
+    subGroup: DB_AllocationSubGroup,
+  ): SubGroupDTO {
+    return {
+      group: subGroup.allocationGroupId,
+      subGroup: subGroup.id,
+      displayName: subGroup.displayName,
     };
   }
 }

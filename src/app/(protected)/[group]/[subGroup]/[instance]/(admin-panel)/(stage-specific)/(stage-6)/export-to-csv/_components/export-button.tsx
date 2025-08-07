@@ -1,8 +1,9 @@
 "use client";
+
 import { ExportCSVButton } from "@/components/export-csv";
 import { Button } from "@/components/ui/button";
 
-import { AllocationCsvData } from "@/lib/validations/allocation-csv-data";
+import { type AllocationCsvData } from "@/lib/validations/allocation-csv-data";
 
 export function ExportDataButton({ data }: { data: AllocationCsvData[] }) {
   const header = [
@@ -11,10 +12,9 @@ export function ExportDataButton({ data }: { data: AllocationCsvData[] }) {
     "Student Name",
     "Student Matric.",
     "Student Email",
-    "Student Level",
+    "Student Flag",
     "Project Title",
     "Project Description",
-    "Project Special Technical Requirements",
     "Student Ranking",
     "Supervisor GUID",
     "Supervisor Name",
@@ -27,10 +27,9 @@ export function ExportDataButton({ data }: { data: AllocationCsvData[] }) {
     e.student.name,
     e.student.matric,
     e.student.email,
-    e.student.level,
+    e.student.flag.displayName,
     e.project.title,
     e.project.description,
-    e.project.specialTechnicalRequirements,
     e.student.ranking,
     e.supervisor.id,
     e.supervisor.name,

@@ -1,7 +1,14 @@
 "use client";
+
 import { useState } from "react";
+
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { CHAPTER } from "@/config/stages";
+
+import { stageSchema } from "@/db/types";
+import { type Stage } from "@/db/types";
 
 import { useInstanceParams } from "@/components/params-context";
 import { Button } from "@/components/ui/button";
@@ -9,11 +16,6 @@ import { Button } from "@/components/ui/button";
 import { api } from "@/lib/trpc/client";
 
 import { StageButton } from "./stage-button";
-
-import { stageSchema } from "@/db/types";
-import { CHAPTER } from "@/config/config/stage";
-
-import { Stage } from "@/db/types";
 
 export function StageControl({ stage }: { stage: Stage }) {
   const params = useInstanceParams();
@@ -23,17 +25,18 @@ export function StageControl({ stage }: { stage: Stage }) {
   const [confirmedIdx, setConfirmedIdx] = useState(stages.indexOf(stage) + 1);
 
   const utils = api.useUtils();
-  const refetchTabs = utils.institution.instance.getHeaderTabs.refetch;
+  const refetchTabs = async () =>
+    await utils.institution.instance.getHeaderTabs.refetch();
 
   const { mutateAsync } = api.institution.instance.setStage.useMutation();
 
   const handleConfirmation = (idx: number) => {
     toast.promise(
-      mutateAsync({ params, stage: stages[idx - 1]! }).then(() => {
+      mutateAsync({ params, stage: stages[idx - 1] }).then(async () => {
         setSelectedIdx(-1);
         setConfirmedIdx(idx);
         router.refresh();
-        refetchTabs();
+        await refetchTabs();
       }),
       {
         loading: "Updating Stage...",

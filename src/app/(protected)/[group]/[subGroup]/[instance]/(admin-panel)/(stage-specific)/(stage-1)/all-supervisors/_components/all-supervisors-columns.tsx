@@ -1,4 +1,4 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
   FilePlus2,
@@ -7,6 +7,13 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
+
+import { INSTITUTION } from "@/config/institution";
+import { PAGES } from "@/config/pages";
+
+import { type SupervisorDTO } from "@/dto";
+
+import { Role, Stage } from "@/db/types";
 
 import { AccessControl } from "@/components/access-control";
 import { useInstanceStage } from "@/components/params-context";
@@ -34,10 +41,6 @@ import {
   stageLte,
 } from "@/lib/utils/permissions/stage-check";
 
-import { Role, Stage } from "@/db/types";
-import { SupervisorDTO } from "@/dto";
-import { PAGES } from "@/config/pages";
-
 export function useAllSupervisorsColumns({
   roles,
   deleteSupervisor,
@@ -53,10 +56,10 @@ export function useAllSupervisorsColumns({
 
   const userCols: ColumnDef<SupervisorDTO>[] = [
     {
-      id: "GUID",
+      id: INSTITUTION.ID_NAME,
       accessorFn: (s) => s.id,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="GUID" canFilter />
+        <DataTableColumnHeader column={column} title={INSTITUTION.ID_NAME} />
       ),
       cell: ({ row: { original: supervisor } }) => (
         <WithTooltip

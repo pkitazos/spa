@@ -1,27 +1,33 @@
 "use client";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import {
+  type TagDTO,
+  type FlagDTO,
+  type ProjectDTO,
+  type SupervisorDTO,
+} from "@/dto";
+
+import { type PreferenceType, type Role } from "@/db/types";
+
+import {
   useInstanceParams,
-  useInstancePath,
+  usePathInInstance,
 } from "@/components/params-context";
 import { ToastSuccessCard } from "@/components/toast-success-card";
 import { buttonVariants } from "@/components/ui/button";
 import DataTable from "@/components/ui/data-table/data-table";
-import { useDataTableProjectFilters } from "@/components/ui/data-table/data-table-context";
 
+import { type User } from "@/lib/auth/types";
 import { api } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { User } from "@/lib/validations/auth";
-import { ProjectTableDataDto } from "@/lib/validations/dto/project";
-import { StudentPreferenceType } from "@/lib/validations/student-preference";
+import { toPP3 } from "@/lib/utils/general/instance-params";
+import { type StudentPreferenceType } from "@/lib/validations/student-preference";
 
 import { useAllProjectsColumns } from "./all-projects-columns";
-
-import { PreferenceType, Role } from "@/db/types";
-import { toPP3 } from "@/lib/utils/general/instance-params";
 
 export function AllProjectsDataTable({
   data,
@@ -29,24 +35,33 @@ export function AllProjectsDataTable({
   roles,
   projectPreferences,
   hasSelfDefinedProject,
+  projectDescriptors,
 }: {
-  data: ProjectTableDataDto[];
+  data: { project: ProjectDTO; supervisor: SupervisorDTO }[];
   user: User;
   roles: Set<Role>;
   projectPreferences: Record<string, PreferenceType>;
   hasSelfDefinedProject: boolean;
+  projectDescriptors: { flags: FlagDTO[]; tags: TagDTO[] };
 }) {
   const params = useInstanceParams();
-  const instancePath = useInstancePath();
+  const { getPath } = usePathInInstance();
   const router = useRouter();
 
-  const { mutateAsync: deleteAsync } = api.project.delete.useMutation();
-  const { mutateAsync: deleteAllAsync } =
+  const { mutateAsync: api_delete } = api.project.delete.useMutation();
+
+  const { mutateAsync: api_deleteMultiple } =
     api.project.deleteSelected.useMutation();
+
+  const { mutateAsync: api_changePreference } =
+    api.user.student.preference.update.useMutation();
+
+  const { mutateAsync: api_changeMultiplePreferences } =
+    api.user.student.preference.updateSelected.useMutation();
 
   async function handleDelete(projectId: string) {
     void toast.promise(
-      deleteAsync({ params: toPP3(params, projectId) }).then(() =>
+      api_delete({ params: toPP3(params, projectId) }).then(() =>
         router.refresh(),
       ),
       {
@@ -57,9 +72,9 @@ export function AllProjectsDataTable({
     );
   }
 
-  async function handleDeleteSelected(projectIds: string[]) {
+  async function handleDeleteMultiple(projectIds: string[]) {
     void toast.promise(
-      deleteAllAsync({ params, projectIds }).then(() => router.refresh()),
+      api_deleteMultiple({ params, projectIds }).then(() => router.refresh()),
       {
         loading: "Deleting selected projects...",
         error: "Something went wrong",
@@ -68,18 +83,12 @@ export function AllProjectsDataTable({
     );
   }
 
-  const { mutateAsync: changePreferenceAsync } =
-    api.user.student.preference.update.useMutation();
-
-  const { mutateAsync: changeSelectedPreferencesAsync } =
-    api.user.student.preference.updateSelected.useMutation();
-
   async function handleChangePreference(
     preferenceType: StudentPreferenceType,
     projectId: string,
   ) {
     void toast.promise(
-      changePreferenceAsync({ params, preferenceType, projectId }).then(() =>
+      api_changePreference({ params, preferenceType, projectId }).then(() =>
         router.refresh(),
       ),
       {
@@ -90,7 +99,7 @@ export function AllProjectsDataTable({
             message="Successfully updated project preference"
             action={
               <Link
-                href={`${instancePath}/my-preferences`}
+                href={getPath("my-preferences")}
                 className={cn(
                   buttonVariants({ variant: "outline" }),
                   "flex h-full w-max items-center gap-2 self-end py-3 text-xs",
@@ -105,12 +114,12 @@ export function AllProjectsDataTable({
     );
   }
 
-  async function handleChangeSelectedPreferences(
+  async function handleChangeMultiplePreferences(
     preferenceType: StudentPreferenceType,
     projectIds: string[],
   ) {
     void toast.promise(
-      changeSelectedPreferencesAsync({
+      api_changeMultiplePreferences({
         params,
         preferenceType,
         projectIds,
@@ -123,7 +132,7 @@ export function AllProjectsDataTable({
             message={`Successfully updated ${projectIds.length} project preferences`}
             action={
               <Link
-                href={`${instancePath}/my-preferences`}
+                href={getPath("my-preferences")}
                 className={cn(
                   buttonVariants({ variant: "outline" }),
                   "flex h-full w-max items-center gap-2 self-end py-3 text-xs",
@@ -138,7 +147,22 @@ export function AllProjectsDataTable({
     );
   }
 
-  const filters = useDataTableProjectFilters();
+  const filters = [
+    {
+      columnId: "Flags",
+      options: projectDescriptors.flags.map((flag) => ({
+        id: flag.id,
+        title: flag.displayName,
+      })),
+    },
+    {
+      columnId: "Keywords",
+      options: projectDescriptors.tags.map((tag) => ({
+        id: tag.id,
+        title: tag.title,
+      })),
+    },
+  ];
 
   const columns = useAllProjectsColumns({
     user,
@@ -146,14 +170,13 @@ export function AllProjectsDataTable({
     projectPreferences,
     hasSelfDefinedProject,
     deleteProject: handleDelete,
-    deleteSelectedProjects: handleDeleteSelected,
+    deleteMultipleProjects: handleDeleteMultiple,
     changePreference: handleChangePreference,
-    changeSelectedPreferences: handleChangeSelectedPreferences,
+    changeMultiplePreferences: handleChangeMultiplePreferences,
   });
 
   return (
     <DataTable
-      searchableColumn={{ id: "Title", displayName: "Project Titles" }}
       className="w-full"
       columns={columns}
       filters={filters}

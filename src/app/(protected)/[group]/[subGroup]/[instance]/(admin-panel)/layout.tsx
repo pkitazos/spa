@@ -1,10 +1,9 @@
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
-import { Heading } from "@/components/heading";
+import { type InstanceParams } from "@/lib/validations/params";
 
 export default async function Layout({
   params,
@@ -21,12 +20,5 @@ export default async function Layout({
     );
   }
 
-  const instance = await api.institution.instance.get({ params });
-
-  return (
-    <section className="mr-12 w-full">
-      <Heading>{instance.displayName}</Heading>
-      {children}
-    </section>
-  );
+  return <>{children}</>;
 }

@@ -1,11 +1,16 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CopyIcon,
   CornerDownRightIcon,
   MoreHorizontalIcon as MoreIcon,
-  PenIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { z } from "zod";
+
+import { INSTITUTION } from "@/config/institution";
+import { PAGES } from "@/config/pages";
+
+import { type FlagDTO } from "@/dto";
 
 import { ExportCSVButton } from "@/components/export-csv";
 import { CircleCheckSolidIcon } from "@/components/icons/circle-check";
@@ -27,72 +32,71 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { cn } from "@/lib/utils";
 import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
-import { StudentPreferenceSubmissionDto } from "@/lib/validations/dto/preference";
-import { PAGES } from "@/config/pages";
+import { type StudentPreferenceSubmissionDto } from "@/lib/validations/dto/preference";
 
 export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSubmissionDto>[] {
   const selectCol = getSelectColumn<StudentPreferenceSubmissionDto>();
 
   const baseCols: ColumnDef<StudentPreferenceSubmissionDto>[] = [
     {
-      id: "GUID",
-      accessorFn: (s) => s.id,
+      id: INSTITUTION.ID_NAME,
+      accessorFn: (s) => s.student.id,
       header: ({ column }) => (
         <DataTableColumnHeader
           className="w-28"
           column={column}
-          title="GUID"
-          canFilter
+          title={INSTITUTION.ID_NAME}
         />
       ),
     },
     {
       id: "Name",
-      accessorFn: (s) => s.name,
+      accessorFn: (s) => s.student.name,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
       ),
       cell: ({
         row: {
-          original: { name, id },
+          original: { student },
         },
       }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`./${PAGES.allStudents.href}/${id}`}
+          href={`./${PAGES.allStudents.href}/${student.id}`}
         >
-          {name}
+          {student.name}
         </Link>
       ),
     },
     {
       id: "Email",
-      accessorFn: (s) => s.email,
+      accessorFn: (s) => s.student.email,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Email" />
       ),
     },
     {
-      id: "Level",
-      accessorFn: ({ level }) => level,
+      id: "Flag",
+      accessorFn: (s) => s.student.flag,
       header: ({ column }) => (
-        <DataTableColumnHeader className="w-20" column={column} title="Level" />
+        <DataTableColumnHeader className="w-20" column={column} title="Flag" />
       ),
       cell: ({
         row: {
-          original: { level },
+          original: { student },
         },
       }) => (
         <div className="grid w-20 place-items-center">
-          <Badge variant="accent">{level}</Badge>
+          <Badge variant="accent" className="rounded-md">
+            {student.flag.displayName}
+          </Badge>
         </div>
       ),
       filterFn: (row, columnId, value) => {
-        const selectedFilters = value as ("4" | "5")[];
-        const rowValue = row.getValue(columnId) as 4 | 5;
-        console.log({ selectedFilters });
-        const studentLevel = rowValue.toString() as "4" | "5";
-        return selectedFilters.includes(studentLevel);
+        const selectedFilters = z.array(z.string()).parse(value);
+        return selectedFilters.includes(
+          row.getValue<FlagDTO>(columnId).displayName,
+        );
       },
     },
     {
@@ -159,9 +163,9 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
         const data = table
           .getSelectedRowModel()
           .rows.map(({ original: r }) => [
-            r.id,
-            r.name,
-            r.email,
+            r.student.id,
+            r.student.name,
+            r.student.email,
             r.submissionCount,
             r.submitted ? 1 : 0,
           ]);
@@ -196,7 +200,7 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
       },
       cell: ({
         row: {
-          original: { id, name, email },
+          original: { student },
         },
       }) => (
         <div className="flex w-14 items-center justify-center">
@@ -210,31 +214,25 @@ export function usePreferenceSubmissionColumns(): ColumnDef<StudentPreferenceSub
             <DropdownMenuContent align="center" side="bottom">
               <DropdownMenuLabel>
                 Actions
-                <span className="ml-2 text-muted-foreground">for {name}</span>
+                <span className="ml-2 text-muted-foreground">
+                  for {student.name}
+                </span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./${PAGES.allStudents.href}/${id}`}
+                  href={`./${PAGES.allStudents.href}/${student.id}`}
                 >
                   <CornerDownRightIcon className="h-4 w-4" />
                   <span>View student details</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem className="group/item">
-                <Link
-                  className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./${PAGES.allStudents.href}/${id}?edit=true`}
-                >
-                  <PenIcon className="h-4 w-4" />
-                  <span>Edit student details</span>
-                </Link>
-              </DropdownMenuItem>
+              {/* // TODO: make the actual email be click-copyable instead */}
               <DropdownMenuItem className="group/item">
                 <button
                   className="flex items-center gap-2 text-sm text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  onClick={async () => await copyToClipboard(email)}
+                  onClick={async () => await copyToClipboard(student.email)}
                 >
                   <CopyIcon className="h-4 w-4" />
                   <span>Copy email</span>

@@ -1,12 +1,15 @@
-import { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
+
+import { INSTITUTION } from "@/config/institution";
+import { PAGES } from "@/config/pages";
+
+import { type UserDTO } from "@/dto";
 
 import { buttonVariants } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 
-import { SupervisorMatchingDetailsDto } from "@/lib/validations/matching";
-import { UserDTO } from "@/dto";
-import { PAGES } from "@/config/pages";
+import { type SupervisorMatchingDetailsDto } from "@/lib/validations/matching";
 
 export function useSupervisorResultsColumns(): ColumnDef<{
   supervisor: UserDTO;
@@ -14,10 +17,10 @@ export function useSupervisorResultsColumns(): ColumnDef<{
 }>[] {
   return [
     {
-      id: "GUID",
+      id: INSTITUTION.ID_NAME,
       accessorFn: (s) => s.supervisor.id,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="GUID" canFilter />
+        <DataTableColumnHeader column={column} title={INSTITUTION.ID_NAME} />
       ),
     },
     {

@@ -1,16 +1,19 @@
-import { Plus } from "lucide-react";
-import { Metadata } from "next";
+import { Plus, SquareLibraryIcon } from "lucide-react";
+import { type Metadata } from "next";
 import Link from "next/link";
 
-import { Heading, SubHeading } from "@/components/heading";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+import { spacesLabels } from "@/config/spaces";
+
+import { Heading, SectionHeading } from "@/components/heading";
+import { PanelWrapper } from "@/components/panel-wrapper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 
 import { api } from "@/lib/trpc/server";
-
-import { app, metadataTitle } from "@/config/meta";
-import { spacesLabels } from "@/config/spaces";
 
 export const dynamic = "force-dynamic";
 
@@ -23,8 +26,8 @@ export default async function Page() {
   const groups = await api.institution.groups();
 
   return (
-    <div className="mt-6 flex h-max w-full max-w-5xl flex-col gap-10 px-6 pb-20">
-      <Heading>University of Glasgow</Heading>
+    <PanelWrapper className="gap-10">
+      <Heading>{app.institution.name}</Heading>
       <Card className="my-10 flex flex-col gap-2 ">
         <CardHeader className="-mb-3 mt-3">
           <CardTitle>Super-Admins</CardTitle>
@@ -46,32 +49,55 @@ export default async function Page() {
           </Table>
         </CardContent>
       </Card>
-      <SubHeading>Manage {spacesLabels.group.full}s</SubHeading>
-      <div className="flex w-full flex-col gap-6">
-        <Link href="/admin/create-group" className="w-fit">
-          <Button
-            size="lg"
-            variant="outline"
-            className="flex h-20 w-full items-center justify-center gap-3 rounded-lg bg-accent/60 hover:bg-accent"
-          >
-            <Plus className="h-6 w-6 stroke-[3px]" />{" "}
-            <p className="text-lg">Create {spacesLabels.group.short}</p>
-          </Button>
+      <SectionHeading className="mb-2 flex items-center">
+        <SquareLibraryIcon className="mr-2 h-6 w-6 text-indigo-500" />
+        <span>Manage Platform Users</span>
+      </SectionHeading>
+      <Button
+        className="h-20 text-base font-semibold w-1/4"
+        variant="outline"
+        size="lg"
+        asChild
+      >
+        <Link
+          href={`/${PAGES.superAdminPanel.href}/${PAGES.userManagement.href}`}
+        >
+          <span>View All Users</span>
         </Link>
+      </Button>
+
+      <Separator />
+
+      <SectionHeading className="mb-2 flex items-center">
+        <SquareLibraryIcon className="mr-2 h-6 w-6 text-indigo-500" />
+        <span>Manage {spacesLabels.group.full}s</span>
+      </SectionHeading>
+      <div className="flex w-full flex-col gap-6">
+        <Button
+          size="lg"
+          variant="outline"
+          className="flex h-20 w-fit items-center justify-center gap-3 rounded-lg bg-accent/60 hover:bg-accent"
+          asChild
+        >
+          <Link href={`/${PAGES.superAdminPanel.href}/${PAGES.newGroup.href}`}>
+            <Plus className="h-6 w-6" />{" "}
+            <span className="text-lg">Create {spacesLabels.group.short}</span>
+          </Link>
+        </Button>
         <div className="grid w-full grid-cols-3 gap-6">
-          {groups.map(({ group, displayName }, i) => (
-            <Link className="col-span-1" href={`/${group}`} key={i}>
-              <Button
-                className="h-20 w-full text-base font-semibold"
-                variant="outline"
-                size="lg"
-              >
-                {displayName}
-              </Button>
-            </Link>
+          {groups.map(({ group, displayName }) => (
+            <Button
+              className="h-20 w-full text-base font-semibold col-span-1"
+              variant="outline"
+              size="lg"
+              key={group}
+              asChild
+            >
+              <Link href={`/${group}`}>{displayName}</Link>
+            </Button>
           ))}
         </div>
       </div>
-    </div>
+    </PanelWrapper>
   );
 }

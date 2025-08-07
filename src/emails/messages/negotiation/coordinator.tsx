@@ -1,15 +1,4 @@
 import {
-  ProjectDTO,
-  ReaderDTO,
-  StudentDTO,
-  SupervisorDTO,
-  UnitOfAssessmentDTO,
-} from "@/dto";
-import { Column, Heading, Row, Section } from "@react-email/components";
-import { Layout } from "../../components/layout";
-import { format } from "@/lib/utils/date/format";
-import { Grade } from "@/config/grades";
-import {
   fakeDeadline,
   fakeProject,
   fakeReader,
@@ -17,6 +6,21 @@ import {
   fakeSupervisor,
   fakeUnit,
 } from "@/emails/fake-data";
+import { Column, Heading, Row, Section } from "@react-email/components";
+
+import { Grade } from "@/config/grades";
+
+import {
+  type ProjectDTO,
+  type ReaderDTO,
+  type StudentDTO,
+  type SupervisorDTO,
+  type UnitOfAssessmentDTO,
+} from "@/dto";
+
+import { format } from "@/lib/utils/date/format";
+
+import { Layout } from "../../components/layout";
 
 interface Props {
   project: ProjectDTO;

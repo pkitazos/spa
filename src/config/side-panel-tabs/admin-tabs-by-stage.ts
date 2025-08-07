@@ -1,7 +1,8 @@
-import { TabType } from "@/lib/validations/tabs";
-
 import { PAGES } from "@/config/pages";
+
 import { Stage } from "@/db/types";
+
+import { type TabType } from "@/lib/validations/tabs";
 
 export const ADMIN_TABS_BY_STAGE: Record<Stage, TabType[]> = {
   [Stage.SETUP]: [PAGES.addStudents, PAGES.addSupervisors],
@@ -12,6 +13,7 @@ export const ADMIN_TABS_BY_STAGE: Record<Stage, TabType[]> = {
     PAGES.preAllocatedProjects,
     PAGES.addStudents,
     PAGES.addSupervisors,
+    PAGES.createProject,
   ],
   [Stage.STUDENT_BIDDING]: [
     PAGES.studentInvites,
@@ -20,6 +22,7 @@ export const ADMIN_TABS_BY_STAGE: Record<Stage, TabType[]> = {
     PAGES.preAllocatedProjects,
     PAGES.addStudents,
     PAGES.addSupervisors,
+    PAGES.createProject,
   ],
   [Stage.PROJECT_ALLOCATION]: [
     PAGES.algorithms,
@@ -27,20 +30,21 @@ export const ADMIN_TABS_BY_STAGE: Record<Stage, TabType[]> = {
     PAGES.preferenceStatistics,
     PAGES.preferenceSubmissions,
     PAGES.preAllocatedProjects,
+    PAGES.createProject,
   ],
   [Stage.ALLOCATION_ADJUSTMENT]: [
-    PAGES.manualChanges,
+    PAGES.manualAllocations,
     PAGES.randomAllocations,
     PAGES.results,
     PAGES.preferenceStatistics,
     PAGES.preferenceSubmissions,
     PAGES.preAllocatedProjects,
+    PAGES.createProject,
   ],
   [Stage.ALLOCATION_PUBLICATION]: [
     PAGES.manageUserAccess,
     PAGES.allocationOverview,
     PAGES.exportToCSV,
-    // ! Note: branch tab injected in side-panel/admin-only tabs
     PAGES.preferenceStatistics,
     PAGES.preferenceSubmissions,
   ],

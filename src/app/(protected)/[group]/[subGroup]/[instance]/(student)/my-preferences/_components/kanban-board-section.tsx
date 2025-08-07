@@ -1,7 +1,9 @@
 "use client";
-import { PreferenceType } from "@prisma/client";
+
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { type PreferenceType } from "@/db/types";
 
 import { KanbanBoard } from "@/components/kanban-board";
 import { useBoardDetails } from "@/components/kanban-board/store";
@@ -15,8 +17,8 @@ export function KanbanBoardSection() {
 
   const utils = api.useUtils();
 
-  const refetch = () =>
-    utils.user.student.preference.initialBoardState.refetch();
+  const refetch = async () =>
+    await utils.user.student.preference.initialBoardState.refetch();
 
   const deleteProject = useBoardDetails((s) => s.deleteProject);
 
@@ -33,9 +35,9 @@ export function KanbanBoardSection() {
   ) {
     void toast.promise(
       reorderAsync({ params, projectId, updatedRank, preferenceType }).then(
-        () => {
+        async () => {
           router.refresh();
-          refetch();
+          await refetch();
         },
       ),
       {
@@ -49,9 +51,9 @@ export function KanbanBoardSection() {
   async function deletePreference(projectId: string) {
     void toast.promise(
       updatePreferenceAsync({ params, projectId, preferenceType: "None" }).then(
-        () => {
+        async () => {
           router.refresh();
-          refetch();
+          await refetch();
           deleteProject(projectId);
         },
       ),

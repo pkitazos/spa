@@ -1,0 +1,136 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+
+assert_dep_mode() {
+    if [ -z $AMPS_DEPLOYMENT_MODE ]; then
+        echo "AMPS deployment mode not defined."
+        exit 1
+    fi
+}
+
+assert_db_backup_dir() {
+    if [ -z $AMPS_DB_BACKUP_DIR ]; then
+        echo "AMPS database backup directory not specified."
+        exit 1
+    fi
+}
+
+assert_log_backup_dir() {
+    if [ -z $AMPS_LOG_BACKUP_DIR ]; then
+        echo "AMPS log backup directory not specified."
+        exit 1
+    fi
+}
+
+if [ -z $AMPS_LOC ]; then
+    export AMPS_LOC=$(pwd)
+fi
+
+pushd $AMPS_LOC >/dev/null
+
+# Check if we are *probably* in the right directory
+if [ ! -f package.json ]; then
+    echo "No package json found; make sure '\$AMPS_LOC' is properly set, or that you run this command in the root of the repository"
+    exit 1
+fi
+
+pushd scripts/deploy/commands >/dev/null
+
+# Parse flags
+set -- $(getopt -n amps -o eg --long email,git -- $*)
+
+while true; do
+    case "$1" in
+    "-g" | "--git")
+        export AMPS_CLI_GIT="true"
+        shift
+        ;;
+    "-e" | "--email")
+        export AMPS_CLI_EMAIL="true"
+        shift
+        ;;
+    "--")
+        shift
+        break
+        ;;
+    esac
+done
+
+# Handle actual commands
+case "$1" in
+"'config'")
+    case $2 in
+    "'init'")
+        ./config/init.sh
+        ;;
+    "'email'")
+        ./config/email.sh
+        ;;
+    "'db-backups'")
+        ./config/db-backups.sh
+        ;;
+    "'log-backups'")
+        ./config/log-backups.sh
+        ;;
+    "'startup'")
+        ./config/startup-service.sh
+        ;;
+    "'updater'")
+        ./config/updater.sh
+        ;;
+    *)
+        echo "unknown command: '$1 $2'"
+        ;;
+    esac
+    ;;
+"'logs'")
+    case $2 in
+    "'backup'")
+        ./logs/backup.sh
+        ;;
+    esac
+    ;;
+"'start'")
+    assert_dep_mode
+    echo "starting AMPS..."
+    ./start.sh
+    ;;
+"'stop'")
+    assert_dep_mode
+    echo "stoping AMPS..."
+    ./stop.sh
+    ;;
+"'pull'")
+    assert_dep_mode
+    echo "pulling AMPS..."
+    ./pull.sh
+    ;;
+
+"'db'")
+    case $2 in
+    "'backup'")
+        echo "pulling AMPS..."
+        ./db/backup.sh
+        ;;
+    "'prepare'")
+        echo "pulling AMPS..."
+        ./db/prepare.sh
+        ;;
+    "'restore'")
+        echo "pulling AMPS..."
+        ./db/restore.sh
+        ;;
+    *)
+        echo "unrecognized command: '$1 $2'"
+        exit 1
+        ;;
+    esac
+    ;;
+*)
+    echo "unrecognized command: '$1'"
+    exit 1
+    ;;
+esac
+
+popd >/dev/null

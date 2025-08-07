@@ -1,19 +1,24 @@
-import { MarkerType, Stage } from "@/db/types";
-import { procedure } from "../middleware";
-import { createTRPCRouter } from "../trpc";
-import { subsequentStages } from "@/lib/utils/permissions/stage-check";
-import { expand } from "@/lib/utils/general/instance-params";
-import { Transformers as T } from "@/db/transformers";
-import { z } from "zod";
 import {
   GradingStatus,
-  MarkerStatusSummary,
-  ProjectMarkingOverview,
+  type MarkerStatusSummary,
+  type ProjectMarkingOverview,
   projectMarkingOverviewSchema,
 } from "@/app/(protected)/[group]/[subGroup]/[instance]/(admin-panel)/(stage-specific)/(stage-9)/marking-overview/row";
-import { MarkingSubmissionDTO, UserDTO } from "@/dto";
+import { z } from "zod";
+
 import { Grade } from "@/config/grades";
+
+import { type MarkingSubmissionDTO, type UserDTO } from "@/dto";
+
+import { Transformers as T } from "@/db/transformers";
+import { MarkerType, Stage } from "@/db/types";
+
 import { LogLevels } from "@/lib/logging/logger";
+import { expand } from "@/lib/utils/general/instance-params";
+import { subsequentStages } from "@/lib/utils/permissions/stage-check";
+
+import { procedure } from "../middleware";
+import { createTRPCRouter } from "../trpc";
 
 // TODO: fix
 export const markingRouter = createTRPCRouter({
@@ -21,28 +26,21 @@ export const markingRouter = createTRPCRouter({
     .inStage(subsequentStages(Stage.MARK_SUBMISSION))
     .subGroupAdmin.output(z.array(projectMarkingOverviewSchema))
     .query(async ({ ctx: { db, instance } }) => {
-      const { id: seyp_flag_id } = await db.flag.findUniqueOrThrow({
-        where: {
-          title_allocationGroupId_allocationSubGroupId_allocationInstanceId: {
+      const allowedFlagIds = await db.flag
+        .findMany({
+          where: {
             ...expand(instance.params),
-            title: "SEYP",
+            displayName: { in: ["SEYP", "Level 4"] },
           },
-        },
-        select: { id: true },
-      });
+          select: { id: true },
+        })
+        .then((data) => data.map(({ id }) => id));
 
       const projectStudentDataRaw = await db.studentProjectAllocation
         .findMany({
           where: {
             ...expand(instance.params),
-            OR: [
-              { student: { studentLevel: { equals: 4 } } },
-              {
-                student: {
-                  studentFlags: { some: { flagId: { equals: seyp_flag_id } } },
-                },
-              },
-            ],
+            student: { flagId: { in: allowedFlagIds } },
           },
           include: {
             project: {
@@ -64,7 +62,7 @@ export const markingRouter = createTRPCRouter({
             student: {
               include: {
                 userInInstance: { include: { user: true } },
-                studentFlags: { include: { flag: true } },
+                studentFlag: true,
               },
             },
           },
@@ -85,7 +83,7 @@ export const markingRouter = createTRPCRouter({
           where: expand(instance.params),
           include: { flag: true, assessmentCriteria: true },
         })
-        .then((data) => data.map(T.toUnitOfAssessmentDTO));
+        .then((data) => data.map((x) => T.toUnitOfAssessmentDTO(x)));
 
       const submissions = await db.markingSubmission.findMany({
         where: {
@@ -186,8 +184,8 @@ export const markingRouter = createTRPCRouter({
           const unitFinalMarksByUnit =
             unitFinalMarksByUnitByStudent[student.id] ?? {};
 
-          const applicableUnits = units.filter((u) =>
-            student.flags.map((f) => f.id).includes(u.flag.id),
+          const applicableUnits = units.filter(
+            (u) => student.flag.id === u.flag.id,
           );
 
           const unitData = applicableUnits.map((u) => {

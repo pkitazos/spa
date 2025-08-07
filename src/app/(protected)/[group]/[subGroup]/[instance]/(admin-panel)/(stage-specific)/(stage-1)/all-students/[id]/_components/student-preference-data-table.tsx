@@ -1,4 +1,5 @@
 "use client";
+
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -6,10 +7,10 @@ import { useInstanceParams } from "@/components/params-context";
 import DataTable from "@/components/ui/data-table/data-table";
 
 import { api } from "@/lib/trpc/client";
-import { StudentPreferenceType } from "@/lib/validations/student-preference";
+import { type StudentPreferenceType } from "@/lib/validations/student-preference";
 
 import {
-  PreferenceData,
+  type PreferenceData,
   useStudentPreferencesColumns,
 } from "./student-preference-columns";
 
@@ -23,10 +24,10 @@ export function StudentPreferenceDataTable({
   const params = useInstanceParams();
   const router = useRouter();
 
-  const { mutateAsync: changePreferenceAsync } =
+  const { mutateAsync: api_changePreference } =
     api.user.student.preference.change.useMutation();
 
-  const { mutateAsync: changeSelectedPreferencesAsync } =
+  const { mutateAsync: api_changeMultiplePreferences } =
     api.user.student.preference.changeSelected.useMutation();
 
   async function changePreference(
@@ -34,7 +35,7 @@ export function StudentPreferenceDataTable({
     projectId: string,
   ) {
     void toast.promise(
-      changePreferenceAsync({
+      api_changePreference({
         params,
         newPreferenceType,
         projectId,
@@ -48,12 +49,12 @@ export function StudentPreferenceDataTable({
     );
   }
 
-  async function changeSelectedPreferences(
+  async function changeMultiplePreferences(
     newPreferenceType: StudentPreferenceType,
     projectIds: string[],
   ) {
     void toast.promise(
-      changeSelectedPreferencesAsync({
+      api_changeMultiplePreferences({
         params,
         newPreferenceType,
         studentId,
@@ -69,15 +70,8 @@ export function StudentPreferenceDataTable({
 
   const columns = useStudentPreferencesColumns({
     changePreference,
-    changeSelectedPreferences,
+    changeMultiplePreferences,
   });
 
-  return (
-    <DataTable
-      searchableColumn={{ id: "Title", displayName: "Project Title" }}
-      className="w-full"
-      columns={columns}
-      data={data}
-    />
-  );
+  return <DataTable className="w-full" columns={columns} data={data} />;
 }

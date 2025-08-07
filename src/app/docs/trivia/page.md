@@ -1,3 +1,3 @@
-## Why is it called 'AMPS'?
+## Why is it called 'SPA'?
 
-AMPS stands for "Allocation & Marking Project System"
+The acronym SPA originally stood for 'Student-Project Allocation'. As the system's functionality has grown to include managing project marking, it now stands for 'Student Project Administration'.

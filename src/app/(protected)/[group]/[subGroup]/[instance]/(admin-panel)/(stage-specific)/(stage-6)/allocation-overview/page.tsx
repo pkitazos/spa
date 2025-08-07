@@ -1,17 +1,17 @@
-import { SubHeading } from "@/components/heading";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
+import { Heading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import { ByProjectDataTable } from "./_components/by-project-data-table";
 import { ByStudentDataTable } from "./_components/by-student-data-table";
 import { BySupervisorDataTable } from "./_components/by-supervisor-data-table";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
@@ -29,8 +29,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
     await api.institution.instance.projectAllocations({ params });
 
   return (
-    <PanelWrapper className="mt-10 flex w-full flex-col items-start gap-3 px-12">
-      <SubHeading className="mb-6">Final Allocation</SubHeading>
+    <PanelWrapper className="gap-10">
+      <Heading className="mb-6">{PAGES.allocationOverview.title}</Heading>
       <Tabs defaultValue="student" className="w-full">
         <TabsList className="w-full">
           <TabsTrigger

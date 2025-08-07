@@ -1,5 +1,7 @@
 "use client";
+
 import { useState } from "react";
+
 import { addWeeks } from "date-fns";
 import {
   ChevronDown,
@@ -35,7 +37,8 @@ import {
 
 import { cn } from "@/lib/utils";
 
-import { Classification } from "./state/store";
+import { type Classification } from "./state/store";
+
 import { useMarkingSchemeStore } from "./state";
 import {
   useTabPosition,

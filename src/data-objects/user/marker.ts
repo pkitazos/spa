@@ -1,19 +1,22 @@
-import { Transformers as T } from "@/db/transformers";
-import { DB } from "@/db/types";
 import {
-  MarkingSubmissionDTO,
-  ProjectDTO,
-  StudentDTO,
-  UnitOfAssessmentDTO,
-  PartialMarkingSubmissionDTO,
+  type MarkingSubmissionDTO,
+  type ProjectDTO,
+  type StudentDTO,
+  type UnitOfAssessmentDTO,
+  type PartialMarkingSubmissionDTO,
 } from "@/dto";
-import { InstanceParams } from "@/lib/validations/params";
-import { MarkerType } from "@prisma/client";
+import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
+
+import { Transformers as T } from "@/db/transformers";
+import { MarkerType } from "@/db/types";
+import { type DB } from "@/db/types";
+
+import { expand } from "@/lib/utils/general/instance-params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import { AllocationInstance } from "../space/instance";
+
 import { User } from ".";
-import { expand } from "@/lib/utils/general/instance-params";
-import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
 
 export class Marker extends User {
   public static computeStatus(
@@ -89,18 +92,14 @@ export class Marker extends User {
           student: {
             include: {
               userInInstance: { include: { user: true } },
-              studentFlags: {
+              studentFlag: {
                 include: {
-                  flag: {
+                  unitsOfAssessment: {
+                    where: { allowedMarkerTypes: { has: "SUPERVISOR" } },
                     include: {
-                      unitsOfAssessment: {
-                        where: { allowedMarkerTypes: { has: "SUPERVISOR" } },
-                        include: {
-                          assessmentCriteria: true,
-                          flag: true,
-                          markerSubmissions: { where: { markerId } },
-                        },
-                      },
+                      assessmentCriteria: true,
+                      flag: true,
+                      markerSubmissions: { where: { markerId } },
                     },
                   },
                 },
@@ -117,12 +116,12 @@ export class Marker extends User {
       });
 
       assignedProjects = assignedProjects.concat(
-        data.flatMap((a) =>
-          a.student.studentFlags.flatMap((f) => ({
-            project: T.toProjectDTO(a.project),
-            student: T.toStudentDTO(a.student),
-            markerType: MarkerType.SUPERVISOR,
-            unitsOfAssessment: f.flag.unitsOfAssessment.map((u) => {
+        data.flatMap((a) => ({
+          project: T.toProjectDTO(a.project),
+          student: T.toStudentDTO(a.student),
+          markerType: MarkerType.SUPERVISOR,
+          unitsOfAssessment: a.student.studentFlag.unitsOfAssessment.map(
+            (u) => {
               const submission = u.markerSubmissions.find(
                 (s) => s.studentId === a.student.userId,
               );
@@ -136,9 +135,9 @@ export class Marker extends User {
                   submission && T.toMarkingSubmissionDTO(submission),
                 ),
               };
-            }),
-          })),
-        ),
+            },
+          ),
+        })),
       );
     }
 
@@ -149,18 +148,14 @@ export class Marker extends User {
           student: {
             include: {
               userInInstance: { include: { user: true } },
-              studentFlags: {
+              studentFlag: {
                 include: {
-                  flag: {
+                  unitsOfAssessment: {
+                    where: { allowedMarkerTypes: { has: "READER" } },
                     include: {
-                      unitsOfAssessment: {
-                        where: { allowedMarkerTypes: { has: "READER" } },
-                        include: {
-                          assessmentCriteria: true,
-                          flag: true,
-                          markerSubmissions: { where: { markerId: this.id } },
-                        },
-                      },
+                      assessmentCriteria: true,
+                      flag: true,
+                      markerSubmissions: { where: { markerId: this.id } },
                     },
                   },
                 },
@@ -177,12 +172,12 @@ export class Marker extends User {
       });
 
       assignedProjects = assignedProjects.concat(
-        readerAllocations.flatMap((a) =>
-          a.student.studentFlags.map((f) => ({
-            project: T.toProjectDTO(a.project),
-            student: T.toStudentDTO(a.student),
-            markerType: MarkerType.READER,
-            unitsOfAssessment: f.flag.unitsOfAssessment.map((u) => {
+        readerAllocations.flatMap((a) => ({
+          project: T.toProjectDTO(a.project),
+          student: T.toStudentDTO(a.student),
+          markerType: MarkerType.READER,
+          unitsOfAssessment: a.student.studentFlag.unitsOfAssessment.map(
+            (u) => {
               const submission = u.markerSubmissions.find(
                 (s) => s.studentId === a.student.userId,
               );
@@ -196,9 +191,9 @@ export class Marker extends User {
                   submission && T.toMarkingSubmissionDTO(submission),
                 ),
               };
-            }),
-          })),
-        ),
+            },
+          ),
+        })),
       );
     }
 
@@ -273,8 +268,8 @@ export class Marker extends User {
             studentId,
             assessmentCriterionId,
             unitOfAssessmentId,
-            grade: m.mark || -1,
-            justification: m.justification || "",
+            grade: m.mark ?? -1,
+            justification: m.justification ?? "",
           },
           update: { grade: m.mark, justification: m.justification },
         }),

@@ -1,10 +1,14 @@
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+import { spacesLabels } from "@/config/spaces";
+
+import { Heading } from "@/components/heading";
+import { PanelWrapper } from "@/components/panel-wrapper";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
-import { SubGroupParams } from "@/lib/validations/params";
+import { type SubGroupParams } from "@/lib/validations/params";
 
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
 import { WizardSection } from "./_components/wizard-section";
 
 export async function generateMetadata({ params }: { params: SubGroupParams }) {
@@ -29,11 +33,11 @@ export default async function Page({ params }: { params: SubGroupParams }) {
   });
 
   return (
-    <div className="mx-20 flex w-full max-w-9xl flex-col gap-4">
-      {/* <Heading className="text-4xl">
+    <PanelWrapper className="gap-10">
+      <Heading className="text-4xl">
         Create new {spacesLabels.instance.full}
-      </Heading> */}
+      </Heading>
       <WizardSection params={params} takenNames={takenNames} />
-    </div>
+    </PanelWrapper>
   );
 }

@@ -1,15 +1,18 @@
-import { New } from "@/db/types";
-import { AlgorithmFlag } from "@prisma/client";
 import { z } from "zod";
+
 import {
   GenerousAlgorithm,
   GreedyAlgorithm,
   GreedyGenAlgorithm,
   MinCostAlgorithm,
 } from "@/config/algorithms";
+
+import { AlgorithmFlag } from "@/db/types";
+import { type New } from "@/db/types";
+
 import { matchingResultDtoSchema } from "@/lib/validations/matching";
 
-export const algorithmFlagSchema = z.nativeEnum(AlgorithmFlag);
+export const algorithmFlagSchema = z.enum(AlgorithmFlag);
 
 export const algorithmDtoSchema = z.object({
   id: z.string(),
@@ -51,14 +54,14 @@ export function buildNewAlgorithmSchema(takenNames: Set<string>) {
 
   return z.object({
     displayName: z
-      .string({ required_error: "Please select an Algorithm Name" })
+      .string("Please select an Algorithm Name")
       .refine((item) => !allTakenNames.has(item), "This name is already taken"),
     flag1: algorithmFlagSchema,
     flag2: algorithmFlagSchema.optional(),
     flag3: algorithmFlagSchema.optional(),
-    targetModifier: z.coerce.number().int().nonnegative(),
-    upperBoundModifier: z.coerce.number().int().nonnegative(),
-    maxRank: z.coerce.number().int().positive().or(z.literal(-1)),
+    targetModifier: z.coerce.number<number>().int().nonnegative(),
+    upperBoundModifier: z.coerce.number<number>().int().nonnegative(),
+    maxRank: z.coerce.number<number>().int().positive().or(z.literal(-1)),
   });
 }
 

@@ -2,23 +2,25 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { app, metadataTitle } from "@/config/meta";
+import { spacesLabels } from "@/config/spaces";
+
+import { AdminLevel } from "@/db/types";
+
 import { AdminLevelAC } from "@/components/access-control/admin-level-ac";
 import { Heading, SubHeading } from "@/components/heading";
+import { PanelWrapper } from "@/components/panel-wrapper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
-import { SubGroupParams } from "@/lib/validations/params";
+import { type SubGroupParams } from "@/lib/validations/params";
 
 import { AdminRemovalButton } from "./_components/admin-removal-button";
 import { DeleteConfirmation } from "./_components/delete-confirmation";
 import { FormButton } from "./_components/form-button";
-
-import { app, metadataTitle } from "@/config/meta";
-import { spacesLabels } from "@/config/spaces";
-import { AdminLevel } from "@/db/types";
 
 export async function generateMetadata({ params }: { params: SubGroupParams }) {
   const { displayName } = await api.institution.subGroup.get({ params });
@@ -44,7 +46,7 @@ export default async function Page({ params }: { params: SubGroupParams }) {
   const { group, subGroup } = params;
 
   return (
-    <div className="mt-6 flex h-max w-full max-w-5xl flex-col gap-10 px-6 pb-20">
+    <PanelWrapper className="gap-10">
       <Heading>{displayName}</Heading>
       <Card className="my-10 flex flex-col gap-2">
         <CardHeader className="-mb-3 mt-3">
@@ -113,6 +115,6 @@ export default async function Page({ params }: { params: SubGroupParams }) {
           />
         </div>
       </AdminLevelAC>
-    </div>
+    </PanelWrapper>
   );
 }

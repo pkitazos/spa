@@ -1,4 +1,5 @@
 "use client";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -13,7 +14,7 @@ import { buttonVariants } from "@/components/ui/button";
 
 import { api } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
-import { StudentPreferenceType } from "@/lib/validations/student-preference";
+import { type StudentPreferenceType } from "@/lib/validations/student-preference";
 
 export function StudentPreferenceButton({
   projectId,
@@ -31,11 +32,9 @@ export function StudentPreferenceButton({
 
   async function handleChange(preferenceType: StudentPreferenceType) {
     void toast.promise(
-      updateAsync({
-        params,
-        projectId,
-        preferenceType,
-      }).then(() => router.refresh()),
+      updateAsync({ params, projectId, preferenceType }).then(() =>
+        router.refresh(),
+      ),
       {
         loading: `Updating preference for Project ${projectId}...`,
         error: "Something went wrong",

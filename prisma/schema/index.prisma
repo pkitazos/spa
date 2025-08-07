@@ -1,6 +1,6 @@
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl", "rhel-openssl-3.0.x", "debian-openssl-1.1.x"]
+  binaryTargets = ["native", "linux-musl", "rhel-openssl-3.0.x", "debian-openssl-1.1.x", "linux-musl-arm64-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -37,7 +37,7 @@ model AllocationSubGroup {
   displayName         String               @map("display_name")
   // ---
   allocationGroupId   String               @map("allocation_group_id")
-  allocationGroup     AllocationGroup      @relation(fields: [allocationGroupId], references: [id], onDelete: Cascade)
+  allocationGroup     AllocationGroup      @relation(fields: [allocationGroupId], references: [id], onDelete: Cascade, map: "sub_group_group")
   // ---
   allocationInstances AllocationInstance[]
   subGroupAdmins      SubGroupAdmin[]
@@ -52,7 +52,6 @@ model AllocationInstance {
   stage                               Stage              @default(SETUP)
   // ---
   selectedAlgId                       String?            @map("selected_alg_id")
-  parentInstanceId                    String?            @map("parent_instance_id")
   // supervisor details
   projectSubmissionDeadline           DateTime           @map("project_submission_deadline")
   supervisorAllocationAccess          Boolean            @default(false) @map("supervisor_allocation_access")
@@ -69,11 +68,10 @@ model AllocationInstance {
   // ---
   allocationGroupId                   String             @map("allocation_group_id")
   allocationSubGroupId                String             @map("allocation_sub_group_id")
-  allocationSubGroup                  AllocationSubGroup @relation(fields: [allocationGroupId, allocationSubGroupId], references: [allocationGroupId, id], onDelete: Cascade)
+  allocationSubGroup                  AllocationSubGroup @relation(fields: [allocationGroupId, allocationSubGroupId], references: [allocationGroupId, id], onDelete: Cascade, map: "instance_sub_group")
   // ---
   users                               UserInInstance[]
   projects                            Project[]
-  studentFlags                        FlagOnStudent[]
   algorithms                          Algorithm[]
   flags                               Flag[]
   tags                                Tag[]
@@ -81,27 +79,30 @@ model AllocationInstance {
   finalGrades                         FinalGrade[]
   matchingPairs                       MatchingPair[]
   unitsOfAssessment                   UnitOfAssessment[]
+  FlagOnProject                       FlagOnProject[]
 
   @@id([allocationGroupId, allocationSubGroupId, id], name: "instanceId", map: "instance_id")
   @@unique([displayName, allocationGroupId, allocationSubGroupId])
   @@map("allocation_instance")
 }
 
+// TODO: flag ID has to be unique across all instances which means this blows up
 model Flag {
-  id                   String             @id @default(uuid())
-  title                String
+  id                   String
+  displayName          String             @map("display_name")
   description          String
   // ---
   allocationGroupId    String             @map("allocation_group_id")
   allocationSubGroupId String             @map("allocation_sub_group_id")
   allocationInstanceId String             @map("allocation_instance_id")
   // ---
-  allocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "allocation_instance")
+  allocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "flag_instance")
   flagOnProjects       FlagOnProject[]
-  flagOnStudents       FlagOnStudent[]
   unitsOfAssessment    UnitOfAssessment[]
+  students             StudentDetails[]
 
-  @@unique([title, allocationGroupId, allocationSubGroupId, allocationInstanceId])
+  @@id([id, allocationGroupId, allocationSubGroupId, allocationInstanceId], name: "flagId", map: "flag_id")
+  @@unique([displayName, allocationGroupId, allocationSubGroupId, allocationInstanceId])
   @@map("flag")
 }
 
@@ -112,7 +113,7 @@ model Tag {
   allocationGroupId    String             @map("allocation_group_id")
   allocationSubGroupId String             @map("allocation_sub_group_id")
   allocationInstanceId String             @map("allocation_instance_id")
-  allocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "allocation_instance")
+  allocationInstance   AllocationInstance @relation(fields: [allocationGroupId, allocationSubGroupId, allocationInstanceId], references: [allocationGroupId, allocationSubGroupId, id], onDelete: Cascade, map: "tag_instance")
   tagOnProject         TagOnProject[]
 
   @@unique([title, allocationGroupId, allocationSubGroupId, allocationInstanceId])

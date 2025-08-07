@@ -1,6 +1,4 @@
-import { DB } from "@/db/types";
-
-// ----------------------------------------------------------------
+import { type DB } from "@/db/types";
 
 export abstract class DataObject {
   protected db: DB;

@@ -1,7 +1,8 @@
-import { MarkerType } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 import { immer } from "zustand/middleware/immer";
 import { createStore } from "zustand/vanilla";
+
+import { type MarkerType } from "@/db/types";
 
 export type Classification = {
   title: string;

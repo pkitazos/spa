@@ -1,6 +1,7 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-import type { Config } from "tailwindcss";
+import tailwindAnimate from "tailwindcss-animate";
 import plugin from "tailwindcss/plugin";
+
+import type { Config } from "tailwindcss";
 
 const config: Config = {
   darkMode: ["class", "class"],
@@ -95,10 +96,11 @@ const config: Config = {
     },
   },
   plugins: [
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-require-imports
     require("tailwind-scrollbar")({ nocompatible: true }),
-    require("tailwindcss-animate"),
-    plugin(function ({ addUtilities }) {
-      addUtilities({
+    tailwindAnimate,
+    plugin(function (opts) {
+      opts.addUtilities({
         ".--orange-500": { outline: "2px solid", outlineColor: "#f97316" },
         ".--orange-600": { outline: "2px solid", outlineColor: "#ea580c" },
         ".--amber-500": { outline: "2px solid", outlineColor: "#f59e0b" },

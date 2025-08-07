@@ -1,23 +1,24 @@
 import { z } from "zod";
 
-import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
-import { subsequentStages } from "@/lib/utils/permissions/stage-check";
-import { instanceParamsSchema } from "@/lib/validations/params";
-import { supervisorCapacitiesSchema } from "@/lib/validations/supervisor-project-submission-details";
+import { computeProjectSubmissionTarget } from "@/config/submission-target";
+
+import {
+  type ProjectDTO,
+  projectDtoSchema,
+  type StudentDTO,
+  studentDtoSchema,
+  supervisorDtoSchema,
+} from "@/dto";
+
+import { Stage } from "@/db/types";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
-import { computeProjectSubmissionTarget } from "@/config/submission-target";
-import { Stage } from "@/db/types";
-import {
-  ProjectDTO,
-  projectDtoSchema,
-  StudentDTO,
-  studentDtoSchema,
-  supervisorDtoSchema,
-  userDtoSchema,
-} from "@/dto";
+import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
+import { subsequentStages } from "@/lib/utils/permissions/stage-check";
+import { instanceParamsSchema } from "@/lib/validations/params";
+import { supervisorCapacitiesSchema } from "@/lib/validations/supervisor-project-submission-details";
 
 export const supervisorRouter = createTRPCRouter({
   exists: procedure.instance.user
@@ -27,6 +28,14 @@ export const supervisorRouter = createTRPCRouter({
       async ({ ctx: { instance }, input: { supervisorId } }) =>
         await instance.isSupervisor(supervisorId),
     ),
+
+  getById: procedure.instance.subGroupAdmin
+    .input(z.object({ supervisorId: z.string() }))
+    .output(supervisorDtoSchema)
+    .query(async ({ ctx: { instance }, input: { supervisorId } }) => {
+      const supervisor = await instance.getSupervisor(supervisorId);
+      return await supervisor.toDTO();
+    }),
 
   allocationAccess: procedure.instance.user
     .output(z.boolean())
@@ -67,33 +76,21 @@ export const supervisorRouter = createTRPCRouter({
       };
     }),
 
-  // TODO rename
-  // TODO change output schema
-  // MOVE to instance router
-  instanceData: procedure.instance.subGroupAdmin
+  instanceProjects: procedure.instance.subGroupAdmin
     .input(z.object({ supervisorId: z.string() }))
     .output(
-      // TODO compose don't extend
-      z.object({
-        supervisor: supervisorDtoSchema,
-        projects: z.array(
-          projectDtoSchema.extend({
-            allocatedStudents: z.array(userDtoSchema),
-          }),
-        ),
-      }),
+      z.array(
+        z.object({
+          project: projectDtoSchema,
+          allocatedStudent: studentDtoSchema.optional(),
+        }),
+      ),
     )
     .query(async ({ ctx: { instance }, input: { supervisorId } }) => {
       const supervisor = await instance.getSupervisor(supervisorId);
-      return {
-        supervisor: await supervisor.toDTO(),
-        projects: await supervisor.getProjectsWithDetails(),
-      };
+      return await supervisor.getProjectsWithStudentAllocation();
     }),
 
-  // ? not sure about the output schema definition here
-  // TODO consider renaming e.g. projectStats?
-  // TODO split
   projectStats: procedure.instance.supervisor
     .output(
       z.object({
@@ -101,30 +98,13 @@ export const supervisorRouter = createTRPCRouter({
         submissionTarget: z.number(),
       }),
     )
-    .query(async ({ ctx: { instance, user } }) => {
-      const { parentInstanceId } = await instance.get();
-
-      // TODO: this call returns allocated students and it does not have to
-      // so the name is lying here
+    .query(async ({ ctx: { user } }) => {
       const allProjects = await user.getProjects();
       const { projectTarget: target } = await user.getCapacityDetails();
 
-      let totalCount: number;
-      if (parentInstanceId) {
-        const forkedPreAllocatedCount = allProjects.reduce(
-          (acc, val) => (val.project.preAllocatedStudentId ? acc + 1 : acc),
-          0,
-        );
-
-        const parentCount =
-          await user.countAllocationsInParent(parentInstanceId);
-
-        totalCount = forkedPreAllocatedCount + parentCount;
-      } else {
-        totalCount = await user
-          .getSupervisionAllocations()
-          .then((allocations) => allocations.length);
-      }
+      const totalCount = await user
+        .getSupervisionAllocations()
+        .then((allocations) => allocations.length);
 
       return {
         currentSubmissionCount: allProjects.length,
@@ -132,7 +112,6 @@ export const supervisorRouter = createTRPCRouter({
       };
     }),
 
-  // BREAKING output type
   rowProjects: procedure.instance.supervisor
     .output(
       z.array(
@@ -191,7 +170,6 @@ export const supervisorRouter = createTRPCRouter({
         await instance.deleteSupervisors(supervisorIds),
     ),
 
-  // BREAKING output type
   // TODO: change rank to studentRanking
   allocations: procedure.instance.supervisor
     .output(

@@ -1,8 +1,10 @@
+import { type ProjectDTO, type StudentDTO } from "@/dto";
+
 import { Transformers as T } from "@/db/transformers";
-import { DB } from "@/db/types";
-import { ProjectDTO, StudentDTO } from "@/dto";
+import { type DB } from "@/db/types";
+
 import { expand } from "@/lib/utils/general/instance-params";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import { Marker } from ".";
 
@@ -20,14 +22,10 @@ export class Reader extends Marker {
         student: {
           include: {
             userInInstance: { include: { user: true } },
-            studentFlags: {
+            studentFlag: {
               include: {
-                flag: {
-                  include: {
-                    unitsOfAssessment: {
-                      include: { assessmentCriteria: true, flag: true },
-                    },
-                  },
+                unitsOfAssessment: {
+                  include: { assessmentCriteria: true, flag: true },
                 },
               },
             },

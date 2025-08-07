@@ -1,18 +1,19 @@
+import { User2Icon } from "lucide-react";
 import { notFound } from "next/navigation";
 
-import { Heading, SubHeading } from "@/components/heading";
-import { PageWrapper } from "@/components/page-wrapper";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
+import { Heading, SectionHeading } from "@/components/heading";
+import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import { StudentAllocation } from "./_components/student-allocation";
 import { StudentDetailsCard } from "./_components/student-details-card";
 import { StudentPreferencesSection } from "./_components/student-preferences-section";
 import { StudentProjectSection } from "./_components/student-project-section";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
 
 type PageParams = InstanceParams & { id: string };
 
@@ -35,24 +36,41 @@ export default async function Page({ params }: { params: PageParams }) {
   const exists = await api.user.student.exists({ params, studentId });
   if (!exists) notFound();
 
+  const flags = await api.institution.instance.getFlags({ params });
+
   const { student, selfDefinedProjectId, allocation } =
     await api.user.student.getById({ params, studentId });
 
   return (
-    <PageWrapper>
+    <PanelWrapper>
       <Heading>{student.name}</Heading>
-      <SubHeading>Details</SubHeading>
+
+      <SectionHeading className="mt-6 mb-2 flex items-center">
+        <User2Icon className="mr-2 h-6 w-6 text-indigo-500" />
+        <span>Details</span>
+      </SectionHeading>
       <section className="flex gap-10">
-        <StudentDetailsCard className="w-1/2" student={student} />
-        {!!selfDefinedProjectId && !!allocation && (
-          <StudentAllocation className="w-1/2" allocation={allocation} />
+        <StudentDetailsCard className="w-1/2" student={student} flags={flags} />
+        {/* If the student has been allocated a project show it */}
+        {allocation && (
+          <StudentAllocation
+            className="w-1/2"
+            allocation={allocation}
+            selfDefined={!!selfDefinedProjectId}
+          />
         )}
       </section>
-      {selfDefinedProjectId ? (
-        <StudentPreferencesSection params={params} />
-      ) : (
-        <StudentProjectSection params={params} />
+
+      {/* if the student has already been allocated a project show it */}
+      {allocation && (
+        <StudentProjectSection
+          className="mt-16"
+          allocatedProject={allocation.project}
+        />
       )}
-    </PageWrapper>
+
+      {/* if the student has not defined a project show their preferences */}
+      {!selfDefinedProjectId && <StudentPreferencesSection params={params} />}
+    </PanelWrapper>
   );
 }

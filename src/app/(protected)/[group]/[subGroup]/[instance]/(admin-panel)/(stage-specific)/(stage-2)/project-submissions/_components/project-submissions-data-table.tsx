@@ -1,22 +1,26 @@
 "use client";
 
-import DataTable from "@/components/ui/data-table/data-table";
+import { type SupervisorDTO } from "@/dto";
 
-import { ProjectSubmissionDto } from "@/lib/validations/dto/project";
+import DataTable from "@/components/ui/data-table/data-table";
 
 import { useProjectSubmissionColumns } from "./project-submissions-columns";
 
 export function ProjectSubmissionsDataTable({
   data,
 }: {
-  data: ProjectSubmissionDto[];
+  data: {
+    supervisor: SupervisorDTO;
+    submittedProjectsCount: number;
+    submissionTarget: number;
+    targetMet: boolean;
+  }[];
 }) {
   const columns = useProjectSubmissionColumns();
 
   return (
     <DataTable
       className="w-full"
-      searchableColumn={{ id: "Name", displayName: "Names" }}
       columns={columns}
       filters={[
         {

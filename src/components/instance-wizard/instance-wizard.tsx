@@ -1,8 +1,16 @@
 "use client";
-import { ReactNode } from "react";
+
+import { type ReactNode } from "react";
 import { useFormContext } from "react-hook-form";
+
+import { format, isAfter } from "date-fns";
 import { z } from "zod";
 
+import { spacesLabels } from "@/config/spaces";
+
+import { DateTimePicker } from "@/components/date-time-picker";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   FormControl,
   FormDescription,
@@ -13,66 +21,37 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { spacesLabels } from "@/config/spaces";
-import { format, isAfter } from "date-fns";
-import { DateTimePicker } from "@/components/date-time-picker";
-import { TimelineSequence } from "./timeline-sequence";
+
+import { FormWizard, type WizardStep } from "../wizard-form";
+
 import { UploadJsonArea } from "./flag-json-upload";
-import { Badge } from "@/components/ui/badge";
 import TagInput from "./tag-input";
-import { FormWizard, WizardStep } from "../wizard-form";
 
 // TODO these need reset buttons
 
 export const flagsAssessmentSchema = z
   .array(
     z.object({
-      flag: z.string(),
+      id: z
+        .string()
+        .regex(
+          /^[a-zA-Z0-9_-]+$/,
+          "Flag ID must be alphanumeric, hyphens, or underscores",
+        ),
+      displayName: z.string(),
       description: z.string(),
-      units_of_assessment: z.array(
-        z.object({
-          title: z.string(),
-          student_submission_deadline: z.coerce.date(),
-          marker_submission_deadline: z.coerce.date(),
-          weight: z.number(),
-          allowed_marker_types: z
-            .array(
-              z.union([z.literal("supervisor"), z.literal("reader")], {
-                errorMap(err) {
-                  if (err.code === "invalid_union") {
-                    return {
-                      message: "Values must be either supervisor or reader",
-                    };
-                  } else return { message: err.message ?? "freaky error" };
-                },
-              }),
-            )
-            .refine((arr) => arr.length === new Set(arr).size, {
-              message: "no duplicate values",
-            }),
-          assessment_criteria: z.array(
-            z.object({
-              title: z.string(),
-              description: z.string(),
-              weight: z.number(),
-            }),
-          ),
-        }),
-      ),
     }),
   )
   .min(1);
 
-function buildWizardSchema(takenNames: Set<string> = new Set()) {
+function buildWizardSchema(takenNames = new Set<string>()) {
   return z
     .object({
       // basic details
       displayName: z
         .string()
         .min(1, "Please enter a name")
-        .refine((name) => !takenNames.has(name), {
-          message: "This name is already taken",
-        }),
+        .refine((name) => !takenNames.has(name), "This name is already taken"),
 
       // flags and assessment
       flags: flagsAssessmentSchema,
@@ -86,65 +65,49 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
 
       // deadlines
       //deadlines should validate after input
-      projectSubmissionDeadline: z.date({
-        required_error: "Please select a project submission deadline",
-      }),
+      projectSubmissionDeadline: z.date(
+        "Please select a project submission deadline",
+      ),
 
-      studentPreferenceSubmissionDeadline: z.date({
-        required_error:
-          "Please select a student preference submission deadline",
-      }),
+      studentPreferenceSubmissionDeadline: z.date(
+        "Please select a student preference submission deadline",
+      ),
 
-      readerPreferenceSubmissionDeadline: z.date({
-        required_error: "Please select a reader preference submission deadline",
-      }),
+      readerPreferenceSubmissionDeadline: z.date(
+        "Please select a reader preference submission deadline",
+      ),
 
       // student preferences
       minStudentPreferences: z.coerce
-        .number({
-          invalid_type_error: "Please enter an integer",
-          required_error: "Please enter an integer",
-        })
-        .int({ message: "Number must be an integer" })
-        .positive(),
+        .number("Please enter an integer")
+        .int("Number must be an integer")
+        .nonnegative(),
 
       maxStudentPreferences: z.coerce
-        .number({
-          invalid_type_error: "Please enter an integer",
-          required_error: "Please enter an integer",
-        })
-        .int({ message: "Number must be an integer" })
+        .number("Please enter an integer")
+        .int("Number must be an integer")
         .positive(),
 
       maxStudentPreferencesPerSupervisor: z.coerce
-        .number({
-          invalid_type_error: "Please enter an integer",
-          required_error: "Please enter an integer",
-        })
-        .int({ message: "Number must be an integer" })
+        .number("Please enter an integer")
+        .int("Number must be an integer")
         .positive(),
 
       // reader preferences
       minReaderPreferences: z.coerce
-        .number({
-          invalid_type_error: "Please enter an integer",
-          required_error: "Please enter an integer",
-        })
-        .int({ message: "Number must be an integer" })
-        .positive(),
+        .number("Please enter an integer")
+        .int("Number must be an integer")
+        .nonnegative(),
 
       maxReaderPreferences: z.coerce
-        .number({
-          invalid_type_error: "Please enter an integer",
-          required_error: "Please enter an integer",
-        })
-        .int({ message: "Number must be an integer" })
+        .number("Please enter an integer")
+        .int("Number must be an integer")
         .positive(),
     })
     .refine(
       (data) => data.minStudentPreferences <= data.maxStudentPreferences,
       {
-        message:
+        error:
           "Maximum Number of Preferences can't be less than Minimum Number of Preferences",
         path: ["maxStudentPreferences"],
       },
@@ -153,20 +116,20 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
       (data) =>
         data.maxStudentPreferencesPerSupervisor <= data.maxStudentPreferences,
       {
-        message:
+        error:
           "Maximum Number of Preferences per supervisor can't be more than Maximum Number of Preferences",
         path: ["maxStudentPreferencesPerSupervisor"],
       },
     )
     .refine((data) => data.minReaderPreferences <= data.maxReaderPreferences, {
-      message:
+      error:
         "Maximum Number of Preferences can't be less than Minimum Number of Preferences",
       path: ["maxReaderPreferences"],
     })
     .refine(
       (data) => data.minStudentPreferences <= data.maxStudentPreferences,
       {
-        message:
+        error:
           "Maximum Number of Preferences can't be less than Minimum Number of Preferences",
 
         path: ["maxStudentPreferences"],
@@ -179,7 +142,7 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
           data.projectSubmissionDeadline,
         ),
       {
-        message:
+        error:
           "Student Preference Submission deadline must be after Project Upload deadline",
         path: ["studentPreferenceSubmissionDeadline"],
       },
@@ -191,7 +154,7 @@ function buildWizardSchema(takenNames: Set<string> = new Set()) {
           data.studentPreferenceSubmissionDeadline,
         ),
       {
-        message:
+        error:
           "Reader Preference Submission deadline must be after Student Preference Submission deadline",
         path: ["readerPreferenceSubmissionDeadline"],
       },
@@ -264,22 +227,11 @@ function BasicDetailsPage() {
   );
 }
 
-function FlagsAssessmentPage() {
-  /**
-   * TODO hook up visual component (i.e. re-write with form control)
-   * need to create a bridge between the store and form
-   * can add an effect that syncs data between them ?
-   *
-   * - should initialise state using the current form values
-   * - need a way to update the form when the marking scheme changes
-   * - "New Flag" button should add flags to both the Zustand store and the form
-   * - flag deletion must update both states
-   *
-   */
+function StudentFlagsPage() {
   return (
     <WizardPage
-      title="Flags & Assessment Configuration"
-      description="Configure flags to categorize students and define assessments for each flag."
+      title="Student Flags Configuration"
+      description="Configure flags to categorise students."
     >
       <UploadJsonArea />
     </WizardPage>
@@ -415,7 +367,7 @@ function DeadlinesPage() {
             </FormItem>
           )}
         />
-        <TimelineSequence />
+        {/* <TimelineSequence /> */}
       </div>
     </WizardPage>
   );
@@ -581,108 +533,164 @@ function ReviewPage() {
       title="Review & Submit"
       description="Review your settings and create your allocation instance."
     >
-      <div className="flex flex-col items-start justify-start gap-4">
-        <div>
-          <p className="text-sm text-muted-foreground">Display Name</p>
-          <p>{formData.displayName}</p>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">Flags</p>
-          <p>
-            {formData.flags.map((f) => (
-              <div key={f.flag}>
-                <p className="font-semibold">{f.flag}</p>
-                <p>{f.description}</p>
-                <div>
-                  {f.units_of_assessment.map((u) => (
-                    <div key={`${f.flag}-${u.title}`} className="pl-6">
-                      <p className="font-semibold">{u.title}</p>
-                      <p>weight: {u.weight}</p>
-                      <p>
-                        allowed marker types:{" "}
-                        {u.allowed_marker_types.join(", ")}
-                      </p>
-                      <p>
-                        <span>Student Submission Deadline: </span>
-                        {format(
-                          u.student_submission_deadline,
-                          "dd MMM yyyy - HH:mm",
-                        )}
-                      </p>
-                      <p>
-                        <span>Marker Submission Deadline: </span>
-                        {format(
-                          u.marker_submission_deadline,
-                          "dd MMM yyyy - HH:mm",
-                        )}
-                      </p>
-                      <div className="pl-6">
-                        {u.assessment_criteria.map((c) => (
-                          <div
-                            className="pl-6"
-                            key={`${f.flag}-${u.title}-${c.title}`}
-                          >
-                            <p className="font-semibold">{c.title}</p>
-                            <p>{c.description}</p>
-                            <p>{c.weight}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Basic Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div>
+                <span className="text-sm font-medium text-muted-foreground">
+                  Display Name
+                </span>
+                <p className="text-base font-semibold">
+                  {formData.displayName}
+                </p>
               </div>
-            ))}
-          </p>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">Tags</p>
-          <div className="flex flex-wrap gap-2">
-            {formData.tags.map((t, i) => (
-              <Badge variant="accent" key={i}>
-                {t.title}
-              </Badge>
-            ))}
-          </div>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">Deadlines</p>
-          <p>
-            Project Submission:
-            {format(formData.projectSubmissionDeadline, "dd MMM yyyy - HH:mm")}
-          </p>
-          <p>
-            Student Preference Submission:
-            {format(
-              formData.studentPreferenceSubmissionDeadline,
-              "dd MMM yyyy - HH:mm ",
-            )}
-          </p>
-          <p>
-            Reader Preference Submission:
-            {format(
-              formData.readerPreferenceSubmissionDeadline,
-              "dd MMM yyyy - HH:mm ",
-            )}
-          </p>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">
-            Student Preference Restrictions
-          </p>
-          <p>min: {formData.minStudentPreferences}</p>
-          <p>max: {formData.maxStudentPreferences}</p>
-          <p>
-            max per supervisor: {formData.maxStudentPreferencesPerSupervisor}
-          </p>
-        </div>
-        <div>
-          <p className="text-sm text-muted-foreground">
-            Reader Preference Restrictions
-          </p>
-          <p>min: {formData.minReaderPreferences}</p>
-          <p>max: {formData.maxReaderPreferences}</p>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Student Flags</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {formData.flags.map((flag) => (
+                <div key={flag.id} className="rounded-md border p-3">
+                  <div className="mb-1 flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {flag.id}
+                    </Badge>
+                    <span className="font-medium">{flag.displayName}</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {flag.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Project Keywords</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {formData.tags.map((tag, i) => (
+                <Badge variant="outline" key={i} className="px-3 py-1">
+                  {tag.title}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Deadlines</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Project Submission:</span>
+                <span className="text-sm">
+                  {format(
+                    formData.projectSubmissionDeadline,
+                    "dd MMM yyyy - HH:mm",
+                  )}
+                </span>
+              </div>
+              <Separator />
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">
+                  Student Preferences:
+                </span>
+                <span className="text-sm">
+                  {format(
+                    formData.studentPreferenceSubmissionDeadline,
+                    "dd MMM yyyy - HH:mm",
+                  )}
+                </span>
+              </div>
+              <Separator />
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Reader Preferences:</span>
+                <span className="text-sm">
+                  {format(
+                    formData.readerPreferenceSubmissionDeadline,
+                    "dd MMM yyyy - HH:mm",
+                  )}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Student Preference Rules</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">
+                  Minimum preferences:
+                </span>
+                <span className="text-sm font-mono">
+                  {formData.minStudentPreferences}
+                </span>
+              </div>
+              <Separator />
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">
+                  Maximum preferences:
+                </span>
+                <span className="text-sm font-mono">
+                  {formData.maxStudentPreferences}
+                </span>
+              </div>
+              <Separator />
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">Max per supervisor:</span>
+                <span className="text-sm font-mono">
+                  {formData.maxStudentPreferencesPerSupervisor}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Reader Preference Rules</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">
+                  Minimum preferences:
+                </span>
+                <span className="text-sm font-mono">
+                  {formData.minReaderPreferences}
+                </span>
+              </div>
+              <Separator />
+              <div className="flex justify-between">
+                <span className="text-sm font-medium">
+                  Maximum preferences:
+                </span>
+                <span className="text-sm font-mono">
+                  {formData.maxReaderPreferences}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </WizardPage>
   );
@@ -697,9 +705,9 @@ export const WIZARD_STEPS: WizardStep<WizardFormData>[] = [
   },
   {
     id: "flags-assessment",
-    title: "Flags & Assessments",
+    title: "Student Flags",
     fieldsToValidate: ["flags"],
-    render: () => <FlagsAssessmentPage />,
+    render: () => <StudentFlagsPage />,
   },
   {
     id: "project-tags",

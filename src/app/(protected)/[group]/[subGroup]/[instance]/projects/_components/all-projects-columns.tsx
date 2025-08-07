@@ -8,12 +8,23 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
+import { z } from "zod";
+
+import { PAGES } from "@/config/pages";
+import { spacesLabels } from "@/config/spaces";
+
+import { flagDtoSchema, type ProjectDTO, type SupervisorDTO } from "@/dto";
+
+import { type PreferenceType, Role, Stage } from "@/db/types";
 
 import { AccessControl } from "@/components/access-control";
 import { ExportCSVButton } from "@/components/export-csv";
-import { useInstancePath, useInstanceStage } from "@/components/params-context";
+import {
+  useInstanceStage,
+  usePathInInstance,
+} from "@/components/params-context";
 import { StudentPreferenceActionSubMenu } from "@/components/student-preference-action-menu";
-import { TagType } from "@/components/tag/tag-input";
+import { tagTypeSchema } from "@/components/tag/tag-input";
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionColumnLabel } from "@/components/ui/data-table/action-column-label";
@@ -33,15 +44,12 @@ import {
   YesNoActionTrigger,
 } from "@/components/yes-no-action";
 
+import { type User } from "@/lib/auth/types";
 import { cn } from "@/lib/utils";
 import { stageIn } from "@/lib/utils/permissions/stage-check";
-import { User } from "@/lib/validations/auth";
-import { ProjectTableDataDto } from "@/lib/validations/dto/project";
-import { StudentPreferenceType } from "@/lib/validations/student-preference";
+import { type StudentPreferenceType } from "@/lib/validations/student-preference";
 
-import { spacesLabels } from "@/config/spaces";
-import { PreferenceType, Role, Stage } from "@/db/types";
-import { PAGES } from "@/config/pages";
+type ProjectData = { project: ProjectDTO; supervisor: SupervisorDTO };
 
 export function useAllProjectsColumns({
   user,
@@ -49,40 +57,40 @@ export function useAllProjectsColumns({
   projectPreferences,
   hasSelfDefinedProject,
   deleteProject,
-  deleteSelectedProjects,
+  deleteMultipleProjects,
   changePreference,
-  changeSelectedPreferences,
+  changeMultiplePreferences,
 }: {
   user: User;
   roles: Set<Role>;
   projectPreferences: Record<string, PreferenceType>;
   hasSelfDefinedProject: boolean;
   deleteProject: (id: string) => Promise<void>;
-  deleteSelectedProjects: (ids: string[]) => Promise<void>;
+  deleteMultipleProjects: (ids: string[]) => Promise<void>;
   changePreference: (
     newType: StudentPreferenceType,
     projectId: string,
   ) => Promise<void>;
-  changeSelectedPreferences: (
+  changeMultiplePreferences: (
     newType: StudentPreferenceType,
     projectIds: string[],
   ) => Promise<void>;
-}): ColumnDef<ProjectTableDataDto>[] {
-  const instancePath = useInstancePath();
+}): ColumnDef<ProjectData>[] {
+  const { getPath } = usePathInInstance();
   const stage = useInstanceStage();
 
-  const selectCol = getSelectColumn<ProjectTableDataDto>();
+  const selectCol = getSelectColumn<ProjectData>();
 
-  const baseCols: ColumnDef<ProjectTableDataDto>[] = [
+  const baseCols: ColumnDef<ProjectData>[] = [
     {
       id: "Title",
-      accessorFn: ({ title }) => title,
+      accessorFn: ({ project }) => project.title,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Title" />
       ),
       cell: ({
         row: {
-          original: { id, title },
+          original: { project },
         },
       }) => (
         <Link
@@ -90,9 +98,9 @@ export function useAllProjectsColumns({
             buttonVariants({ variant: "link" }),
             "inline-block h-max min-w-60 px-0 text-start",
           )}
-          href={`${instancePath}/projects/${id}`}
+          href={getPath(`projects/${project.id}`)}
         >
-          {title}
+          {project.title}
         </Link>
       ),
     },
@@ -104,63 +112,78 @@ export function useAllProjectsColumns({
       ),
       cell: ({
         row: {
-          original: {
-            supervisor: { id, name },
-          },
+          original: { supervisor },
         },
       }) =>
         roles.has(Role.ADMIN) ? (
           <Link
             className={buttonVariants({ variant: "link" })}
-            href={`${instancePath}/${PAGES.allSupervisors.href}/${id}`}
+            href={getPath(`${PAGES.allSupervisors.href}/${supervisor.id}`)}
           >
-            {name}
+            {supervisor.name}
           </Link>
         ) : (
-          <p className="font-medium">{name}</p>
+          <p className="font-medium">{supervisor.name}</p>
         ),
     },
     {
       id: "Flags",
-      accessorFn: (row) => row.flags,
+      accessorFn: (row) => row.project.flags,
       header: () => <div className="text-center">Flags</div>,
       filterFn: (row, columnId, value) => {
-        const ids = value as string[];
-        const rowFlags = row.getValue(columnId) as TagType[];
-        return rowFlags.some((e) => ids.includes(e.id));
+        const selectedFilters = z.array(z.string()).parse(value);
+        const rowFlags = z.array(flagDtoSchema).parse(row.getValue(columnId));
+
+        return (
+          new Set(rowFlags.map((f) => f.id)).size > 0 &&
+          selectedFilters.some((f) => rowFlags.some((rf) => rf.id === f))
+        );
       },
       cell: ({
         row: {
-          original: { flags },
+          original: { project },
         },
       }) => (
         <div className="flex flex-col gap-2">
-          {flags.length > 2 ? (
+          {project.flags.length > 2 ? (
             <>
-              <Badge className="w-fit" key={flags[0]!.id}>
-                {flags[0]!.title}
+              <Badge
+                variant="accent"
+                className="w-40 rounded-md"
+                key={project.flags[0].id}
+              >
+                {project.flags[0].displayName}
               </Badge>
               <WithTooltip
                 side="right"
                 tip={
                   <ul className="flex list-disc flex-col gap-1 p-2 pl-1">
-                    {flags.slice(1).map((flag) => (
-                      <Badge className="w-fit" key={flag.id}>
-                        {flag.title}
+                    {project.flags.slice(1).map((flag) => (
+                      <Badge
+                        variant="accent"
+                        className="w-40 rounded-md"
+                        key={flag.id}
+                      >
+                        {flag.displayName}
                       </Badge>
                     ))}
                   </ul>
                 }
               >
-                <div className={cn(badgeVariants(), "w-fit font-normal")}>
-                  {flags.length - 1}+
+                <div
+                  className={cn(
+                    badgeVariants({ variant: "accent" }),
+                    "w-fit rounded-md font-normal",
+                  )}
+                >
+                  {project.flags.length - 1}+
                 </div>
               </WithTooltip>
             </>
           ) : (
-            flags.map((flag) => (
-              <Badge className="w-fit" key={flag.id}>
-                {flag.title}
+            project.flags.map((flag) => (
+              <Badge variant="accent" className="w-40 rounded-md" key={flag.id}>
+                {flag.displayName}
               </Badge>
             ))
           )}
@@ -169,31 +192,35 @@ export function useAllProjectsColumns({
     },
     {
       id: "Keywords",
-      accessorFn: (row) => row.tags,
+      accessorFn: (row) => row.project.tags,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Keywords" />
       ),
       filterFn: (row, columnId, value) => {
         const ids = value as string[];
-        const rowTags = row.getValue(columnId) as TagType[];
+        const rowTags = z.array(tagTypeSchema).parse(row.getValue(columnId));
         return rowTags.some((e) => ids.includes(e.id));
       },
       cell: ({
         row: {
-          original: { tags },
+          original: { project },
         },
       }) => (
         <div className="flex flex-col gap-2">
-          {tags.length > 2 ? (
+          {project.tags.length > 2 ? (
             <>
-              <Badge variant="outline" className="w-fit" key={tags[0]!.id}>
-                {tags[0]!.title}
+              <Badge
+                variant="outline"
+                className="w-fit"
+                key={project.tags[0].id}
+              >
+                {project.tags[0].title}
               </Badge>
               <WithTooltip
                 side="right"
                 tip={
                   <ul className="flex list-disc flex-col gap-1 p-2 pl-1">
-                    {tags.slice(1).map((tag) => (
+                    {project.tags.slice(1).map((tag) => (
                       <Badge variant="outline" className="w-fit" key={tag.id}>
                         {tag.title}
                       </Badge>
@@ -207,12 +234,12 @@ export function useAllProjectsColumns({
                     "w-fit font-normal",
                   )}
                 >
-                  {tags.length - 1}+
+                  {project.tags.length - 1}+
                 </div>
               </WithTooltip>
             </>
           ) : (
-            tags.map((tag) => (
+            project.tags.map((tag) => (
               <Badge variant="outline" className="w-fit" key={tag.id}>
                 {tag.title}
               </Badge>
@@ -230,18 +257,17 @@ export function useAllProjectsColumns({
 
         const selectedProjectIds = table
           .getSelectedRowModel()
-          .rows.map((e) => e.original.id);
+          .rows.map((e) => e.original.project.id);
 
         const data = table
           .getSelectedRowModel()
           .rows.map((e) => [
-            e.original.title,
-            e.original.description,
-            e.original.specialTechnicalRequirements,
+            e.original.project.title,
+            e.original.project.description,
             e.original.supervisor.name,
             e.original.supervisor.email,
-            e.original.flags.map((f) => f.title).join("; "),
-            e.original.tags.map((t) => t.title).join("; "),
+            e.original.project.flags.map((f) => f.displayName).join("; "),
+            e.original.project.tags.map((t) => t.title).join("; "),
           ]);
 
         if (someSelected && !hasSelfDefinedProject)
@@ -256,7 +282,7 @@ export function useAllProjectsColumns({
                 </DropdownMenuTrigger>
                 <YesNoActionContainer
                   action={async () =>
-                    void deleteSelectedProjects(selectedProjectIds)
+                    void deleteMultipleProjects(selectedProjectIds)
                   }
                   title={`Delete ${selectedProjectIds.length} Projects`}
                   description={`You are about to delete ${selectedProjectIds.length} projects from the ${spacesLabels.instance.short}. Do you wish to proceed?`}
@@ -271,7 +297,6 @@ export function useAllProjectsColumns({
                         header={[
                           "Title",
                           "Description",
-                          "Special Technical Requirements",
                           "Supervisor Name",
                           "Supervisor Email",
                           "Flags",
@@ -286,7 +311,7 @@ export function useAllProjectsColumns({
                     >
                       <StudentPreferenceActionSubMenu
                         changePreference={async (t) =>
-                          void changeSelectedPreferences(t, selectedProjectIds)
+                          void changeMultiplePreferences(t, selectedProjectIds)
                         }
                       />
                     </AccessControl>
@@ -317,7 +342,7 @@ export function useAllProjectsColumns({
         return <ActionColumnLabel />;
       },
       cell: ({ row, table }) => {
-        const project = row.original;
+        const project = row.original.project;
         const supervisor = row.original.supervisor;
 
         async function handleDelete() {
@@ -347,7 +372,7 @@ export function useAllProjectsColumns({
                   <DropdownMenuItem className="group/item">
                     <Link
                       className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                      href={`${instancePath}/projects/${project.id}`}
+                      href={getPath(`projects/${project.id}`)}
                     >
                       <CornerDownRightIcon className="h-4 w-4" />
                       <p className="flex items-center">
@@ -382,7 +407,7 @@ export function useAllProjectsColumns({
                     <DropdownMenuItem className="group/item">
                       <Link
                         className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                        href={`${instancePath}/projects/${project.id}/edit`}
+                        href={getPath(`projects/${project.id}/edit`)}
                       >
                         <PenIcon className="h-4 w-4" />
                         <span>Edit Project details</span>

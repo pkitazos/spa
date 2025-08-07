@@ -1,12 +1,17 @@
-import { cn } from "@/lib/utils";
-import { Button } from "./ui/button";
-import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
-import { ClassValue } from "clsx";
+import { type ClassValue } from "clsx";
 import { CopyIcon } from "lucide-react";
-import { Tooltip } from "@radix-ui/react-tooltip";
-import { TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
-// pin - check styling @pkitazos
+import { cn } from "@/lib/utils";
+import { copyToClipboard } from "@/lib/utils/general/copy-to-clipboard";
+
+import { Button } from "./ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
+
 export function CopyButton({
   data,
   message,

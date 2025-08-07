@@ -5,8 +5,11 @@ import {
   ZapIcon,
 } from "lucide-react";
 
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
 import { CopyEmailsButton } from "@/components/copy-emails-button";
-import { SectionHeading, SubHeading } from "@/components/heading";
+import { Heading, SectionHeading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,13 +23,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import { PreferenceSubmissionsDataTable } from "./_components/preference-submissions-data-table";
 import { SummarySection } from "./_components/summary-section";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
@@ -44,12 +44,12 @@ export default async function Page({ params }: { params: InstanceParams }) {
   const students = await api.institution.instance.preference.studentSubmissions(
     { params },
   );
+  const projectDescriptors =
+    await api.institution.instance.getAllProjectDescriptors({ params });
 
   return (
-    <PanelWrapper className="mt-10 flex flex-col items-start gap-16 px-12">
-      <SubHeading className="mb-4">
-        {PAGES.preferenceSubmissions.title}
-      </SubHeading>
+    <PanelWrapper className="gap-16">
+      <Heading className="mb-4">{PAGES.preferenceSubmissions.title}</Heading>
       <section className="flex flex-col gap-5">
         <SectionHeading className="flex items-center">
           <ZapIcon className="mr-2 h-6 w-6 text-indigo-500" />
@@ -70,7 +70,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
                 </p>
                 <div className="flex w-44 items-center">
                   <CopyEmailsButton
-                    data={students.incomplete}
+                    data={students.incomplete.map((s) => s.student)}
                     className="w-36 rounded-r-none"
                   />
                   <DropdownMenu>
@@ -94,8 +94,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
                           className="flex w-full items-center gap-2 text-left"
                           label="Include Pre-allocated Students"
                           data={[
-                            ...students.incomplete,
-                            ...students.preAllocated,
+                            ...students.incomplete.map((s) => s.student),
+                            ...students.preAllocated.map((s) => s.student),
                           ]}
                           unstyled
                         />
@@ -129,7 +129,10 @@ export default async function Page({ params }: { params: InstanceParams }) {
           <DatabaseIcon className="mr-2 h-6 w-6 text-indigo-500" />
           <span>All data</span>
         </SectionHeading>
-        <PreferenceSubmissionsDataTable data={students.all} />
+        <PreferenceSubmissionsDataTable
+          data={students.all}
+          projectDescriptors={projectDescriptors}
+        />
       </section>
     </PanelWrapper>
   );

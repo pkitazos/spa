@@ -1,15 +1,20 @@
 "use client";
-import { createContext, ReactNode, useContext } from "react";
+
+import { createContext, type ReactNode, useContext } from "react";
+
 import { ArrowUpLeft } from "lucide-react";
 import Link from "next/link";
 
+import { type Role, type Stage } from "@/db/types";
+
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
-import { InstanceParams } from "@/lib/validations/params";
-import { Role, Stage } from "@/db/types";
+import { type InstanceParams } from "@/lib/validations/params";
 
 type InstanceData = { params: InstanceParams; stage: Stage; roles: Set<Role> };
 
 const InstanceContext = createContext<InstanceData | undefined>(undefined);
+
+// move this stuff
 
 export function InstanceParamsProvider({
   children,
@@ -35,6 +40,16 @@ export function useInstancePath() {
   const instance = useContext(InstanceContext);
   if (!instance) throw new Error("Missing InstanceParamsProvider in the tree");
   return formatParamsAsPath(instance.params);
+}
+
+export function usePathInInstance() {
+  const instance = useContext(InstanceContext);
+  if (!instance) throw new Error("Missing InstanceParamsProvider in the tree");
+
+  return {
+    basePath: formatParamsAsPath(instance.params),
+    getPath: (path: string) => `${formatParamsAsPath(instance.params)}/${path}`,
+  };
 }
 
 export function useInstanceStage() {

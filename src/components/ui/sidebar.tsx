@@ -1,9 +1,12 @@
 "use client";
 
 import * as React from "react";
+
 import { Slot } from "@radix-ui/react-slot";
-import { cva, VariantProps } from "class-variance-authority";
+import { cva, type VariantProps } from "class-variance-authority";
 import { PanelLeft } from "lucide-react";
+import { SidebarIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +21,7 @@ import {
 } from "@/components/ui/tooltip";
 
 import { useIsMobile } from "@/lib/hooks/use-mobile";
+import { api } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state";
@@ -209,9 +213,7 @@ const Sidebar = React.forwardRef<
             data-mobile="true"
             className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
             style={
-              {
-                "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
-              } as React.CSSProperties
+              { "--sidebar-width": SIDEBAR_WIDTH_MOBILE } as React.CSSProperties
             }
             side={side}
           >
@@ -537,10 +539,7 @@ const sidebarMenuButtonVariants = cva(
         lg: "h-12 text-sm group-data-[collapsible=icon]:!p-0",
       },
     },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
+    defaultVariants: { variant: "default", size: "default" },
   },
 );
 
@@ -584,9 +583,7 @@ const SidebarMenuButton = React.forwardRef<
     }
 
     if (typeof tooltip === "string") {
-      tooltip = {
-        children: tooltip,
-      };
+      tooltip = { children: tooltip };
     }
 
     return (
@@ -606,10 +603,7 @@ SidebarMenuButton.displayName = "SidebarMenuButton";
 
 const SidebarMenuAction = React.forwardRef<
   HTMLButtonElement,
-  React.ComponentProps<"button"> & {
-    asChild?: boolean;
-    showOnHover?: boolean;
-  }
+  React.ComponentProps<"button"> & { asChild?: boolean; showOnHover?: boolean }
 >(({ className, asChild = false, showOnHover = false, ...props }, ref) => {
   const Comp = asChild ? Slot : "button";
 
@@ -659,9 +653,7 @@ SidebarMenuBadge.displayName = "SidebarMenuBadge";
 
 const SidebarMenuSkeleton = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<"div"> & {
-    showIcon?: boolean;
-  }
+  React.ComponentProps<"div"> & { showIcon?: boolean }
 >(({ className, showIcon = false, ...props }, ref) => {
   // Random width between 50 to 90%.
   const width = React.useMemo(() => {
@@ -684,11 +676,7 @@ const SidebarMenuSkeleton = React.forwardRef<
       <Skeleton
         className="h-4 max-w-[--skeleton-width] flex-1"
         data-sidebar="menu-skeleton-text"
-        style={
-          {
-            "--skeleton-width": width,
-          } as React.CSSProperties
-        }
+        style={{ "--skeleton-width": width } as React.CSSProperties}
       />
     </div>
   );
@@ -749,7 +737,29 @@ const SidebarMenuSubButton = React.forwardRef<
 });
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton";
 
+function ToggleSidebarButton() {
+  const { toggleSidebar } = useSidebar();
+
+  const path = usePathname();
+
+  const { data } = api.institution.inInstance_safe.useQuery({ path });
+
+  if (!data) return <div className="h-8 w-8" />;
+
+  return (
+    <Button
+      className="h-8 w-8"
+      variant="ghost"
+      size="icon"
+      onClick={toggleSidebar}
+    >
+      <SidebarIcon />
+    </Button>
+  );
+}
+
 export {
+  ToggleSidebarButton,
   Sidebar,
   SidebarContent,
   SidebarFooter,

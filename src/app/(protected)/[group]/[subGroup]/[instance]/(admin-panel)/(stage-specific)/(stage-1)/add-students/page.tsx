@@ -1,13 +1,13 @@
-import { SubHeading } from "@/components/heading";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
+import { Heading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
 
 import { AddStudentsSection } from "./_components/add-students-section";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
@@ -17,11 +17,12 @@ export async function generateMetadata({ params }: { params: InstanceParams }) {
   };
 }
 
-export default function Page() {
+export default async function Page({ params }: { params: InstanceParams }) {
+  const flags = await api.institution.instance.getFlags({ params });
   return (
-    <PanelWrapper className="mt-10">
-      <SubHeading className="mb-4">{PAGES.addStudents.title}</SubHeading>
-      <AddStudentsSection />
+    <PanelWrapper>
+      <Heading>{PAGES.addStudents.title}</Heading>
+      <AddStudentsSection flags={flags} />
     </PanelWrapper>
   );
 }

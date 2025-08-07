@@ -1,23 +1,25 @@
-import { Transformers as T } from "@/db/transformers";
-import { DB, New } from "@/db/types";
 import {
-  InstanceDTO,
-  FlagDTO,
-  NewUnitOfAssessmentDTO,
-  TagDTO,
+  type InstanceDTO,
+  type FlagDTO,
+  type TagDTO,
   builtInAlgorithms,
-  SubGroupDTO,
-  UserDTO,
+  type SubGroupDTO,
+  type UserDTO,
 } from "@/dto";
+
+import { Transformers as T } from "@/db/transformers";
+import { type DB, type New } from "@/db/types";
+
 import { toInstanceId, expand } from "@/lib/utils/general/instance-params";
 import { slugify } from "@/lib/utils/general/slugify";
 import { uniqueById } from "@/lib/utils/list-unique";
-import { SubGroupParams } from "@/lib/validations/params";
+import { type SubGroupParams } from "@/lib/validations/params";
 
 import { DataObject } from "../data-object";
+import { User } from "../user";
+
 import { AllocationGroup } from "./group";
 import { Institution } from "./institution";
-import { User } from "../user";
 
 function toSubgroupId(params: SubGroupParams) {
   return { allocationGroupId: params.group, id: params.subGroup };
@@ -41,12 +43,12 @@ export class AllocationSubGroup extends DataObject {
   }
 
   public async createInstance({
-    newInstance: { group, subGroup, ...newInstance },
+    newInstance: { group: _group, subGroup: _subGroup, ...newInstance },
     flags,
     tags,
   }: {
     newInstance: Omit<InstanceDTO, "instance">;
-    flags: (New<FlagDTO> & { unitsOfAssessment: NewUnitOfAssessmentDTO[] })[];
+    flags: FlagDTO[];
     tags: New<TagDTO>[];
   }) {
     const instanceSlug = slugify(newInstance.displayName);
@@ -61,14 +63,15 @@ export class AllocationSubGroup extends DataObject {
       const flagData = await tx.flag.createManyAndReturn({
         data: flags.map((f) => ({
           ...expand(params),
-          title: f.title,
+          id: f.id,
+          displayName: f.displayName,
           description: f.description,
         })),
         skipDuplicates: true,
       });
 
-      const flagTitleToId = flagData.reduce(
-        (acc, val) => ({ ...acc, [val.title]: val.id }),
+      const _flagDisplayNameToId = flagData.reduce(
+        (acc, val) => ({ ...acc, [val.displayName]: val.id }),
         {} as Record<string, string>,
       );
 
@@ -77,42 +80,54 @@ export class AllocationSubGroup extends DataObject {
       });
 
       await tx.algorithm.createMany({
-        data: builtInAlgorithms.map((alg) => ({ ...expand(params), ...alg })),
+        data: builtInAlgorithms.map((alg) => ({
+          ...expand(params),
+          displayName: alg.displayName,
+          description: alg.description,
+          flag1: alg.flag1,
+          createdAt: alg.createdAt,
+          builtIn: alg.builtIn,
+          flag2: alg.flag2,
+          flag3: alg.flag3,
+          targetModifier: alg.targetModifier,
+          upperBoundModifier: alg.upperBoundModifier,
+          maxRank: alg.maxRank,
+        })),
       });
 
-      const units = await tx.unitOfAssessment.createManyAndReturn({
-        data: flags.flatMap((f) =>
-          f.unitsOfAssessment.map((a) => ({
-            ...expand(params),
-            flagId: flagTitleToId[f.title],
-            title: a.title,
-            weight: a.weight,
-            studentSubmissionDeadline: a.studentSubmissionDeadline,
-            markerSubmissionDeadline: a.markerSubmissionDeadline,
-            allowedMarkerTypes: a.allowedMarkerTypes,
-          })),
-        ),
-      });
+      // const units = await tx.unitOfAssessment.createManyAndReturn({
+      //   data: flags.flatMap((f) =>
+      //     f.unitsOfAssessment.map((a) => ({
+      //       ...expand(params),
+      //       flagId: flagDisplayNameToId[f.displayName],
+      //       title: a.title,
+      //       weight: a.weight,
+      //       studentSubmissionDeadline: a.studentSubmissionDeadline,
+      //       markerSubmissionDeadline: a.markerSubmissionDeadline,
+      //       allowedMarkerTypes: a.allowedMarkerTypes,
+      //     })),
+      //   ),
+      // });
 
-      const unitTitleToId = units.reduce(
-        (acc, val) => ({ ...acc, [`${val.flagId}${val.title}`]: val.id }),
-        {} as Record<string, string>,
-      );
+      // const unitTitleToId = units.reduce(
+      //   (acc, val) => ({ ...acc, [`${val.flagId}${val.title}`]: val.id }),
+      //   {} as Record<string, string>,
+      // );
 
-      await tx.assessmentCriterion.createMany({
-        data: flags.flatMap((f) =>
-          f.unitsOfAssessment.flatMap((u) =>
-            u.components.map((c) => ({
-              unitOfAssessmentId:
-                unitTitleToId[`${flagTitleToId[f.title]}${u.title}`],
-              title: c.title,
-              description: c.description,
-              weight: c.weight,
-              layoutIndex: c.layoutIndex,
-            })),
-          ),
-        ),
-      });
+      // await tx.assessmentCriterion.createMany({
+      //   data: flags.flatMap((f) =>
+      //     f.unitsOfAssessment.flatMap((u) =>
+      //       u.components.map((c) => ({
+      //         unitOfAssessmentId:
+      //           unitTitleToId[`${flagTitleToId[f.displayName]}${u.title}`],
+      //         title: c.title,
+      //         description: c.description,
+      //         weight: c.weight,
+      //         layoutIndex: c.layoutIndex,
+      //       })),
+      //     ),
+      //   ),
+      // });
     });
   }
 
@@ -125,13 +140,13 @@ export class AllocationSubGroup extends DataObject {
   public async get(): Promise<SubGroupDTO> {
     return await this.db.allocationSubGroup
       .findFirstOrThrow({ where: toSubgroupId(this.params) })
-      .then(T.toAllocationSubGroupDTO);
+      .then((x) => T.toAllocationSubGroupDTO(x));
   }
 
   public async getInstances(): Promise<InstanceDTO[]> {
     return await this.db.allocationInstance
       .findMany({ where: subgroupExpand(this.params) })
-      .then((data) => data.map(T.toAllocationInstanceDTO));
+      .then((data) => data.map((x) => T.toAllocationInstanceDTO(x)));
   }
 
   public async isSubGroupAdmin(userId: string): Promise<boolean> {
@@ -170,16 +185,16 @@ export class AllocationSubGroup extends DataObject {
   public async delete(): Promise<SubGroupDTO> {
     return await this.db.allocationSubGroup
       .delete({ where: { subGroupId: toSubgroupId(this.params) } })
-      .then(T.toAllocationSubGroupDTO);
+      .then((x) => T.toAllocationSubGroupDTO(x));
   }
 
   get institution() {
-    if (!this._institution) this._institution = new Institution(this.db);
+    this._institution ??= new Institution(this.db);
     return this._institution;
   }
 
   get group() {
-    if (!this._group) this._group = new AllocationGroup(this.db, this.params);
+    this._group ??= new AllocationGroup(this.db, this.params);
     return this._group;
   }
 }

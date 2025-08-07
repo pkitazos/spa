@@ -3,24 +3,27 @@
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { spacesLabels } from "@/config/spaces";
+
+import { type FlagDTO, type ProjectDTO, type StudentDTO } from "@/dto";
+
+import { type Role } from "@/db/types";
+
 import { useInstanceParams } from "@/components/params-context";
 import DataTable from "@/components/ui/data-table/data-table";
-import { studentLevelFilter } from "@/components/ui/data-table/data-table-context";
 
 import { api } from "@/lib/trpc/client";
 
 import { useAllStudentsColumns } from "./all-students-columns";
 
-import { spacesLabels } from "@/config/spaces";
-import { Role } from "@/db/types";
-import { ProjectDTO, StudentDTO } from "@/dto";
-
 export function StudentsDataTable({
   roles,
   data,
+  projectDescriptors,
 }: {
   roles: Set<Role>;
   data: { student: StudentDTO; allocation?: ProjectDTO }[];
+  projectDescriptors: { flags: FlagDTO[] };
 }) {
   const params = useInstanceParams();
   const router = useRouter();
@@ -57,10 +60,20 @@ export function StudentsDataTable({
     deleteSelectedStudents: handleDeleteSelected,
   });
 
+  const filters = [
+    {
+      title: "filter by Flag",
+      columnId: "Flag",
+      options: projectDescriptors.flags.map((flag) => ({
+        id: flag.displayName,
+        title: flag.displayName,
+      })),
+    },
+  ];
+
   return (
     <DataTable
-      searchableColumn={{ id: "Name", displayName: "Student Names" }}
-      filters={[studentLevelFilter]}
+      filters={filters}
       className="w-full"
       columns={columns}
       data={data}

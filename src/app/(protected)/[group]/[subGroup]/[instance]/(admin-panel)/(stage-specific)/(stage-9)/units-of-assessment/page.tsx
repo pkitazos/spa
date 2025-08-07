@@ -1,14 +1,32 @@
+import React from "react";
+
 import { ClipboardPenIcon } from "lucide-react";
 import Link from "next/link";
 
-import { SectionHeading } from "@/components/heading";
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
+import { Heading, SectionHeading } from "@/components/heading";
+import { PanelWrapper } from "@/components/panel-wrapper";
 import { buttonVariants } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { PAGES } from "@/config/pages";
+
 import { api } from "@/lib/trpc/server";
-import { InstanceParams } from "@/lib/validations/params";
+import { type InstanceParams } from "@/lib/validations/params";
+
 import { UnitOpenToggle } from "./_components/unit-open-toggle";
-import React from "react";
+
+export async function generateMetadata({ params }: { params: InstanceParams }) {
+  const { displayName } = await api.institution.instance.get({ params });
+
+  return {
+    title: metadataTitle([
+      PAGES.unitsOfAssessment.title,
+      displayName,
+      app.name,
+    ]),
+  };
+}
 
 export default async function Page({ params }: { params: InstanceParams }) {
   const data = await api.institution.instance.getAllUnitsOfAssessment({
@@ -16,7 +34,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
   });
 
   return (
-    <section className="pt-6">
+    <PanelWrapper className="gap-10">
+      <Heading>{PAGES.unitsOfAssessment.title}</Heading>
       <Table>
         <TableBody className="flex-col space-y-7">
           {data.map((x) => (
@@ -25,7 +44,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
                 <TableCell colSpan={2}>
                   <SectionHeading className="flex items-center text-2xl no-underline">
                     <ClipboardPenIcon className="mr-2 h-6 w-6 text-indigo-500" />
-                    <span>{x.flag.title}</span>
+                    <span>{x.flag.displayName}</span>
                   </SectionHeading>
                 </TableCell>
               </TableRow>
@@ -48,6 +67,6 @@ export default async function Page({ params }: { params: InstanceParams }) {
           ))}
         </TableBody>
       </Table>
-    </section>
+    </PanelWrapper>
   );
 }

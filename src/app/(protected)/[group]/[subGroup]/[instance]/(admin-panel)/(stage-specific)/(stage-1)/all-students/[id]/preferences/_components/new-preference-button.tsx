@@ -1,12 +1,17 @@
 "use client";
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PreferenceType } from "@prisma/client";
-import { ClassValue } from "clsx";
+import { type ClassValue } from "clsx";
 import { Check, ChevronsUpDown, PlusIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+import { type ProjectDTO } from "@/dto";
+
+import { PreferenceType } from "@/db/types";
 
 import { useBoardDetails } from "@/components/kanban-board/store";
 import { Button } from "@/components/ui/button";
@@ -44,17 +49,16 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { api } from "@/lib/trpc/client";
 import { cn } from "@/lib/utils";
 import {
-  NewProjectPreferenceDto,
+  type NewProjectPreferenceDto,
   newProjectPreferenceDtoSchema,
 } from "@/lib/validations/dto/preference";
-import { NewStudentProjectDto } from "@/lib/validations/dto/project";
-import { PageParams } from "@/lib/validations/params";
+import { type PageParams } from "@/lib/validations/params";
 
 export function NewPreferenceButton({
   availableProjects,
   className,
 }: {
-  availableProjects: NewStudentProjectDto[];
+  availableProjects: ProjectDTO[];
   className?: ClassValue;
 }) {
   const params = useParams<PageParams>();
@@ -64,12 +68,10 @@ export function NewPreferenceButton({
 
   const form = useForm<NewProjectPreferenceDto>({
     resolver: zodResolver(newProjectPreferenceDtoSchema),
-    defaultValues: {
-      preferenceType: PreferenceType.PREFERENCE,
-    },
+    defaultValues: { preferenceType: PreferenceType.PREFERENCE },
   });
 
-  const { mutateAsync: updatePreferencesAsync } =
+  const { mutateAsync: api_updatePreferencesAsync } =
     api.user.student.preference.makeUpdate.useMutation();
 
   function onSubmit(data: NewProjectPreferenceDto) {
@@ -79,7 +81,7 @@ export function NewPreferenceButton({
         : "shortlist";
 
     void toast.promise(
-      updatePreferencesAsync({
+      api_updatePreferencesAsync({
         params,
         studentId: params.id,
         projectId: data.projectId,

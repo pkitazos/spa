@@ -1,29 +1,20 @@
-import { ProjectParams } from "@/lib/validations/params";
+import { AllocationMethod, type TX } from "@/db/types";
 
-import { TX } from "@/db/types";
 import { expand } from "@/lib/utils/general/instance-params";
+import { type ProjectParams } from "@/lib/validations/params";
 
-// move
-export async function linkProjectFlags(
+export async function linkProjectFlagIds(
   db: TX,
   params: ProjectParams,
-
-  flagTitles: string[],
+  flagsIds: string[],
 ) {
   await db.flagOnProject.deleteMany({
-    where: {
-      projectId: params.projectId,
-      flag: { title: { notIn: flagTitles } },
-    },
-  });
-
-  const existingFlags = await db.flag.findMany({
-    where: { ...expand(params), title: { in: flagTitles } },
-    select: { id: true, title: true },
+    where: { projectId: params.projectId, flagId: { notIn: flagsIds } },
   });
 
   await db.flagOnProject.createMany({
-    data: existingFlags.map(({ id }) => ({
+    data: flagsIds.map((id) => ({
+      ...expand(params),
       projectId: params.projectId,
       flagId: id,
     })),
@@ -31,25 +22,22 @@ export async function linkProjectFlags(
   });
 }
 
-export async function linkProjectTags(
+export async function linkProjectTagIds(
   db: TX,
   params: ProjectParams,
-  tagTitles: string[],
+  tagIds: string[],
 ) {
-  const tags = await db.tag.createManyAndReturn({
-    data: tagTitles.map((tag) => ({ ...expand(params), title: tag })),
-    skipDuplicates: true,
+  await db.tagOnProject.deleteMany({
+    where: { projectId: params.projectId, tagId: { notIn: tagIds } },
   });
 
-  await db.tagOnProject.deleteMany({ where: { projectId: params.projectId } });
-
   await db.tagOnProject.createMany({
-    data: tags.map(({ id }) => ({ projectId: params.projectId, tagId: id })),
+    data: tagIds.map((id) => ({ projectId: params.projectId, tagId: id })),
     skipDuplicates: true,
   });
 }
 
-export async function linkPreallocatedStudent(
+export async function linkPreAllocatedStudent(
   tx: TX,
   params: ProjectParams,
   userId: string,
@@ -64,6 +52,7 @@ export async function linkPreallocatedStudent(
       projectId: params.projectId,
       userId,
       studentRanking: 1,
+      allocationMethod: AllocationMethod.PRE_ALLOCATED,
     },
   });
 }

@@ -1,18 +1,6 @@
 import { compareAsc } from "date-fns";
 import { z } from "zod";
 
-import { expand } from "@/lib/utils/general/instance-params";
-
-import {
-  matchingResultDtoSchema,
-  supervisorMatchingDetailsDtoSchema,
-} from "@/lib/validations/matching";
-import { instanceParamsSchema } from "@/lib/validations/params";
-
-import { procedure } from "@/server/middleware";
-import { createTRPCRouter } from "@/server/trpc";
-
-import { Transformers as T } from "@/db/transformers";
 import {
   algorithmDtoSchema,
   algorithmResultDtoSchema,
@@ -21,10 +9,22 @@ import {
   userDtoSchema,
 } from "@/dto";
 import { AlgorithmRunResult } from "@/dto/result/algorithm-run-result";
+
+import { Transformers as T } from "@/db/transformers";
+
+import { procedure } from "@/server/middleware";
+import { createTRPCRouter } from "@/server/trpc";
+
 import {
   adjustTarget,
   adjustUpperBound,
 } from "@/lib/utils/algorithm/modifiers";
+import { expand } from "@/lib/utils/general/instance-params";
+import {
+  matchingResultDtoSchema,
+  supervisorMatchingDetailsDtoSchema,
+} from "@/lib/validations/matching";
+import { instanceParamsSchema } from "@/lib/validations/params";
 
 export const algorithmRouter = createTRPCRouter({
   // BREAKING input/output type changed
@@ -33,7 +33,12 @@ export const algorithmRouter = createTRPCRouter({
     .input(z.object({ algId: z.string() }))
     .output(z.object({ total: z.number(), matched: z.number() }))
     .mutation(async ({ ctx: { alg, instance } }) => {
-      const matchingData = await instance.getMatchingData();
+      const matchingData = await instance.getMatchingData(alg);
+
+      if (!matchingData) {
+        throw new Error("No matching data found");
+      }
+
       const res = await alg.run(matchingData);
 
       if (res !== AlgorithmRunResult.OK) {
@@ -41,12 +46,16 @@ export const algorithmRouter = createTRPCRouter({
         throw new Error("Algorithm failed to run");
       }
 
-      const matchingResults = await alg.getResults();
+      try {
+        const matchingResults = await alg.getResults();
 
-      return {
-        total: matchingData.students.length,
-        matched: matchingResults.matching.length,
-      };
+        return {
+          total: matchingData.students.length,
+          matched: matchingResults.matching.length,
+        };
+      } catch (_error) {
+        throw new Error("No matching results found");
+      }
     }),
 
   // BREAKING return type is now set
@@ -116,7 +125,7 @@ export const algorithmRouter = createTRPCRouter({
                 include: {
                   student: {
                     include: {
-                      studentFlags: { include: { flag: true } },
+                      studentFlag: true,
                       userInInstance: { include: { user: true } },
                     },
                   },

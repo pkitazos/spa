@@ -1,18 +1,25 @@
 "use client";
-import { Stage } from "@prisma/client";
-import { ColumnDef } from "@tanstack/react-table";
+
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   CornerDownRightIcon,
   MoreHorizontal as MoreIcon,
-  PenIcon,
   Trash2Icon,
 } from "lucide-react";
 import Link from "next/link";
+import { z } from "zod";
+
+import { INSTITUTION } from "@/config/institution";
+import { PAGES } from "@/config/pages";
+
+import { type StudentDTO } from "@/dto";
+
+import { Stage } from "@/db/types";
 
 import { AccessControl } from "@/components/access-control";
 import { useInstanceStage } from "@/components/params-context";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionColumnLabel } from "@/components/ui/data-table/action-column-label";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 import { getSelectColumn } from "@/components/ui/data-table/select-column";
@@ -29,8 +36,6 @@ import {
   YesNoActionContainer,
   YesNoActionTrigger,
 } from "@/components/yes-no-action";
-import { StudentDTO } from "@/dto";
-import { PAGES } from "@/config/pages";
 
 export function useNewStudentColumns({
   removeStudent,
@@ -50,29 +55,33 @@ export function useNewStudentColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Full Name" />
       ),
-      cell: ({
-        row: {
-          original: { name },
-        },
-      }) => (
-        <WithTooltip align="start" tip={<div className="max-w-xs">{name}</div>}>
-          <div className="w-40 truncate">{name}</div>
+      cell: ({ row: { original: student } }) => (
+        <WithTooltip
+          align="start"
+          tip={<div className="max-w-xs">{student.name}</div>}
+        >
+          <Link
+            className={buttonVariants({ variant: "link" })}
+            href={`./${PAGES.allStudents.href}/${student.id}`}
+          >
+            {student.name}
+          </Link>
         </WithTooltip>
       ),
     },
     {
-      id: "GUID",
+      id: INSTITUTION.ID_NAME,
       accessorFn: ({ id }) => id,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="GUID" canFilter />
+        <DataTableColumnHeader column={column} title={INSTITUTION.ID_NAME} />
       ),
       cell: ({
         row: {
           original: { id },
         },
       }) => (
-        <WithTooltip align="start" tip={<div className="max-w-xs">{id}</div>}>
-          <div className="w-32 truncate">{id}</div>
+        <WithTooltip tip={<div className="max-w-xs">{id}</div>}>
+          <div className="w-20 truncate">{id}</div>
         </WithTooltip>
       ),
     },
@@ -84,30 +93,25 @@ export function useNewStudentColumns({
       ),
     },
     {
-      id: "Student Level",
-      accessorFn: ({ level }) => level,
+      id: "Flag",
+      accessorFn: ({ flag }) => flag.displayName,
       header: ({ column }) => (
-        <DataTableColumnHeader
-          className="w-24"
-          column={column}
-          title="Student Level"
-        />
+        <DataTableColumnHeader className="w-28" column={column} title="Flag" />
       ),
       cell: ({
         row: {
-          original: { level },
+          original: { flag },
         },
       }) => (
-        <div className="grid w-24 place-items-center">
-          <Badge variant="accent">{level}</Badge>
+        <div className="grid w-40 place-items-center">
+          <Badge variant="accent" className="rounded-md">
+            {flag.displayName}
+          </Badge>
         </div>
       ),
       filterFn: (row, columnId, value) => {
-        const selectedFilters = value as ("4" | "5")[];
-        const rowValue = row.getValue(columnId) as 4 | 5;
-        console.log({ selectedFilters });
-        const studentLevel = rowValue.toString() as "4" | "5";
-        return selectedFilters.includes(studentLevel);
+        const selectedFilters = z.array(z.string()).parse(value);
+        return selectedFilters.includes(row.getValue<string>(columnId));
       },
     },
     {
@@ -195,15 +199,6 @@ export function useNewStudentColumns({
                   >
                     <CornerDownRightIcon className="h-4 w-4" />
                     <span>View student details</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="group/item">
-                  <Link
-                    className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={`./${PAGES.allStudents.href}/${id}?edit=true`}
-                  >
-                    <PenIcon className="h-4 w-4" />
-                    <span>Edit student details</span>
                   </Link>
                 </DropdownMenuItem>
                 <AccessControl allowedStages={[Stage.SETUP]}>

@@ -1,42 +1,48 @@
-import { zodResolver } from "@hookform/resolvers/zod";
+// TODO: jump through typescript hoops
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck
 import React, { useState } from "react";
-import { FormProvider, Path, useForm } from "react-hook-form";
-import { z } from "zod";
-import { Form } from "@/components/ui/form";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { StepIndicator } from "./step-indicator";
+import { FormProvider, type Path, useForm } from "react-hook-form";
+
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { type z } from "zod";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
+
+import { StepIndicator } from "./step-indicator";
 
 export type WizardStep<T> = {
   id: string;
   title: string;
   fieldsToValidate: Path<T>[];
-  render: React.FC<{}>;
+  render: React.FC;
 };
 
-export function FormWizard<T extends z.ZodTypeAny>({
+export function FormWizard<
+  TSchema extends z.ZodType<unknown>,
+  TOut extends z.output<TSchema>,
+>({
   onSubmit,
   steps,
   defaultValues,
   schema,
 }: {
-  onSubmit: (data: z.infer<T>) => Promise<void>;
-  steps: WizardStep<z.infer<T>>[];
-  defaultValues: z.infer<T>;
-  schema: T;
+  onSubmit: (data: TOut) => Promise<void>;
+  steps: WizardStep<TOut>[];
+  defaultValues: TOut;
+  schema: TSchema;
 }) {
   const [currentStep, setCurrentStep] = useState(0);
 
-  const form = useForm<z.infer<T>>({
-    resolver: zodResolver(schema),
-    defaultValues,
-  });
+  const form = useForm({ resolver: zodResolver(schema), defaultValues });
 
   async function handleNext() {
     if (currentStep === steps.length - 1) {
       await form.trigger();
-      form.handleSubmit(onSubmit)();
+      await form.handleSubmit(onSubmit)();
       return;
     }
 

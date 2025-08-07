@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+
 import {
   DndContext,
-  DragEndEvent,
+  type DragEndEvent,
   DragOverlay,
-  DragStartEvent,
+  type DragStartEvent,
   PointerSensor,
   useSensor,
   useSensors,
@@ -13,12 +14,13 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { MarkerType } from "@prisma/client";
+
+import { type MarkerType } from "@/db/types";
 
 import { computeUpdatedRank } from "@/lib/utils/sorting/compute-updated-rank";
 
 import { useMarkingSchemeStore } from "../state";
-import { AssessmentCriterion } from "../state/store";
+import { type AssessmentCriterion } from "../state/store";
 
 import { AssessmentCriterionCard } from "./assessment-criterion-card";
 import { FormDivider } from "./form-divider";

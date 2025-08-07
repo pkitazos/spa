@@ -2,10 +2,17 @@ import { FlagIcon, TagIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { app, metadataTitle } from "@/config/meta";
+import { PAGES } from "@/config/pages";
+
+import { type ProjectDTO, type StudentDTO, type SupervisorDTO } from "@/dto";
+
+import { Role, Stage } from "@/db/types";
+
 import { AccessControl } from "@/components/access-control";
 import { Heading, SubHeading } from "@/components/heading";
 import { MarkdownRenderer } from "@/components/markdown-editor";
-import { PageWrapper } from "@/components/page-wrapper";
+import { PanelWrapper } from "@/components/panel-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,19 +22,14 @@ import { Unauthorised } from "@/components/unauthorised";
 import { api } from "@/lib/trpc/server";
 import { cn } from "@/lib/utils";
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
+import { toPP1 } from "@/lib/utils/general/instance-params";
 import { toPositional } from "@/lib/utils/general/to-positional";
 import { previousStages } from "@/lib/utils/permissions/stage-check";
-import { InstanceParams } from "@/lib/validations/params";
-import { StudentPreferenceType } from "@/lib/validations/student-preference";
+import { type InstanceParams } from "@/lib/validations/params";
+import { type StudentPreferenceType } from "@/lib/validations/student-preference";
 
 import { StudentPreferenceButton } from "./_components/student-preference-button";
 import { StudentPreferenceDataTable } from "./_components/student-preference-data-table";
-
-import { app, metadataTitle } from "@/config/meta";
-import { PAGES } from "@/config/pages";
-import { PreferenceType, Role, Stage } from "@/db/types";
-import { toPP1 } from "@/lib/utils/general/instance-params";
-import { ProjectDTO, StudentDTO, SupervisorDTO } from "@/dto";
 
 type PageParams = InstanceParams & { id: string };
 
@@ -47,6 +49,8 @@ export async function generateMetadata({ params }: { params: PageParams }) {
   };
 }
 
+// TODO: this is super messy and should be reviewed and fixed a lil
+
 export default async function Project({ params }: { params: PageParams }) {
   const projectId = params.id;
   const exists = await api.project.exists({ params: toPP1(params) });
@@ -54,7 +58,7 @@ export default async function Project({ params }: { params: PageParams }) {
 
   const instancePath = formatParamsAsPath(params);
 
-  const userAccess = await api.project.getUserAccess({ params: toPP1(params) });
+  const userAccess = await api.ac.projectAccess({ params: toPP1(params) });
 
   if (!userAccess.access) {
     return (
@@ -89,8 +93,11 @@ export default async function Project({ params }: { params: PageParams }) {
     params: toPP1(params),
   });
 
+  const projectDescriptors =
+    await api.institution.instance.getAllProjectDescriptors({ params });
+
   return (
-    <PageWrapper>
+    <PanelWrapper>
       <Heading
         className={cn(
           "flex items-center justify-between gap-2 text-4xl",
@@ -130,15 +137,6 @@ export default async function Project({ params }: { params: PageParams }) {
               <MarkdownRenderer source={project.description} />
             </div>
           </section>
-          <section
-            className={cn(
-              "flex flex-col",
-              project.specialTechnicalRequirements === "" && "hidden",
-            )}
-          >
-            <SubHeading>Special Technical Requirements</SubHeading>
-            <p className="mt-6">{project.specialTechnicalRequirements}</p>
-          </section>
         </div>
         <div className="w-1/4">
           <ProjectDetailsCard
@@ -157,29 +155,15 @@ export default async function Project({ params }: { params: PageParams }) {
           },
         }}
       >
-        <section className={cn("mt-16 flex flex-col gap-8")}>
-          <SubHeading>Allocation</SubHeading>
-          <AllocatedStudentCard
-            studentAllocation={allocatedStudent!}
-            preAllocated={!!project.preAllocatedStudentId}
-          />
-        </section>
-        {/* TODO: fix type errors */}
-        {/* <section className="mb-16 flex flex-col">
-          <SectionHeading>Special Circumstances</SectionHeading>
-          <SpecialCircumstancesPage
-            formInternalData={{
-              specialCircumstances:
-                allocatedStudent?.specialCircumstances ?? "",
-            }}
-            studentId={allocatedStudent!.id}
-            project={{
-              id: projectId,
-              specialCircumstances:
-                allocatedStudent?.specialCircumstances ?? "",
-            }}
-          />
-        </section> */}
+        {allocatedStudent && (
+          <section className={cn("mt-16 flex flex-col gap-8")}>
+            <SubHeading>Allocation</SubHeading>
+            <AllocatedStudentCard
+              studentAllocation={allocatedStudent}
+              preAllocated={!!project.preAllocatedStudentId}
+            />
+          </section>
+        )}
         <Separator />
       </AccessControl>
       <AccessControl
@@ -189,18 +173,12 @@ export default async function Project({ params }: { params: PageParams }) {
         <section className="mt-16 flex flex-col gap-8">
           <SubHeading>Student Preferences</SubHeading>
           <StudentPreferenceDataTable
-            data={studentPreferences.map((s) => ({
-              id: s.student.id,
-              name: s.student.name,
-              level: s.student.level,
-              // TODO: fix data table display for submitted projects
-              type: s.preference.type as PreferenceType,
-              rank: s.preference.rank! ?? NaN,
-            }))}
+            data={studentPreferences}
+            projectDescriptors={projectDescriptors}
           />
         </section>
       </AccessControl>
-    </PageWrapper>
+    </PanelWrapper>
   );
 }
 
@@ -213,7 +191,7 @@ async function ProjectDetailsCard({
 }) {
   const user = await api.user.get();
   return (
-    <Card className="w-full max-w-sm border-none bg-accent">
+    <Card className="w-full max-w-sm">
       <CardContent className="flex flex-col gap-10 pt-5">
         <AccessControl
           allowedRoles={[Role.ADMIN, Role.STUDENT]}
@@ -252,8 +230,8 @@ async function ProjectDetailsCard({
           </div>
           <div className="flex flex-wrap gap-2">
             {projectData.project.flags.map((flag, i) => (
-              <Badge className="w-max" variant="outline" key={i}>
-                {flag.title}
+              <Badge className="rounded-md" variant="accent" key={i}>
+                {flag.displayName}
               </Badge>
             ))}
           </div>

@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { flagDtoSchema } from "./flag-tag";
 
 export const userDtoSchema = z.object({
@@ -39,9 +40,8 @@ export const readerDtoSchema = instanceUserDtoSchema.extend({
 export type ReaderDTO = z.infer<typeof readerDtoSchema>;
 
 export const studentDtoSchema = instanceUserDtoSchema.extend({
-  level: z.number(),
   latestSubmission: z.date().optional(),
-  flags: z.array(flagDtoSchema),
+  flag: flagDtoSchema,
 });
 
 export type StudentDTO = z.infer<typeof studentDtoSchema>;

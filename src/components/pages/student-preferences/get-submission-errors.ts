@@ -1,4 +1,4 @@
-import { ProjectPreferenceCardDto } from "@/lib/validations/board";
+import { type ProjectPreferenceCardDto } from "@/lib/validations/board";
 
 export function getSubmissionErrors(
   preferences: ProjectPreferenceCardDto[],
@@ -33,7 +33,7 @@ function computeOverSelected(
         name: supervisor.name,
       },
     }),
-    {} as { [key: string]: { name: string; count: number } },
+    {} as Record<string, { name: string; count: number }>,
   );
 
   const overSelected = Object.entries(supervisorCounts)

@@ -1,8 +1,11 @@
 "use client";
+
 import { useState } from "react";
-import { PreferenceType } from "@prisma/client";
-import { ClassValue } from "clsx";
+
+import { type ClassValue } from "clsx";
 import { BookmarkIcon } from "lucide-react";
+
+import { PreferenceType } from "@/db/types";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import {
   studentPreferenceSchema,
-  StudentPreferenceType,
+  type StudentPreferenceType,
 } from "@/lib/validations/student-preference";
 
 export function ChangePreferenceButton({
