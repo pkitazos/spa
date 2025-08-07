@@ -1,19 +1,13 @@
 import { z } from "zod";
 
-import { INSTITUTION } from "@/config/institution";
+import { institutionIdSchema } from "@/lib/validations/institution-id";
 
 export const newSupervisorSchema = z
   .object({
     fullName: z
       .string("Please enter a valid name")
       .min(1, "Please enter a valid name"),
-    institutionId: z
-      .string(`Please enter a valid ${INSTITUTION.ID_NAME}`)
-      .min(1, `Please enter a valid ${INSTITUTION.ID_NAME}`)
-      .regex(
-        /^[a-zA-Z0-9]+$/,
-        `Only alphanumeric characters are allowed in ${INSTITUTION.ID_NAME}`,
-      ),
+    institutionId: institutionIdSchema,
     email: z
       .email("Please enter a valid email address")
       .min(1, "Please enter a valid email address"),
