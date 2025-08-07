@@ -34,7 +34,6 @@ import { YesNoAction } from "@/components/yes-no-action";
 import { api } from "@/lib/trpc/client";
 
 import { columns, StatusBox } from "./marking-overview-columns";
-import { prepCSV } from "./prep-csv";
 import { type ProjectMarkingOverview } from "./row";
 
 export function MarkingOverviewTable({
@@ -171,7 +170,7 @@ export function MarkingOverviewTable({
             "overallGrade",
             "penalty",
           ]}
-          data={prepCSV(data)}
+          data={[]} /* prepCSV(data)*/
           filename={"marking"}
           text="Download as CSV"
         />
