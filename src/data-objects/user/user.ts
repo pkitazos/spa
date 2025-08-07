@@ -313,6 +313,8 @@ export class User extends DataObject {
 
       if (subGroup === PAGES.newGroup.href) {
         addSegment(subGroup, isSuperAdmin);
+      } else if (subGroup === PAGES.userManagement.href) {
+        addSegment(subGroup, isSuperAdmin);
       } else if (subGroup) throw new Error("Unknown Segment");
 
       return res;

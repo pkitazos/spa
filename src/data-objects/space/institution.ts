@@ -66,4 +66,8 @@ export class Institution extends DataObject {
   public async getUsers(): Promise<UserDTO[]> {
     return await this.db.user.findMany();
   }
+
+  public async deleteUser(id: string): Promise<UserDTO> {
+    return await this.db.user.delete({ where: { id } });
+  }
 }

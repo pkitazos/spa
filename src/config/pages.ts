@@ -33,6 +33,13 @@ export const PAGES = {
     allowedRoles: [Role.ADMIN],
     hasSubRoute: true,
   },
+  userManagement: {
+    title: "User Management",
+    href: "users",
+    level: 2,
+    allowedRoles: [Role.ADMIN],
+    hasSubRoute: false,
+  },
   newGroup: {
     title: "New Group",
     href: "create-group",
