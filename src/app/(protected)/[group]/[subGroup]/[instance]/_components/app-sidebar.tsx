@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { BookMarkedIcon, HomeIcon, LifeBuoyIcon } from "lucide-react";
+import { HomeIcon, LifeBuoyIcon } from "lucide-react";
 import Link from "next/link";
 
 import { app } from "@/config/meta";
@@ -106,14 +106,14 @@ export function AppSidebar({
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem> */}
-          <SidebarMenuItem>
+          {/* <SidebarMenuItem>
             <SidebarMenuButton asChild>
               <Link href="/docs">
                 <BookMarkedIcon />
                 <span>Docs</span>
               </Link>
             </SidebarMenuButton>
-          </SidebarMenuItem>
+          </SidebarMenuItem> */}
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
