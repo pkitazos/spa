@@ -59,9 +59,10 @@ export class User extends DataObject {
     return this._data;
   }
 
-  static fromDTO(db: DB, data: UserDTO) {
+  static fromDTO(db: DB, data: UserDTO): User {
     const user = new User(db, data.id);
     user._data = data;
+    return user;
   }
 
   // --- kind checks:
@@ -311,9 +312,10 @@ export class User extends DataObject {
       const isSuperAdmin = await this.isSuperAdmin();
       addSegment(group, isSuperAdmin);
 
-      if (subGroup === PAGES.newGroup.href) {
-        addSegment(subGroup, isSuperAdmin);
-      } else if (subGroup === PAGES.userManagement.href) {
+      if (
+        subGroup === PAGES.newGroup.href ||
+        subGroup === PAGES.userManagement.href
+      ) {
         addSegment(subGroup, isSuperAdmin);
       } else if (subGroup) throw new Error("Unknown Segment");
 

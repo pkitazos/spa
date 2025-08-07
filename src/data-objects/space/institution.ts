@@ -51,8 +51,19 @@ export class Institution extends DataObject {
     }));
   }
 
-  public async createUser({ id, name, email }: UserDTO): Promise<void> {
-    await this.db.user.create({ data: { id, name, email } });
+  public async createUser({ id, name, email }: UserDTO): Promise<UserDTO> {
+    return await this.db.user.create({ data: { id, name, email } });
+  }
+
+  public async getUserById(userId: string): Promise<UserDTO> {
+    return await this.db.user.findFirstOrThrow({ where: { id: userId } });
+  }
+
+  public async updateUser(user: UserDTO): Promise<UserDTO> {
+    return await this.db.user.update({
+      where: { id: user.id },
+      data: { email: user.email, name: user.name },
+    });
   }
 
   public async createUsers(users: UserDTO[]): Promise<void> {
@@ -65,9 +76,5 @@ export class Institution extends DataObject {
 
   public async getUsers(): Promise<UserDTO[]> {
     return await this.db.user.findMany();
-  }
-
-  public async deleteUser(id: string): Promise<UserDTO> {
-    return await this.db.user.delete({ where: { id } });
   }
 }

@@ -31,7 +31,7 @@ const userEditSchema = z.object({
 
 export type UserEdit = z.infer<typeof userEditSchema>;
 
-export function EditUserDetailsForm({ user }: { user: UserDTO }) {
+export function InlineUserEditForm({ user }: { user: UserDTO }) {
   const router = useRouter();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
