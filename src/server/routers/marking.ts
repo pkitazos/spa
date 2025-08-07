@@ -26,20 +26,9 @@ export const markingRouter = createTRPCRouter({
     .inStage(subsequentStages(Stage.MARK_SUBMISSION))
     .subGroupAdmin.output(z.array(projectMarkingOverviewSchema))
     .query(async ({ ctx: { db, instance } }) => {
-      const { id: seyp_flag_id } = await db.flag.findUniqueOrThrow({
-        where: {
-          displayName_allocationGroupId_allocationSubGroupId_allocationInstanceId:
-            { ...expand(instance.params), displayName: "SEYP" },
-        },
-        select: { id: true },
-      });
-
       const projectStudentDataRaw = await db.studentProjectAllocation
         .findMany({
-          where: {
-            ...expand(instance.params),
-            OR: [{ student: { studentFlag: { id: seyp_flag_id } } }],
-          },
+          where: expand(instance.params),
           include: {
             project: {
               include: {
