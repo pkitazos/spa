@@ -1,3 +1,4 @@
+import { env } from "@/env";
 import { z } from "zod";
 
 import {
@@ -17,7 +18,6 @@ import { createTRPCRouter } from "@/server/trpc";
 import { auth } from "@/lib/auth";
 import { relativeComplement } from "@/lib/utils/general/set-difference";
 import { nubsById } from "@/lib/utils/list-unique";
-import { getTestUsers } from "@/lib/utils/test-users";
 
 import { markerRouter } from "./marker";
 import { studentRouter } from "./student";
@@ -149,7 +149,7 @@ export const userRouter = createTRPCRouter({
   getTestUsers: procedure.user
     .output(z.array(userDtoSchema))
     .query(async ({ ctx: { db } }) => {
-      const testUsers = getTestUsers();
+      const testUsers = env.TEST_USER_EMAILS;
 
       if (testUsers.length === 0) {
         return [];

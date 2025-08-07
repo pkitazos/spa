@@ -52,7 +52,13 @@ export const env = createEnv({
     TEST_USER_EMAILS: z
       .string()
       .default("")
-      .transform((x) => x.split(",")),
+      .transform((x) =>
+        x
+          .split(",")
+          .map((email) => email.trim())
+          .filter((email) => email.length > 0)
+          .map((email, index) => ({ email, ord: index })),
+      ),
 
     /** Name of the header to extract Shibboleth GUID from */
     HEADERS_SHIB_GUID: z.string().optional(),
