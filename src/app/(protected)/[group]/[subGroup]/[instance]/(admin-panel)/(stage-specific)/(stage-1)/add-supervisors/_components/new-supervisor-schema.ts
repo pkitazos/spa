@@ -9,7 +9,11 @@ export const newSupervisorSchema = z
       .min(1, "Please enter a valid name"),
     institutionId: z
       .string(`Please enter a valid ${INSTITUTION.ID_NAME}`)
-      .min(1, `Please enter a valid ${INSTITUTION.ID_NAME}`),
+      .min(1, `Please enter a valid ${INSTITUTION.ID_NAME}`)
+      .regex(
+        /^[a-zA-Z0-9]+$/,
+        `Only alphanumeric characters are allowed in ${INSTITUTION.ID_NAME}`,
+      ),
     email: z
       .email("Please enter a valid email address")
       .min(1, "Please enter a valid email address"),
@@ -36,8 +40,8 @@ export const newSupervisorSchema = z
       path: ["projectTarget"],
     },
   );
-// for CSV parsing - validates supervisor data from CSV
 
+// for CSV parsing - validates supervisor data from CSV
 export const csvSupervisorSchema = newSupervisorSchema;
 
 export type NewSupervisor = z.infer<typeof newSupervisorSchema>;

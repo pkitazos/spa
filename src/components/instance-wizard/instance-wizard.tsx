@@ -32,7 +32,12 @@ import TagInput from "./tag-input";
 export const flagsAssessmentSchema = z
   .array(
     z.object({
-      id: z.string(),
+      id: z
+        .string()
+        .regex(
+          /^[a-zA-Z0-9_-]+$/,
+          "Flag ID must be alphanumeric, hyphens, or underscores",
+        ),
       displayName: z.string(),
       description: z.string(),
     }),
