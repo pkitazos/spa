@@ -2,8 +2,6 @@ import { z } from "zod";
 
 import { groupDtoSchema, userDtoSchema } from "@/dto";
 
-import { User } from "@/data-objects";
-
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
@@ -66,11 +64,13 @@ export const institutionRouter = createTRPCRouter({
   getDetailsForUser: procedure.superAdmin
     .input(z.object({ userId: z.string() }))
     .output(z.object({ user: userDtoSchema, isSuperAdmin: z.boolean() }))
-    .query(async ({ ctx: { institution, db }, input: { userId } }) => {
-      const userData = await institution.getUserById(userId);
-      const user = User.fromDTO(db, userData);
+    .query(async ({ ctx: { institution }, input: { userId } }) => {
+      const user = institution.getUserObjectById(userId);
 
-      return { user: userData, isSuperAdmin: await user.isSuperAdmin() };
+      return {
+        user: await user.toDTO(),
+        isSuperAdmin: await user.isSuperAdmin(),
+      };
     }),
 
   createUser: procedure.superAdmin

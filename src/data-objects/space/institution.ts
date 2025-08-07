@@ -13,6 +13,7 @@ import { slugify } from "@/lib/utils/general/slugify";
 import { type InstanceParams } from "@/lib/validations/params";
 
 import { DataObject } from "../data-object";
+import { User } from "../user";
 
 export class Institution extends DataObject {
   constructor(db: DB) {
@@ -55,16 +56,19 @@ export class Institution extends DataObject {
     return await this.db.user.create({ data: { id, name, email } });
   }
 
-  public async getUserById(userId: string): Promise<UserDTO> {
-    return await this.db.user.findFirstOrThrow({ where: { id: userId } });
+  public async createUsers(users: UserDTO[]): Promise<UserDTO[]> {
+    return await this.db.user.createManyAndReturn({
+      data: users,
+      skipDuplicates: true,
+    });
   }
 
   public async updateUser({ id, name, email }: UserDTO): Promise<UserDTO> {
     return await this.db.user.update({ where: { id }, data: { name, email } });
   }
 
-  public async createUsers(users: UserDTO[]): Promise<void> {
-    await this.db.user.createMany({ data: users, skipDuplicates: true });
+  public getUserObjectById(userId: string): User {
+    return new User(this.db, userId);
   }
 
   public async userExists(id: string): Promise<boolean> {
