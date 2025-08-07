@@ -1,9 +1,9 @@
 export const app = {
-  name: "AMPS",
-  fullName: "Allocation & Marking Project System",
+  name: "SPA",
+  fullName: "Student Project Allocation & Marking System",
   institution: { name: "UofG" },
   metadata: { separator: " - " },
-  descriptor: "SoCS allocation & marking project system",
+  descriptor: "SoCS project allocation & marking system",
   supportEmail: "compsci-spa-support@glasgow.ac.uk",
 };
 
