@@ -35,7 +35,7 @@ export const PAGES = {
   },
   userManagement: {
     title: "User Management",
-    href: "users",
+    href: "all-users",
     level: 2,
     allowedRoles: [Role.ADMIN],
     hasSubRoute: false,
