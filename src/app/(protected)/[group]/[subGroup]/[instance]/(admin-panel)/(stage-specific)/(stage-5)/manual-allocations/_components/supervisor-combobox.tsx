@@ -72,7 +72,7 @@ export function SupervisorCombobox({
           ) : (
             <span className="text-muted-foreground">Select supervisor...</span>
           )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 flex-shrink-0 opacity-50" />
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[380px] p-0">
@@ -101,7 +101,7 @@ export function SupervisorCombobox({
                     <SupervisorCell supervisor={supervisor} />
                     <Check
                       className={cn(
-                        "ml-2 h-4 w-4 flex-shrink-0",
+                        "ml-2 h-4 w-4 shrink-0",
                         value === supervisor.id ? "opacity-100" : "opacity-0",
                       )}
                     />
