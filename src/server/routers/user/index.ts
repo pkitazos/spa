@@ -40,6 +40,14 @@ export const userRouter = createTRPCRouter({
         await new User(db, userId).toDTO(),
     ),
 
+  updateById: procedure.superAdmin
+    .input(userDtoSchema)
+    .output(userDtoSchema)
+    .mutation(
+      async ({ ctx: { institution }, input: user }) =>
+        await institution.updateUser(user),
+    ),
+
   deleteById: procedure.superAdmin
     .input(z.object({ userId: z.string() }))
     .output(userDtoSchema)
