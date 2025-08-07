@@ -60,7 +60,7 @@ export function SidePanel() {
 
   return (
     <Sidebar
-      className="w-[17rem] flex-none bg-background pt-6"
+      className="w-68 flex-none bg-background pt-6"
       collapsible="none"
     >
       <SidebarHeader className="mb-5 flex flex-row items-center justify-between px-2">
@@ -202,7 +202,7 @@ function CollapsibleClassificationTab({
                 <SidebarMenuItem
                   key={`${flag.title}_${flagIdx}_${submission.title}_${submissionIdx}`}
                   className={cn(
-                    "flex w-full items-center justify-between gap-2 rounded-md py-1.5 pl-14 pr-[2.125rem] hover:bg-slate-300/80",
+                    "flex w-full items-center justify-between gap-2 rounded-md py-1.5 pl-14 pr-8.5 hover:bg-slate-300/80",
                     submissionIdx === 0 && "mt-1.5",
                     selectedFlagIndex === flagIdx &&
                       selectedSubmissionIndex === submissionIdx &&

@@ -73,7 +73,7 @@ export function ProjectCombobox({
           ) : (
             <span className="text-muted-foreground">Select project...</span>
           )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 flex-shrink-0 opacity-50" />
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[500px] p-0">
@@ -102,7 +102,7 @@ export function ProjectCombobox({
                     <ProjectCell project={project} />
                     <Check
                       className={cn(
-                        "mt-1 h-4 w-4 flex-shrink-0",
+                        "mt-1 h-4 w-4 shrink-0",
                         value === project.id ? "opacity-100" : "opacity-0",
                       )}
                     />
@@ -163,7 +163,7 @@ function ProjectCell({
           </span>
           <div
             className={cn(
-              "flex-shrink-0 rounded-full border px-2 py-1 text-xs font-medium",
+              "shrink-0 rounded-full border px-2 py-1 text-xs font-medium",
               getStatusColor(project.status),
             )}
           >
@@ -185,7 +185,7 @@ function ProjectCell({
         </h4>
         <div
           className={cn(
-            "flex-shrink-0 rounded-full border px-2 py-1 text-xs font-medium",
+            "shrink-0 rounded-full border px-2 py-1 text-xs font-medium",
             getStatusColor(project.status),
           )}
         >
