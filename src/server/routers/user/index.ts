@@ -7,7 +7,7 @@ import {
   userDtoSchema,
 } from "@/dto";
 
-import { User, AllocationInstance } from "@/data-objects";
+import { AllocationInstance } from "@/data-objects";
 
 import { Role, roleSchema } from "@/db/types";
 
@@ -36,24 +36,8 @@ export const userRouter = createTRPCRouter({
     .input(z.object({ userId: z.string() }))
     .output(userDtoSchema)
     .query(
-      async ({ ctx: { db }, input: { userId } }) =>
-        await new User(db, userId).toDTO(),
-    ),
-
-  updateById: procedure.superAdmin
-    .input(userDtoSchema)
-    .output(userDtoSchema)
-    .mutation(
-      async ({ ctx: { institution }, input: user }) =>
-        await institution.updateUser(user),
-    ),
-
-  deleteById: procedure.superAdmin
-    .input(z.object({ userId: z.string() }))
-    .output(userDtoSchema)
-    .mutation(
       async ({ ctx: { institution }, input: { userId } }) =>
-        await institution.deleteUser(userId),
+        await institution.getUserObjectById(userId).toDTO(),
     ),
 
   roles: procedure.instance.user
