@@ -5,6 +5,8 @@ import { api } from "@/lib/trpc/server";
 
 import { UserDataTable } from "./_components/user-data-table";
 
+export const dynamic = "force-dynamic";
+
 export default async function UserPage() {
   const allUsers = await api.institution.getAllUsers();
 
