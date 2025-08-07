@@ -40,8 +40,16 @@ export const userRouter = createTRPCRouter({
         await new User(db, userId).toDTO(),
     ),
 
+  deleteById: procedure.superAdmin
+    .input(z.object({ userId: z.string() }))
+    .output(userDtoSchema)
+    .mutation(
+      async ({ ctx: { institution }, input: { userId } }) =>
+        await institution.deleteUser(userId),
+    ),
+
   roles: procedure.instance.user
-    .output(z.set(z.nativeEnum(Role)))
+    .output(z.set(z.enum(Role)))
     .query(
       async ({ ctx: { user, instance } }) =>
         await user.getRolesInInstance(instance.params),
