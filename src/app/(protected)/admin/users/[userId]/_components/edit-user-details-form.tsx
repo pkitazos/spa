@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Save, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { z } from "zod";
 
-import { type UserDTO } from "@/dto";
+import { INSTITUTION } from "@/config/institution";
+
+import { userDtoSchema, type UserDTO } from "@/dto";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,73 +21,56 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { api } from "@/lib/trpc/client";
-
-const userEditSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  email: z.email("Invalid email address").optional(),
-});
-
-export type UserEdit = z.infer<typeof userEditSchema>;
 
 export function EditUserDetailsForm({ user }: { user: UserDTO }) {
   const router = useRouter();
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  const { mutateAsync: updateUser, isPending: isSubmitting } =
+    api.institution.updateUser.useMutation();
 
-  const { mutateAsync: updateUser } = api.institution.updateUser.useMutation();
-
-  const form = useForm<UserEdit>({
-    resolver: zodResolver(userEditSchema),
-    defaultValues: { name: user.name, email: user.email },
+  const form = useForm({
+    resolver: zodResolver(userDtoSchema),
+    defaultValues: user,
   });
 
-  // Watch for changes to enable/disable save button
-  const watchedValues = form.watch();
-
-  useEffect(() => {
-    const currentValues = form.getValues();
-    const hasChanged =
-      currentValues.name !== user.name || currentValues.email !== user.email;
-
-    setHasChanges(hasChanged);
-  }, [watchedValues, user.name, user.email, form]);
+  const hasChanges =
+    form.getFieldState("email").isDirty || form.getFieldState("name").isDirty;
 
   function handleReset() {
     form.reset({ name: user.name, email: user.email });
-    setHasChanges(false);
+
     toast.info("Changes reset to original values");
   }
 
-  async function handleSubmit(data: UserEdit) {
-    setIsSubmitting(true);
-
-    void toast.promise(
-      updateUser({
-        user: {
-          id: user.id,
-          name: data.name ?? user.name,
-          email: data.email ?? user.email,
-        },
-      }).then(() => {
-        setHasChanges(false);
-        form.reset(data);
-        router.refresh();
-      }),
-      {
+  async function handleSubmit(user: UserDTO) {
+    void toast
+      .promise(updateUser({ user }), {
         loading: "Updating user...",
-        success: "User updated successfully",
+        success: (data) =>
+          `User ${data.name} (${data.id}) updated successfully`,
         error: "Failed to update user",
-      },
-    );
+      })
+      .unwrap()
+      .then(() => {
+        form.reset(user);
+        router.refresh();
+      });
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
+          <FormItem>
+            <FormLabel>{INSTITUTION.ID_NAME}</FormLabel>
+            <WithTooltip tip="Sorry - Ids cannot be changed after creation">
+              <Input disabled value={user.id} />
+            </WithTooltip>
+          </FormItem>
+
           <FormField
             control={form.control}
             name="name"

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { api } from "@/lib/trpc/server";
 
-import { InlineUserEditForm } from "./_components/inline-user-edit-form";
+import { EditUserDetailsForm } from "./_components/edit-user-details-form";
 
 export default async function Page({ params }: { params: { userId: string } }) {
   const { user, isSuperAdmin } = await api.institution.getDetailsForUser({
@@ -30,7 +30,7 @@ export default async function Page({ params }: { params: { userId: string } }) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <InlineUserEditForm user={user} />
+            <EditUserDetailsForm user={user} />
           </CardContent>
         </Card>
 
