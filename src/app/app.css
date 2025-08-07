@@ -1,4 +1,51 @@
-@import 'tailwindcss';
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@plugin 'tailwind-scrollbar' {
+  nocompatible: true;
+}
+
+:root {
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(222.2 47.4% 11.2%);
+
+  --primary: hsl(207 100% 20%);
+  --primary-foreground: hsl(210 40% 96.1%);
+
+  --secondary: hsl(207 100% 30%);
+  --secondary-foreground: hsl(210 40% 96.1%);
+
+  --accent: hsl(210 40% 96.1%);
+  --accent-foreground: hsl(207 100% 20%);
+
+  --destructive: hsl(0 100% 40%);
+  --destructive-foreground: hsl(210 40% 98%);
+
+  --muted: hsl(210 40% 96.1%);
+  --muted-foreground: hsl(215.4 16.3% 46.9%);
+
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(222.2 47.4% 11.2%);
+
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(222.2 47.4% 11.2%);
+
+  --border: hsl(214.3 31.8% 91.4%);
+
+  --input: hsl(214.3 31.8% 91.4%);
+  --input-dark: hsl(215 25% 27%);
+
+  --ring: hsl(215 20.2% 65.1%);
+
+  --radius: 0.5rem; /* might be useless */
+
+  --sidebar-background: var(--accent);
+  --sidebar-foreground: var(--accent-foreground);
+
+  --sidebar-accent: var(--secondary);
+  --sidebar-accent-foreground: var(--secondary-foreground);
+  --sidebar-border: var(--border);
+}
 
 @custom-variant dark (&:is(class *));
 
@@ -9,58 +56,58 @@
   --container-8xl: 88rem;
   --container-9xl: 96rem;
 
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
 
-  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-primary-foreground: var(--primary-foreground);
 
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
 
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-secondary-foreground: var(--secondary-foreground);
 
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
 
-  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-accent-foreground: var(--accent-foreground);
 
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
 
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
 
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
 
-  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-muted-foreground: var(--muted-foreground);
 
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
 
-  --color-card-foreground: hsl(var(--card-foreground));
+  --color-card-foreground: var(--card-foreground);
 
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
 
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-input-dark: hsl(var(--input-dark));
-  --color-ring: hsl(var(--ring));
+  --color-popover-foreground: var(--popover-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-dark: var(--input-dark);
+  --color-ring: var(--ring);
 
-  --color-sidebar: hsl(var(--sidebar-background));
-  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
-  --color-sidebar-accent: hsl(var(--sidebar-accent));
-  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
-  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
 
-  --color-chart-1: hsl(var(--chart-1));
-  --color-chart-2: hsl(var(--chart-2));
-  --color-chart-3: hsl(var(--chart-3));
-  --color-chart-4: hsl(var(--chart-4));
-  --color-chart-5: hsl(var(--chart-5));
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -106,48 +153,6 @@
 }
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 47.4% 11.2%;
-
-    --primary: 207 100% 20%;
-    --primary-foreground: 210 40% 96.1%;
-
-    --secondary: 207 100% 30%;
-    --secondary-foreground: 210 40% 96.1%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 207 100% 20%;
-
-    --destructive: 0 100% 40%;
-    --destructive-foreground: 210 40% 98%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
-
-    --border: 214.3 31.8% 91.4%;
-
-    --input: 214.3 31.8% 91.4%;
-    --input-dark: 215 25% 27%;
-
-    --ring: 215 20.2% 65.1%;
-
-    --radius: 0.5rem; /* might be useless */
-
-    --sidebar-background: var(--accent);
-    --sidebar-foreground: var(--accent-foreground);
-
-    --sidebar-accent: var(--secondary);
-    --sidebar-accent-foreground: var(--secondary-foreground);
-    --sidebar-border: var(--border);
-  }
-
   ::-webkit-scrollbar {
     height: 6px;
     width: 6px;
