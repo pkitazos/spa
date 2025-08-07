@@ -9,6 +9,8 @@ import { api } from "@/lib/trpc/server";
 
 import { EditUserDetailsForm } from "./_components/edit-user-details-form";
 
+export const dynamic = "force-dynamic";
+
 export default async function Page({ params }: { params: { userId: string } }) {
   const { user, isSuperAdmin } = await api.institution.getDetailsForUser({
     userId: params.userId,

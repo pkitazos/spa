@@ -1,10 +1,3 @@
-# Student-Project Allocation (SPA)
+# Student-Project Administration (SPA)
 
-### Tech stack
-
-- TypeScript
-- NextJS + React
-- TailwindCSS
-- tRPC
-- Prisma
-- ShadCN UI
+This repo contains the system used at glasgow university to manage student project allocation as well as marking.
