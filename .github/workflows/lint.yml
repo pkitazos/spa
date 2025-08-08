@@ -6,6 +6,27 @@ on:
     branches: [main]
 
 jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Run Typechecker
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm tc
+
   lint:
     runs-on: ubuntu-latest
 
@@ -23,7 +44,6 @@ jobs:
           cache: "pnpm"
 
       - name: Run Linter
-
         run: |
           pnpm install --frozen-lockfile
           pnpm lint
