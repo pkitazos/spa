@@ -44,8 +44,8 @@ export function ColumnContainer({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex h-full min-h-40 w-full flex-col gap-4 rounded-md bg-accent/50 px-3.5 pb-32 shadow-xs",
-        isOver && "outline-solid outline-4 outline-muted-foreground/50",
+        "flex h-full min-h-40 w-full flex-col gap-4 rounded-md bg-accent/50 px-3.5 pb-32 shadow-sm",
+        isOver && "outline outline-4 outline-muted-foreground/50",
       )}
     >
       <SectionHeading className="mx-3 mb-3 mt-5 flex items-center">

@@ -127,7 +127,7 @@ export function FormSection({
             )}
           />
           <Button size="icon" variant="secondary">
-            <Plus className="h-4 w-4 stroke-white stroke-3" />
+            <Plus className="h-4 w-4 stroke-white stroke-[3]" />
           </Button>
         </div>
       </form>
