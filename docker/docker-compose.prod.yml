@@ -18,7 +18,7 @@ services:
       MAIL_PASSWORD: ${MAIL_PASSWORD}
 
       DEV_ENV: "PROD"
-      AMPS_MODE: "PROD"
+      AMPS_MODE: "prod"
       VALIDATE_ENV_VARS: "true"
       AUTH_FROM_HEADERS: "ON"
 
