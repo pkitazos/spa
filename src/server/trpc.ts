@@ -36,7 +36,7 @@ export const createTRPCContext = async (opts: {
   headers: Headers;
   session: Session | null;
 }) => {
-  const { mask: user } = await auth();
+  const { real, mask: user } = await auth();
 
   if (!user) console.error("Failed to get user from auth()");
   const session = opts.session ?? { user };
@@ -46,7 +46,8 @@ export const createTRPCContext = async (opts: {
 
   function audit(message: string, ...meta: Record<string, unknown>[]) {
     const data = meta.reduce((acc, val) => ({ ...acc, ...val }), {
-      authorizer: user,
+      authorizer: real,
+      mask: user,
     });
 
     trpcLogger.log(LogLevels.AUDIT, message, data);
