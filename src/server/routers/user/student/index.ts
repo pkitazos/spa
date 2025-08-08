@@ -88,9 +88,10 @@ export const studentRouter = createTRPCRouter({
   setAllocationAccess: procedure.instance.subGroupAdmin
     .input(z.object({ access: z.boolean() }))
     .output(z.boolean())
-    .mutation(async ({ ctx: { instance }, input: { access } }) =>
-      instance.setStudentPublicationAccess(access),
-    ),
+    .mutation(async ({ ctx: { instance, audit }, input: { access } }) => {
+      audit("Set student allocation access", { setTo: access });
+      return instance.setStudentPublicationAccess(access);
+    }),
 
   // TODO rename + split
   overviewData: procedure.instance.student.query(
