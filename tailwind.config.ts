@@ -1,4 +1,5 @@
 import tailwindAnimate from "tailwindcss-animate";
+import plugin from "tailwindcss/plugin";
 
 import type { Config } from "tailwindcss";
 
@@ -10,6 +11,7 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
+    tabSize: { "1": "1", "8": "8" },
     extend: {
       screens: { "2xl": "1536px", "3xl": "1700px" },
       maxWidth: { "8xl": "88rem", "9xl": "96rem" },
@@ -97,6 +99,26 @@ const config: Config = {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-require-imports
     require("tailwind-scrollbar")({ nocompatible: true }),
     tailwindAnimate,
+    plugin(function (opts) {
+      opts.addUtilities({
+        ".--orange-500": { outline: "2px solid", outlineColor: "#f97316" },
+        ".--orange-600": { outline: "2px solid", outlineColor: "#ea580c" },
+        ".--amber-500": { outline: "2px solid", outlineColor: "#f59e0b" },
+        ".--amber-600": { outline: "2px solid", outlineColor: "#d97706" },
+        ".--lime-500": { outline: "2px solid", outlineColor: "#84cc16" },
+        ".--lime-600": { outline: "2px solid", outlineColor: "#65a30d" },
+        ".--emerald-500": { outline: "2px solid", outlineColor: "#10b981" },
+        ".--emerald-600": { outline: "2px solid", outlineColor: "#059669" },
+        ".--sky-500": { outline: "2px solid", outlineColor: "#0ea5e9" },
+        ".--sky-600": { outline: "2px solid", outlineColor: "#0284c7" },
+        ".--blue-500": { outline: "2px solid", outlineColor: "#3b82f6" },
+        ".--blue-600": { outline: "2px solid", outlineColor: "#2563eb" },
+        ".--purple-500": { outline: "2px solid", outlineColor: "#a855f7" },
+        ".--purple-600": { outline: "2px solid", outlineColor: "#9333ea" },
+        ".--pink-500": { outline: "2px solid", outlineColor: "#ec4899" },
+        ".--pink-600": { outline: "2px solid", outlineColor: "#db2777" },
+      });
+    }),
   ],
 };
 export default config;
