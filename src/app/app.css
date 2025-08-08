@@ -208,5 +208,5 @@
 }
 
 @utility dbg-* {
-  outline: 2px solid --value(--color- *);
+  outline: 2px solid --value(--color-*);
 }
