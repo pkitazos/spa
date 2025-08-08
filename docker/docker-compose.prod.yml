@@ -2,7 +2,7 @@ name: amps
 
 services:
   app:
-    image: "ghcr.io/pkitazos/amps-app:staging-latest"
+    image: "ghcr.io/pkitazos/amps-app:main-latest"
     depends_on:
       - db
     ports:
