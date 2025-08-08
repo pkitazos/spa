@@ -110,6 +110,7 @@
     "@dotenvx/dotenvx": "^1.44.2",
     "@eslint/js": "^9.31.0",
     "@faker-js/faker": "^9.8.0",
+    "@tailwindcss/typography": "^0.5.16",
     "@total-typescript/ts-reset": "^0.6.1",
     "@trivago/prettier-plugin-sort-imports": "^5.2.2",
     "@types/node": "22.5.1",

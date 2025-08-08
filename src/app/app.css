@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 @plugin 'tailwind-scrollbar' {
   nocompatible: true;
@@ -207,5 +208,5 @@
 }
 
 @utility dbg-* {
-  outline: 2px solid --value(--color-*);
+  outline: 2px solid --value(--color- *);
 }
