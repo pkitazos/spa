@@ -45,14 +45,9 @@ export async function UserButton() {
                     <p className="text-sm font-medium leading-none">
                       {user.name}
                     </p>
-                    {env.AMPS_MODE === "dev" && (
+                    {env.AUTH_FROM_HEADERS === "OFF" && (
                       <span className="rounded bg-orange-100 px-1.5 py-0.5 text-xs text-orange-700">
                         DEV
-                      </span>
-                    )}
-                    {env.AMPS_MODE === "testing" && (
-                      <span className="rounded bg-lime-100 px-1.5 py-0.5 text-xs text-lime-700">
-                        TESTING
                       </span>
                     )}
                   </div>
@@ -64,7 +59,7 @@ export async function UserButton() {
                   </p>
                 </div>
               </DropdownMenuLabel>
-              {env.AUTH_MASKING === "ON" && (
+              {env.AUTH_MASKING_ENABLED === "ON" && (
                 <UserSwitcher users={testUsers} currentUserId={user.id} />
               )}
             </>
