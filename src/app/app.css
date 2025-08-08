@@ -205,3 +205,7 @@
     @apply bg-background text-foreground;
   }
 }
+
+@utility dbg-* {
+  outline: 2px solid --value(--color-*);
+}
