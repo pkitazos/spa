@@ -45,3 +45,5 @@ export const logger = winston.createLogger({
     }),
   ],
 });
+
+export type AuditFn = (msg: string, ...meta: Record<string, unknown>[]) => void;
