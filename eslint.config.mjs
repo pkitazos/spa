@@ -43,4 +43,37 @@ export default tseslint.config(
     linterOptions: { reportUnusedDisableDirectives: true },
     languageOptions: { parserOptions: { projectService: true } },
   },
+  {
+    ignores: ["src/db/**/*.ts", "src/db/**/*.tsx"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@prisma/client",
+              message: "Please import via `@/db` as appropriate",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    ignores: ["src/components/ui/**/*.ts", "src/components/ui/**/*.tsx"],
+    rules: {
+      "no-restricted-imports": [
+        "warn",
+        {
+          patterns: [
+            {
+              group: ["@radix-ui/*"],
+              message:
+                "Imports directly from radix-ui are generally incorrect; please check and ignore this if necessary",
+            },
+          ],
+        },
+      ],
+    },
+  },
 );
