@@ -149,7 +149,7 @@ export const userRouter = createTRPCRouter({
   getTestUsers: procedure.user
     .output(z.array(userDtoSchema))
     .query(async ({ ctx: { db } }) => {
-      const testUsers = env.TEST_USER_EMAILS;
+      const testUsers = env.AUTH_MASKING_EMAILS;
 
       if (testUsers.length === 0) {
         return [];
