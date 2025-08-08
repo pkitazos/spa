@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { PAGES } from "@/config/pages";
+
 import { ChangePreferenceButton } from "@/components/change-preference-button";
 import {
   useInstanceParams,
-  useInstancePath,
+  usePathInInstance,
 } from "@/components/params-context";
 import { ToastSuccessCard } from "@/components/toast-success-card";
 import { buttonVariants } from "@/components/ui/button";
@@ -25,7 +27,7 @@ export function StudentPreferenceButton({
 }) {
   const router = useRouter();
   const params = useInstanceParams();
-  const instancePath = useInstancePath();
+  const { getPath } = usePathInInstance();
 
   const { mutateAsync: updateAsync } =
     api.user.student.preference.update.useMutation();
@@ -43,13 +45,13 @@ export function StudentPreferenceButton({
             message="Successfully updated project preference"
             action={
               <Link
-                href={`${instancePath}/my-preferences`}
+                href={getPath(PAGES.myPreferences.href)}
                 className={cn(
                   buttonVariants({ variant: "outline" }),
-                  "flex h-full w-max items-center gap-2 self-end py-3 text-xs",
+                  "flex h-full w-34 text-nowrap items-center gap-2 self-end py-3 text-xs",
                 )}
               >
-                view &quot;My Preferences&quot;
+                {PAGES.myPreferences.title}
               </Link>
             }
           />
