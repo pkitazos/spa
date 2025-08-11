@@ -3,12 +3,15 @@ import { z } from "zod";
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
 
 import {
+  instanceDtoSchema,
   type ProjectDTO,
   projectDtoSchema,
   type StudentDTO,
   studentDtoSchema,
   supervisorDtoSchema,
 } from "@/dto";
+
+import { Role } from "@/db/types";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
@@ -90,7 +93,7 @@ export const supervisorRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx: { user } }) => {
-      const allProjects = await user.getProjects();
+      const allProjects = await user.getProjectsInInstance();
       const { projectTarget: target } = await user.getCapacityDetails();
 
       const totalCount = await user
@@ -114,7 +117,7 @@ export const supervisorRouter = createTRPCRouter({
     )
     .query(async ({ ctx: { user } }) => {
       type Ret = { project: ProjectDTO; student: StudentDTO | undefined }[];
-      const supervisorProjects = await user.getProjects();
+      const supervisorProjects = await user.getProjectsInInstance();
 
       return supervisorProjects.flatMap((p) => {
         if (p.allocatedStudents.length === 0) {
@@ -159,4 +162,28 @@ export const supervisorRouter = createTRPCRouter({
       ),
     )
     .query(async ({ ctx: { user } }) => user.getSupervisionAllocations()),
+
+  getPreviousProjects: procedure.instance
+    .withRoles([Role.SUPERVISOR, Role.ADMIN])
+    .input(z.object({ params: instanceParamsSchema, supervisorId: z.string() }))
+    .output(
+      z.array(
+        z.object({
+          instanceData: instanceDtoSchema,
+          project: projectDtoSchema,
+          supervisor: supervisorDtoSchema,
+        }),
+      ),
+    )
+    .query(async ({ ctx: { instance }, input: { supervisorId } }) => {
+      const supervisor = await instance.getSupervisor(supervisorId);
+      const projects = await supervisor.getProjectsInGroup();
+      const supervisorData = await supervisor.toDTO();
+
+      return projects.map(({ project, instanceData }) => ({
+        project,
+        supervisor: supervisorData,
+        instanceData,
+      }));
+    }),
 });

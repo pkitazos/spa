@@ -78,7 +78,7 @@ export function ProjectForm({
     defaultValues: {
       title: "",
       description: "",
-      flags: [],
+      flags,
       tags: [],
       capacityUpperBound: 1,
       isPreAllocated: false,

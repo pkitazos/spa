@@ -47,7 +47,7 @@
   --sidebar-accent-foreground: var(--secondary-foreground);
   --sidebar-border: var(--border);
   --sidebar: hsl(0 0% 98%);
-  --sidebar-primary: hsl(240 5.9% 10%);
+  --sidebar-primary: hsl(207 100% 20%);
   --sidebar-primary-foreground: hsl(0 0% 98%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
@@ -208,5 +208,5 @@
 }
 
 @utility dbg-* {
-  outline: 2px solid --value(--color-*);
+  outline: 2px solid --value(--color- *);
 }
