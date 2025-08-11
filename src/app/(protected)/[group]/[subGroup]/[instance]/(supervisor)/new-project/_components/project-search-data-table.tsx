@@ -4,9 +4,12 @@ import { useState } from "react";
 
 import {
   type ColumnFiltersState,
+  type SortingState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
   useReactTable,
   type VisibilityState,
 } from "@tanstack/react-table";
@@ -15,6 +18,7 @@ import { Search, XIcon } from "lucide-react";
 import { type InstanceDTO, type ProjectDTO, type SupervisorDTO } from "@/dto";
 
 import { Button } from "@/components/ui/button";
+import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 import { type TableFilter } from "@/components/ui/data-table/data-table-toolbar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,7 +36,7 @@ import { cn } from "@/lib/utils";
 import { useProjectSearchColumns } from "./project-search-columns";
 import { globalContains, hasSome } from "./utils";
 
-export default function ProjectSearchDataTable({
+export function ProjectSearchDataTable({
   data,
   className,
   filters,
@@ -46,21 +50,26 @@ export default function ProjectSearchDataTable({
   filters: TableFilter[];
 }) {
   const [query, setQuery] = useState("");
-  const [debounced, setDebounced] = useState("");
-  const [open, setOpen] = useState(false);
 
+  const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility] = useState<VisibilityState>({ instance: false });
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+    instance: false,
+  });
 
   const columns = useProjectSearchColumns();
 
   const table = useReactTable({
     data,
     columns,
-    state: { globalFilter: debounced, columnFilters, columnVisibility },
+    state: { globalFilter: query, sorting, columnFilters, columnVisibility },
+    onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     globalFilterFn: globalContains,
     filterFns: { hasSome, globalContains },
     enableGlobalFilter: true,
@@ -71,7 +80,6 @@ export default function ProjectSearchDataTable({
 
   return (
     <div className={cn("w-full space-y-6", className)}>
-      {/* Global Search */}
       <div className="relative">
         <Label htmlFor="global-search" className="sr-only">
           Search Projects
@@ -81,7 +89,7 @@ export default function ProjectSearchDataTable({
           id="global-search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search projects, supervisors, instances..."
+          placeholder="Search projects..."
           className="h-12 rounded-md pl-10"
           aria-label="Global search across all columns"
         />
@@ -98,7 +106,22 @@ export default function ProjectSearchDataTable({
         )}
       </div>
 
-      {/* Data Table */}
+      <div className="flex items-center space-x-2">
+        {filters.map((filter) => {
+          const column = table.getColumn(filter.columnId);
+          if (!column || filter.columnId !== "instance") return null;
+
+          return (
+            <DataTableFacetedFilter
+              key={filter.columnId}
+              column={column}
+              title={filter.title ?? "Instance"}
+              options={filter.options ?? []}
+            />
+          );
+        })}
+      </div>
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
