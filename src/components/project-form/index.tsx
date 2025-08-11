@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -56,6 +57,7 @@ interface ProjectFormProps {
   userRole: typeof Role.ADMIN | typeof Role.SUPERVISOR;
   children?: React.ReactNode;
   isSubmitting?: boolean;
+  onFormDirtyChange?: (isDirty: boolean) => void;
 }
 
 export function ProjectForm({
@@ -66,6 +68,7 @@ export function ProjectForm({
   userRole,
   children,
   isSubmitting = false,
+  onFormDirtyChange,
 }: ProjectFormProps) {
   const { takenTitles, flags, tags, students, supervisors } =
     formInitialisationData;
@@ -89,6 +92,13 @@ export function ProjectForm({
   });
 
   const isPreAllocated = form.watch("isPreAllocated");
+  
+  // Track form dirty state and notify parent
+  useEffect(() => {
+    if (onFormDirtyChange) {
+      onFormDirtyChange(form.formState.isDirty);
+    }
+  }, [form.formState.isDirty, onFormDirtyChange]);
 
   const handlePreAllocatedToggle = () => {
     const newState = !isPreAllocated;

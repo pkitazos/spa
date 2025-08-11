@@ -8,6 +8,7 @@ import { PAGES } from "@/config/pages";
 import {
   type ProjectFormInitialisationDTO,
   type ProjectFormSubmissionDTO,
+  type ProjectFormInternalStateDTO,
   formToApiTransformations,
 } from "@/dto/project";
 
@@ -26,6 +27,8 @@ interface CreateProjectFormProps {
   userRole: typeof Role.ADMIN | typeof Role.SUPERVISOR;
   currentUserId: string;
   onBehalfOf?: string;
+  defaultValues?: Partial<ProjectFormInternalStateDTO>;
+  onFormDirtyChange?: (isDirty: boolean) => void;
 }
 
 export function CreateProjectForm({
@@ -33,6 +36,8 @@ export function CreateProjectForm({
   userRole,
   currentUserId,
   onBehalfOf,
+  defaultValues,
+  onFormDirtyChange,
 }: CreateProjectFormProps) {
   const params = useInstanceParams();
   const router = useRouter();
@@ -78,11 +83,12 @@ export function CreateProjectForm({
   return (
     <ProjectForm
       formInitialisationData={formInitialisationData}
-      defaultValues={{ supervisorId: onBehalfOf }}
+      defaultValues={defaultValues || { supervisorId: onBehalfOf }}
       onSubmit={handleSubmit}
       submissionButtonLabel="Create New Project"
       userRole={userRole}
       isSubmitting={isPending}
+      onFormDirtyChange={onFormDirtyChange}
     >
       <Button
         variant="outline"
