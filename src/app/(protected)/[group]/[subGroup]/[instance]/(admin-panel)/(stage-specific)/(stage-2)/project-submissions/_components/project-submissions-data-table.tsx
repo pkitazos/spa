@@ -27,8 +27,8 @@ export function ProjectSubmissionsDataTable({
           columnId: "Target Met",
           title: "add filters",
           options: [
-            { title: "Target Met", id: "yes" },
-            { title: "Target Not Met", id: "no" },
+            { displayName: "Target Met", id: "yes" },
+            { displayName: "Target Not Met", id: "no" },
           ],
         },
       ]}
