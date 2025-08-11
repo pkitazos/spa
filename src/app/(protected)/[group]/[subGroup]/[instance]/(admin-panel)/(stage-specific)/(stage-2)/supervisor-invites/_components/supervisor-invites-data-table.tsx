@@ -22,8 +22,8 @@ export function SupervisorInvitesDataTable({
           columnId: "Status",
           title: "add filters",
           options: [
-            { title: "Joined", id: "joined" },
-            { title: "Invited", id: "invited" },
+            { displayName: "Joined", id: "joined" },
+            { displayName: "Invited", id: "invited" },
           ],
         },
       ]}

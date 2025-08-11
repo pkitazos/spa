@@ -62,14 +62,14 @@ export function SupervisorProjectsDataTable({
       columnId: "Flags",
       options: projectDescriptors.flags.map((flag) => ({
         id: flag.id,
-        title: flag.displayName,
+        displayName: flag.displayName,
       })),
     },
     {
       columnId: "Keywords",
       options: projectDescriptors.tags.map((tag) => ({
         id: tag.id,
-        title: tag.title,
+        displayName: tag.title,
       })),
     },
   ];
@@ -91,13 +91,16 @@ export function SupervisorProjectsDataTable({
           options: [
             {
               id: ProjectAllocationStatus.ALGORITHMIC,
-              title: "Algorithm Allocated",
+              displayName: "Algorithm Allocated",
             },
             {
               id: ProjectAllocationStatus.PRE_ALLOCATED,
-              title: "Pre-allocated",
+              displayName: "Pre-allocated",
             },
-            { id: ProjectAllocationStatus.UNALLOCATED, title: "Unallocated" },
+            {
+              id: ProjectAllocationStatus.UNALLOCATED,
+              displayName: "Unallocated",
+            },
           ],
         },
       ]}
