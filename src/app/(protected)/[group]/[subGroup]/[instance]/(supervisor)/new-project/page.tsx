@@ -9,6 +9,7 @@ import { CreateProjectForm } from "@/components/project-form/create-project";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
+import { nubsById } from "@/lib/utils/list-unique";
 import { stageGt } from "@/lib/utils/permissions/stage-check";
 import { type InstanceParams } from "@/lib/validations/params";
 
@@ -43,8 +44,21 @@ export default async function Page({ params }: { params: InstanceParams }) {
   return (
     <PanelWrapper className="gap-10">
       <Heading>{PAGES.newProject.title}</Heading>
-      {/* <PreviousProjectSelector data={previousProjectData} /> */}
-      <ProjectSearchDataTable data={previousProjectData} />
+      <ProjectSearchDataTable
+        data={previousProjectData}
+        filters={[
+          {
+            columnId: "instance",
+            title: "Instance",
+            options: previousProjectData
+              .map((row) => ({
+                id: row.instanceData.displayName,
+                displayName: row.instanceData.displayName,
+              }))
+              .filter(nubsById),
+          },
+        ]}
+      />
       <CreateProjectForm
         formInitialisationData={formInitData}
         userRole={userRoles.has(Role.ADMIN) ? Role.ADMIN : Role.SUPERVISOR}

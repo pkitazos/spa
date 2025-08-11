@@ -20,6 +20,5 @@ export const hasSome: FilterFn<ProjectSearchColumn> = (
 ) => {
   const rowValue = row.getValue<string>(columnId);
   const filters = z.string().array().parse(filterValue);
-  console.log({ rowValue, filterValue });
   return filters.includes(rowValue);
 };
