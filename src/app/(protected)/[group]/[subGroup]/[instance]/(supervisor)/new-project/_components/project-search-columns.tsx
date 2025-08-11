@@ -1,12 +1,14 @@
 import { useMemo } from "react";
 
 import { type ColumnDef } from "@tanstack/react-table";
+import { Copy } from "lucide-react";
 
 import { spacesLabels } from "@/config/spaces";
 
 import { type InstanceDTO, type ProjectDTO, type SupervisorDTO } from "@/dto";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
 
 import { hasSome } from "./utils";
@@ -17,7 +19,11 @@ export type ProjectSearchColumn = {
   supervisor: SupervisorDTO;
 };
 
-export function useProjectSearchColumns() {
+interface UseProjectSearchColumnsProps {
+  onProjectSelect?: (project: ProjectDTO) => void;
+}
+
+export function useProjectSearchColumns({ onProjectSelect }: UseProjectSearchColumnsProps = {}) {
   return useMemo<ColumnDef<ProjectSearchColumn>[]>(() => {
     const projectColumns = [
       {
@@ -76,6 +82,30 @@ export function useProjectSearchColumns() {
       },
     } satisfies ColumnDef<ProjectSearchColumn>;
 
-    return [...projectColumns, supervisorColumn];
-  }, []);
+    const actionColumn = {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const { project } = row.original;
+        
+        if (!onProjectSelect) return null;
+
+        return (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onProjectSelect(project)}
+            className="flex items-center gap-2"
+          >
+            <Copy className="h-4 w-4" />
+            Use as Template
+          </Button>
+        );
+      },
+      enableSorting: false,
+      enableGlobalFilter: false,
+    } satisfies ColumnDef<ProjectSearchColumn>;
+
+    return [...projectColumns, supervisorColumn, actionColumn];
+  }, [onProjectSelect]);
 }

@@ -40,6 +40,7 @@ export function ProjectSearchDataTable({
   data,
   className,
   filters,
+  onProjectSelect,
 }: {
   data: {
     instanceData: InstanceDTO;
@@ -48,6 +49,7 @@ export function ProjectSearchDataTable({
   }[];
   className?: string;
   filters: TableFilter[];
+  onProjectSelect?: (project: ProjectDTO) => void;
 }) {
   const [query, setQuery] = useState("");
 
@@ -57,7 +59,7 @@ export function ProjectSearchDataTable({
     instance: false,
   });
 
-  const columns = useProjectSearchColumns();
+  const columns = useProjectSearchColumns({ onProjectSelect });
 
   const table = useReactTable({
     data,
