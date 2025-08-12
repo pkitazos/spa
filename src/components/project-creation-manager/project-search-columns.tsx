@@ -2,14 +2,21 @@ import { useMemo } from "react";
 
 import { type ColumnDef } from "@tanstack/react-table";
 import { Copy } from "lucide-react";
+import { z } from "zod";
 
 import { spacesLabels } from "@/config/spaces";
+
+import { flagDtoSchema, tagDtoSchema } from "@/dto";
 
 import { Role } from "@/db/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+
+import { isSameInstance } from "@/lib/utils/general/instance-params";
+
+import { useInstanceParams } from "../params-context";
 
 import { hasSome } from "./utils";
 
@@ -22,6 +29,7 @@ export function useProjectSearchColumns({
   userRole: Role;
   onProjectSelect: (data: ProjectSearchData) => void;
 }) {
+  const params = useInstanceParams();
   return useMemo<ColumnDef<ProjectSearchData>[]>(() => {
     const projectColumns = [
       {
@@ -45,18 +53,24 @@ export function useProjectSearchColumns({
                 <Badge variant="secondary">{instanceData.displayName}</Badge>
               </div>
               <div className="flex items-center gap-2">
-                {project.flags.map((flag) => (
-                  <Badge key={flag.id} variant="accent">
-                    {flag.displayName}
-                  </Badge>
-                ))}
+                {isSameInstance(params, instanceData) &&
+                  project.flags.map((flag) => (
+                    <Badge
+                      variant="accent"
+                      className="w-40 rounded-md"
+                      key={flag.id}
+                    >
+                      {flag.displayName}
+                    </Badge>
+                  ))}
               </div>
               <div className="flex items-center gap-2">
-                {project.tags.map((tag) => (
-                  <Badge key={tag.id} variant="outline">
-                    {tag.title}
-                  </Badge>
-                ))}
+                {isSameInstance(params, instanceData) &&
+                  project.tags.map((tag) => (
+                    <Badge key={tag.id} variant="outline">
+                      {tag.title}
+                    </Badge>
+                  ))}
               </div>
             </div>
           );
@@ -68,6 +82,34 @@ export function useProjectSearchColumns({
         cell: () => null,
         accessorFn: (row) => row.instanceData.displayName,
         filterFn: hasSome,
+        enableGlobalFilter: false,
+      },
+      {
+        id: "Flags",
+        header: () => null,
+        cell: () => null,
+        accessorFn: (row) => row.project.flags,
+        filterFn: (row, columnId, value) => {
+          const selectedFilters = z.array(z.string()).parse(value);
+          const rowFlags = z.array(flagDtoSchema).parse(row.getValue(columnId));
+
+          return (
+            new Set(rowFlags.map((f) => f.id)).size > 0 &&
+            selectedFilters.some((f) => rowFlags.some((rf) => rf.id === f))
+          );
+        },
+        enableGlobalFilter: false,
+      },
+      {
+        id: "Keywords",
+        header: () => null,
+        cell: () => null,
+        accessorFn: (row) => row.project.tags,
+        filterFn: (row, columnId, value) => {
+          const ids = value as string[];
+          const rowTags = z.array(tagDtoSchema).parse(row.getValue(columnId));
+          return rowTags.some((e) => ids.includes(e.id));
+        },
         enableGlobalFilter: false,
       },
     ] satisfies ColumnDef<ProjectSearchData>[];
@@ -98,12 +140,12 @@ export function useProjectSearchColumns({
       id: "actions",
       cell: ({ row }) => {
         return (
-          <div className="h-full grid place-items-center dbg-lime-500">
+          <div className="h-full grid place-items-center">
             <Button
               variant="outline"
               size="sm"
               onClick={() => onProjectSelect(row.original)}
-              className="my-auto flex w-44 items-center gap-2 dbg-amber-500"
+              className="my-auto flex w-46 items-center gap-2"
             >
               <Copy className="h-4 w-4" />
               Use Project Details
@@ -118,5 +160,5 @@ export function useProjectSearchColumns({
     return userRole === Role.ADMIN
       ? [actionColumn, ...projectColumns, supervisorColumn]
       : [actionColumn, ...projectColumns];
-  }, [onProjectSelect, userRole]);
+  }, [onProjectSelect, params, userRole]);
 }
