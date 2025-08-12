@@ -23,25 +23,6 @@ export function Heading({
   );
 }
 
-export function SubHeading({
-  children: text,
-  className,
-}: {
-  className?: ClassValue;
-  children: ReactNode;
-}) {
-  return (
-    <h2
-      className={cn(
-        "text-3xl font-medium leading-none tracking-tight underline decoration-secondary underline-offset-4",
-        className,
-      )}
-    >
-      {text}
-    </h2>
-  );
-}
-
 export function SectionHeading({
   children: text,
   className,

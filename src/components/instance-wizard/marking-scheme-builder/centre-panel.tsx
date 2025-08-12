@@ -2,7 +2,7 @@
 
 import { MarkerType } from "@/db/types";
 
-import { SubHeading } from "@/components/heading";
+import { SectionHeading } from "@/components/heading";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -56,7 +56,7 @@ export function CentrePanel() {
     return (
       <div className="flex w-full flex-col items-center justify-start gap-10 px-10 pt-10">
         <div className="flex w-full flex-col items-start justify-center gap-10">
-          <SubHeading>{selectedFlag.title}</SubHeading>
+          <SectionHeading>{selectedFlag.title}</SectionHeading>
           <EditableSubmission
             component="h3"
             className="h-7 text-2xl font-medium leading-none tracking-tight"

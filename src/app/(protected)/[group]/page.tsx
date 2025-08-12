@@ -8,7 +8,7 @@ import { spacesLabels } from "@/config/spaces";
 import { AdminLevel } from "@/db/types";
 
 import { AdminLevelAC } from "@/components/access-control/admin-level-ac";
-import { Heading, SubHeading } from "@/components/heading";
+import { Heading, SectionHeading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -74,7 +74,7 @@ export default async function Page({ params }: { params: GroupParams }) {
           </AdminLevelAC>
         </CardContent>
       </Card>
-      <SubHeading>Manage {spacesLabels.subGroup.full}s</SubHeading>
+      <SectionHeading>Manage {spacesLabels.subGroup.full}s</SectionHeading>
       <div className="flex w-full flex-col gap-6">
         <Link href={`/${params.group}/create-sub-group`} className="w-fit">
           <Button

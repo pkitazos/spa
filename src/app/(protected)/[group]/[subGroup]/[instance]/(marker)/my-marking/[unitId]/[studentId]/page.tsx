@@ -3,7 +3,7 @@ import { PAGES } from "@/config/pages";
 
 import { MarkingSubmissionStatus } from "@/dto/result/marking-submission-status";
 
-import { Heading, SubHeading } from "@/components/heading";
+import { Heading, SectionHeading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { api } from "@/lib/trpc/server";
@@ -99,7 +99,7 @@ export default async function MarksPage({
         {project.title}
       </Heading>
 
-      <SubHeading>{unitOfAssessment.title}</SubHeading>
+      <SectionHeading>{unitOfAssessment.title}</SectionHeading>
 
       <div className="mt-6 flex flex-col gap-6">
         <MarkingSection
