@@ -1,6 +1,5 @@
 "use client";
 
-import { Label } from "@radix-ui/react-dropdown-menu";
 import { BookmarkXIcon, DatabaseZapIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -20,6 +19,7 @@ import {
   DestructiveActionTrigger,
   DestructiveActionVerificationTypeIn,
 } from "@/components/ui/destructive-action";
+import { Label } from "@/components/ui/label";
 import { Table, TableCell, TableRow } from "@/components/ui/table";
 import { YesNoAction } from "@/components/yes-no-action";
 

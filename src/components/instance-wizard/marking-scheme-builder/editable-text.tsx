@@ -6,6 +6,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  type JSX,
 } from "react";
 
 import { Check, Pen } from "lucide-react";
