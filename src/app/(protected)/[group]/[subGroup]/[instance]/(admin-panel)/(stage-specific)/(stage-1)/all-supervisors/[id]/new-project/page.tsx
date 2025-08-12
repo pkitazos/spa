@@ -5,7 +5,7 @@ import { Role, Stage } from "@/db/types";
 
 import { Heading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
-import { CreateProjectForm } from "@/components/project-form/create-project";
+import { ProjectCreationManager } from "@/components/project-creation-manager";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
@@ -41,18 +41,30 @@ export default async function Page({ params }: { params: PageParams }) {
   const supervisor = await api.user.getById({ userId: params.id });
   const formInitData = await api.project.getFormInitialisationData({ params });
 
+  const previousProjectData = await api.user.supervisor.getPreviousProjects({
+    params,
+    supervisorId: supervisor.id,
+  });
+
   return (
     <PanelWrapper>
       <Heading className="flex items-baseline gap-6">
         <p>{PAGES.newSupervisorProject.title}</p>
         <p className="text-3xl text-muted-foreground">for {supervisor.name}</p>
       </Heading>
-      <CreateProjectForm
+      <ProjectCreationManager
+        previousProjectData={previousProjectData}
         formInitialisationData={formInitData}
         userRole={Role.ADMIN}
         currentUserId={user.id}
         onBehalfOf={supervisor.id}
       />
+      {/* <CreateProjectForm
+        formInitialisationData={formInitData}
+        userRole={Role.ADMIN}
+        currentUserId={user.id}
+        onBehalfOf={supervisor.id}
+      /> */}
     </PanelWrapper>
   );
 }

@@ -130,24 +130,44 @@ export function ProjectCreationManager({
     };
   }, [selectedProjectData, params, onBehalfOf]);
 
+  const filters = [
+    {
+      columnId: "instance",
+      title: spacesLabels.instance.short,
+      options: previousProjectData
+        .map((row) => ({
+          id: row.instanceData.displayName,
+          displayName: row.instanceData.displayName,
+        }))
+        .filter(nubsById),
+    },
+    {
+      columnId: "Flags",
+      title: "filter by Flags",
+      options: previousProjectData
+        .filter((p) => isSameInstance(params, p.instanceData))
+        .flatMap((p) => p.project.flags)
+        .filter(nubsById),
+    },
+    {
+      columnId: "Keywords",
+      title: "filter by Keywords",
+      options: previousProjectData
+        .filter((p) => isSameInstance(params, p.instanceData))
+        .flatMap((p) =>
+          p.project.tags.map((tag) => ({ id: tag.id, displayName: tag.title })),
+        )
+        .filter(nubsById),
+    },
+  ];
+
   return (
     <div className="space-y-10">
       <div className="space-y-4">
         <ProjectSearchDataTable
           userRole={userRole}
           data={previousProjectData}
-          filters={[
-            {
-              columnId: "instance",
-              title: spacesLabels.instance.short,
-              options: previousProjectData
-                .map((row) => ({
-                  id: row.instanceData.displayName,
-                  displayName: row.instanceData.displayName,
-                }))
-                .filter(nubsById),
-            },
-          ]}
+          filters={filters}
           onProjectSelect={handleProjectSelect}
         />
         {previousProjectData.length > 0 && (
