@@ -1,7 +1,7 @@
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
-import { Heading, SubHeading } from "@/components/heading";
+import { Heading, SectionHeading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { Unauthorised } from "@/components/unauthorised";
 
@@ -37,7 +37,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
       <Heading>{PAGES.mySupervisions.title}</Heading>
       {allocations.length === 0 ? (
         <div className="mt-9 flex flex-col gap-4">
-          <SubHeading>Allocations</SubHeading>
+          <SectionHeading>Allocations</SectionHeading>
           <p>You have not been allocated any students</p>
         </div>
       ) : (

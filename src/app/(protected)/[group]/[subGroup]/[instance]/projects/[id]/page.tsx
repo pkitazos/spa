@@ -10,7 +10,7 @@ import { type ProjectDTO, type StudentDTO, type SupervisorDTO } from "@/dto";
 import { Role, Stage } from "@/db/types";
 
 import { AccessControl } from "@/components/access-control";
-import { Heading, SubHeading } from "@/components/heading";
+import { Heading, SectionHeading } from "@/components/heading";
 import { MarkdownRenderer } from "@/components/markdown-editor";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { Badge } from "@/components/ui/badge";
@@ -132,7 +132,7 @@ export default async function Project({ params }: { params: PageParams }) {
       <div className="mt-6 flex gap-6">
         <div className="flex w-3/4 flex-col gap-16">
           <section className="flex flex-col">
-            <SubHeading>Description</SubHeading>
+            <SectionHeading>Description</SectionHeading>
             <div className="mt-6">
               <MarkdownRenderer source={project.description} />
             </div>
@@ -157,7 +157,7 @@ export default async function Project({ params }: { params: PageParams }) {
       >
         {allocatedStudent && (
           <section className={cn("mt-16 flex flex-col gap-8")}>
-            <SubHeading>Allocation</SubHeading>
+            <SectionHeading>Allocation</SectionHeading>
             <AllocatedStudentCard
               studentAllocation={allocatedStudent}
               preAllocated={!!project.preAllocatedStudentId}
@@ -171,7 +171,7 @@ export default async function Project({ params }: { params: PageParams }) {
         extraConditions={{ RBAC: { AND: !project.preAllocatedStudentId } }}
       >
         <section className="mt-16 flex flex-col gap-8">
-          <SubHeading>Student Preferences</SubHeading>
+          <SectionHeading>Student Preferences</SectionHeading>
           <StudentPreferenceDataTable
             data={studentPreferences}
             projectDescriptors={projectDescriptors}

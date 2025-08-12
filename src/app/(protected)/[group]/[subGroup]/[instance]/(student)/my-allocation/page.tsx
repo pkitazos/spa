@@ -4,7 +4,7 @@ import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
 import { CopyEmailLink } from "@/components/copy-email-link";
-import { Heading, SectionHeading, SubHeading } from "@/components/heading";
+import { Heading, SectionHeading } from "@/components/heading";
 import { MarkdownRenderer } from "@/components/markdown-editor";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,7 +47,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
       <Heading>{PAGES.myAllocation.title}</Heading>
       {!allocatedProject ? (
         <div className="mt-9 flex flex-col gap-4">
-          <SubHeading>Allocation</SubHeading>
+          <SectionHeading>Allocation</SectionHeading>
           <p>You have not been allocated a project</p>
         </div>
       ) : (

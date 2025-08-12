@@ -1,4 +1,4 @@
-import { Heading, SubHeading } from "@/components/heading";
+import { Heading, SectionHeading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 
 import { auth } from "@/lib/auth";
@@ -67,7 +67,7 @@ export default async function ResolvePage({
         {project.title}
       </Heading>
 
-      <SubHeading>{unitOfAssessment.title}</SubHeading>
+      <SectionHeading>{unitOfAssessment.title}</SectionHeading>
 
       <div className="mt-6 flex flex-col gap-6">
         <ResolutionForm
