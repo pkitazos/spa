@@ -15,6 +15,14 @@ export function expand(params: InstanceParams, instanceId?: string) {
   };
 }
 
+export function isSameInstance(a: InstanceParams, b: InstanceParams) {
+  return (
+    a.group === b.group &&
+    a.subGroup === b.subGroup &&
+    a.instance === b.instance
+  );
+}
+
 export function toInstanceId(params: InstanceParams, instanceId?: string) {
   return {
     allocationGroupId: params.group,

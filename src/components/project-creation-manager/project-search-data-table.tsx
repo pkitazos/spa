@@ -15,7 +15,7 @@ import {
 } from "@tanstack/react-table";
 import { Search, XIcon } from "lucide-react";
 
-import { type InstanceDTO, type ProjectDTO, type SupervisorDTO } from "@/dto";
+import { type Role } from "@/db/types";
 
 import { Button } from "@/components/ui/button";
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
@@ -36,20 +36,20 @@ import { cn } from "@/lib/utils";
 import { useProjectSearchColumns } from "./project-search-columns";
 import { globalContains, hasSome } from "./utils";
 
+import { type ProjectSearchData } from ".";
+
 export function ProjectSearchDataTable({
+  userRole,
   data,
   className,
   filters,
   onProjectSelect,
 }: {
-  data: {
-    instanceData: InstanceDTO;
-    project: ProjectDTO;
-    supervisor: SupervisorDTO;
-  }[];
+  userRole: Role;
+  data: ProjectSearchData[];
   className?: string;
   filters: TableFilter[];
-  onProjectSelect?: (project: ProjectDTO) => void;
+  onProjectSelect: (data: ProjectSearchData) => void;
 }) {
   const [query, setQuery] = useState("");
 
@@ -59,7 +59,7 @@ export function ProjectSearchDataTable({
     instance: false,
   });
 
-  const columns = useProjectSearchColumns({ onProjectSelect });
+  const columns = useProjectSearchColumns({ userRole, onProjectSelect });
 
   const table = useReactTable({
     data,
@@ -111,13 +111,13 @@ export function ProjectSearchDataTable({
       <div className="flex items-center space-x-2">
         {filters.map((filter) => {
           const column = table.getColumn(filter.columnId);
-          if (!column || filter.columnId !== "instance") return null;
+          if (!column) return null;
 
           return (
             <DataTableFacetedFilter
               key={filter.columnId}
               column={column}
-              title={filter.title ?? "Instance"}
+              title={filter.title}
               options={filter.options ?? []}
             />
           );

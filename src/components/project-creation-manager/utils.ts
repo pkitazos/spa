@@ -1,9 +1,9 @@
 import { type FilterFn } from "@tanstack/react-table";
 import { z } from "zod";
 
-import { type ProjectSearchColumn } from "./project-search-columns";
+import { type ProjectSearchData } from ".";
 
-export const globalContains: FilterFn<ProjectSearchColumn> = (
+export const globalContains: FilterFn<ProjectSearchData> = (
   row,
   columnId,
   filterValue,
@@ -13,7 +13,7 @@ export const globalContains: FilterFn<ProjectSearchColumn> = (
   return target.includes(query);
 };
 
-export const hasSome: FilterFn<ProjectSearchColumn> = (
+export const hasSome: FilterFn<ProjectSearchData> = (
   row,
   columnId,
   filterValue,

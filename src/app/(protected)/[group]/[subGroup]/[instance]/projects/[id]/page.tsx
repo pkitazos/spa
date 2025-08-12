@@ -139,7 +139,10 @@ export default async function Project({ params }: { params: PageParams }) {
       <div className="mt-6 flex gap-6">
         <div className="flex w-3/4 flex-col gap-16">
           <section className="flex flex-col">
-            <SectionHeading icon={TextIcon}>Description</SectionHeading>
+            <SectionHeading className="mb-2 flex items-center">
+              <TextIcon className="mr-2 h-6 w-6 text-indigo-500" />
+              <span>Description</span>
+            </SectionHeading>
             <div className="mt-6">
               <MarkdownRenderer source={project.description} />
             </div>

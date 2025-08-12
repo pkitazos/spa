@@ -5,13 +5,12 @@ import { Role, Stage } from "@/db/types";
 
 import { Heading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
+import { ProjectCreationManager } from "@/components/project-creation-manager";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
 import { stageGt } from "@/lib/utils/permissions/stage-check";
 import { type InstanceParams } from "@/lib/validations/params";
-
-import { ProjectCreationManager } from "./_components/project-creation-manager";
 
 export async function generateMetadata({ params }: { params: InstanceParams }) {
   const { displayName } = await api.institution.instance.get({ params });
