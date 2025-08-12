@@ -5,7 +5,7 @@ import { Copy } from "lucide-react";
 
 import { spacesLabels } from "@/config/spaces";
 
-import { type InstanceDTO, type ProjectDTO, type SupervisorDTO } from "@/dto";
+import { Role } from "@/db/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,18 +13,16 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-col
 
 import { hasSome } from "./utils";
 
-export type ProjectSearchColumn = {
-  instanceData: InstanceDTO;
-  project: ProjectDTO;
-  supervisor: SupervisorDTO;
-};
+import { type ProjectSearchData } from ".";
 
-interface UseProjectSearchColumnsProps {
-  onProjectSelect?: (project: ProjectDTO) => void;
-}
-
-export function useProjectSearchColumns({ onProjectSelect }: UseProjectSearchColumnsProps = {}) {
-  return useMemo<ColumnDef<ProjectSearchColumn>[]>(() => {
+export function useProjectSearchColumns({
+  userRole,
+  onProjectSelect,
+}: {
+  userRole: Role;
+  onProjectSelect: (data: ProjectSearchData) => void;
+}) {
+  return useMemo<ColumnDef<ProjectSearchData>[]>(() => {
     const projectColumns = [
       {
         id: "project",
@@ -46,6 +44,20 @@ export function useProjectSearchColumns({ onProjectSelect }: UseProjectSearchCol
                 </span>
                 <Badge variant="secondary">{instanceData.displayName}</Badge>
               </div>
+              <div className="flex items-center gap-2">
+                {project.flags.map((flag) => (
+                  <Badge key={flag.id} variant="accent">
+                    {flag.displayName}
+                  </Badge>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                {project.tags.map((tag) => (
+                  <Badge key={tag.id} variant="outline">
+                    {tag.title}
+                  </Badge>
+                ))}
+              </div>
             </div>
           );
         },
@@ -58,15 +70,15 @@ export function useProjectSearchColumns({ onProjectSelect }: UseProjectSearchCol
         filterFn: hasSome,
         enableGlobalFilter: false,
       },
-    ] satisfies ColumnDef<ProjectSearchColumn>[];
+    ] satisfies ColumnDef<ProjectSearchData>[];
 
     const supervisorColumn = {
       id: "supervisor",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Supervisor" />
       ),
-      accessorFn: (row) =>
-        `${row.supervisor.id} ${row.supervisor.name} ${row.supervisor.email}`,
+      accessorFn: ({ supervisor }) =>
+        `${supervisor.id} ${supervisor.name} ${supervisor.email}`,
       enableGlobalFilter: true,
       cell: ({ row }) => {
         const { supervisor } = row.original;
@@ -80,32 +92,31 @@ export function useProjectSearchColumns({ onProjectSelect }: UseProjectSearchCol
           </div>
         );
       },
-    } satisfies ColumnDef<ProjectSearchColumn>;
+    } satisfies ColumnDef<ProjectSearchData>;
 
     const actionColumn = {
       id: "actions",
-      header: "Actions",
       cell: ({ row }) => {
-        const { project } = row.original;
-        
-        if (!onProjectSelect) return null;
-
         return (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onProjectSelect(project)}
-            className="flex items-center gap-2"
-          >
-            <Copy className="h-4 w-4" />
-            Use as Template
-          </Button>
+          <div className="h-full grid place-items-center dbg-lime-500">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onProjectSelect(row.original)}
+              className="my-auto flex w-44 items-center gap-2 dbg-amber-500"
+            >
+              <Copy className="h-4 w-4" />
+              Use Project Details
+            </Button>
+          </div>
         );
       },
       enableSorting: false,
       enableGlobalFilter: false,
-    } satisfies ColumnDef<ProjectSearchColumn>;
+    } satisfies ColumnDef<ProjectSearchData>;
 
-    return [...projectColumns, supervisorColumn, actionColumn];
-  }, [onProjectSelect]);
+    return userRole === Role.ADMIN
+      ? [actionColumn, ...projectColumns, supervisorColumn]
+      : [actionColumn, ...projectColumns];
+  }, [onProjectSelect, userRole]);
 }

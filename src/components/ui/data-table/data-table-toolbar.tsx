@@ -13,8 +13,8 @@ export type TableFilterOption = { id: string; displayName: string };
 
 export type TableFilter = {
   columnId: string;
-  title?: string;
-  options?: TableFilterOption[];
+  title: string;
+  options: TableFilterOption[];
 };
 
 interface DataTableToolbarProps<TData> {

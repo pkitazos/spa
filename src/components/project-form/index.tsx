@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -57,7 +57,7 @@ interface ProjectFormProps {
   userRole: typeof Role.ADMIN | typeof Role.SUPERVISOR;
   children?: React.ReactNode;
   isSubmitting?: boolean;
-  onFormDirtyChange?: (isDirty: boolean) => void;
+  onFormDirtyChange: () => void;
 }
 
 export function ProjectForm({
@@ -92,13 +92,35 @@ export function ProjectForm({
   });
 
   const isPreAllocated = form.watch("isPreAllocated");
-  
-  // Track form dirty state and notify parent
+
+  const previousDefaultValues = useRef(defaultValues);
+
   useEffect(() => {
-    if (onFormDirtyChange) {
-      onFormDirtyChange(form.formState.isDirty);
+    if (defaultValues !== previousDefaultValues.current) {
+      const newDefaults = {
+        title: "",
+        description: "",
+        flags,
+        tags: [],
+        capacityUpperBound: 1,
+        isPreAllocated: false,
+        preAllocatedStudentId: "",
+        supervisorId: "",
+        ...defaultValues,
+      };
+
+      form.reset(newDefaults);
+      previousDefaultValues.current = defaultValues;
     }
-  }, [form.formState.isDirty, onFormDirtyChange]);
+  }, [defaultValues, form, flags, tags]);
+
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      onFormDirtyChange();
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form, onFormDirtyChange]);
 
   const handlePreAllocatedToggle = () => {
     const newState = !isPreAllocated;
@@ -540,7 +562,6 @@ export function ProjectForm({
           />
         </div>
 
-        {/* Form Actions */}
         <div className="mt-16 flex justify-end gap-8">
           {children}
           <Button type="submit" size="lg" disabled={isSubmitting}>
