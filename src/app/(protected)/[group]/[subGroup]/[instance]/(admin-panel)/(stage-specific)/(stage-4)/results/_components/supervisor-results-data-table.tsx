@@ -18,9 +18,6 @@ export function SupervisorResultsDataTable({
 }) {
   const columns = useSupervisorResultsColumns();
   return (
-    <DataTable
-      columns={columns}
-      data={data}
-    />
+    <DataTable searchParamPrefix="supervisor" columns={columns} data={data} />
   );
 }

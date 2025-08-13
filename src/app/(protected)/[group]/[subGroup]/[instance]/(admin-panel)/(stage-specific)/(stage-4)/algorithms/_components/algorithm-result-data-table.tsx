@@ -25,5 +25,7 @@ export function AlgorithmResultDataTable() {
 
   if (status !== "success") return <Skeleton className="h-60 w-full" />;
 
-  return <DataTable columns={columns} data={data} />;
+  return (
+    <DataTable searchParamPrefix="summary" columns={columns} data={data} />
+  );
 }
