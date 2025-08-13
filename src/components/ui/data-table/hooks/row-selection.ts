@@ -3,9 +3,11 @@ import { useCallback } from "react";
 import { type RowSelectionState, type Updater } from "@tanstack/react-table";
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 
-export function useRowSelectionSearchParams() {
+import { addPrefix } from "./add-prefix";
+
+export function useRowSelectionSearchParams(prefix?: string) {
   const [selectedRows, setSelectedRows] = useQueryState(
-    "selected-rows",
+    addPrefix("selected-rows", prefix),
     parseAsArrayOf(parseAsString).withDefault([]),
   );
 

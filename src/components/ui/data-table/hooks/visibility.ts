@@ -7,9 +7,14 @@ import {
 } from "@tanstack/react-table";
 import { useQueryState, parseAsArrayOf, parseAsString } from "nuqs";
 
-export function useVisibilitySearchParams<T, V>(cols: ColumnDef<T, V>[]) {
+import { addPrefix } from "./add-prefix";
+
+export function useVisibilitySearchParams<T, V>(
+  cols: ColumnDef<T, V>[],
+  prefix?: string,
+) {
   const [hidden, setHidden] = useQueryState(
-    "hidden",
+    addPrefix("hidden", prefix),
     parseAsArrayOf(parseAsString, ",").withDefault([]),
   );
 
