@@ -14,23 +14,25 @@ export const matchingRouter = createTRPCRouter({
   select: procedure.instance.subGroupAdmin
     .input(z.object({ algId: z.string() }))
     .output(z.void())
-    .mutation(
-      async ({ ctx: { instance }, input: { algId } }) =>
-        await instance.selectAlg(algId),
-    ),
+    .mutation(async ({ ctx: { instance, audit }, input: { algId } }) => {
+      audit("Set selected algorithm", { algId });
+      return await instance.selectAlg(algId);
+    }),
 
   clearSelection: procedure.instance.subGroupAdmin
     .input(z.object({ params: instanceParamsSchema }))
     .output(z.void())
-    .mutation(
-      async ({ ctx: { instance } }) => await instance.clearAlgSelection(),
-    ),
+    .mutation(async ({ ctx: { instance, audit } }) => {
+      audit("Cleared algorithm selection");
+      await instance.clearAlgSelection();
+    }),
 
   clearAll: procedure.instance.subGroupAdmin
     .output(z.void())
-    .mutation(
-      async ({ ctx: { instance } }) => await instance.clearAllAlgResults(),
-    ),
+    .mutation(async ({ ctx: { instance, audit } }) => {
+      audit("Cleared algorithm results");
+      await instance.clearAllAlgResults();
+    }),
 
   exportCsvData: procedure.instance.subGroupAdmin
     .output(z.array(allocationCsvDataSchema))
@@ -42,7 +44,8 @@ export const matchingRouter = createTRPCRouter({
   allocateRandomProjectToStudent: procedure.instance.subGroupAdmin
     .input(z.object({ studentId: z.string() }))
     .output(z.void())
-    .mutation(async ({ ctx: { instance }, input: { studentId } }) => {
+    .mutation(async ({ ctx: { instance, audit }, input: { studentId } }) => {
+      audit("Randomly allocating project to student", { studentId });
       const projects = await instance.getStudentSuitableProjects(studentId);
 
       const randomAllocation = projects.at(getRandomInt(projects.length - 1));
@@ -53,13 +56,17 @@ export const matchingRouter = createTRPCRouter({
     }),
 
   allocateRandomProjectsToAll: procedure.instance.subGroupAdmin.mutation(
-    async ({ ctx: { instance } }) => {
+    async ({ ctx: { instance, audit } }) => {
       const { selectedAlgConfigId: selectedAlgName } = await instance.get();
       if (!selectedAlgName) return;
 
       const unallocatedStudents = await instance.getUnallocatedStudents();
 
       const allocatedProjectIds = new Set<string>();
+
+      audit("Allocating random projects to students", {
+        studentIds: unallocatedStudents.map((x) => x.id),
+      });
 
       for (const { id: studentId } of unallocatedStudents) {
         const projects = await instance.getStudentSuitableProjects(studentId);
@@ -81,8 +88,8 @@ export const matchingRouter = createTRPCRouter({
   removeAllocation: procedure.instance.subGroupAdmin
     .input(z.object({ studentId: z.string() }))
     .output(z.void())
-    .mutation(
-      async ({ ctx: { instance }, input: { studentId } }) =>
-        await instance.deleteStudentAllocation(studentId),
-    ),
+    .mutation(async ({ ctx: { instance, audit }, input: { studentId } }) => {
+      audit("Deleted allocation for student", { studentId });
+      await instance.deleteStudentAllocation(studentId);
+    }),
 });

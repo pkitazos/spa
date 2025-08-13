@@ -368,19 +368,30 @@ export const preferenceRouter = createTRPCRouter({
     .withRoles([Role.ADMIN, Role.STUDENT])
     .input(z.object({ studentId: z.string() }))
     .output(z.date().optional())
-    .mutation(async ({ ctx: { instance, user }, input: { studentId } }) => {
-      const student = !(await user.isSubGroupAdminOrBetter(instance.params))
-        ? await user.toStudent(instance.params)
-        : await instance.getStudent(studentId);
+    .mutation(
+      async ({ ctx: { instance, user, audit }, input: { studentId } }) => {
+        const student = !(await user.isSubGroupAdminOrBetter(instance.params))
+          ? await user.toStudent(instance.params)
+          : await instance.getStudent(studentId);
 
-      if (studentId !== student.id) {
-        throw new TRPCError({ code: "UNAUTHORIZED" });
-      }
+        if (studentId !== student.id) {
+          audit("Attempted student preference submission (unauthorized)", {
+            studentId,
+          });
+          throw new TRPCError({ code: "UNAUTHORIZED" });
+        }
 
-      if (await student.hasSelfDefinedProject()) return;
+        if (await student.hasSelfDefinedProject()) {
+          audit("Attempted student preference submission (self-defined)", {
+            studentId,
+          });
+          return;
+        }
 
-      return await student.submitPreferences();
-    }),
+        audit("Student preferences submitted", { studentId });
+        return await student.submitPreferences();
+      },
+    ),
 
   initialBoardState: procedure.instance
     .inStage([Stage.STUDENT_BIDDING, Stage.ALLOCATION_ADJUSTMENT])

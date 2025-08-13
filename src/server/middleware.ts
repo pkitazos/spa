@@ -100,11 +100,18 @@ const stageMiddleware = (allowedStages: Stage[]) =>
 /**
  * @requires a preceding `.input(z.object({ params: projectParamsSchema }))`
  */
-const projectMiddleware = t.middleware(async ({ ctx: { db }, input, next }) => {
-  const { params } = z.object({ params: projectParamsSchema }).parse(input);
-  const project = new Project(db, params);
-  return next({ ctx: { project } });
-});
+const projectMiddleware = t.middleware(
+  async ({ ctx: { db, audit }, input, next }) => {
+    const { params } = z.object({ params: projectParamsSchema }).parse(input);
+    const project = new Project(db, params);
+
+    const auditNew: AuditFn = function auditNew(msg, ...vals) {
+      audit(msg, ...vals, { projectId: params.projectId });
+    };
+
+    return next({ ctx: { project, audit: auditNew } });
+  },
+);
 
 /**
  * @requires a preceding `.input(z.object({ params: instanceParamsSchema, algId: z.string() }))`
