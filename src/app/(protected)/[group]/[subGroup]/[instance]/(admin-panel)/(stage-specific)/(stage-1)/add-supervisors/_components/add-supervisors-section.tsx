@@ -154,9 +154,8 @@ export function AddSupervisorsSection() {
   return (
     <>
       <div className="mt-6 flex flex-col gap-6">
-        <SectionHeading className="mb-2 flex items-center">
-          <FileSpreadsheetIcon className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>Upload using CSV</span>
+        <SectionHeading icon={FileSpreadsheetIcon} className="mb-2">
+          Upload using CSV
         </SectionHeading>
         <div className="flex items-center gap-6">
           <CSVUploadButton

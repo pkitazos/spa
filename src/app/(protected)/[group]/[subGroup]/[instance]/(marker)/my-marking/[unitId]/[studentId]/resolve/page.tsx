@@ -1,3 +1,5 @@
+import { ListCheckIcon } from "lucide-react";
+
 import { Heading, SectionHeading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 
@@ -67,7 +69,9 @@ export default async function ResolvePage({
         {project.title}
       </Heading>
 
-      <SectionHeading>{unitOfAssessment.title}</SectionHeading>
+      <SectionHeading icon={ListCheckIcon}>
+        {unitOfAssessment.title}
+      </SectionHeading>
 
       <div className="mt-6 flex flex-col gap-6">
         <ResolutionForm

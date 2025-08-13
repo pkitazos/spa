@@ -36,23 +36,24 @@ export default async function Page({ params }: { params: InstanceParams }) {
       <Heading className="mb-4">{PAGES.algorithms.title}</Heading>
       <AlgorithmProvider selectedAlgName={algorithm?.id}>
         <section className="flex w-full flex-col">
-          <SectionHeading className="mb-2 flex items-center">
-            <ListVideoIcon className="mr-2 h-6 w-6 text-indigo-500" />
-            <span>Select Algorithms to run</span>
+          <SectionHeading icon={ListVideoIcon} className="mb-2">
+            Select Algorithms to run
           </SectionHeading>
           <AlgorithmSection takenNames={takenNames} />
         </section>
         <section className="mt-10 flex w-full flex-col">
-          <SectionHeading className="mb-2 flex items-center">
-            <ListTodoIcon className="mr-2 h-6 w-6 text-indigo-500" />
-            <span>Results Summary</span>
+          <SectionHeading icon={ListTodoIcon} className="mb-2">
+            Results Summary
           </SectionHeading>
           <AlgorithmResultDataTable />
         </section>
         <section className="flex w-full flex-col gap-6">
-          <SectionHeading className="mb-2 flex items-center">
-            <Trash2Icon className="mr-2 h-6 w-6 text-destructive" />
-            <span>Danger Zone</span>
+          <SectionHeading
+            icon={Trash2Icon}
+            iconClassName="text-destructive"
+            className="mb-2"
+          >
+            Danger Zone
           </SectionHeading>
           {/* // TODO: should be disabled if the algorithm displayName is undefined  */}
           <ClearResultsSection

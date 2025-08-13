@@ -38,10 +38,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
     <PanelWrapper className="gap-16">
       <Heading className="mb-4">{PAGES.preferenceStatistics.title}</Heading>
       <section className="flex w-full flex-col gap-5">
-        <SectionHeading className="flex items-center">
-          <InfoIcon className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>Download Statistics</span>
-        </SectionHeading>
+        <SectionHeading icon={InfoIcon}>Download Statistics</SectionHeading>
         <Card className="w-full">
           <CardContent className="mt-6 flex items-center justify-between gap-10">
             <p>
@@ -75,9 +72,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
         </Card>
       </section>
       <section className="flex w-full flex-col gap-5">
-        <SectionHeading className="flex items-center">
-          <FileSpreadsheetIcon className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>Download student preferences by Grouping</span>
+        <SectionHeading icon={FileSpreadsheetIcon}>
+          Download student preferences by Grouping
         </SectionHeading>
         <DownloadPreferenceDataSection params={params} />
       </section>

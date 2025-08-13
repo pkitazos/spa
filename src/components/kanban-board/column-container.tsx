@@ -48,9 +48,8 @@ export function ColumnContainer({
         isOver && "outline-solid outline-4 outline-muted-foreground/50",
       )}
     >
-      <SectionHeading className="mx-3 mb-3 mt-5 flex items-center">
-        <Icon className="mr-2 h-6 w-6 text-indigo-500" />
-        <span>{column.displayName}</span>
+      <SectionHeading icon={Icon} className="mx-3 mb-3 mt-5">
+        {column.displayName}
       </SectionHeading>
       <SortableContext items={projectIds}>
         {projects.map((e, i) => (

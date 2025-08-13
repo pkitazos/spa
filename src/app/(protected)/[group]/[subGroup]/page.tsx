@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, SquareLibraryIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -75,7 +75,9 @@ export default async function Page({ params }: { params: SubGroupParams }) {
           </AdminLevelAC>
         </CardContent>
       </Card>
-      <SectionHeading>Manage {spacesLabels.instance.full}s</SectionHeading>
+      <SectionHeading icon={SquareLibraryIcon}>
+        Manage {spacesLabels.instance.full}s
+      </SectionHeading>
       <div className="flex w-full flex-col gap-6">
         <Button
           size="lg"

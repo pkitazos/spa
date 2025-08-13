@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, SquareLibraryIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -74,7 +74,9 @@ export default async function Page({ params }: { params: GroupParams }) {
           </AdminLevelAC>
         </CardContent>
       </Card>
-      <SectionHeading>Manage {spacesLabels.subGroup.full}s</SectionHeading>
+      <SectionHeading icon={SquareLibraryIcon}>
+        Manage {spacesLabels.subGroup.full}s
+      </SectionHeading>
       <div className="flex w-full flex-col gap-6">
         <Link href={`/${params.group}/create-sub-group`} className="w-fit">
           <Button
