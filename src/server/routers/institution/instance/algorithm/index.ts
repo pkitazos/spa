@@ -78,7 +78,7 @@ export const algorithmRouter = createTRPCRouter({
   delete: procedure.algorithm.subGroupAdmin
     .output(z.void())
     .mutation(async ({ ctx: { alg, audit } }) => {
-      audit("Running algorithm", { algId: alg.params.algConfigId });
+      audit("Deleting algorithm", { algId: alg.params.algConfigId });
 
       return await alg.delete();
     }),

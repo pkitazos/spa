@@ -215,7 +215,7 @@ export const studentRouter = createTRPCRouter({
     .mutation(async ({ ctx: { instance, audit }, input: { studentIds } }) => {
       const { stage } = await instance.get();
       if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
-        audit("Attempted students (failed)", { studentIds });
+        audit("Attempted delete students (failed)", { studentIds });
         throw new Error("Cannot delete students at this stage");
       }
 
