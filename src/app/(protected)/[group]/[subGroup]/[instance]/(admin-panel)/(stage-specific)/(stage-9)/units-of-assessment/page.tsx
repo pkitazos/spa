@@ -42,9 +42,11 @@ export default async function Page({ params }: { params: InstanceParams }) {
             <React.Fragment key={x.flag.id}>
               <TableRow>
                 <TableCell colSpan={2}>
-                  <SectionHeading className="flex items-center text-2xl no-underline">
-                    <ClipboardPenIcon className="mr-2 h-6 w-6 text-indigo-500" />
-                    <span>{x.flag.displayName}</span>
+                  <SectionHeading
+                    icon={ClipboardPenIcon}
+                    className="flex items-center text-2xl no-underline"
+                  >
+                    {x.flag.displayName}
                   </SectionHeading>
                 </TableCell>
               </TableRow>

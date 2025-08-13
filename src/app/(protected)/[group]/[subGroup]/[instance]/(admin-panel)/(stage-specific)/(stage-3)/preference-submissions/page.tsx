@@ -51,10 +51,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
     <PanelWrapper className="gap-16">
       <Heading className="mb-4">{PAGES.preferenceSubmissions.title}</Heading>
       <section className="flex flex-col gap-5">
-        <SectionHeading className="flex items-center">
-          <ZapIcon className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>Quick Actions</span>
-        </SectionHeading>
+        <SectionHeading icon={ZapIcon}>Quick Actions</SectionHeading>
         <Card className="w-full">
           <CardContent className="mt-6 flex items-center justify-between gap-10">
             {students.incomplete.length !== 0 ? (
@@ -111,10 +108,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
         </Card>
       </section>
       <section className="flex w-full flex-col gap-5">
-        <SectionHeading className="flex items-center">
-          <BarChartBigIcon className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>Summary</span>
-        </SectionHeading>
+        <SectionHeading icon={BarChartBigIcon}>Summary</SectionHeading>
         <SummarySection
           data={{
             all: students.all.length,
@@ -125,10 +119,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
         />
       </section>
       <section className="flex w-full flex-col gap-5">
-        <SectionHeading className="flex items-center">
-          <DatabaseIcon className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>All data</span>
-        </SectionHeading>
+        <SectionHeading icon={DatabaseIcon}>All data</SectionHeading>
         <PreferenceSubmissionsDataTable
           data={students.all}
           projectDescriptors={projectDescriptors}

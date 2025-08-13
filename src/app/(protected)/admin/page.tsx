@@ -49,9 +49,8 @@ export default async function Page() {
           </Table>
         </CardContent>
       </Card>
-      <SectionHeading className="mb-2 flex items-center">
-        <SquareLibraryIcon className="mr-2 h-6 w-6 text-indigo-500" />
-        <span>Manage Platform Users</span>
+      <SectionHeading icon={SquareLibraryIcon} className="mb-2">
+        Manage Platform Users
       </SectionHeading>
       <Button
         className="h-20 text-base font-semibold w-1/4"
@@ -68,9 +67,8 @@ export default async function Page() {
 
       <Separator />
 
-      <SectionHeading className="mb-2 flex items-center">
-        <SquareLibraryIcon className="mr-2 h-6 w-6 text-indigo-500" />
-        <span>Manage {spacesLabels.group.full}s</span>
+      <SectionHeading icon={SquareLibraryIcon} className="mb-2 flex">
+        Manage {spacesLabels.group.full}s
       </SectionHeading>
       <div className="flex w-full flex-col gap-6">
         <Button

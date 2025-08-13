@@ -1,4 +1,11 @@
-import { FlagIcon, TagIcon, UserIcon } from "lucide-react";
+import {
+  BookmarkIcon,
+  FlagIcon,
+  FolderCheckIcon,
+  TagIcon,
+  TextIcon,
+  UserIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -132,7 +139,7 @@ export default async function Project({ params }: { params: PageParams }) {
       <div className="mt-6 flex gap-6">
         <div className="flex w-3/4 flex-col gap-16">
           <section className="flex flex-col">
-            <SectionHeading>Description</SectionHeading>
+            <SectionHeading icon={TextIcon}>Description</SectionHeading>
             <div className="mt-6">
               <MarkdownRenderer source={project.description} />
             </div>
@@ -157,7 +164,7 @@ export default async function Project({ params }: { params: PageParams }) {
       >
         {allocatedStudent && (
           <section className={cn("mt-16 flex flex-col gap-8")}>
-            <SectionHeading>Allocation</SectionHeading>
+            <SectionHeading icon={FolderCheckIcon}>Allocation</SectionHeading>
             <AllocatedStudentCard
               studentAllocation={allocatedStudent}
               preAllocated={!!project.preAllocatedStudentId}
@@ -171,7 +178,9 @@ export default async function Project({ params }: { params: PageParams }) {
         extraConditions={{ RBAC: { AND: !project.preAllocatedStudentId } }}
       >
         <section className="mt-16 flex flex-col gap-8">
-          <SectionHeading>Student Preferences</SectionHeading>
+          <SectionHeading icon={BookmarkIcon}>
+            Student Preferences
+          </SectionHeading>
           <StudentPreferenceDataTable
             data={studentPreferences}
             projectDescriptors={projectDescriptors}

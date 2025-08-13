@@ -1,3 +1,5 @@
+import { ListCheckIcon } from "lucide-react";
+
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
@@ -98,9 +100,9 @@ export default async function MarksPage({
         <strong>Marking:</strong>
         {project.title}
       </Heading>
-
-      <SectionHeading>{unitOfAssessment.title}</SectionHeading>
-
+      <SectionHeading icon={ListCheckIcon}>
+        {unitOfAssessment.title}
+      </SectionHeading>
       <div className="mt-6 flex flex-col gap-6">
         <MarkingSection
           markingCriteria={markingCriteria}

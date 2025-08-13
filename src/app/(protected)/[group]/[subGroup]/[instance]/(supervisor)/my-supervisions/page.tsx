@@ -1,3 +1,5 @@
+import { FolderXIcon } from "lucide-react";
+
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
@@ -37,7 +39,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
       <Heading>{PAGES.mySupervisions.title}</Heading>
       {allocations.length === 0 ? (
         <div className="mt-9 flex flex-col gap-4">
-          <SectionHeading>Allocations</SectionHeading>
+          <SectionHeading icon={FolderXIcon}>Allocations</SectionHeading>
           <p>You have not been allocated any students</p>
         </div>
       ) : (

@@ -33,10 +33,7 @@ export default function Page() {
         <Accordion type="multiple">
           <AccordionItem className="border-b-0" value="by-supervisors">
             <AccordionTrigger className="mb-4 rounded-md px-5 py-4 hover:bg-accent hover:no-underline">
-              <SectionHeading className="flex items-center">
-                <Users2Icon className="mr-2 h-6 w-6 text-indigo-500" />
-                <span>By Supervisors</span>
-              </SectionHeading>
+              <SectionHeading icon={Users2Icon}>By Supervisors</SectionHeading>
             </AccordionTrigger>
             <AccordionContent>
               <SupervisorResultsSection />
@@ -45,9 +42,8 @@ export default function Page() {
           <Separator className="mb-5" />
           <AccordionItem className="border-b-0" value="by-students">
             <AccordionTrigger className="mb-4 rounded-md px-5 py-4 hover:bg-accent hover:no-underline">
-              <SectionHeading className="flex items-center">
-                <GraduationCapIcon className="mr-2 h-6 w-6 text-indigo-500" />
-                <span>By Students</span>
+              <SectionHeading icon={GraduationCapIcon}>
+                By Students
               </SectionHeading>
             </AccordionTrigger>
             <AccordionContent>

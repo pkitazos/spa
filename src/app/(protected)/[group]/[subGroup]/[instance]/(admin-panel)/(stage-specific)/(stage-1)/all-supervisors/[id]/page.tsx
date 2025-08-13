@@ -65,9 +65,8 @@ export default async function Page({ params }: { params: PageParams }) {
         <InstanceDetailsCard supervisor={supervisor} />
       </div>
       <div className="-mb-2 mt-6 flex items-center justify-between">
-        <SectionHeading className="mb-2 flex items-center">
-          <FolderIcon className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>All Projects</span>
+        <SectionHeading icon={FolderIcon} className="mb-2">
+          All Projects
         </SectionHeading>
         <Link
           className={cn(

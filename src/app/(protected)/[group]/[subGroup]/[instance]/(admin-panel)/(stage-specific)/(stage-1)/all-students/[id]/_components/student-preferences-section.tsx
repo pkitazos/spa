@@ -36,9 +36,8 @@ export async function StudentPreferencesSection({
   return (
     <>
       <div className="-mb-2 mt-6 flex items-center justify-between">
-        <SectionHeading className="mb-2 flex items-center">
-          <BookmarkIcon className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>Preferences</span>
+        <SectionHeading icon={BookmarkIcon} className="mb-2">
+          Preferences
         </SectionHeading>
         <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
           <Link
