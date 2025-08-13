@@ -35,6 +35,7 @@ import {
 } from "./hooks";
 
 interface DataTableProps<TData, TValue> {
+  searchParamPrefix?: string;
   className?: string;
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -43,24 +44,29 @@ interface DataTableProps<TData, TValue> {
 }
 
 export default function DataTable<TData, TValue>({
+  searchParamPrefix: prefix,
   className,
   columns,
   data,
   filters = [],
   removeRow,
 }: DataTableProps<TData, TValue>) {
-  const [pagination, setPagination] = usePaginationSearchParams();
-  const [columnVisibility, setColumnVisibility] =
-    useVisibilitySearchParams(columns);
+  const [pagination, setPagination] = usePaginationSearchParams(prefix);
+  const [columnVisibility, setColumnVisibility] = useVisibilitySearchParams(
+    columns,
+    prefix,
+  );
 
-  const [sorting, setSorting] = useSortingSearchParams();
+  const [sorting, setSorting] = useSortingSearchParams(prefix);
 
-  const [columnFilters, setColumnFilters] =
-    useColumnFilterSearchParams(columns);
+  const [columnFilters, setColumnFilters] = useColumnFilterSearchParams(
+    columns,
+    prefix,
+  );
 
-  const [globalFilter, setGlobalFilter] = useGlobalFilterSearchParams();
+  const [globalFilter, setGlobalFilter] = useGlobalFilterSearchParams(prefix);
 
-  const [rowSelection, setRowSelection] = useRowSelectionSearchParams();
+  const [rowSelection, setRowSelection] = useRowSelectionSearchParams(prefix);
 
   const table = useReactTable({
     data,

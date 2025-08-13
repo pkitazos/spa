@@ -3,15 +3,21 @@ import { useCallback } from "react";
 import { type Updater, type SortingState } from "@tanstack/react-table";
 import { useQueryStates, parseAsBoolean, parseAsString } from "nuqs";
 
+import { addPrefix } from "./add-prefix";
 import { useProxyState } from "./use-proxy-state";
 
-export function useSortingSearchParams() {
+export function useSortingSearchParams(prefix?: string) {
   const [state, setVals] = useQueryStates(
     {
       desc: parseAsBoolean.withDefault(true),
       id: parseAsString.withDefault(""),
     },
-    { urlKeys: { desc: "desc", id: "sort-col" } },
+    {
+      urlKeys: {
+        desc: addPrefix("sort-desc", prefix),
+        id: addPrefix("sort-col", prefix),
+      },
+    },
   );
 
   const computeSorting = useCallback(

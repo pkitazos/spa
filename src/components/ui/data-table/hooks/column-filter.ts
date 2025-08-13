@@ -7,9 +7,13 @@ import {
 } from "@tanstack/react-table";
 import { useQueryStates, parseAsString } from "nuqs";
 
+import { addPrefix } from "./add-prefix";
 import { useProxyState } from "./use-proxy-state";
 
-export function useColumnFilterSearchParams<T, V>(cols: ColumnDef<T, V>[]) {
+export function useColumnFilterSearchParams<T, V>(
+  cols: ColumnDef<T, V>[],
+  prefix?: string,
+) {
   const [filters, setFilters] = useQueryStates(
     cols.reduce(
       (acc, val) => ({ ...acc, [val.id!]: parseAsString.withDefault("") }),
@@ -19,7 +23,7 @@ export function useColumnFilterSearchParams<T, V>(cols: ColumnDef<T, V>[]) {
       urlKeys: cols.reduce(
         (acc, val) => ({
           ...acc,
-          [val.id!]: `filter-${val.id?.replace(" ", "-")}`,
+          [val.id!]: addPrefix(`filter-${val.id?.replace(" ", "-")}`, prefix),
         }),
         {},
       ),

@@ -1,5 +1,10 @@
 import { useQueryState, parseAsString } from "nuqs";
 
-export function useGlobalFilterSearchParams() {
-  return useQueryState("search", parseAsString.withDefault(""));
+import { addPrefix } from "./add-prefix";
+
+export function useGlobalFilterSearchParams(prefix?: string) {
+  return useQueryState(
+    addPrefix("search", prefix),
+    parseAsString.withDefault(""),
+  );
 }
