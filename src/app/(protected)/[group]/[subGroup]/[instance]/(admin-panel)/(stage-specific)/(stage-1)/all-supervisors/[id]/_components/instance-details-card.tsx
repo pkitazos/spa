@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowUpToLineIcon, PenIcon, TargetIcon } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useQueryState, parseAsBoolean } from "nuqs";
 import { toast } from "sonner";
+import type z from "zod";
 
 import { spacesLabels } from "@/config/spaces";
 
@@ -29,38 +29,32 @@ import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 import { api } from "@/lib/trpc/client";
 import { supervisorCapacitiesSchema } from "@/lib/validations/supervisor-project-submission-details";
 
-type SupervisorInstanceCapacities = {
-  projectTarget: number;
-  projectUpperQuota: number;
-};
+type SupervisorInstanceCapacities = z.infer<typeof supervisorCapacitiesSchema>;
 
 export function InstanceDetailsCard({
   supervisor,
 }: {
   supervisor: SupervisorDTO;
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const editMode = searchParams.get("edit") ?? false;
+  const [editMode, setEditMode] = useQueryState(
+    "edit",
+    parseAsBoolean.withDefault(false),
+  );
 
   const params = useInstanceParams();
-  const [capacities, setCapacities] = useState<SupervisorInstanceCapacities>({
-    projectTarget: supervisor.allocationTarget,
-    projectUpperQuota: supervisor.allocationUpperBound,
-  });
+
+  const {
+    mutateAsync,
+    data: capacities = {
+      projectTarget: supervisor.allocationTarget,
+      projectUpperQuota: supervisor.allocationUpperBound,
+    },
+  } = api.user.supervisor.updateInstanceCapacities.useMutation();
 
   const form = useForm<SupervisorInstanceCapacities>({
     resolver: zodResolver(supervisorCapacitiesSchema),
+    defaultValues: capacities,
   });
-
-  function changeEditMode(newMode: boolean) {
-    if (!newMode) router.push(pathname);
-    else router.push(`${pathname}?edit=true`);
-  }
-
-  const { mutateAsync } =
-    api.user.supervisor.updateInstanceCapacities.useMutation();
 
   function onSubmit(data: SupervisorInstanceCapacities) {
     void toast.promise(
@@ -68,10 +62,7 @@ export function InstanceDetailsCard({
         params,
         supervisorId: supervisor.id,
         capacities: data,
-      }).then((newCapacities) => {
-        setCapacities(newCapacities);
-        changeEditMode(false);
-      }),
+      }).then(() => setEditMode(false)),
       {
         loading: `Updating supervisor ${spacesLabels.instance.short} capacities...`,
         success: `Successfully updated supervisor ${spacesLabels.instance.short} capacities`,
@@ -87,7 +78,7 @@ export function InstanceDetailsCard({
           <WithTooltip tip="Edit Target and Upper Quota">
             <button
               className="flex items-center gap-3 "
-              onClick={() => changeEditMode(!editMode)}
+              onClick={() => setEditMode((e) => !e)}
             >
               <p className="group-hover:underline group-hover:underline-offset-2">
                 Supervisor capacities
@@ -150,7 +141,7 @@ export function InstanceDetailsCard({
                   className="w-full"
                   variant="outline"
                   type="button"
-                  onClick={() => changeEditMode(false)}
+                  onClick={() => setEditMode(false)}
                 >
                   Cancel
                 </Button>
