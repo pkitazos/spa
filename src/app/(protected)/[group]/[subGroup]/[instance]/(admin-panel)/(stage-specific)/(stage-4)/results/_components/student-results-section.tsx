@@ -53,6 +53,7 @@ export function StudentResultsSection() {
       {data.results.map((result, i) => (
         <TabsContent key={i} value={result.algorithm.id}>
           <DataTable
+            searchParamPrefix="student"
             columns={studentResultsColumns}
             data={result.matchingPairs}
           />
