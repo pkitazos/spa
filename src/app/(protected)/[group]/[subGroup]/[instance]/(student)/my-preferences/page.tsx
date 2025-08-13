@@ -72,7 +72,12 @@ export default async function Page({ params }: { params: InstanceParams }) {
           restrictions={restrictions}
         />
       </AccessControl>
-      <Tabs defaultValue="current-board-state" className="w-full">
+      <Tabs
+        searchParamName="tab"
+        options={["current-board-state", "last-submission"]}
+        defaultValue="current-board-state"
+        className="w-full"
+      >
         <TabsList className="w-full">
           <TabsTrigger
             className="w-full data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground"
