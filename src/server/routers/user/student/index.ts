@@ -198,24 +198,28 @@ export const studentRouter = createTRPCRouter({
 
   delete: procedure.instance.subGroupAdmin
     .input(z.object({ studentId: z.string() }))
-    .mutation(async ({ ctx: { instance }, input: { studentId } }) => {
+    .mutation(async ({ ctx: { instance, audit }, input: { studentId } }) => {
       const { stage } = await instance.get();
       if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
+        audit("Attempted student (failed)", { studentId });
         throw new Error("Cannot delete student at this stage");
       }
 
+      audit("Delete student", { studentId });
       await instance.unlinkStudent(studentId);
     }),
 
   // TODO naming inconsistency (see supervisor deleteMany)
   deleteSelected: procedure.instance.subGroupAdmin
     .input(z.object({ studentIds: z.array(z.string()) }))
-    .mutation(async ({ ctx: { instance }, input: { studentIds } }) => {
+    .mutation(async ({ ctx: { instance, audit }, input: { studentIds } }) => {
       const { stage } = await instance.get();
       if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
+        audit("Attempted students (failed)", { studentIds });
         throw new Error("Cannot delete students at this stage");
       }
 
+      audit("Delete students", { studentIds });
       await instance.unlinkStudents(studentIds);
     }),
 

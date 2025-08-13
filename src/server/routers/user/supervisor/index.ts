@@ -48,10 +48,10 @@ export const supervisorRouter = createTRPCRouter({
   setAllocationAccess: procedure.instance.subGroupAdmin
     .input(z.object({ access: z.boolean() }))
     .output(z.boolean())
-    .mutation(
-      async ({ ctx: { instance }, input: { access } }) =>
-        await instance.setSupervisorPublicationAccess(access),
-    ),
+    .mutation(async ({ ctx: { instance, audit }, input: { access } }) => {
+      audit("Set supervisor allocation access", { access });
+      return await instance.setSupervisorPublicationAccess(access);
+    }),
 
   // TODO split to e.g. displayname and DeadlineDetails
   // TODO rename
@@ -146,7 +146,11 @@ export const supervisorRouter = createTRPCRouter({
     )
     .output(supervisorCapacitiesSchema)
     .mutation(
-      async ({ ctx: { instance }, input: { supervisorId, capacities } }) => {
+      async ({
+        ctx: { instance, audit },
+        input: { supervisorId, capacities },
+      }) => {
+        audit("Updated supervisor capacities", { supervisorId, capacities });
         const supervisor = await instance.getSupervisor(supervisorId);
         return supervisor.setCapacityDetails(capacities);
       },
@@ -156,18 +160,20 @@ export const supervisorRouter = createTRPCRouter({
     .inStage(subsequentStages(Stage.PROJECT_ALLOCATION))
     .subGroupAdmin.input(z.object({ supervisorId: z.string() }))
     .output(z.void())
-    .mutation(
-      async ({ ctx: { instance }, input: { supervisorId } }) =>
-        await instance.deleteSupervisor(supervisorId),
-    ),
+    .mutation(async ({ ctx: { instance, audit }, input: { supervisorId } }) => {
+      audit("Deleted supervisor", { supervisorId });
+      return await instance.deleteSupervisor(supervisorId);
+    }),
 
   deleteMany: procedure.instance
     .inStage(subsequentStages(Stage.PROJECT_ALLOCATION))
     .subGroupAdmin.input(z.object({ supervisorIds: z.array(z.string()) }))
     .output(z.void())
     .mutation(
-      async ({ ctx: { instance }, input: { supervisorIds } }) =>
-        await instance.deleteSupervisors(supervisorIds),
+      async ({ ctx: { instance, audit }, input: { supervisorIds } }) => {
+        audit("Deleted supervisors", { supervisorIds });
+        return await instance.deleteSupervisors(supervisorIds);
+      },
     ),
 
   // TODO: change rank to studentRanking

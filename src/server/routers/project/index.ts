@@ -40,7 +40,7 @@ export const projectRouter = createTRPCRouter({
     .output(z.void())
     .mutation(
       async ({
-        ctx: { db, project },
+        ctx: { db, project, audit },
         input: {
           updatedProject: {
             title,
@@ -53,6 +53,18 @@ export const projectRouter = createTRPCRouter({
           },
         },
       }) => {
+        audit("Updated project", {
+          data: {
+            title,
+            description,
+            capacityUpperBound,
+            preAllocatedStudentId,
+            supervisorId,
+            tagIds,
+            flagIds,
+          },
+        });
+
         await db.$transaction(async (tx) => {
           await tx.project.update({
             where: toPP2(project.params),
@@ -276,7 +288,8 @@ export const projectRouter = createTRPCRouter({
     .inStage(previousStages(Stage.PROJECT_ALLOCATION))
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
     .output(permissionResultSchema)
-    .mutation(async ({ ctx: { project, user } }) => {
+    .mutation(async ({ ctx: { project, user, audit } }) => {
+      audit("Delete project");
       if (await user.isSubGroupAdminOrBetter(project.params)) {
         await project.delete();
         return PermissionResult.OK;
@@ -295,74 +308,81 @@ export const projectRouter = createTRPCRouter({
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
     .input(z.object({ projectIds: z.array(z.string()) }))
     .output(z.array(permissionResultSchema))
-    .mutation(async ({ ctx: { instance, user }, input: { projectIds } }) => {
-      const isAdmin = await user.isSubGroupAdminOrBetter(instance.params);
+    .mutation(
+      async ({ ctx: { instance, user, audit }, input: { projectIds } }) => {
+        audit("Delete projects", { projectIds });
+        const isAdmin = await user.isSubGroupAdminOrBetter(instance.params);
 
-      const checkedProjects = isAdmin
-        ? projectIds.map((e) => ({ pid: e, res: true }))
-        : await Promise.all(
-            projectIds.map(async (e) => ({
-              pid: e,
-              res: await user.isProjectSupervisor(e),
-            })),
-          );
+        const checkedProjects = isAdmin
+          ? projectIds.map((e) => ({ pid: e, res: true }))
+          : await Promise.all(
+              projectIds.map(async (e) => ({
+                pid: e,
+                res: await user.isProjectSupervisor(e),
+              })),
+            );
 
-      await instance.deleteProjects(
-        checkedProjects.filter(({ res }) => res).map(({ pid }) => pid),
-      );
+        await instance.deleteProjects(
+          checkedProjects.filter(({ res }) => res).map(({ pid }) => pid),
+        );
 
-      return checkedProjects.map(({ res }) =>
-        res ? PermissionResult.OK : PermissionResult.UNAUTHORISED,
-      );
-    }),
+        return checkedProjects.map(({ res }) =>
+          res ? PermissionResult.OK : PermissionResult.UNAUTHORISED,
+        );
+      },
+    ),
 
   create: procedure.instance
     .inStage([Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING])
     .withRoles([Role.ADMIN, Role.SUPERVISOR])
     .input(z.object({ newProject: projectForm.createApiInputSchema }))
     .output(z.string())
-    .mutation(async ({ ctx: { instance, db }, input: { newProject } }) => {
-      return await db.$transaction(async (tx) => {
-        const project = await tx.project.create({
-          data: {
-            ...expand(instance.params),
-            title: newProject.title,
-            description: newProject.description,
-            capacityLowerBound: 0,
-            capacityUpperBound: newProject.capacityUpperBound,
-            preAllocatedStudentId: newProject.preAllocatedStudentId ?? null,
-            latestEditDateTime: new Date(),
-            supervisorId: newProject.supervisorId,
-          },
-        });
+    .mutation(
+      async ({ ctx: { instance, db, audit }, input: { newProject } }) => {
+        audit("Create project", { project: newProject });
 
-        if (
-          newProject.preAllocatedStudentId &&
-          newProject.preAllocatedStudentId.trim() !== ""
-        ) {
-          // ! would just override another pre-allocated student - bad probably
-          await linkPreAllocatedStudent(
+        return await db.$transaction(async (tx) => {
+          const project = await tx.project.create({
+            data: {
+              ...expand(instance.params),
+              title: newProject.title,
+              description: newProject.description,
+              capacityLowerBound: 0,
+              capacityUpperBound: newProject.capacityUpperBound,
+              preAllocatedStudentId: newProject.preAllocatedStudentId ?? null,
+              latestEditDateTime: new Date(),
+              supervisorId: newProject.supervisorId,
+            },
+          });
+
+          if (
+            newProject.preAllocatedStudentId &&
+            newProject.preAllocatedStudentId.trim() !== ""
+          ) {
+            // ! would just override another pre-allocated student - bad probably
+            await linkPreAllocatedStudent(
+              tx,
+              { ...instance.params, projectId: project.id },
+              newProject.preAllocatedStudentId,
+            );
+          }
+
+          await linkProjectFlagIds(
             tx,
             { ...instance.params, projectId: project.id },
-            newProject.preAllocatedStudentId,
+            newProject.flagIds,
           );
-        }
 
-        await linkProjectFlagIds(
-          tx,
-          { ...instance.params, projectId: project.id },
-          newProject.flagIds,
-        );
+          await linkProjectTagIds(
+            tx,
+            { ...instance.params, projectId: project.id },
+            newProject.tagIds,
+          );
 
-        await linkProjectTagIds(
-          tx,
-          { ...instance.params, projectId: project.id },
-          newProject.tagIds,
-        );
-
-        return project.id;
-      });
-    }),
+          return project.id;
+        });
+      },
+    ),
 
   getFormInitialisationData: procedure.instance.user
     .input(z.object({ projectId: z.string().optional() }))
