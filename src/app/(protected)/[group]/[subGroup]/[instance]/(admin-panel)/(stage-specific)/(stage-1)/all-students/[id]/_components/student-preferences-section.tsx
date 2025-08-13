@@ -53,7 +53,12 @@ export async function StudentPreferencesSection({
         </AccessControl>
       </div>
 
-      <Tabs defaultValue="current-board-state" className="w-full">
+      <Tabs
+        searchParamName="tab"
+        options={["current-board-state", "current-board-state"]}
+        defaultValue="current-board-state"
+        className="w-full"
+      >
         <TabsList className="w-full">
           <TabsTrigger
             className="w-full data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground"

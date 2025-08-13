@@ -64,7 +64,12 @@ export function CentrePanel() {
           <DeadlinesSection defaultDates={selectedSubmission} />
         </div>
 
-        <Tabs defaultValue={MarkerType.SUPERVISOR} className="w-full">
+        <Tabs
+          searchParamName="tab"
+          options={[MarkerType.SUPERVISOR, MarkerType.READER]}
+          defaultValue={MarkerType.SUPERVISOR}
+          className="w-full"
+        >
           <TabsList className="w-full">
             <TabsTrigger className="w-full" value={MarkerType.SUPERVISOR}>
               Supervisor
