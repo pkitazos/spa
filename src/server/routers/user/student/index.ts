@@ -5,12 +5,8 @@ import { projectDtoSchema, supervisorDtoSchema } from "@/dto";
 
 import { Supervisor } from "@/data-objects";
 
-import { Stage } from "@/db/types";
-
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
-
-import { stageGte } from "@/lib/utils/permissions/stage-check";
 
 import { preferenceRouter } from "./preference";
 
@@ -196,33 +192,6 @@ export const studentRouter = createTRPCRouter({
         studentRanking,
         supervisor: await supervisor.get(),
       };
-    }),
-
-  delete: procedure.instance.subGroupAdmin
-    .input(z.object({ studentId: z.string() }))
-    .mutation(async ({ ctx: { instance, audit }, input: { studentId } }) => {
-      const { stage } = await instance.get();
-      if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
-        audit("Attempted student (failed)", { studentId });
-        throw new Error("Cannot delete student at this stage");
-      }
-
-      audit("Delete student", { studentId });
-      await instance.unlinkStudent(studentId);
-    }),
-
-  // TODO naming inconsistency (see supervisor deleteMany)
-  deleteSelected: procedure.instance.subGroupAdmin
-    .input(z.object({ studentIds: z.array(z.string()) }))
-    .mutation(async ({ ctx: { instance, audit }, input: { studentIds } }) => {
-      const { stage } = await instance.get();
-      if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
-        audit("Attempted delete students (failed)", { studentIds });
-        throw new Error("Cannot delete students at this stage");
-      }
-
-      audit("Delete students", { studentIds });
-      await instance.unlinkStudents(studentIds);
     }),
 
   getSuitableProjects: procedure.instance.subGroupAdmin

@@ -17,7 +17,10 @@ import { type SupervisorDTO } from "@/dto";
 import { Stage } from "@/db/types";
 
 import { AccessControl } from "@/components/access-control";
-import { useInstanceStage } from "@/components/params-context";
+import {
+  useInstanceStage,
+  usePathInInstance,
+} from "@/components/params-context";
 import { Button } from "@/components/ui/button";
 import { ActionColumnLabel } from "@/components/ui/data-table/action-column-label";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
@@ -36,14 +39,17 @@ import {
   YesNoActionTrigger,
 } from "@/components/yes-no-action";
 
+import { previousStages } from "@/lib/utils/permissions/stage-check";
+
 export function useNewSupervisorColumns({
-  removeSupervisor,
-  removeSelectedSupervisors,
+  deleteSupervisor,
+  deleteManySupervisors,
 }: {
-  removeSupervisor: (id: string) => Promise<void>;
-  removeSelectedSupervisors: (ids: string[]) => Promise<void>;
+  deleteSupervisor: (id: string) => Promise<void>;
+  deleteManySupervisors: (ids: string[]) => Promise<void>;
 }): ColumnDef<SupervisorDTO>[] {
   const stage = useInstanceStage();
+  const { getInstancePath } = usePathInInstance();
 
   const selectCol = getSelectColumn<SupervisorDTO>();
 
@@ -122,12 +128,6 @@ export function useNewSupervisorColumns({
           .getSelectedRowModel()
           .rows.map((e) => e.original.id);
 
-        function handleRemoveSelectedSupervisors() {
-          void removeSelectedSupervisors(selectedSupervisorIds).then(() =>
-            table.toggleAllRowsSelected(false),
-          );
-        }
-
         if (someSelected && stage === Stage.SETUP)
           return (
             <div className="flex w-14 items-center justify-center">
@@ -139,7 +139,11 @@ export function useNewSupervisorColumns({
                   </Button>
                 </DropdownMenuTrigger>
                 <YesNoActionContainer
-                  action={handleRemoveSelectedSupervisors}
+                  action={async () =>
+                    void deleteManySupervisors(selectedSupervisorIds).then(() =>
+                      table.toggleAllRowsSelected(false),
+                    )
+                  }
                   title="Remove Supervisors?"
                   description={
                     selectedSupervisorIds.length === 1
@@ -150,16 +154,20 @@ export function useNewSupervisorColumns({
                   <DropdownMenuContent align="center" side="bottom">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
-                      <YesNoActionTrigger
-                        trigger={
-                          <button className="flex items-center gap-2">
-                            <Trash2Icon className="h-4 w-4" />
-                            <span>Remove selected Supervisors</span>
-                          </button>
-                        }
-                      />
-                    </DropdownMenuItem>
+                    <AccessControl
+                      allowedStages={previousStages(Stage.STUDENT_BIDDING)}
+                    >
+                      <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
+                        <YesNoActionTrigger
+                          trigger={
+                            <button className="flex items-center gap-2">
+                              <Trash2Icon className="h-4 w-4" />
+                              <span>Remove selected Supervisors</span>
+                            </button>
+                          }
+                        />
+                      </DropdownMenuItem>
+                    </AccessControl>
                   </DropdownMenuContent>
                 </YesNoActionContainer>
               </DropdownMenu>
@@ -168,11 +176,7 @@ export function useNewSupervisorColumns({
 
         return <ActionColumnLabel />;
       },
-      cell: ({
-        row: {
-          original: { name, id },
-        },
-      }) => (
+      cell: ({ row: { original: supervisor } }) => (
         <div className="flex w-14 items-center justify-center">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -182,20 +186,25 @@ export function useNewSupervisorColumns({
               </Button>
             </DropdownMenuTrigger>
             <YesNoActionContainer
-              action={async () => void removeSupervisor(id)}
+              action={async () => void deleteSupervisor(supervisor.id)}
               title="Remove Supervisor?"
-              description={`You are about to remove "${name}" from the supervisor list. Do you wish to proceed?`}
+              description={`You are about to remove "${supervisor.name}" from the supervisor list. Do you wish to proceed?`}
             >
               <DropdownMenuContent align="center" side="bottom">
                 <DropdownMenuLabel>
                   Actions
-                  <span className="ml-2 text-muted-foreground">for {name}</span>
+                  <span className="ml-2 text-muted-foreground">
+                    for {supervisor.name}
+                  </span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="group/item">
                   <Link
                     className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={`./${PAGES.allSupervisors.href}/${id}`}
+                    href={getInstancePath([
+                      PAGES.allSupervisors.href,
+                      supervisor.id,
+                    ])}
                   >
                     <CornerDownRightIcon className="h-4 w-4" />
                     <span>View supervisor details</span>
@@ -204,13 +213,18 @@ export function useNewSupervisorColumns({
                 <DropdownMenuItem className="group/item">
                   <Link
                     className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={`./${PAGES.allSupervisors.href}/${id}?edit=true`}
+                    href={getInstancePath(
+                      [PAGES.allSupervisors.href, supervisor.id],
+                      "edit=true",
+                    )}
                   >
                     <PenIcon className="h-4 w-4" />
                     <span>Edit supervisor details</span>
                   </Link>
                 </DropdownMenuItem>
-                <AccessControl allowedStages={[Stage.SETUP]}>
+                <AccessControl
+                  allowedStages={previousStages(Stage.STUDENT_BIDDING)}
+                >
                   <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
                     <YesNoActionTrigger
                       trigger={

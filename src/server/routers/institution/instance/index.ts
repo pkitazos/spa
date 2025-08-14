@@ -277,7 +277,7 @@ export const instanceRouter = createTRPCRouter({
     ),
 
   deleteSupervisor: procedure.instance
-    .inStage(previousStages(Stage.PROJECT_ALLOCATION))
+    .inStage(previousStages(Stage.STUDENT_BIDDING))
     .subGroupAdmin.input(z.object({ supervisorId: z.string() }))
     .output(z.void())
     .mutation(async ({ ctx: { instance, audit }, input: { supervisorId } }) => {
@@ -286,18 +286,18 @@ export const instanceRouter = createTRPCRouter({
     }),
 
   deleteManySupervisors: procedure.instance
-    .inStage(previousStages(Stage.PROJECT_ALLOCATION))
+    .inStage(previousStages(Stage.STUDENT_BIDDING))
     .subGroupAdmin.input(z.object({ supervisorIds: z.array(z.string()) }))
     .output(z.void())
     .mutation(
       async ({ ctx: { instance, audit }, input: { supervisorIds } }) => {
         audit("Deleted supervisors", { supervisorIds });
-        return await instance.deleteSupervisors(supervisorIds);
+        return await instance.deleteManySupervisors(supervisorIds);
       },
     ),
 
   deleteUserInInstance: procedure.instance
-    .inStage(previousStages(Stage.PROJECT_ALLOCATION))
+    .inStage(previousStages(Stage.STUDENT_BIDDING))
     .subGroupAdmin.input(z.object({ supervisorId: z.string() }))
     .output(z.void())
     .mutation(async ({ ctx: { instance, audit }, input: { supervisorId } }) => {
@@ -306,7 +306,7 @@ export const instanceRouter = createTRPCRouter({
     }),
 
   deleteManyUsersInInstance: procedure.instance
-    .inStage(previousStages(Stage.PROJECT_ALLOCATION))
+    .inStage(previousStages(Stage.STUDENT_BIDDING))
     .subGroupAdmin.input(z.object({ supervisorIds: z.array(z.string()) }))
     .output(z.void())
     .mutation(
@@ -442,22 +442,24 @@ export const instanceRouter = createTRPCRouter({
       },
     ),
 
-  removeStudent: procedure.instance.subGroupAdmin
-    .input(z.object({ studentId: z.string() }))
+  deleteStudent: procedure.instance
+    .inStage(previousStages(Stage.STUDENT_BIDDING))
+    .subGroupAdmin.input(z.object({ studentId: z.string() }))
     .output(z.void())
     .mutation(async ({ ctx: { instance, audit }, input: { studentId } }) => {
       {
-        audit("Removed student", { studentId });
-        return await instance.unlinkStudent(studentId);
+        audit("Deleting student", { studentId });
+        return await instance.deleteStudent(studentId);
       }
     }),
 
-  removeStudents: procedure.instance.subGroupAdmin
-    .input(z.object({ studentIds: z.array(z.string()) }))
+  deleteManyStudents: procedure.instance
+    .inStage(previousStages(Stage.STUDENT_BIDDING))
+    .subGroupAdmin.input(z.object({ studentIds: z.array(z.string()) }))
     .output(z.void())
     .mutation(async ({ ctx: { instance, audit }, input: { studentIds } }) => {
-      audit("Removed student", { data: studentIds });
-      await instance.unlinkStudents(studentIds);
+      audit("Deleting students", { data: studentIds });
+      await instance.deleteManyStudents(studentIds);
     }),
 
   invitedStudents: procedure.instance.subGroupAdmin
