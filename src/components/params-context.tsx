@@ -49,6 +49,8 @@ export function usePathInInstance() {
   return {
     basePath: formatParamsAsPath(instance.params),
     getPath: (path: string) => `${formatParamsAsPath(instance.params)}/${path}`,
+    getInstancePath: (paths: string[], queryParams?: string) =>
+      `${formatParamsAsPath(instance.params)}/${paths.join("/")}${queryParams ? `?${queryParams}` : ""}`,
   };
 }
 

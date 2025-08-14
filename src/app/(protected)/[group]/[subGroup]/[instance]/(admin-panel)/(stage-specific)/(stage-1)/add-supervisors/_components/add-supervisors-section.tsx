@@ -48,16 +48,16 @@ export function AddSupervisorsSection() {
   const { data, isLoading, refetch } =
     api.institution.instance.getSupervisors.useQuery({ params });
 
-  const { mutateAsync: api_addSupervisorAsync } =
+  const { mutateAsync: api_addSupervisor } =
     api.institution.instance.addSupervisor.useMutation();
 
-  const { mutateAsync: api_addManySupervisorsAsync } =
+  const { mutateAsync: api_addManySupervisors } =
     api.institution.instance.addSupervisors.useMutation();
 
-  const { mutateAsync: api_deleteSupervisorAsync } =
+  const { mutateAsync: api_deleteSupervisor } =
     api.institution.instance.deleteSupervisor.useMutation();
 
-  const { mutateAsync: api_deleteManySupervisorsAsync } =
+  const { mutateAsync: api_deleteManySupervisors } =
     api.institution.instance.deleteManySupervisors.useMutation();
 
   async function handleAddSupervisor(data: NewSupervisor) {
@@ -72,7 +72,7 @@ export function AddSupervisorsSection() {
     };
 
     void toast
-      .promise(api_addSupervisorAsync({ params, newSupervisor }), {
+      .promise(api_addSupervisor({ params, newSupervisor }), {
         loading: "Adding supervisor...",
         success: `Successfully added supervisor ${newSupervisor.id} to ${spacesLabels.instance.short}`,
         // todo: revisit error reporting method
@@ -93,7 +93,7 @@ export function AddSupervisorsSection() {
   ): Promise<LinkUserResult[]> {
     return await toast
       .promise(
-        api_addManySupervisorsAsync({ params, newSupervisors: supervisors }),
+        api_addManySupervisors({ params, newSupervisors: supervisors }),
         {
           loading: `Adding ${supervisors.length} supervisors to ${spacesLabels.instance.short}...`,
           success: `Successfully added ${supervisors.length} supervisors to ${spacesLabels.instance.short}`,
@@ -111,9 +111,9 @@ export function AddSupervisorsSection() {
       });
   }
 
-  async function removeSupervisor(supervisorId: string) {
+  async function deleteSupervisor(supervisorId: string) {
     void toast
-      .promise(api_deleteSupervisorAsync({ params, supervisorId }), {
+      .promise(api_deleteSupervisor({ params, supervisorId }), {
         loading: "Removing supervisor...",
         success: `Successfully removed supervisor ${supervisorId} from ${spacesLabels.instance.short}`,
         error: `Failed to remove supervisor from ${spacesLabels.instance.short}`,
@@ -125,9 +125,9 @@ export function AddSupervisorsSection() {
       });
   }
 
-  async function removeSelectedSupervisors(supervisorIds: string[]) {
+  async function deleteManySupervisors(supervisorIds: string[]) {
     void toast
-      .promise(api_deleteManySupervisorsAsync({ params, supervisorIds }), {
+      .promise(api_deleteManySupervisors({ params, supervisorIds }), {
         loading: "Removing supervisors...",
         success: `Successfully removed ${supervisorIds.length} supervisors from ${spacesLabels.instance.short}`,
         error: `Failed to remove supervisors from ${spacesLabels.instance.short}`,
@@ -153,8 +153,8 @@ export function AddSupervisorsSection() {
   }
 
   const columns = useNewSupervisorColumns({
-    removeSupervisor,
-    removeSelectedSupervisors,
+    deleteSupervisor,
+    deleteManySupervisors,
   });
 
   return (
