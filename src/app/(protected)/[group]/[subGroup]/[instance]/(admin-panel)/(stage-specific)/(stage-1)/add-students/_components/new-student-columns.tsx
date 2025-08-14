@@ -16,7 +16,10 @@ import { type StudentDTO } from "@/dto";
 
 import { Stage } from "@/db/types";
 
-import { AccessControl } from "@/components/access-control";
+import {
+  ConditionalRender,
+  ConditionalRenderSimple,
+} from "@/components/access-control";
 import {
   useInstanceStage,
   usePathInInstance,
@@ -157,7 +160,7 @@ export function useNewStudentColumns({
                   <DropdownMenuContent align="center" side="bottom">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <AccessControl
+                    <ConditionalRenderSimple
                       allowedStages={previousStages(Stage.STUDENT_BIDDING)}
                     >
                       <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
@@ -170,7 +173,7 @@ export function useNewStudentColumns({
                           }
                         />
                       </DropdownMenuItem>
-                    </AccessControl>
+                    </ConditionalRenderSimple>
                   </DropdownMenuContent>
                 </YesNoActionContainer>
               </DropdownMenu>
@@ -205,20 +208,39 @@ export function useNewStudentColumns({
                     <span>View student details</span>
                   </Link>
                 </DropdownMenuItem>
-                <AccessControl
+                <ConditionalRender
                   allowedStages={previousStages(Stage.STUDENT_BIDDING)}
                 >
-                  <DropdownMenuItem className="bg-background text-destructive focus:bg-red-100/40 focus:text-destructive">
-                    <YesNoActionTrigger
-                      trigger={
-                        <button className="flex items-center gap-2 text-sm">
-                          <Trash2Icon className="h-4 w-4" />
-                          <span>Remove Student {student.name}</span>
-                        </button>
-                      }
-                    />
-                  </DropdownMenuItem>
-                </AccessControl>
+                  {({ allowed, reason }) =>
+                    allowed ? (
+                      <DropdownMenuItem className="bg-background text-destructive focus:bg-red-100/40 focus:text-destructive">
+                        <YesNoActionTrigger
+                          trigger={
+                            <button className="flex items-center gap-2 text-sm">
+                              <Trash2Icon className="h-4 w-4" />
+                              <span>Remove Student {student.name}</span>
+                            </button>
+                          }
+                        />
+                      </DropdownMenuItem>
+                    ) : (
+                      <WithTooltip
+                        tip={<p className="max-w-xl">{reason}</p>}
+                        forDisabled
+                      >
+                        <DropdownMenuItem
+                          className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive"
+                          disabled
+                        >
+                          <button className="flex items-center gap-2">
+                            <Trash2Icon className="h-4 w-4" />
+                            <span>Remove Student {student.name}</span>
+                          </button>
+                        </DropdownMenuItem>
+                      </WithTooltip>
+                    )
+                  }
+                </ConditionalRender>
               </DropdownMenuContent>
             </YesNoActionContainer>
           </DropdownMenu>
