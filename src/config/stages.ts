@@ -102,6 +102,10 @@ export const STAGES: Record<Stage, StageInfo> = {
   },
 };
 
+export function getStageLabel(s: Stage) {
+  return STAGES[s].displayName;
+}
+
 // TODO: somehow merge these two
 
 export const CHAPTER = {
