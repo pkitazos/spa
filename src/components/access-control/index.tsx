@@ -37,3 +37,15 @@ export function AccessControl({
     </RBAC>
   );
 }
+
+export {
+  ConditionalRender,
+  ConditionalRenderMapping,
+  ConditionalRenderSimple,
+} from "./conditional-render";
+
+export { useAccessControl } from "./use-access-control";
+export type {
+  AccessConditions,
+  AccessControlState,
+} from "./use-access-control";
