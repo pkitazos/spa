@@ -10,13 +10,10 @@ import {
   supervisorDtoSchema,
 } from "@/dto";
 
-import { Stage } from "@/db/types";
-
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
 import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
-import { subsequentStages } from "@/lib/utils/permissions/stage-check";
 import { instanceParamsSchema } from "@/lib/validations/params";
 import { supervisorCapacitiesSchema } from "@/lib/validations/supervisor-project-submission-details";
 
@@ -153,26 +150,6 @@ export const supervisorRouter = createTRPCRouter({
         audit("Updated supervisor capacities", { supervisorId, capacities });
         const supervisor = await instance.getSupervisor(supervisorId);
         return supervisor.setCapacityDetails(capacities);
-      },
-    ),
-
-  delete: procedure.instance
-    .inStage(subsequentStages(Stage.PROJECT_ALLOCATION))
-    .subGroupAdmin.input(z.object({ supervisorId: z.string() }))
-    .output(z.void())
-    .mutation(async ({ ctx: { instance, audit }, input: { supervisorId } }) => {
-      audit("Deleted supervisor", { supervisorId });
-      return await instance.deleteSupervisor(supervisorId);
-    }),
-
-  deleteMany: procedure.instance
-    .inStage(subsequentStages(Stage.PROJECT_ALLOCATION))
-    .subGroupAdmin.input(z.object({ supervisorIds: z.array(z.string()) }))
-    .output(z.void())
-    .mutation(
-      async ({ ctx: { instance, audit }, input: { supervisorIds } }) => {
-        audit("Deleted supervisors", { supervisorIds });
-        return await instance.deleteSupervisors(supervisorIds);
       },
     ),
 

@@ -37,6 +37,7 @@ import { createTRPCRouter } from "@/server/trpc";
 
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import { expand } from "@/lib/utils/general/instance-params";
+import { previousStages } from "@/lib/utils/permissions/stage-check";
 import { newReaderAllocationSchema } from "@/lib/validations/allocate-readers/new-reader-allocation";
 import { instanceParamsSchema } from "@/lib/validations/params";
 import { tabGroupSchema } from "@/lib/validations/tabs";
@@ -275,21 +276,42 @@ export const instanceRouter = createTRPCRouter({
       },
     ),
 
-  // TODO: rename to e.g. Delete user in instance
-  removeSupervisor: procedure.instance.subGroupAdmin
-    .input(z.object({ supervisorId: z.string() }))
+  deleteSupervisor: procedure.instance
+    .inStage(previousStages(Stage.PROJECT_ALLOCATION))
+    .subGroupAdmin.input(z.object({ supervisorId: z.string() }))
     .output(z.void())
     .mutation(async ({ ctx: { instance, audit }, input: { supervisorId } }) => {
-      audit("Removed supervisor", { supervisorId });
-      return await instance.unlinkUser(supervisorId);
+      audit("Deleted supervisor", { supervisorId });
+      return await instance.deleteSupervisor(supervisorId);
     }),
 
-  removeSupervisors: procedure.instance.subGroupAdmin
-    .input(z.object({ supervisorIds: z.array(z.string()) }))
+  deleteManySupervisors: procedure.instance
+    .inStage(previousStages(Stage.PROJECT_ALLOCATION))
+    .subGroupAdmin.input(z.object({ supervisorIds: z.array(z.string()) }))
     .output(z.void())
     .mutation(
       async ({ ctx: { instance, audit }, input: { supervisorIds } }) => {
-        audit("Removed supervisors", { data: supervisorIds });
+        audit("Deleted supervisors", { supervisorIds });
+        return await instance.deleteSupervisors(supervisorIds);
+      },
+    ),
+
+  deleteUserInInstance: procedure.instance
+    .inStage(previousStages(Stage.PROJECT_ALLOCATION))
+    .subGroupAdmin.input(z.object({ supervisorId: z.string() }))
+    .output(z.void())
+    .mutation(async ({ ctx: { instance, audit }, input: { supervisorId } }) => {
+      audit("Deleted UserInInstance", { supervisorId });
+      return await instance.unlinkUser(supervisorId);
+    }),
+
+  deleteManyUsersInInstance: procedure.instance
+    .inStage(previousStages(Stage.PROJECT_ALLOCATION))
+    .subGroupAdmin.input(z.object({ supervisorIds: z.array(z.string()) }))
+    .output(z.void())
+    .mutation(
+      async ({ ctx: { instance, audit }, input: { supervisorIds } }) => {
+        audit("Deleted UserInInstance", { data: supervisorIds });
         return instance.unlinkUsers(supervisorIds);
       },
     ),
