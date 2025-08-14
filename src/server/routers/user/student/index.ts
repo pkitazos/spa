@@ -10,7 +10,6 @@ import { Stage } from "@/db/types";
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
-import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
 import { stageGte } from "@/lib/utils/permissions/stage-check";
 
 import { preferenceRouter } from "./preference";
@@ -94,18 +93,21 @@ export const studentRouter = createTRPCRouter({
     }),
 
   // TODO rename + split
-  overviewData: procedure.instance.student.query(
-    async ({ ctx: { instance } }) => {
-      const { displayName, studentPreferenceSubmissionDeadline: deadline } =
-        await instance.get();
-
-      return {
+  overviewData: procedure.instance.student
+    .output(
+      z.object({
+        displayName: z.string(),
+        preferenceSubmissionDeadline: z.date(),
+      }),
+    )
+    .query(async ({ ctx: { instance } }) => {
+      const {
         displayName,
-        preferenceSubmissionDeadline: getGMTZoned(deadline),
-        deadlineTimeZoneOffset: getGMTOffset(deadline),
-      };
-    },
-  ),
+        studentPreferenceSubmissionDeadline: preferenceSubmissionDeadline,
+      } = await instance.get();
+
+      return { displayName, preferenceSubmissionDeadline };
+    }),
 
   // Can anyone see this?
   latestSubmission: procedure.instance.user
