@@ -28,7 +28,7 @@ export default async function AdminPanel({
             <p>
               <span className="text-muted-foreground">Stage:</span>{" "}
               <span>
-                {stageInfo.number} - {stageInfo.name}
+                {stageInfo.number} - {stageInfo.displayName}
               </span>
             </p>
             <p>

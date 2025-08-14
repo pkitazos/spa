@@ -15,7 +15,10 @@ import { type SupervisorDTO } from "@/dto";
 
 import { Role, Stage } from "@/db/types";
 
-import { AccessControl } from "@/components/access-control";
+import {
+  ConditionalRenderSimple,
+  ConditionalRender,
+} from "@/components/access-control";
 import {
   useInstanceStage,
   usePathInInstance,
@@ -231,7 +234,7 @@ export function useAllSupervisorsColumns({
                   <span>Edit supervisor details</span>
                 </Link>
               </DropdownMenuItem>
-              <AccessControl
+              <ConditionalRenderSimple
                 allowedStages={previousStages(Stage.STUDENT_BIDDING)}
               >
                 <DropdownMenuItem className="group/item">
@@ -247,21 +250,40 @@ export function useAllSupervisorsColumns({
                     <span>Create new project</span>
                   </Link>
                 </DropdownMenuItem>
-              </AccessControl>
-              <AccessControl
+              </ConditionalRenderSimple>
+              <ConditionalRender
                 allowedStages={previousStages(Stage.STUDENT_BIDDING)}
               >
-                <DropdownMenuItem className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive">
-                  <YesNoActionTrigger
-                    trigger={
-                      <button className="flex items-center gap-2">
-                        <Trash2Icon className="h-4 w-4" />
-                        <span>Remove from Instance</span>
-                      </button>
-                    }
-                  />
-                </DropdownMenuItem>
-              </AccessControl>
+                {({ allowed, reason }) =>
+                  allowed ? (
+                    <DropdownMenuItem className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive">
+                      <YesNoActionTrigger
+                        trigger={
+                          <button className="flex items-center gap-2">
+                            <Trash2Icon className="h-4 w-4" />
+                            <span>Remove from Instance</span>
+                          </button>
+                        }
+                      />
+                    </DropdownMenuItem>
+                  ) : (
+                    <WithTooltip
+                      tip={<p className="max-w-xl">{reason}</p>}
+                      forDisabled
+                    >
+                      <DropdownMenuItem
+                        className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive"
+                        disabled
+                      >
+                        <button className="flex items-center gap-2">
+                          <Trash2Icon className="h-4 w-4" />
+                          <span>Remove from Instance</span>
+                        </button>
+                      </DropdownMenuItem>
+                    </WithTooltip>
+                  )
+                }
+              </ConditionalRender>
             </DropdownMenuContent>
           </YesNoActionContainer>
         </DropdownMenu>
