@@ -40,12 +40,13 @@ export function AccessControl({
 
 export {
   ConditionalRender,
-  ConditionalRenderMapping,
   ConditionalRenderSimple,
 } from "./conditional-render";
 
 export { useAccessControl } from "./use-access-control";
 export type {
-  AccessConditions,
+  CustomCondition,
+  AccessCondition,
+  DenialReason,
   AccessControlState,
-} from "./use-access-control";
+} from "./types";

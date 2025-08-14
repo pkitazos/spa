@@ -20,6 +20,7 @@ import {
   ConditionalRender,
   ConditionalRenderSimple,
 } from "@/components/access-control";
+import { FormatDenial } from "@/components/access-control/format-denial";
 import {
   useInstanceStage,
   usePathInInstance,
@@ -210,9 +211,8 @@ export function useNewStudentColumns({
                 </DropdownMenuItem>
                 <ConditionalRender
                   allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-                >
-                  {({ allowed, reason }) =>
-                    allowed ? (
+                  components={{
+                    allowed: (
                       <DropdownMenuItem className="bg-background text-destructive focus:bg-red-100/40 focus:text-destructive">
                         <YesNoActionTrigger
                           trigger={
@@ -223,9 +223,20 @@ export function useNewStudentColumns({
                           }
                         />
                       </DropdownMenuItem>
-                    ) : (
+                    ),
+                    denied: (data) => (
                       <WithTooltip
-                        tip={<p className="max-w-xl">{reason}</p>}
+                        tip={
+                          <p className="max-w-xl">
+                            {data.reasons.map((reason, i) => (
+                              <FormatDenial
+                                key={i}
+                                ctx={data.ctx}
+                                reason={reason}
+                              />
+                            ))}
+                          </p>
+                        }
                         forDisabled
                       >
                         <DropdownMenuItem
@@ -238,9 +249,9 @@ export function useNewStudentColumns({
                           </button>
                         </DropdownMenuItem>
                       </WithTooltip>
-                    )
-                  }
-                </ConditionalRender>
+                    ),
+                  }}
+                />
               </DropdownMenuContent>
             </YesNoActionContainer>
           </DropdownMenu>
