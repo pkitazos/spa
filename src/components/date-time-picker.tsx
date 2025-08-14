@@ -1,9 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
-import { format } from "date-fns";
-import { CalendarIcon, Clock } from "lucide-react";
+import {
+  format,
+  getDate,
+  getMonth,
+  getYear,
+  parse,
+  setDate,
+  setMonth,
+  setYear,
+} from "date-fns";
+import { CalendarIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -13,56 +22,31 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 import { cn } from "@/lib/utils";
 
+import { Input } from "./ui/input";
+
 interface DateTimePickerProps {
-  value?: Date;
-  onChange?: (date: Date) => void;
+  value: Date;
+  onChange: (date: Date) => void;
   disabled?: boolean;
   label?: string;
   placeholder?: string;
 }
 
 export function DateTimePicker({
-  value,
-  onChange,
+  value: controlled,
+  onChange: extOnChange,
   disabled = false,
   label = "Date and time",
   placeholder = "Select date and time",
 }: DateTimePickerProps) {
-  const [date, setDate] = useState<Date | undefined>(value);
-  const [hours, setHours] = useState<string>(
-    value ? format(value, "HH") : "12",
-  );
-  const [minutes, setMinutes] = useState<string>(
-    value ? format(value, "mm") : "00",
-  );
+  const [value, onChange] = useState(controlled);
 
   useEffect(() => {
-    if (date) {
-      const newDate = new Date(date);
-      newDate.setHours(Number.parseInt(hours, 10));
-      newDate.setMinutes(Number.parseInt(minutes, 10));
-      newDate.setSeconds(0);
-      onChange?.(newDate);
-    }
-  }, [date, hours, minutes, onChange]);
-
-  const hoursOptions = Array.from({ length: 24 }, (_, i) =>
-    i.toString().padStart(2, "0"),
-  );
-
-  const minutesOptions = Array.from({ length: 60 }, (_, i) =>
-    i.toString().padStart(2, "0"),
-  );
+    extOnChange(value);
+  }, [value, extOnChange]);
 
   return (
     <div className="space-y-2">
@@ -73,13 +57,13 @@ export function DateTimePicker({
             variant="outline"
             className={cn(
               "w-full justify-start text-left font-normal",
-              !date && "text-muted-foreground",
+              !value && "text-muted-foreground",
             )}
             disabled={disabled}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? (
-              format(date, `PPP 'at' ${hours}:${minutes}`)
+            {value ? (
+              format(value, "PPP 'at' HH:mm OOOO")
             ) : (
               <span>{placeholder}</span>
             )}
@@ -88,43 +72,39 @@ export function DateTimePicker({
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             mode="single"
-            selected={date}
-            onSelect={setDate}
+            selected={value}
+            onSelect={(v) => {
+              if (!v) return;
+              onChange((prev) => {
+                let newDate = prev;
+                newDate = setYear(newDate, getYear(v));
+                newDate = setMonth(newDate, getMonth(v));
+                newDate = setDate(newDate, getDate(v));
+
+                return newDate;
+              });
+            }}
             initialFocus
           />
-          <div className="border-t p-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
+          <div className="border-t p-3 flex flex-row justify-between gap-3">
+            <div className="flex flex-row items-center justify-center gap-2">
+              <div className="flex flex-col justify-start space-x-2">
                 <span className="text-sm font-medium">Time</span>
+                <span className="self-end text-sm text-muted-foreground">
+                  {format(value, "OOOO")}
+                </span>
               </div>
-              <div className="flex items-center space-x-2">
-                <Select value={hours} onValueChange={setHours}>
-                  <SelectTrigger className="w-[70px]">
-                    <SelectValue placeholder="Hours" />
-                  </SelectTrigger>
-                  <SelectContent position="popper">
-                    {hoursOptions.map((hour) => (
-                      <SelectItem key={hour} value={hour}>
-                        {hour}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <span className="text-sm">:</span>
-                <Select value={minutes} onValueChange={setMinutes}>
-                  <SelectTrigger className="w-[70px]">
-                    <SelectValue placeholder="Minutes" />
-                  </SelectTrigger>
-                  <SelectContent position="popper">
-                    {minutesOptions.map((minute) => (
-                      <SelectItem key={minute} value={minute}>
-                        {minute}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Input
+                value={format(value, "HH:mm")}
+                onChange={(e) => {
+                  onChange((prev) => parse(e.target.value, "HH:mm", prev));
+                }}
+                type="time"
+                id="time-picker"
+                className="bg-background appearance-none [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-calendar-picker-indicator]:appearance-none"
+              />
             </div>
           </div>
         </PopoverContent>
