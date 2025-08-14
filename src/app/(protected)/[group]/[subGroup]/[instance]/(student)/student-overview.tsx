@@ -26,11 +26,8 @@ import Layout from "./layout";
 export async function StudentOverview({ params }: { params: InstanceParams }) {
   const stage = await api.institution.instance.currentStage({ params });
 
-  const {
-    displayName,
-    preferenceSubmissionDeadline: deadline,
-    deadlineTimeZoneOffset: timeZoneOffset,
-  } = await api.user.student.overviewData({ params });
+  const { displayName, preferenceSubmissionDeadline: deadline } =
+    await api.user.student.overviewData({ params });
 
   const { minPreferences, maxPreferences } =
     await api.user.student.preferenceRestrictions({ params });
@@ -92,7 +89,9 @@ export async function StudentOverview({ params }: { params: InstanceParams }) {
               </SectionHeading>
               <p className="flex gap-2 text-xl">
                 {format(deadline, "dd MMM yyyy - HH:mm")}
-                <span className="text-muted-foreground">{timeZoneOffset}</span>
+                <span className="text-muted-foreground">
+                  {format(deadline, "OOOO")}
+                </span>
               </p>
             </div>
             <div className="mt-16 flex flex-col gap-4">
