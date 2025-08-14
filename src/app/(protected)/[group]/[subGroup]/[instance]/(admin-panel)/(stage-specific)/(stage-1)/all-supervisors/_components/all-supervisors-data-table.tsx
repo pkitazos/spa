@@ -26,45 +26,43 @@ export function SupervisorsDataTable({
   const params = useInstanceParams();
   const router = useRouter();
 
-  const { mutateAsync: deleteAsync } = api.user.supervisor.delete.useMutation();
-  const { mutateAsync: deleteSelectedAsync } =
-    api.user.supervisor.deleteMany.useMutation();
+  const { mutateAsync: api_deleteAsync } =
+    api.institution.instance.deleteSupervisor.useMutation();
 
-  async function handleDelete(supervisorId: string) {
-    void toast.promise(
-      deleteAsync({ params, supervisorId }).then(() => router.refresh()),
-      {
+  const { mutateAsync: api_deleteManyAsync } =
+    api.institution.instance.deleteManySupervisors.useMutation();
+
+  async function deleteSupervisor(supervisorId: string) {
+    void toast
+      .promise(api_deleteAsync({ params, supervisorId }), {
         loading: `Removing Supervisor ${supervisorId} from ${spacesLabels.instance.short}...`,
-        error: "Something went wrong",
         success: `Supervisor ${supervisorId} deleted successfully`,
-      },
-    );
+        error: `Failed to remove supervisor ${supervisorId} from ${spacesLabels.instance.short}`,
+      })
+      .unwrap()
+      .then(() => {
+        router.refresh();
+      });
   }
 
-  async function handleDeleteSelected(supervisorIds: string[]) {
-    void toast.promise(
-      deleteSelectedAsync({ params, supervisorIds }).then(() =>
-        router.refresh(),
-      ),
-      {
+  async function deleteSelectedSupervisors(supervisorIds: string[]) {
+    void toast
+      .promise(api_deleteManyAsync({ params, supervisorIds }), {
         loading: `Removing ${supervisorIds.length} supervisors from ${spacesLabels.instance.short}...`,
-        error: "Something went wrong",
         success: `Successfully removed ${supervisorIds.length} Supervisors from ${spacesLabels.instance.short}`,
-      },
-    );
+        error: `Failed to remove supervisors from ${spacesLabels.instance.short}`,
+      })
+      .unwrap()
+      .then(() => {
+        router.refresh();
+      });
   }
 
   const columns = useAllSupervisorsColumns({
     roles,
-    deleteSupervisor: handleDelete,
-    deleteSelectedSupervisors: handleDeleteSelected,
+    deleteSupervisor,
+    deleteSelectedSupervisors,
   });
 
-  return (
-    <DataTable
-      className="w-full"
-      columns={columns}
-      data={data}
-    />
-  );
+  return <DataTable className="w-full" columns={columns} data={data} />;
 }

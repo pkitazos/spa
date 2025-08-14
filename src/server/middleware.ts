@@ -88,6 +88,7 @@ const stageMiddleware = (allowedStages: Stage[]) =>
     const instanceData = await instance.get();
 
     if (!allowedStages.includes(instanceData.stage)) {
+      // ? maybe this error should also be logged using the Error Logger?
       throw new TRPCError({
         code: "FORBIDDEN",
         message: "Instance is not in correct stage",
