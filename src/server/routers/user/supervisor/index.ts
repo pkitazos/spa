@@ -13,7 +13,6 @@ import {
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
-import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
 import { instanceParamsSchema } from "@/lib/validations/params";
 import { supervisorCapacitiesSchema } from "@/lib/validations/supervisor-project-submission-details";
 
@@ -59,18 +58,13 @@ export const supervisorRouter = createTRPCRouter({
       z.object({
         displayName: z.string(),
         // TODO make DTO for below
-        deadlineTimeZoneOffset: z.string(),
         projectSubmissionDeadline: z.date(),
       }),
     )
     .query(async ({ ctx: { instance } }) => {
       const { displayName, projectSubmissionDeadline } = await instance.get();
 
-      return {
-        displayName,
-        deadlineTimeZoneOffset: getGMTOffset(projectSubmissionDeadline),
-        projectSubmissionDeadline: getGMTZoned(projectSubmissionDeadline),
-      };
+      return { displayName, projectSubmissionDeadline };
     }),
 
   instanceProjects: procedure.instance.subGroupAdmin

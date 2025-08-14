@@ -22,10 +22,8 @@ export async function SupervisorInstanceHome({
 }) {
   const stage = await api.institution.instance.currentStage({ params });
 
-  const {
-    projectSubmissionDeadline: deadline,
-    deadlineTimeZoneOffset: timeZoneOffset,
-  } = await api.user.supervisor.instancePage({ params });
+  const { projectSubmissionDeadline: deadline } =
+    await api.user.supervisor.instancePage({ params });
 
   const { currentSubmissionCount, submissionTarget } =
     await api.user.supervisor.projectStats({ params });
@@ -40,7 +38,9 @@ export async function SupervisorInstanceHome({
             </SectionHeading>
             <p className="flex gap-2 text-xl">
               {format(deadline, "dd MMM yyyy - HH:mm")}
-              <span className="text-muted-foreground">{timeZoneOffset}</span>
+              <span className="text-muted-foreground">
+                {format(deadline, "OOOO")}
+              </span>
             </p>
           </div>
           <div className="mt-16 flex flex-col gap-4">
