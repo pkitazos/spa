@@ -48,17 +48,17 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
   const { data, isLoading, refetch } =
     api.institution.instance.getStudents.useQuery({ params });
 
-  const { mutateAsync: addStudentAsync } =
+  const { mutateAsync: api_addStudent } =
     api.institution.instance.addStudent.useMutation();
 
-  const { mutateAsync: addStudentsAsync } =
+  const { mutateAsync: api_addManyStudents } =
     api.institution.instance.addStudents.useMutation();
 
-  const { mutateAsync: removeStudentAsync } =
-    api.institution.instance.removeStudent.useMutation();
+  const { mutateAsync: api_deleteStudent } =
+    api.institution.instance.deleteStudent.useMutation();
 
-  const { mutateAsync: removeStudentsAsync } =
-    api.institution.instance.removeStudents.useMutation();
+  const { mutateAsync: api_deleteManyStudents } =
+    api.institution.instance.deleteManyStudents.useMutation();
 
   async function handleAddStudent(data: NewStudent) {
     const flag = flags.find((f) => f.id === data.flagId);
@@ -76,63 +76,65 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
       latestSubmission: undefined,
     };
 
-    void toast.promise(
-      addStudentAsync({ params, newStudent }).then(async () => {
-        router.refresh();
-        await refetch();
-      }),
-      {
+    void toast
+      .promise(api_addStudent({ params, newStudent }), {
         loading: "Adding student...",
         success: `Successfully added student ${newStudent.id} to ${spacesLabels.instance.short}`,
         error: (err) =>
           err instanceof TRPCClientError
             ? err.message
             : `Failed to add student to ${spacesLabels.instance.short}`,
-      },
-    );
+      })
+      .unwrap()
+      .then(async () => {
+        router.refresh();
+        await refetch();
+      });
   }
 
   async function handleAddStudents(
     students: StudentDTO[],
   ): Promise<LinkUserResult[]> {
-    try {
-      const results = await addStudentsAsync({ params, newStudents: students });
-
-      router.refresh();
-      await refetch();
-
-      return results;
-    } catch (err) {
-      console.error("Error adding students:", err);
-      throw err;
-    }
-  }
-
-  async function handleStudentRemoval(studentId: string) {
-    void toast.promise(
-      removeStudentAsync({ params, studentId }).then(async () => {
+    return await toast
+      .promise(api_addManyStudents({ params, newStudents: students }), {
+        loading: `Adding ${students.length} students...`,
+        success: `Successfully added ${students.length} students to ${spacesLabels.instance.short}`,
+        error: `Failed to add students to ${spacesLabels.instance.short}`,
+      })
+      .unwrap()
+      .then(async (results) => {
         router.refresh();
         await refetch();
-      }),
-      {
+        return results;
+      });
+  }
+
+  async function deleteStudent(studentId: string) {
+    void toast
+      .promise(api_deleteStudent({ params, studentId }), {
         loading: "Removing student...",
         success: `Successfully removed student ${studentId} from ${spacesLabels.instance.short}`,
         error: `Failed to remove student from ${spacesLabels.instance.short}`,
-      },
-    );
-  }
-  async function handleStudentsRemoval(studentIds: string[]) {
-    void toast.promise(
-      removeStudentsAsync({ params, studentIds }).then(async () => {
+      })
+      .unwrap()
+      .then(async () => {
         router.refresh();
         await refetch();
-      }),
-      {
+      });
+  }
+
+  async function deleteManyStudents(studentIds: string[]) {
+    void toast
+      .promise(api_deleteManyStudents({ params, studentIds }), {
         loading: "Removing students...",
         success: `Successfully removed ${studentIds.length} students from ${spacesLabels.instance.short}`,
         error: `Failed to remove students from ${spacesLabels.instance.short}`,
-      },
-    );
+      })
+      .unwrap()
+      .then(async () => {
+        router.refresh();
+        await refetch();
+      });
   }
 
   function handleClearResults() {
@@ -148,10 +150,7 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
     setShowErrorModal(true);
   }
 
-  const columns = useNewStudentColumns({
-    removeStudent: handleStudentRemoval,
-    removeSelectedStudents: handleStudentsRemoval,
-  });
+  const columns = useNewStudentColumns({ deleteStudent, deleteManyStudents });
 
   return (
     <>
