@@ -2,47 +2,62 @@
 
 import { type ReactNode } from "react";
 
-import { type AccessConditions, useAccessControl } from "./use-access-control";
+import {
+  type AccessCondition,
+  type AccessControlContext,
+  AccessControlResult,
+  type DenialReason,
+} from "./types";
+import { useAccessControl } from "./use-access-control";
 
-interface ConditionalRenderProps extends AccessConditions {
-  children: (state: ReturnType<typeof useAccessControl>) => ReactNode;
-}
-
-interface ConditionalRenderMappingProps extends AccessConditions {
-  components: { allowed: ReactNode; denied: ReactNode; loading?: ReactNode };
+interface ConditionalRenderProps extends AccessCondition {
+  components: {
+    allowed: ReactNode;
+    denied: (data: {
+      ctx: AccessControlContext;
+      reasons: DenialReason[];
+    }) => ReactNode;
+    loading?: ReactNode;
+    error?: ReactNode;
+  };
 }
 
 export function ConditionalRender({
-  children,
+  components,
   ...conditions
 }: ConditionalRenderProps) {
   const accessState = useAccessControl(conditions);
-  return <>{children(accessState)}</>;
-}
 
-export function ConditionalRenderMapping({
-  components,
-  ...conditions
-}: ConditionalRenderMappingProps) {
-  const accessState = useAccessControl(conditions);
-
-  if (accessState.isLoading) {
+  if (accessState.status === AccessControlResult.LOADING) {
     return <>{components.loading ?? null}</>;
+  } else if (accessState.status === AccessControlResult.ERROR) {
+    return <>{components.error ?? null}</>;
   }
 
-  return <>{accessState.allowed ? components.allowed : components.denied}</>;
+  return (
+    <>
+      {accessState.status === AccessControlResult.ALLOWED
+        ? components.allowed
+        : components.denied(accessState)}
+    </>
+  );
 }
 
+// TODO - just fill in the above component with sensible defaults
 export function ConditionalRenderSimple({
   children,
   fallback,
-  ...conditions
-}: AccessConditions & { children: ReactNode; fallback?: ReactNode }) {
-  const accessState = useAccessControl(conditions);
+  ...condition
+}: AccessCondition & { children: ReactNode; fallback?: ReactNode }) {
+  const accessState = useAccessControl(condition);
 
-  if (accessState.isLoading) {
+  if (accessState.status === AccessControlResult.LOADING) {
     return null;
   }
 
-  return <>{accessState.allowed ? children : fallback}</>;
+  return (
+    <>
+      {accessState.status === AccessControlResult.ALLOWED ? children : fallback}
+    </>
+  );
 }
