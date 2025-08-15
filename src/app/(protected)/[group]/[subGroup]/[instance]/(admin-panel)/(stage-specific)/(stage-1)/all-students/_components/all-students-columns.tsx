@@ -205,20 +205,18 @@ export function useAllStudentsColumns({
                   <DropdownMenuSeparator />
                   <ConditionalRender
                     allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-                    components={{
-                      allowed: (
-                        <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
-                          <YesNoActionTrigger
-                            trigger={
-                              <button className="flex items-center gap-2">
-                                <Trash2Icon className="h-4 w-4" />
-                                <span>Remove selected Students</span>
-                              </button>
-                            }
-                          />
-                        </DropdownMenuItem>
-                      ),
-                    }}
+                    allowed={
+                      <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
+                        <YesNoActionTrigger
+                          trigger={
+                            <button className="flex items-center gap-2">
+                              <Trash2Icon className="h-4 w-4" />
+                              <span>Remove selected Students</span>
+                            </button>
+                          }
+                        />
+                      </DropdownMenuItem>
+                    }
                   />
                 </DropdownMenuContent>
               </YesNoActionContainer>
@@ -265,47 +263,45 @@ export function useAllStudentsColumns({
               </DropdownMenuItem>
               <ConditionalRender
                 allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-                components={{
-                  allowed: (
-                    <DropdownMenuItem className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive">
-                      <YesNoActionTrigger
-                        trigger={
-                          <button className="flex items-center gap-2">
-                            <Trash2Icon className="h-4 w-4" />
-                            <span>Remove Student {student.name}</span>
-                          </button>
-                        }
-                      />
-                    </DropdownMenuItem>
-                  ),
-                  denied: (data) => (
-                    <WithTooltip
-                      tip={
-                        <p className="max-w-xl">
-                          {data.reasons.map((reason, i) => (
-                            <FormatDenial
-                              key={i}
-                              ctx={data.ctx}
-                              reason={reason}
-                            />
-                          ))}
-                        </p>
-                      }
-                      forDisabled
-                    >
-                      <DropdownMenuItem
-                        className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive"
-                        disabled
-                      >
+                allowed={
+                  <DropdownMenuItem className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive">
+                    <YesNoActionTrigger
+                      trigger={
                         <button className="flex items-center gap-2">
                           <Trash2Icon className="h-4 w-4" />
                           <span>Remove Student {student.name}</span>
                         </button>
-                      </DropdownMenuItem>
-                    </WithTooltip>
-                  ),
-                }}
-              ></ConditionalRender>
+                      }
+                    />
+                  </DropdownMenuItem>
+                }
+                denied={(data) => (
+                  <WithTooltip
+                    tip={
+                      <p className="max-w-xl">
+                        {data.reasons.map((reason, i) => (
+                          <FormatDenial
+                            key={i}
+                            ctx={data.ctx}
+                            reason={reason}
+                          />
+                        ))}
+                      </p>
+                    }
+                    forDisabled
+                  >
+                    <DropdownMenuItem
+                      className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive"
+                      disabled
+                    >
+                      <button className="flex items-center gap-2">
+                        <Trash2Icon className="h-4 w-4" />
+                        <span>Remove Student {student.name}</span>
+                      </button>
+                    </DropdownMenuItem>
+                  </WithTooltip>
+                )}
+              />
             </DropdownMenuContent>
           </YesNoActionContainer>
         </DropdownMenu>
