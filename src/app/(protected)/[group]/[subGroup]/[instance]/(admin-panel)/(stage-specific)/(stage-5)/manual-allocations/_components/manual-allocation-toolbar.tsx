@@ -25,9 +25,7 @@ export function ManualAllocationToolbar({
   const isFiltered = table.getState().columnFilters.length > 0;
 
   const availableFlags = useMemo(() => {
-    return students
-      .map((s) => ({ id: s.flag.id, title: s.flag.displayName }))
-      .filter(nubsById);
+    return students.map((s) => s.flag).filter(nubsById);
   }, [students]);
 
   return (

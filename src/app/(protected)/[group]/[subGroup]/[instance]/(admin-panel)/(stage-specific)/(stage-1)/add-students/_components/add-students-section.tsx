@@ -213,7 +213,7 @@ export function AddStudentsSection({ flags }: { flags: FlagDTO[] }) {
               columnId: "Flag",
               options: flags.map((flag) => ({
                 id: flag.displayName,
-                title: flag.displayName,
+                displayName: flag.displayName,
               })),
             },
           ]}

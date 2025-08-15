@@ -151,17 +151,19 @@ export function AllProjectsDataTable({
 
   const filters = [
     {
+      title: "Flags",
       columnId: "Flags",
       options: projectDescriptors.flags.map((flag) => ({
         id: flag.id,
-        title: flag.displayName,
+        displayName: flag.displayName,
       })),
     },
     {
+      title: "Keywords",
       columnId: "Keywords",
       options: projectDescriptors.tags.map((tag) => ({
         id: tag.id,
-        title: tag.title,
+        displayName: tag.title,
       })),
     },
   ];
