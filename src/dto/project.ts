@@ -125,7 +125,7 @@ const initialisationSchema = z.object({
 
   takenTitles: z.set(z.string()),
 
-  currentProject: editApiInputSchema.optional(),
+  currentProject: editApiInputSchema.partial().optional(),
 });
 
 type ProjectFormInitialisationDTO = z.infer<typeof initialisationSchema>;
@@ -183,10 +183,10 @@ export const formToApiTransformations = {
       supervisorId: currentProject.supervisorId,
 
       flags: initialisationData.flags.filter((flag) =>
-        currentProject.flagIds.includes(flag.id),
+        (currentProject.flagIds ?? []).includes(flag.id),
       ),
       tags: initialisationData.tags.filter((tag) =>
-        currentProject.tagIds.includes(tag.id),
+        (currentProject.tagIds ?? []).includes(tag.id),
       ),
 
       isPreAllocated: !!currentProject.preAllocatedStudentId,

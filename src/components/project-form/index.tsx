@@ -1,14 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { type UseFormReturn } from "react-hook-form";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 
 import {
-  projectForm,
   type ProjectFormSubmissionDTO,
   type ProjectFormInitialisationDTO,
   type ProjectFormInternalStateDTO,
@@ -51,76 +48,26 @@ import { MultiSelect } from "../ui/multi-select";
 
 interface ProjectFormProps {
   formInitialisationData: ProjectFormInitialisationDTO;
-  defaultValues?: Partial<ProjectFormInternalStateDTO>;
   onSubmit: (data: ProjectFormSubmissionDTO) => void;
   submissionButtonLabel: string;
   userRole: typeof Role.ADMIN | typeof Role.SUPERVISOR;
   children?: React.ReactNode;
   isSubmitting?: boolean;
-  onFormDirtyChange: () => void;
+  form: UseFormReturn<ProjectFormInternalStateDTO>;
 }
 
 export function ProjectForm({
   formInitialisationData,
-  defaultValues,
   onSubmit,
   submissionButtonLabel,
   userRole,
   children,
+  form,
   isSubmitting = false,
-  onFormDirtyChange,
 }: ProjectFormProps) {
-  const { takenTitles, flags, tags, students, supervisors } =
-    formInitialisationData;
-
-  const projectFormInternalStateSchema =
-    projectForm.buildInternalStateSchema(takenTitles);
-
-  const form = useForm({
-    resolver: zodResolver(projectFormInternalStateSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      flags,
-      tags: [],
-      capacityUpperBound: 1,
-      isPreAllocated: false,
-      preAllocatedStudentId: "",
-      supervisorId: "",
-      ...defaultValues,
-    },
-  });
+  const { flags, tags, students, supervisors } = formInitialisationData;
 
   const isPreAllocated = form.watch("isPreAllocated");
-
-  const previousDefaultValues = useRef(defaultValues);
-
-  useEffect(() => {
-    if (defaultValues !== previousDefaultValues.current) {
-      const newDefaults = {
-        title: "",
-        description: "",
-        flags,
-        tags: [],
-        capacityUpperBound: 1,
-        isPreAllocated: false,
-        preAllocatedStudentId: "",
-        supervisorId: "",
-        ...defaultValues,
-      };
-
-      form.reset(newDefaults);
-      previousDefaultValues.current = defaultValues;
-    }
-  }, [defaultValues, form, flags, tags]);
-
-  useEffect(() => {
-    const subscription = form.watch(() => {
-      onFormDirtyChange();
-    });
-
-    return () => subscription.unsubscribe();
-  }, [form, onFormDirtyChange]);
 
   const handlePreAllocatedToggle = () => {
     const newState = !isPreAllocated;
@@ -562,6 +509,7 @@ export function ProjectForm({
           />
         </div>
 
+        {/* Form Actions */}
         <div className="mt-16 flex justify-end gap-8">
           {children}
           <Button type="submit" size="lg" disabled={isSubmitting}>

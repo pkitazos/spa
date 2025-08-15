@@ -1,31 +1,31 @@
 "use client";
 
-import { useCallback, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
-import { spacesLabels } from "@/config/spaces";
+import { PAGES } from "@/config/pages";
 
 import { type InstanceDTO, type ProjectDTO, type SupervisorDTO } from "@/dto";
-import { type ProjectFormInitialisationDTO } from "@/dto/project";
-
-import { type Role } from "@/db/types";
-
-import { useInstanceParams } from "@/components/params-context";
-import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  formToApiTransformations,
+  type ProjectFormSubmissionDTO,
+  type ProjectFormInitialisationDTO,
+} from "@/dto/project";
 
-import { isSameInstance } from "@/lib/utils/general/instance-params";
-import { nubsById } from "@/lib/utils/list-unique";
+import { Role } from "@/db/types";
 
-import { CreateProjectForm } from "../project-form/create-project";
+import {
+  useInstanceParams,
+  usePathInInstance,
+} from "@/components/params-context";
+import { Button } from "@/components/ui/button";
 
-import { ProjectSearchDataTable } from "./project-search-data-table";
+import { api } from "@/lib/trpc/client";
+
+import { ProjectForm } from "../project-form";
+import { useProjectForm } from "../project-form/use-project-form";
+
+import { ProjectSelectionManager } from "./project-selection-manager";
 
 export type ProjectSearchData = {
   instanceData: InstanceDTO;
@@ -42,7 +42,6 @@ interface ProjectCreationManagerProps {
   formInitialisationData: ProjectFormInitialisationDTO;
   userRole: typeof Role.ADMIN | typeof Role.SUPERVISOR;
   currentUserId: string;
-  onBehalfOf?: string;
 }
 
 export function ProjectCreationManager({
@@ -50,160 +49,76 @@ export function ProjectCreationManager({
   formInitialisationData,
   userRole,
   currentUserId,
-  onBehalfOf,
 }: ProjectCreationManagerProps) {
+  const form = useProjectForm(formInitialisationData);
+
   const params = useInstanceParams();
+  const router = useRouter();
 
-  const [selectedProjectData, setSelectedProjectData] = useState<
-    ProjectSearchData | undefined
-  >(undefined);
-  const [pendingProjectData, setPendingProjectData] = useState<
-    ProjectSearchData | undefined
-  >(undefined);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const { basePath, getPath } = usePathInInstance();
 
-  const [hasUserEdits, setHasUserEdits] = useState(false);
-  const [hasTemplate, setHasTemplate] = useState(false);
+  const { mutateAsync: api_createProject, isPending } =
+    api.project.create.useMutation();
 
-  const isApplyingTemplate = useRef(false);
+  const handleSubmit = async (submissionData: ProjectFormSubmissionDTO) => {
+    const apiData = formToApiTransformations.submissionToCreateApi(
+      submissionData,
+      currentUserId,
+    );
 
-  function handleProjectSelect(data: ProjectSearchData) {
-    if (hasUserEdits) {
-      setPendingProjectData(data);
-      setShowConfirmDialog(true);
-    } else {
-      applyTemplate(data);
-    }
-  }
+    void toast.promise(
+      api_createProject({ params, newProject: apiData })
+        .then((projectId) => {
+          router.push(getPath(`projects/${projectId}`));
+          router.refresh();
+          return projectId;
+        })
+        .catch((error) => {
+          console.error("Project creation error:", error);
+        }),
+      {
+        success: "Successfully created project",
+        loading: "Creating Project...",
+        error: "Something went wrong while creating the project",
+      },
+    );
+  };
 
-  function applyTemplate(data: ProjectSearchData) {
-    isApplyingTemplate.current = true;
-    setSelectedProjectData(data);
-    setHasTemplate(true);
-    setHasUserEdits(false);
+  const handleCancel = () => {
+    const redirectPath =
+      userRole === Role.ADMIN
+        ? basePath
+        : getPath(`${PAGES.myProposedProjects.href}`);
 
-    // resetting the flag after a brief delay to allow form updates to complete
-    setTimeout(() => {
-      isApplyingTemplate.current = false;
-    }, 100);
-  }
-
-  function handleConfirmOverride() {
-    if (pendingProjectData) {
-      applyTemplate(pendingProjectData);
-    }
-    setShowConfirmDialog(false);
-    setPendingProjectData(undefined);
-  }
-
-  function handleCancelOverride() {
-    setShowConfirmDialog(false);
-    setPendingProjectData(undefined);
-  }
-
-  function handleFormChange() {
-    // ignore changes if we're currently applying a template
-    if (isApplyingTemplate.current) {
-      return;
-    }
-
-    // only set hasUserEdits if we have a template applied
-    // (changes to a blank form don't count as "user edits")
-    if (hasTemplate) {
-      setHasUserEdits(true);
-    }
-  }
-
-  const computeDefaultValues = useCallback(() => {
-    if (!selectedProjectData) return { supervisorId: onBehalfOf };
-
-    const { instanceData, project } = selectedProjectData;
-
-    const sameInstance = isSameInstance(params, instanceData);
-
-    return {
-      title: selectedProjectData.project.title,
-      description: selectedProjectData.project.description,
-      flags: sameInstance ? project.flags : [],
-      tags: sameInstance ? project.tags : [],
-      supervisorId: onBehalfOf ?? selectedProjectData.project.supervisorId,
-    };
-  }, [selectedProjectData, params, onBehalfOf]);
-
-  const filters = [
-    {
-      columnId: "instance",
-      title: spacesLabels.instance.short,
-      options: previousProjectData
-        .map((row) => ({
-          id: row.instanceData.displayName,
-          displayName: row.instanceData.displayName,
-        }))
-        .filter(nubsById),
-    },
-    {
-      columnId: "Flags",
-      title: "filter by Flags",
-      options: previousProjectData
-        .filter((p) => isSameInstance(params, p.instanceData))
-        .flatMap((p) => p.project.flags)
-        .filter(nubsById),
-    },
-    {
-      columnId: "Keywords",
-      title: "filter by Keywords",
-      options: previousProjectData
-        .filter((p) => isSameInstance(params, p.instanceData))
-        .flatMap((p) =>
-          p.project.tags.map((tag) => ({ id: tag.id, displayName: tag.title })),
-        )
-        .filter(nubsById),
-    },
-  ];
+    router.push(redirectPath);
+  };
 
   return (
     <div className="space-y-10">
-      <div className="space-y-4">
-        <ProjectSearchDataTable
-          userRole={userRole}
-          data={previousProjectData}
-          filters={filters}
-          onProjectSelect={handleProjectSelect}
-        />
-        {previousProjectData.length > 0 && (
-          <div className="text-sm text-muted-foreground">
-            <strong>Note:</strong> Flags and tags will only be copied from
-            projects within the same instance.
-          </div>
-        )}
-      </div>
-
-      <CreateProjectForm
-        formInitialisationData={formInitialisationData}
+      <ProjectSelectionManager
+        previousProjectData={previousProjectData}
         userRole={userRole}
-        currentUserId={currentUserId}
-        onBehalfOf={onBehalfOf}
-        defaultValues={computeDefaultValues()}
-        onFormDirtyChange={handleFormChange}
+        requiresConfirm={form.formState.isDirty}
+        handleSelect={(data: ProjectSearchData) => form.reset(data.project)}
       />
-
-      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Replace Current Work?</DialogTitle>
-            <DialogDescription>
-              You have unsaved changes in the form. Using this template will
-              replace your current work. Are you sure you want to continue?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCancelOverride}>
-              Cancel
-            </Button>
-            <Button onClick={handleConfirmOverride}>Replace</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ProjectForm
+        form={form}
+        formInitialisationData={formInitialisationData}
+        onSubmit={handleSubmit}
+        submissionButtonLabel="Create New Project"
+        userRole={userRole}
+        isSubmitting={isPending}
+      >
+        <Button
+          variant="outline"
+          size="lg"
+          type="button"
+          onClick={handleCancel}
+          disabled={isPending}
+        >
+          Cancel
+        </Button>
+      </ProjectForm>
     </div>
   );
 }
