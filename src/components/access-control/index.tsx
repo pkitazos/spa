@@ -38,10 +38,7 @@ export function AccessControl({
   );
 }
 
-export {
-  ConditionalRender,
-  ConditionalRenderSimple,
-} from "./conditional-render";
+export { ConditionalRender } from "./conditional-render";
 
 export { useAccessControl } from "./use-access-control";
 export type {

@@ -10,11 +10,11 @@ import { setIntersection } from "@/lib/utils/general/set-intersection";
 import { useInstanceParams } from "../params-context";
 
 import {
+  DenialReason,
   type CustomCondition,
   type AccessCondition,
   type AccessControlState,
   AccessControlResult,
-  type DenialReason,
 } from "./types";
 
 function checkRoles(userRoles: Role[], allowedRoles?: Role[]): boolean {
@@ -76,13 +76,13 @@ export function useAccessControl(
       const reasons: DenialReason[] = [];
 
       if (!hasRequiredRole && allowedRoles) {
-        reasons.push({ code: "BAD_ROLE", allowedRoles });
+        reasons.push({ code: DenialReason.BAD_ROLE, allowedRoles });
       }
       if (!hasRequiredStage && allowedStages) {
-        reasons.push({ code: "BAD_STAGE", allowedStages });
+        reasons.push({ code: DenialReason.BAD_STAGE, allowedStages });
       }
       if (!passesCustomCondition) {
-        reasons.push({ code: "BAD_CUSTOM" });
+        reasons.push({ code: DenialReason.BAD_CUSTOM });
       }
 
       return {

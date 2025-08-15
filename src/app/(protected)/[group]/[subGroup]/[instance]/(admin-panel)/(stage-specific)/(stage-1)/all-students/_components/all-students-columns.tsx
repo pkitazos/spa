@@ -16,10 +16,7 @@ import { type ProjectDTO, type StudentDTO } from "@/dto";
 
 import { Role, Stage } from "@/db/types";
 
-import {
-  ConditionalRender,
-  ConditionalRenderSimple,
-} from "@/components/access-control";
+import { ConditionalRender } from "@/components/access-control";
 import { FormatDenial } from "@/components/access-control/format-denial";
 import {
   useInstanceStage,
@@ -206,20 +203,23 @@ export function useAllStudentsColumns({
                 <DropdownMenuContent align="center" side="bottom">
                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <ConditionalRenderSimple
+                  <ConditionalRender
                     allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-                  >
-                    <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
-                      <YesNoActionTrigger
-                        trigger={
-                          <button className="flex items-center gap-2">
-                            <Trash2Icon className="h-4 w-4" />
-                            <span>Remove selected Students</span>
-                          </button>
-                        }
-                      />
-                    </DropdownMenuItem>
-                  </ConditionalRenderSimple>
+                    components={{
+                      allowed: (
+                        <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
+                          <YesNoActionTrigger
+                            trigger={
+                              <button className="flex items-center gap-2">
+                                <Trash2Icon className="h-4 w-4" />
+                                <span>Remove selected Students</span>
+                              </button>
+                            }
+                          />
+                        </DropdownMenuItem>
+                      ),
+                    }}
+                  />
                 </DropdownMenuContent>
               </YesNoActionContainer>
             </DropdownMenu>
