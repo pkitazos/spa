@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { type Role, type Stage } from "@/db/types";
 
 import { api } from "@/lib/trpc/client";
-import { setIntersection } from "@/lib/utils/general/set-intersection";
+import { hasOverlap } from "@/lib/utils/general/set-intersection";
 
 import { useInstanceParams } from "../params-context";
 
@@ -15,16 +15,25 @@ import {
   type AccessCondition,
   type AccessControlState,
   AccessControlResult,
+  type ACOverrides,
 } from "./types";
 
-function checkRoles(userRoles: Role[], allowedRoles?: Role[]): boolean {
+function checkRoles(
+  userRoles: Role[],
+  allowedRoles?: Role[],
+  { AND = true, OR = false }: ACOverrides = {},
+): boolean {
   if (!allowedRoles || allowedRoles.length == 0) return true;
-  else return setIntersection(allowedRoles, userRoles, (x) => x).length > 0;
+  else return OR || (AND && hasOverlap(allowedRoles, userRoles, (x) => x));
 }
 
-function checkStage(currentStage: Stage, allowedStages?: Stage[]): boolean {
+function checkStage(
+  currentStage: Stage,
+  allowedStages?: Stage[],
+  { AND = true, OR = false }: ACOverrides = {},
+): boolean {
   if (!allowedStages || allowedStages.length == 0) return true;
-  else return allowedStages.includes(currentStage);
+  else return OR || (AND && allowedStages.includes(currentStage));
 }
 
 function checkCondition(
@@ -55,12 +64,21 @@ export function useAccessControl(
       return { status: AccessControlResult.ERROR };
     }
 
-    const { allowedRoles, allowedStages, customCondition } = conditions;
+    const { allowedRoles, allowedStages, customCondition, overrides } =
+      conditions;
 
     const userRoles = Array.from(userRolesSet);
 
-    const hasRequiredRole = checkRoles(userRoles, allowedRoles);
-    const hasRequiredStage = checkStage(currentStage, allowedStages);
+    const hasRequiredRole = checkRoles(
+      userRoles,
+      allowedRoles,
+      overrides?.roles,
+    );
+    const hasRequiredStage = checkStage(
+      currentStage,
+      allowedStages,
+      overrides?.stage,
+    );
     const passesCustomCondition = checkCondition(
       userRoles,
       currentStage,

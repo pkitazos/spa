@@ -7,6 +7,9 @@ import { Role, type Stage, stageSchema } from "@/db/types";
 import { RBAC } from "./rbac";
 import { SBAC } from "./sbac";
 
+/**
+ * @deprecated use ConditionalRender instead
+ */
 export function AccessControl({
   children,
   allowedStages = stageSchema.options,
