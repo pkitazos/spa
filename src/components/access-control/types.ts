@@ -24,13 +24,23 @@ export const AccessControlResult = {
   DENIED: "DENIED",
 } as const;
 
+export const DenialReason = {
+  BAD_ROLE: "BAD_ROLE",
+  BAD_STAGE: "BAD_STAGE",
+  BAD_CUSTOM: "BAD_CUSTOM",
+} as const;
+
 export type DenialReason =
-  | { code: "BAD_ROLE"; allowedRoles: Role[] }
-  | { code: "BAD_STAGE"; allowedStages: Stage[] }
-  | { code: "BAD_CUSTOM" };
+  | { code: typeof DenialReason.BAD_ROLE; allowedRoles: Role[] }
+  | { code: typeof DenialReason.BAD_STAGE; allowedStages: Stage[] }
+  | { code: typeof DenialReason.BAD_CUSTOM };
 
 export type AccessControlState =
-  | { status: "LOADING" }
-  | { status: "ERROR" }
-  | { status: "ALLOWED"; ctx: AccessControlContext }
-  | { status: "DENIED"; ctx: AccessControlContext; reasons: DenialReason[] };
+  | { status: typeof AccessControlResult.LOADING }
+  | { status: typeof AccessControlResult.ERROR }
+  | { status: typeof AccessControlResult.ALLOWED; ctx: AccessControlContext }
+  | {
+      status: typeof AccessControlResult.DENIED;
+      ctx: AccessControlContext;
+      reasons: DenialReason[];
+    };

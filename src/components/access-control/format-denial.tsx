@@ -2,7 +2,7 @@ import { getStageLabel } from "@/config/stages";
 
 import { getRoleDisplayName, type Role, type Stage } from "@/db/types";
 
-import { type AccessControlContext, type DenialReason } from "./types";
+import { type AccessControlContext, DenialReason } from "./types";
 
 // MOVE these to some other file if you think they might be useful to you
 function FancyStage({ stage }: { stage: Stage }) {
@@ -28,40 +28,43 @@ export function FormatDenial({
   ctx: AccessControlContext;
   reason: DenialReason;
 }) {
-  if (reason.code === "BAD_ROLE") {
-    return (
-      <p>
-        Access restricted to roles:{" "}
-        {reason.allowedRoles.map((role, i, arr) => (
-          <>
-            <FancyRole role={role} key={i} />
-            {i === arr.length ? "" : ", "}
-          </>
-        ))}
-        . Your roles:{" "}
-        {ctx.userRoles.map((role, i, arr) => (
-          <>
-            <FancyRole role={role} key={i} />
-            {i === arr.length ? "" : ", "}
-          </>
-        ))}
-      </p>
-    );
-  } else if (reason.code === "BAD_STAGE") {
-    return (
-      <p>
-        Access not available in current stage:{" "}
-        <FancyStage stage={ctx.currentStage} />. Available in:{" "}
-        {reason.allowedStages.map((stage, i, arr) => (
-          <>
-            <FancyStage stage={stage} key={i} />
-            {i === arr.length - 1 ? "" : ", "}
-          </>
-        ))}
-      </p>
-    );
-  } else {
-    return <p>Access condition not met</p>;
+  switch (reason.code) {
+    case DenialReason.BAD_ROLE:
+      return (
+        <p>
+          Access restricted to roles:{" "}
+          {reason.allowedRoles.map((role, i, arr) => (
+            <>
+              <FancyRole role={role} key={i} />
+              {i === arr.length ? "" : ", "}
+            </>
+          ))}
+          . Your roles:{" "}
+          {ctx.userRoles.map((role, i, arr) => (
+            <>
+              <FancyRole role={role} key={i} />
+              {i === arr.length ? "" : ", "}
+            </>
+          ))}
+        </p>
+      );
+
+    case DenialReason.BAD_STAGE:
+      return (
+        <p>
+          Access not available in current stage:{" "}
+          <FancyStage stage={ctx.currentStage} />. Available in:{" "}
+          {reason.allowedStages.map((stage, i, arr) => (
+            <>
+              <FancyStage stage={stage} key={i} />
+              {i === arr.length - 1 ? "" : ", "}
+            </>
+          ))}
+        </p>
+      );
+
+    default:
+      return <p>Access condition not met</p>;
   }
 }
 
