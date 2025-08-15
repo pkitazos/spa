@@ -8,8 +8,6 @@ import { spacesLabels } from "@/config/spaces";
 
 import { flagDtoSchema, tagDtoSchema } from "@/dto";
 
-import { Role } from "@/db/types";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
@@ -17,16 +15,17 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-col
 import { isSameInstance } from "@/lib/utils/general/instance-params";
 
 import { useInstanceParams } from "../params-context";
+import { WithTooltip } from "../ui/tooltip-wrapper";
 
 import { hasSome } from "./utils";
 
 import { type ProjectSearchData } from ".";
 
 export function useProjectSearchColumns({
-  userRole,
+  showSupervisorCol,
   onProjectSelect,
 }: {
-  userRole: Role;
+  showSupervisorCol: boolean;
   onProjectSelect: (data: ProjectSearchData) => void;
 }) {
   const params = useInstanceParams();
@@ -141,15 +140,16 @@ export function useProjectSearchColumns({
       cell: ({ row }) => {
         return (
           <div className="h-full grid place-items-center">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onProjectSelect(row.original)}
-              className="my-auto flex w-46 items-center gap-2"
-            >
-              <Copy className="h-4 w-4" />
-              Use Project Details
-            </Button>
+            <WithTooltip tip="Copy Project Details into form">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => onProjectSelect(row.original)}
+                className="my-auto flex items-center gap-2"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </WithTooltip>
           </div>
         );
       },
@@ -157,8 +157,8 @@ export function useProjectSearchColumns({
       enableGlobalFilter: false,
     } satisfies ColumnDef<ProjectSearchData>;
 
-    return userRole === Role.ADMIN
-      ? [actionColumn, ...projectColumns, supervisorColumn]
-      : [actionColumn, ...projectColumns];
-  }, [onProjectSelect, params, userRole]);
+    return showSupervisorCol
+      ? [...projectColumns, supervisorColumn, actionColumn]
+      : [...projectColumns, actionColumn];
+  }, [onProjectSelect, params, showSupervisorCol]);
 }

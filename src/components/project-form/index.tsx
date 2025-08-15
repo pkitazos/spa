@@ -7,8 +7,8 @@ import { toast } from "sonner";
 
 import {
   type ProjectFormSubmissionDTO,
-  type ProjectFormInitialisationDTO,
   type ProjectFormInternalStateDTO,
+  type ProjectCreationContext,
 } from "@/dto/project";
 
 import { Role } from "@/db/types";
@@ -47,32 +47,32 @@ import { MarkdownEditor } from "../markdown-editor";
 import { MultiSelect } from "../ui/multi-select";
 
 interface ProjectFormProps {
-  formInitialisationData: ProjectFormInitialisationDTO;
+  projectCreationContext: ProjectCreationContext;
   onSubmit: (data: ProjectFormSubmissionDTO) => void;
   submissionButtonLabel: string;
   userRole: typeof Role.ADMIN | typeof Role.SUPERVISOR;
   children?: React.ReactNode;
   isSubmitting?: boolean;
   form: UseFormReturn<ProjectFormInternalStateDTO>;
+  showSupervisorSelector: boolean;
 }
 
 export function ProjectForm({
-  formInitialisationData,
+  projectCreationContext,
   onSubmit,
   submissionButtonLabel,
   userRole,
   children,
   form,
   isSubmitting = false,
+  showSupervisorSelector = false,
 }: ProjectFormProps) {
-  const { flags, tags, students, supervisors } = formInitialisationData;
+  const { flags, tags, students, supervisors } = projectCreationContext;
 
   const isPreAllocated = form.watch("isPreAllocated");
 
   const handlePreAllocatedToggle = () => {
-    const newState = !isPreAllocated;
-
-    if (newState) {
+    if (!isPreAllocated) {
       form.setValue("capacityUpperBound", 1);
       form.setValue("isPreAllocated", true);
     } else {
@@ -114,7 +114,7 @@ export function ProjectForm({
         className="flex w-full flex-col gap-6"
       >
         {/* Supervisor Selection (Admin only) */}
-        {isAdmin && (
+        {isAdmin && showSupervisorSelector && (
           <FormField
             control={form.control}
             name="supervisorId"

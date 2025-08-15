@@ -1044,4 +1044,16 @@ export const instanceRouter = createTRPCRouter({
           .then((u) => u.title);
       },
     ),
+
+  getAllPreviousProjects: procedure.instance.subGroupAdmin
+    .output(
+      z.array(
+        z.object({
+          project: projectDtoSchema,
+          supervisor: supervisorDtoSchema,
+          instanceData: instanceDtoSchema,
+        }),
+      ),
+    )
+    .query(async ({ ctx: { group } }) => await group.getAllProjects()),
 });

@@ -54,19 +54,13 @@ export default async function Page({ params }: { params: PageParams }) {
       </Heading>
       <ProjectCreationManager
         previousProjectData={previousProjectData}
-        formInitialisationData={{
-          ...formInitData,
-          currentProject: { supervisorId: supervisor.id },
-        }}
-        userRole={Role.ADMIN}
-        currentUserId={user.id}
-      />
-      {/* <CreateProjectForm
-        formInitialisationData={formInitData}
-        userRole={Role.ADMIN}
-        currentUserId={user.id}
+        projectCreationContext={formInitData}
         onBehalfOf={supervisor.id}
-      /> */}
+        userRole={Role.ADMIN}
+        currentUserId={user.id}
+        showSupervisorCol={false}
+        showSupervisorSelector={false}
+      />
     </PanelWrapper>
   );
 }

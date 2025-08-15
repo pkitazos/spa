@@ -1,7 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
 
-import { type Role } from "@/db/types";
-
 import { useInstanceParams } from "@/components/params-context";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,19 +11,21 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
-import { ProjectSearchDataTable } from "./project-search-data-table";
+import DataTable from "../ui/data-table/data-table";
+
+import { useProjectSearchColumns } from "./project-search-columns";
 import { makeFilters } from "./utils";
 
 import { type ProjectSearchData } from ".";
 
-export function ProjectSelectionManager({
+export function ProjectTemplateSelector({
   previousProjectData,
-  userRole,
+  showSupervisorCol,
   requiresConfirm = false,
   handleSelect,
 }: {
   previousProjectData: ProjectSearchData[];
-  userRole: Role;
+  showSupervisorCol: boolean;
   requiresConfirm?: boolean;
   handleSelect: (p: ProjectSearchData) => void;
 }) {
@@ -41,9 +41,10 @@ export function ProjectSelectionManager({
     [params, previousProjectData],
   );
 
-  const handleProjectSelect = useCallback(
+  const onProjectSelect = useCallback(
     (data: ProjectSearchData) => {
       if (!requiresConfirm) return handleSelect(data);
+
       setPendingProject(data);
       setOpen(true);
     },
@@ -60,13 +61,18 @@ export function ProjectSelectionManager({
     handleCancel();
   }, [handleCancel, handleSelect, pendingProject]);
 
+  const columns = useProjectSearchColumns({
+    showSupervisorCol,
+    onProjectSelect,
+  });
+
   return (
     <div className="space-y-4">
-      <ProjectSearchDataTable
-        userRole={userRole}
+      <DataTable
+        searchParamPrefix="prev-projects"
+        columns={columns}
         data={previousProjectData}
         filters={filters}
-        onProjectSelect={handleProjectSelect}
       />
       {previousProjectData.length > 0 && (
         <div className="text-sm text-muted-foreground">
