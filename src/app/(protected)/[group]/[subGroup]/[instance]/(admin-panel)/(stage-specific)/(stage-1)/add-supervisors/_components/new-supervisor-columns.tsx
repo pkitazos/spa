@@ -16,7 +16,8 @@ import { type SupervisorDTO } from "@/dto";
 
 import { Stage } from "@/db/types";
 
-import { AccessControl, ConditionalRender } from "@/components/access-control";
+import { ConditionalRender } from "@/components/access-control";
+import { FormatDenial } from "@/components/access-control/format-denial";
 import {
   useInstanceStage,
   usePathInInstance,
@@ -154,20 +155,21 @@ export function useNewSupervisorColumns({
                   <DropdownMenuContent align="center" side="bottom">
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <AccessControl
+                    <ConditionalRender
                       allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-                    >
-                      <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
-                        <YesNoActionTrigger
-                          trigger={
-                            <button className="flex items-center gap-2">
-                              <Trash2Icon className="h-4 w-4" />
-                              <span>Remove selected Supervisors</span>
-                            </button>
-                          }
-                        />
-                      </DropdownMenuItem>
-                    </AccessControl>
+                      allowed={
+                        <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
+                          <YesNoActionTrigger
+                            trigger={
+                              <button className="flex items-center gap-2">
+                                <Trash2Icon className="h-4 w-4" />
+                                <span>Remove selected Supervisors</span>
+                              </button>
+                            }
+                          />
+                        </DropdownMenuItem>
+                      }
+                    />
                   </DropdownMenuContent>
                 </YesNoActionContainer>
               </DropdownMenu>
@@ -224,37 +226,45 @@ export function useNewSupervisorColumns({
                 </DropdownMenuItem>
                 <ConditionalRender
                   allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-                >
-                  {({ allowed, reason }) =>
-                    allowed ? (
-                      <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
-                        <YesNoActionTrigger
-                          trigger={
-                            <button className="flex items-center gap-2">
-                              <Trash2Icon className="h-4 w-4" />
-                              <span>Remove from Instance</span>
-                            </button>
-                          }
-                        />
-                      </DropdownMenuItem>
-                    ) : (
-                      <WithTooltip
-                        tip={<p className="max-w-xl">{reason}</p>}
-                        forDisabled
-                      >
-                        <DropdownMenuItem
-                          className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive"
-                          disabled
-                        >
+                  allowed={
+                    <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
+                      <YesNoActionTrigger
+                        trigger={
                           <button className="flex items-center gap-2">
                             <Trash2Icon className="h-4 w-4" />
                             <span>Remove from Instance</span>
                           </button>
-                        </DropdownMenuItem>
-                      </WithTooltip>
-                    )
+                        }
+                      />
+                    </DropdownMenuItem>
                   }
-                </ConditionalRender>
+                  denied={(data) => (
+                    <WithTooltip
+                      tip={
+                        <p className="max-w-xl">
+                          {data.reasons.map((reason, i) => (
+                            <FormatDenial
+                              key={i}
+                              ctx={data.ctx}
+                              reason={reason}
+                            />
+                          ))}
+                        </p>
+                      }
+                      forDisabled
+                    >
+                      <DropdownMenuItem
+                        className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive"
+                        disabled
+                      >
+                        <button className="flex items-center gap-2">
+                          <Trash2Icon className="h-4 w-4" />
+                          <span>Remove from Instance</span>
+                        </button>
+                      </DropdownMenuItem>
+                    </WithTooltip>
+                  )}
+                />
               </DropdownMenuContent>
             </YesNoActionContainer>
           </DropdownMenu>

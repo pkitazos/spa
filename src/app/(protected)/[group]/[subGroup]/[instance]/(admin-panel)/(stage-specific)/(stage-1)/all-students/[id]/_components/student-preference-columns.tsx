@@ -11,7 +11,7 @@ import { PAGES } from "@/config/pages";
 
 import { PreferenceType, Stage } from "@/db/types";
 
-import { AccessControl } from "@/components/access-control";
+import { ConditionalRender } from "@/components/access-control";
 import { useInstanceStage } from "@/components/params-context";
 import { StudentPreferenceActionSubMenu } from "@/components/student-preference-action-menu";
 import { Badge } from "@/components/ui/badge";
@@ -237,16 +237,18 @@ export function useStudentPreferencesColumns({
                 <span>View Project details</span>
               </Link>
             </DropdownMenuItem>
-            <AccessControl
+            <ConditionalRender
               allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-            >
-              <StudentPreferenceActionSubMenu
-                defaultType={type}
-                changePreference={async (newPreferenceType) =>
-                  void changePreference(newPreferenceType, project.id)
-                }
-              />
-            </AccessControl>
+              allowed={
+                <StudentPreferenceActionSubMenu
+                  defaultType={type}
+                  changePreference={async (newPreferenceType) =>
+                    void changePreference(newPreferenceType, project.id)
+                  }
+                  // TODO: add denied state
+                />
+              }
+            />
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { Stage } from "@/db/types";
 
-import { AccessControl } from "@/components/access-control";
+import { ConditionalRender } from "@/components/access-control";
 import { SectionHeading } from "@/components/heading";
 import { StudentSavedPreferenceDataTable } from "@/components/student-saved-preferences/data-table";
 import { buttonVariants } from "@/components/ui/button";
@@ -39,18 +39,22 @@ export async function StudentPreferencesSection({
         <SectionHeading icon={BookmarkIcon} className="mb-2">
           Preferences
         </SectionHeading>
-        <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
-          <Link
-            className={cn(
-              buttonVariants({ variant: "outline" }),
-              "flex items-center justify-center gap-2 text-nowrap",
-            )}
-            href={`./${studentId}/preferences`}
-          >
-            <PenIcon className="h-4 w-4" />
-            <p>Edit Student Preferences</p>
-          </Link>
-        </AccessControl>
+        <ConditionalRender
+          allowedStages={[Stage.STUDENT_BIDDING]}
+          allowed={
+            // pin - broken link
+            <Link
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "flex items-center justify-center gap-2 text-nowrap",
+              )}
+              href={`./${studentId}/preferences`}
+            >
+              <PenIcon className="h-4 w-4" />
+              <p>Edit Student Preferences</p>
+            </Link>
+          }
+        />
       </div>
 
       <Tabs

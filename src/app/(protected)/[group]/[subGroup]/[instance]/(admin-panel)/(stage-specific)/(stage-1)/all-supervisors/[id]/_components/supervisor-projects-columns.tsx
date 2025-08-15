@@ -19,7 +19,8 @@ import {
 
 import { Stage } from "@/db/types";
 
-import { AccessControl } from "@/components/access-control";
+import { ConditionalRender } from "@/components/access-control";
+import { FormatDenial } from "@/components/access-control/format-denial";
 import { CircleCheckSolidIcon } from "@/components/icons/circle-check";
 import { useInstancePath, useInstanceStage } from "@/components/params-context";
 import { tagTypeSchema } from "@/components/tag/tag-input";
@@ -382,29 +383,87 @@ export function useSupervisorProjectsColumns({
                     </p>
                   </Link>
                 </DropdownMenuItem>
-                <AccessControl
+                <ConditionalRender
                   allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-                >
-                  <DropdownMenuItem className="group/item">
-                    <Link
-                      className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                      href={`${instancePath}/projects/${project.id}/edit`}
+                  allowed={
+                    <DropdownMenuItem className="group/item">
+                      <Link
+                        className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
+                        href={`${instancePath}/projects/${project.id}/edit`}
+                      >
+                        <PenIcon className="h-4 w-4" />
+                        <span>Edit Project details</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  }
+                  denied={(data) => (
+                    <WithTooltip
+                      tip={
+                        <p className="max-w-xl">
+                          {data.reasons.map((reason, i) => (
+                            <FormatDenial
+                              key={i}
+                              ctx={data.ctx}
+                              reason={reason}
+                            />
+                          ))}
+                        </p>
+                      }
+                      forDisabled
                     >
-                      <PenIcon className="h-4 w-4" />
-                      <span>Edit Project details</span>
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive">
-                    <YesNoActionTrigger
-                      trigger={
+                      <DropdownMenuItem className="group/item" disabled>
+                        <Link
+                          className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
+                          href={`${instancePath}/projects/${project.id}/edit`}
+                        >
+                          <PenIcon className="h-4 w-4" />
+                          <span>Edit Project details</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    </WithTooltip>
+                  )}
+                />
+                <ConditionalRender
+                  allowedStages={previousStages(Stage.STUDENT_BIDDING)}
+                  allowed={
+                    <DropdownMenuItem className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive">
+                      <YesNoActionTrigger
+                        trigger={
+                          <button className="flex items-center gap-2">
+                            <Trash2Icon className="h-4 w-4" />
+                            <span>Delete Project</span>
+                          </button>
+                        }
+                      />
+                    </DropdownMenuItem>
+                  }
+                  denied={(data) => (
+                    <WithTooltip
+                      tip={
+                        <p className="max-w-xl">
+                          {data.reasons.map((reason, i) => (
+                            <FormatDenial
+                              key={i}
+                              ctx={data.ctx}
+                              reason={reason}
+                            />
+                          ))}
+                        </p>
+                      }
+                      forDisabled
+                    >
+                      <DropdownMenuItem
+                        className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive"
+                        disabled
+                      >
                         <button className="flex items-center gap-2">
                           <Trash2Icon className="h-4 w-4" />
                           <span>Delete Project</span>
                         </button>
-                      }
-                    />
-                  </DropdownMenuItem>
-                </AccessControl>
+                      </DropdownMenuItem>
+                    </WithTooltip>
+                  )}
+                />
               </DropdownMenuContent>
             </YesNoActionContainer>
           </DropdownMenu>

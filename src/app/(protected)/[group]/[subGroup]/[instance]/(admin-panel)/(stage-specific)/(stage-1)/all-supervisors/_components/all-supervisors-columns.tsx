@@ -15,10 +15,8 @@ import { type SupervisorDTO } from "@/dto";
 
 import { Role, Stage } from "@/db/types";
 
-import {
-  ConditionalRenderSimple,
-  ConditionalRender,
-} from "@/components/access-control";
+import { ConditionalRender } from "@/components/access-control";
+import { FormatDenial } from "@/components/access-control/format-denial";
 import {
   useInstanceStage,
   usePathInInstance,
@@ -234,56 +232,65 @@ export function useAllSupervisorsColumns({
                   <span>Edit supervisor details</span>
                 </Link>
               </DropdownMenuItem>
-              <ConditionalRenderSimple
-                allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-              >
-                <DropdownMenuItem className="group/item">
-                  <Link
-                    className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={getInstancePath([
-                      PAGES.allSupervisors.href,
-                      supervisor.id,
-                      PAGES.newProject.href,
-                    ])}
-                  >
-                    <FilePlus2 className="h-4 w-4" />
-                    <span>Create new project</span>
-                  </Link>
-                </DropdownMenuItem>
-              </ConditionalRenderSimple>
               <ConditionalRender
                 allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-              >
-                {({ allowed, reason }) =>
-                  allowed ? (
-                    <DropdownMenuItem className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive">
-                      <YesNoActionTrigger
-                        trigger={
-                          <button className="flex items-center gap-2">
-                            <Trash2Icon className="h-4 w-4" />
-                            <span>Remove from Instance</span>
-                          </button>
-                        }
-                      />
-                    </DropdownMenuItem>
-                  ) : (
-                    <WithTooltip
-                      tip={<p className="max-w-xl">{reason}</p>}
-                      forDisabled
+                allowed={
+                  <DropdownMenuItem className="group/item">
+                    <Link
+                      className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
+                      href={getInstancePath([
+                        PAGES.allSupervisors.href,
+                        supervisor.id,
+                        PAGES.newProject.href,
+                      ])}
                     >
-                      <DropdownMenuItem
-                        className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive"
-                        disabled
-                      >
+                      <FilePlus2 className="h-4 w-4" />
+                      <span>Create new project</span>
+                    </Link>
+                  </DropdownMenuItem>
+                }
+              />
+              <ConditionalRender
+                allowedStages={previousStages(Stage.STUDENT_BIDDING)}
+                allowed={
+                  <DropdownMenuItem className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive">
+                    <YesNoActionTrigger
+                      trigger={
                         <button className="flex items-center gap-2">
                           <Trash2Icon className="h-4 w-4" />
                           <span>Remove from Instance</span>
                         </button>
-                      </DropdownMenuItem>
-                    </WithTooltip>
-                  )
+                      }
+                    />
+                  </DropdownMenuItem>
                 }
-              </ConditionalRender>
+                denied={(data) => (
+                  <WithTooltip
+                    tip={
+                      <p className="max-w-xl">
+                        {data.reasons.map((reason, i) => (
+                          <FormatDenial
+                            key={i}
+                            ctx={data.ctx}
+                            reason={reason}
+                          />
+                        ))}
+                      </p>
+                    }
+                    forDisabled
+                  >
+                    <DropdownMenuItem
+                      className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive"
+                      disabled
+                    >
+                      <button className="flex items-center gap-2">
+                        <Trash2Icon className="h-4 w-4" />
+                        <span>Remove from Instance</span>
+                      </button>
+                    </DropdownMenuItem>
+                  </WithTooltip>
+                )}
+              />
             </DropdownMenuContent>
           </YesNoActionContainer>
         </DropdownMenu>

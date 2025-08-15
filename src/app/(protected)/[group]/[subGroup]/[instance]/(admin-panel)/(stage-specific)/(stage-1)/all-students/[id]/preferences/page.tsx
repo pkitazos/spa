@@ -5,7 +5,7 @@ import { PAGES } from "@/config/pages";
 
 import { Stage } from "@/db/types";
 
-import { AccessControl } from "@/components/access-control";
+import { ConditionalRender } from "@/components/access-control";
 import { Heading } from "@/components/heading";
 import { LatestSubmissionDataTable } from "@/components/pages/student-preferences/latest-submission-data-table";
 import { SubmissionArea } from "@/components/pages/student-preferences/submission-area";
@@ -69,17 +69,20 @@ export default async function Page({ params }: { params: PageParams }) {
         <p>{PAGES.studentPreferences.title}</p>
         <p className="text-3xl text-muted-foreground">for {student.name}</p>
       </Heading>
-      <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
-        <section className="flex flex-col gap-3">
-          <SubmissionArea
-            title="Submit student preference list"
-            studentId={studentId}
-            initialProjects={initialProjects}
-            latestSubmissionDateTime={latestSubmissionDateTime}
-            restrictions={restrictions}
-          />
-        </section>
-      </AccessControl>
+      <ConditionalRender
+        allowedStages={[Stage.STUDENT_BIDDING]}
+        allowed={
+          <section className="flex flex-col gap-3">
+            <SubmissionArea
+              title="Submit student preference list"
+              studentId={studentId}
+              initialProjects={initialProjects}
+              latestSubmissionDateTime={latestSubmissionDateTime}
+              restrictions={restrictions}
+            />
+          </section>
+        }
+      />
       <Tabs
         searchParamName="tab"
         options={["current-board-state", "last-submission"]}
