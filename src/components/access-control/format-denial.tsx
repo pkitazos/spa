@@ -36,14 +36,14 @@ export function FormatDenial({
           {reason.allowedRoles.map((role, i, arr) => (
             <>
               <FancyRole role={role} key={i} />
-              {i === arr.length ? "" : ", "}
+              {i === arr.length - 1 ? "" : ", "}
             </>
           ))}
           . Your roles:{" "}
           {ctx.userRoles.map((role, i, arr) => (
             <>
               <FancyRole role={role} key={i} />
-              {i === arr.length ? "" : ", "}
+              {i === arr.length - 1 ? "" : ", "}
             </>
           ))}
         </p>

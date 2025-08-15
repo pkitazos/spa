@@ -11,18 +11,14 @@ export interface AccessControlContext {
 
 export type CustomCondition = (context: AccessControlContext) => boolean;
 
+export type ACOverrides = { AND?: boolean; OR?: boolean };
+
 export interface AccessCondition {
   allowedRoles?: Role[];
   allowedStages?: Stage[];
   customCondition?: CustomCondition;
+  overrides?: { stage?: ACOverrides; roles?: ACOverrides };
 }
-
-export const AccessControlResult = {
-  LOADING: "LOADING",
-  ERROR: "ERROR",
-  ALLOWED: "ALLOWED",
-  DENIED: "DENIED",
-} as const;
 
 export const DenialReason = {
   BAD_ROLE: "BAD_ROLE",
@@ -34,6 +30,13 @@ export type DenialReason =
   | { code: typeof DenialReason.BAD_ROLE; allowedRoles: Role[] }
   | { code: typeof DenialReason.BAD_STAGE; allowedStages: Stage[] }
   | { code: typeof DenialReason.BAD_CUSTOM };
+
+export const AccessControlResult = {
+  LOADING: "LOADING",
+  ERROR: "ERROR",
+  ALLOWED: "ALLOWED",
+  DENIED: "DENIED",
+} as const;
 
 export type AccessControlState =
   | { status: typeof AccessControlResult.LOADING }
