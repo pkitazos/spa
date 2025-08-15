@@ -13,7 +13,7 @@ import { useAccessControl } from "./use-access-control";
 interface ConditionalRenderProps extends AccessCondition {
   components: {
     allowed: ReactNode;
-    denied: (data: {
+    denied?: (data: {
       ctx: AccessControlContext;
       reasons: DenialReason[];
     }) => ReactNode;
@@ -38,26 +38,9 @@ export function ConditionalRender({
     <>
       {accessState.status === AccessControlResult.ALLOWED
         ? components.allowed
-        : components.denied(accessState)}
-    </>
-  );
-}
-
-// TODO - just fill in the above component with sensible defaults
-export function ConditionalRenderSimple({
-  children,
-  fallback,
-  ...condition
-}: AccessCondition & { children: ReactNode; fallback?: ReactNode }) {
-  const accessState = useAccessControl(condition);
-
-  if (accessState.status === AccessControlResult.LOADING) {
-    return null;
-  }
-
-  return (
-    <>
-      {accessState.status === AccessControlResult.ALLOWED ? children : fallback}
+        : components.denied
+          ? components.denied(accessState)
+          : null}
     </>
   );
 }
