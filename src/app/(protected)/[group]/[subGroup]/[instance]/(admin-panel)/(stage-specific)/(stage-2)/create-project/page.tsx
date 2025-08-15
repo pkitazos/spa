@@ -33,6 +33,10 @@ export default async function Page({ params }: { params: InstanceParams }) {
 
   // todo: fetch all projects by every supervisor, from every instance in the allocation group
 
+  const prevProjects = await api.institution.instance.getAllPreviousProjects({
+    params,
+  });
+
   return (
     <PanelWrapper>
       <Heading className="flex items-baseline gap-4">
@@ -40,10 +44,12 @@ export default async function Page({ params }: { params: InstanceParams }) {
         <p className="text-3xl text-muted-foreground">for supervisor</p>
       </Heading>
       <ProjectCreationManager
-        previousProjectData={[]}
-        formInitialisationData={formInitData}
+        previousProjectData={prevProjects}
+        projectCreationContext={formInitData}
         userRole={Role.ADMIN}
         currentUserId={user.id}
+        showSupervisorSelector={true}
+        showSupervisorCol={true}
       />
     </PanelWrapper>
   );

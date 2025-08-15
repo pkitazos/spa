@@ -8,8 +8,8 @@ import { PAGES } from "@/config/pages";
 import { type InstanceDTO, type ProjectDTO, type SupervisorDTO } from "@/dto";
 import {
   formToApiTransformations,
+  type ProjectCreationContext,
   type ProjectFormSubmissionDTO,
-  type ProjectFormInitialisationDTO,
 } from "@/dto/project";
 
 import { Role } from "@/db/types";
@@ -25,7 +25,7 @@ import { api } from "@/lib/trpc/client";
 import { ProjectForm } from "../project-form";
 import { useProjectForm } from "../project-form/use-project-form";
 
-import { ProjectSelectionManager } from "./project-selection-manager";
+import { ProjectTemplateSelector } from "./project-template-selector";
 
 export type ProjectSearchData = {
   instanceData: InstanceDTO;
@@ -34,23 +34,27 @@ export type ProjectSearchData = {
 };
 
 interface ProjectCreationManagerProps {
-  previousProjectData: {
-    instanceData: InstanceDTO;
-    project: ProjectDTO;
-    supervisor: SupervisorDTO;
-  }[];
-  formInitialisationData: ProjectFormInitialisationDTO;
+  showSupervisorSelector: boolean;
+  previousProjectData: ProjectSearchData[];
+  projectCreationContext: ProjectCreationContext;
   userRole: typeof Role.ADMIN | typeof Role.SUPERVISOR;
+  showSupervisorCol: boolean;
   currentUserId: string;
+  onBehalfOf?: string;
 }
 
 export function ProjectCreationManager({
+  showSupervisorSelector,
   previousProjectData,
-  formInitialisationData,
+  projectCreationContext,
   userRole,
+  showSupervisorCol,
   currentUserId,
+  onBehalfOf = "",
 }: ProjectCreationManagerProps) {
-  const form = useProjectForm(formInitialisationData);
+  const { form, update } = useProjectForm(projectCreationContext, {
+    supervisorId: onBehalfOf,
+  });
 
   const params = useInstanceParams();
   const router = useRouter();
@@ -66,44 +70,43 @@ export function ProjectCreationManager({
       currentUserId,
     );
 
-    void toast.promise(
-      api_createProject({ params, newProject: apiData })
-        .then((projectId) => {
-          router.push(getPath(`projects/${projectId}`));
-          router.refresh();
-          return projectId;
-        })
-        .catch((error) => {
-          console.error("Project creation error:", error);
-        }),
-      {
+    void toast
+      .promise(api_createProject({ params, newProject: apiData }), {
         success: "Successfully created project",
         loading: "Creating Project...",
         error: "Something went wrong while creating the project",
-      },
-    );
+      })
+      .unwrap()
+      .then((projectId) => {
+        router.push(getPath(`${PAGES.allProjects.href}/${projectId}`));
+        router.refresh();
+      });
   };
 
   const handleCancel = () => {
     const redirectPath =
       userRole === Role.ADMIN
         ? basePath
-        : getPath(`${PAGES.myProposedProjects.href}`);
+        : getPath(PAGES.myProposedProjects.href);
 
     router.push(redirectPath);
   };
 
   return (
     <div className="space-y-10">
-      <ProjectSelectionManager
+      <ProjectTemplateSelector
         previousProjectData={previousProjectData}
-        userRole={userRole}
+        showSupervisorCol={showSupervisorCol}
         requiresConfirm={form.formState.isDirty}
-        handleSelect={(data: ProjectSearchData) => form.reset(data.project)}
+        handleSelect={({ project, instanceData }: ProjectSearchData) => {
+          update(project, instanceData);
+          toast.success(`Copied project into form (${project.title})`);
+        }}
       />
       <ProjectForm
         form={form}
-        formInitialisationData={formInitialisationData}
+        showSupervisorSelector={showSupervisorSelector}
+        projectCreationContext={projectCreationContext}
         onSubmit={handleSubmit}
         submissionButtonLabel="Create New Project"
         userRole={userRole}

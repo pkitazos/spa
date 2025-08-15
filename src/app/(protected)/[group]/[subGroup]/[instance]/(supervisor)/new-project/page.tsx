@@ -43,11 +43,11 @@ export default async function Page({ params }: { params: InstanceParams }) {
       <Heading>{PAGES.newProject.title}</Heading>
       <ProjectCreationManager
         previousProjectData={previousProjectData}
-        formInitialisationData={{
-          ...formInitData,
-          currentProject: { supervisorId: supervisor.id },
-        }}
+        projectCreationContext={formInitData}
+        onBehalfOf={supervisor.id}
         userRole={userRoles.has(Role.ADMIN) ? Role.ADMIN : Role.SUPERVISOR}
+        showSupervisorSelector={false}
+        showSupervisorCol={false}
         currentUserId={supervisor.id}
       />
     </PanelWrapper>

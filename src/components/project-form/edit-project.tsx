@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { PAGES } from "@/config/pages";
 
 import {
-  type ProjectFormInitialisationDTO,
+  type ProjectCreationContext,
+  type ProjectDTO,
   type ProjectFormSubmissionDTO,
   formToApiTransformations,
 } from "@/dto/project";
@@ -27,21 +28,23 @@ import { useProjectForm } from "./use-project-form";
 import { ProjectForm } from ".";
 
 interface EditProjectFormProps {
-  formInitialisationData: ProjectFormInitialisationDTO;
+  projectCreationContext: ProjectCreationContext;
   userRole: typeof Role.ADMIN | typeof Role.SUPERVISOR;
   currentUserId: string;
   projectId: string;
+  initialData: ProjectDTO;
 }
 
 export function EditProjectForm({
-  formInitialisationData,
+  projectCreationContext,
   userRole,
   currentUserId,
   projectId,
+  initialData,
 }: EditProjectFormProps) {
   const params = useParams<PageParams>();
   const router = useRouter();
-  const form = useProjectForm(formInitialisationData);
+  const { form } = useProjectForm(projectCreationContext, initialData);
   const { getPath } = usePathInInstance();
 
   const { mutateAsync: api_editProject, isPending } =
@@ -58,7 +61,7 @@ export function EditProjectForm({
       .promise(
         api_editProject({ params: toPP1(params), updatedProject: apiData }),
         {
-          success: `Successfully updated Project ${projectId}`,
+          success: `Successfully updated Project (${apiData.title})`,
           loading: "Updating project...",
           error: "Something went wrong while updating the project",
         },
@@ -77,7 +80,8 @@ export function EditProjectForm({
   return (
     <ProjectForm
       form={form}
-      formInitialisationData={formInitialisationData}
+      showSupervisorSelector={true}
+      projectCreationContext={projectCreationContext}
       onSubmit={handleSubmit}
       submissionButtonLabel="Update Project"
       userRole={userRole}

@@ -1,8 +1,6 @@
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
-import { type ProjectFormInitialisationDTO } from "@/dto/project";
-
 import { Role, Stage } from "@/db/types";
 
 import { Heading } from "@/components/heading";
@@ -53,25 +51,12 @@ export default async function Page({ params }: { params: PageParams }) {
     projectId,
   });
 
-  const formInitialisationData: ProjectFormInitialisationDTO = {
-    ...formInitData,
-    currentProject: {
-      id: project.id,
-      title: project.title,
-      description: project.description,
-      flagIds: project.flags.map((flag) => flag.id),
-      tagIds: project.tags.map((tag) => tag.id),
-      supervisorId: supervisor.id,
-      capacityUpperBound: project.capacityUpperBound,
-      preAllocatedStudentId: project.preAllocatedStudentId,
-    },
-  };
-
   return (
     <PanelWrapper>
       <Heading>{PAGES.editProject.title}</Heading>
       <EditProjectForm
-        formInitialisationData={formInitialisationData}
+        initialData={project}
+        projectCreationContext={formInitData}
         userRole={roles.has(Role.ADMIN) ? Role.ADMIN : Role.SUPERVISOR}
         currentUserId={user.id}
         projectId={projectId}
