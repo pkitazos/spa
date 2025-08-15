@@ -3,7 +3,7 @@ import { PAGES } from "@/config/pages";
 
 import { Stage } from "@/db/types";
 
-import { AccessControl } from "@/components/access-control";
+import { ConditionalRender } from "@/components/access-control";
 import { Heading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { TaskCompletionCard } from "@/components/task-completion-card";
@@ -36,16 +36,17 @@ export default async function Page({ params }: { params: InstanceParams }) {
   return (
     <PanelWrapper className="gap-10">
       <Heading>{PAGES.myProposedProjects.title}</Heading>
-      <AccessControl
+      <ConditionalRender
         allowedStages={[Stage.PROJECT_SUBMISSION, Stage.STUDENT_BIDDING]}
-      >
-        {/* // TODO: this looks a bit silly now after a supervisor has reached their target */}
-        <TaskCompletionCard
-          title="Submission Target"
-          completed={uniqueProjectIds.size}
-          total={submissionTarget}
-        />
-      </AccessControl>
+        allowed={
+          // TODO: this looks a bit silly now after a supervisor has reached their target
+          <TaskCompletionCard
+            title="Submission Target"
+            completed={uniqueProjectIds.size}
+            total={submissionTarget}
+          />
+        }
+      />
       <MyProjectsDataTable
         projects={rowProjects.map((r) => ({
           id: r.project.id,

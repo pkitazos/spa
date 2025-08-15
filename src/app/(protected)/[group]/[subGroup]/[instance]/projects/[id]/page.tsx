@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+
 import {
   BookmarkIcon,
   FlagIcon,
@@ -16,14 +18,16 @@ import { type ProjectDTO, type StudentDTO, type SupervisorDTO } from "@/dto";
 
 import { Role, Stage } from "@/db/types";
 
-import { AccessControl } from "@/components/access-control";
+import { ConditionalRender } from "@/components/access-control";
+import { FormatDenial } from "@/components/access-control/format-denial";
 import { Heading, SectionHeading } from "@/components/heading";
 import { MarkdownRenderer } from "@/components/markdown-editor";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
@@ -112,28 +116,47 @@ export default async function Project({ params }: { params: PageParams }) {
         )}
       >
         {project.title}
-        <AccessControl
+        <ConditionalRender
           allowedRoles={[Role.STUDENT]}
           allowedStages={[Stage.STUDENT_BIDDING]}
-          extraConditions={{ RBAC: { AND: !preAllocated } }}
-        >
-          <StudentPreferenceButton
-            projectId={projectId}
-            defaultStatus={preferenceStatus}
-          />
-        </AccessControl>
-        <AccessControl
+          overrides={{ roles: { AND: !preAllocated } }}
+          allowed={
+            <StudentPreferenceButton
+              projectId={projectId}
+              defaultStatus={preferenceStatus}
+            />
+          }
+        />
+
+        <ConditionalRender
           allowedRoles={[Role.ADMIN]}
           allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-          extraConditions={{ RBAC: { OR: project.supervisorId === user.id } }}
-        >
-          <Link
-            className={cn(buttonVariants(), "min-w-32 text-nowrap")}
-            href={`${instancePath}/projects/${projectId}/edit`}
-          >
-            Edit or Delete
-          </Link>
-        </AccessControl>
+          overrides={{ roles: { OR: project.supervisorId === user.id } }}
+          allowed={
+            // pin - broken link
+            <Link
+              className={cn(buttonVariants(), "min-w-32 text-nowrap")}
+              href={`${instancePath}/projects/${projectId}/edit`}
+            >
+              Edit or Delete
+            </Link>
+          }
+          denied={(data) => (
+            <WithTooltip
+              tip={
+                <p className="max-w-xl">
+                  {data.reasons.map((reason, i) => (
+                    <FormatDenial key={i} ctx={data.ctx} reason={reason} />
+                  ))}
+                </p>
+              }
+            >
+              <Button className="min-w-32 text-nowrap" disabled>
+                Edit or Delete
+              </Button>
+            </WithTooltip>
+          )}
+        />
       </Heading>
 
       <div className="mt-6 flex gap-6">
@@ -156,40 +179,46 @@ export default async function Project({ params }: { params: PageParams }) {
         </div>
       </div>
 
-      <AccessControl
+      <ConditionalRender
         allowedRoles={[Role.ADMIN]}
-        extraConditions={{
-          RBAC: {
+        overrides={{
+          roles: {
             OR: project.supervisorId === user.id,
             AND: !!allocatedStudent,
           },
         }}
-      >
-        {allocatedStudent && (
-          <section className={cn("mt-16 flex flex-col gap-8")}>
-            <SectionHeading icon={FolderCheckIcon}>Allocation</SectionHeading>
-            <AllocatedStudentCard
-              studentAllocation={allocatedStudent}
-              preAllocated={!!project.preAllocatedStudentId}
+        allowed={
+          <Fragment>
+            {allocatedStudent && (
+              <section className={cn("mt-16 flex flex-col gap-8")}>
+                <SectionHeading icon={FolderCheckIcon}>
+                  Allocation
+                </SectionHeading>
+                <AllocatedStudentCard
+                  studentAllocation={allocatedStudent}
+                  preAllocated={!!project.preAllocatedStudentId}
+                />
+              </section>
+            )}
+            <Separator />
+          </Fragment>
+        }
+      />
+      <ConditionalRender
+        allowedRoles={[Role.ADMIN]}
+        overrides={{ roles: { AND: !project.preAllocatedStudentId } }}
+        allowed={
+          <section className="mt-16 flex flex-col gap-8">
+            <SectionHeading icon={BookmarkIcon}>
+              Student Preferences
+            </SectionHeading>
+            <StudentPreferenceDataTable
+              data={studentPreferences}
+              projectDescriptors={projectDescriptors}
             />
           </section>
-        )}
-        <Separator />
-      </AccessControl>
-      <AccessControl
-        allowedRoles={[Role.ADMIN]}
-        extraConditions={{ RBAC: { AND: !project.preAllocatedStudentId } }}
-      >
-        <section className="mt-16 flex flex-col gap-8">
-          <SectionHeading icon={BookmarkIcon}>
-            Student Preferences
-          </SectionHeading>
-          <StudentPreferenceDataTable
-            data={studentPreferences}
-            projectDescriptors={projectDescriptors}
-          />
-        </section>
-      </AccessControl>
+        }
+      />
     </PanelWrapper>
   );
 }
@@ -205,36 +234,36 @@ async function ProjectDetailsCard({
   return (
     <Card className="w-full max-w-sm">
       <CardContent className="flex flex-col gap-10 pt-5">
-        <AccessControl
+        <ConditionalRender
           allowedRoles={[Role.ADMIN, Role.STUDENT]}
-          extraConditions={{
-            RBAC: { OR: projectData.supervisor.id === user.id },
-          }}
-        >
-          <div className="flex items-center space-x-4">
-            <UserIcon className="h-6 w-6 text-blue-500" />
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">
-                Supervisor
-              </h3>
-              {roles.has(Role.ADMIN) ? (
-                <Link
-                  className={cn(
-                    buttonVariants({ variant: "link" }),
-                    "p-0 text-lg",
-                  )}
-                  href={`../${PAGES.allSupervisors.href}/${projectData.supervisor.id}`}
-                >
-                  {projectData.supervisor.name}
-                </Link>
-              ) : (
-                <p className="text-lg font-semibold">
-                  {projectData.supervisor.name}
-                </p>
-              )}
+          overrides={{ roles: { OR: projectData.supervisor.id === user.id } }}
+          allowed={
+            <div className="flex items-center space-x-4">
+              <UserIcon className="h-6 w-6 text-blue-500" />
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Supervisor
+                </h3>
+                {/* // ! this is so dumb */}
+                {roles.has(Role.ADMIN) ? (
+                  <Link
+                    className={cn(
+                      buttonVariants({ variant: "link" }),
+                      "p-0 text-lg",
+                    )}
+                    href={`../${PAGES.allSupervisors.href}/${projectData.supervisor.id}`}
+                  >
+                    {projectData.supervisor.name}
+                  </Link>
+                ) : (
+                  <p className="text-lg font-semibold">
+                    {projectData.supervisor.name}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        </AccessControl>
+          }
+        />
         <div className={cn(projectData.project.flags.length === 0 && "hidden")}>
           <div className="mb-2 flex items-center space-x-4">
             <FlagIcon className="h-6 w-6 text-fuchsia-500" />

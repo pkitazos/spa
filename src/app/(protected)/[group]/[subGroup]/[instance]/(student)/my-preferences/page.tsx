@@ -3,7 +3,7 @@ import { PAGES } from "@/config/pages";
 
 import { Role, Stage } from "@/db/types";
 
-import { AccessControl } from "@/components/access-control";
+import { ConditionalRender } from "@/components/access-control";
 import { Heading } from "@/components/heading";
 import { BoardDetailsProvider } from "@/components/kanban-board/store";
 import { LatestSubmissionDataTable } from "@/components/pages/student-preferences/latest-submission-data-table";
@@ -63,15 +63,18 @@ export default async function Page({ params }: { params: InstanceParams }) {
   return (
     <PanelWrapper className="gap-10">
       <Heading>{PAGES.myPreferences.title}</Heading>
-      <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
-        <SubmissionArea
-          title="Submit your preference list"
-          studentId={user.id}
-          initialProjects={initialProjects}
-          latestSubmissionDateTime={latestSubmissionDateTime}
-          restrictions={restrictions}
-        />
-      </AccessControl>
+      <ConditionalRender
+        allowedStages={[Stage.STUDENT_BIDDING]}
+        allowed={
+          <SubmissionArea
+            title="Submit your preference list"
+            studentId={user.id}
+            initialProjects={initialProjects}
+            latestSubmissionDateTime={latestSubmissionDateTime}
+            restrictions={restrictions}
+          />
+        }
+      />
       <Tabs
         searchParamName="tab"
         options={["current-board-state", "last-submission"]}

@@ -17,7 +17,8 @@ import { flagDtoSchema, type ProjectDTO, type SupervisorDTO } from "@/dto";
 
 import { type PreferenceType, Role, Stage } from "@/db/types";
 
-import { AccessControl } from "@/components/access-control";
+import { ConditionalRender } from "@/components/access-control";
+import { FormatDenial } from "@/components/access-control/format-denial";
 import { ExportCSVButton } from "@/components/export-csv";
 import {
   useInstanceStage,
@@ -305,34 +306,40 @@ export function useAllProjectsColumns({
                         data={data}
                       />
                     </DropdownMenuItem>
-                    <AccessControl
+                    <ConditionalRender
                       allowedRoles={[Role.STUDENT]}
                       allowedStages={[Stage.STUDENT_BIDDING]}
-                    >
-                      <StudentPreferenceActionSubMenu
-                        changePreference={async (t) =>
-                          void changeMultiplePreferences(t, selectedProjectIds)
-                        }
-                      />
-                    </AccessControl>
-                    <AccessControl
+                      allowed={
+                        <StudentPreferenceActionSubMenu
+                          changePreference={async (t) =>
+                            void changeMultiplePreferences(
+                              t,
+                              selectedProjectIds,
+                            )
+                          }
+                        />
+                      }
+                    />
+
+                    <ConditionalRender
                       allowedRoles={[Role.ADMIN]}
                       allowedStages={[
                         Stage.PROJECT_SUBMISSION,
                         Stage.STUDENT_BIDDING,
                       ]}
-                    >
-                      <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
-                        <YesNoActionTrigger
-                          trigger={
-                            <button className="flex items-center gap-2">
-                              <Trash2Icon className="h-4 w-4" />
-                              <span>Delete Selected Projects</span>
-                            </button>
-                          }
-                        />
-                      </DropdownMenuItem>
-                    </AccessControl>
+                      allowed={
+                        <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
+                          <YesNoActionTrigger
+                            trigger={
+                              <button className="flex items-center gap-2">
+                                <Trash2Icon className="h-4 w-4" />
+                                <span>Delete Selected Projects</span>
+                              </button>
+                            }
+                          />
+                        </DropdownMenuItem>
+                      }
+                    />
                   </DropdownMenuContent>
                 </YesNoActionContainer>
               </DropdownMenu>
@@ -382,48 +389,87 @@ export function useAllProjectsColumns({
                       </p>
                     </Link>
                   </DropdownMenuItem>
-                  <AccessControl
+                  <ConditionalRender
                     allowedRoles={[Role.STUDENT]}
                     allowedStages={[Stage.STUDENT_BIDDING]}
-                    extraConditions={{ RBAC: { AND: !hasSelfDefinedProject } }}
-                  >
-                    <StudentPreferenceActionSubMenu
-                      defaultType={projectPreferences[project.id] ?? "None"}
-                      changePreference={async (t) =>
-                        void changePreference(t, project.id)
-                      }
-                    />
-                  </AccessControl>
-                  <AccessControl
+                    overrides={{ roles: { AND: !hasSelfDefinedProject } }}
+                    allowed={
+                      <StudentPreferenceActionSubMenu
+                        defaultType={projectPreferences[project.id] ?? "None"}
+                        changePreference={async (t) =>
+                          void changePreference(t, project.id)
+                        }
+                      />
+                    }
+                  />
+
+                  <ConditionalRender
                     allowedRoles={[Role.ADMIN]}
                     allowedStages={[
                       Stage.PROJECT_SUBMISSION,
                       Stage.STUDENT_BIDDING,
                     ]}
-                    extraConditions={{
-                      RBAC: { OR: supervisor.id === user.id },
-                    }}
-                  >
-                    <DropdownMenuItem className="group/item">
-                      <Link
-                        className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                        href={getPath(`projects/${project.id}/edit`)}
+                    overrides={{ roles: { OR: supervisor.id === user.id } }}
+                    allowed={
+                      // pin - broken link
+                      <DropdownMenuItem className="group/item">
+                        <Link
+                          className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
+                          href={getPath(`projects/${project.id}/edit`)}
+                        >
+                          <PenIcon className="h-4 w-4" />
+                          <span>Edit Project details</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    }
+                  />
+
+                  <ConditionalRender
+                    allowedRoles={[Role.ADMIN]}
+                    allowedStages={[
+                      Stage.PROJECT_SUBMISSION,
+                      Stage.STUDENT_BIDDING,
+                    ]}
+                    overrides={{ roles: { OR: supervisor.id === user.id } }}
+                    allowed={
+                      <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
+                        <YesNoActionTrigger
+                          trigger={
+                            <button className="flex items-center gap-2">
+                              <Trash2Icon className="h-4 w-4" />
+                              <span>Delete Project</span>
+                            </button>
+                          }
+                        />
+                      </DropdownMenuItem>
+                    }
+                    denied={(data) => (
+                      <WithTooltip
+                        tip={
+                          <p className="max-w-xl">
+                            {data.reasons.map((reason, i) => (
+                              <FormatDenial
+                                key={i}
+                                ctx={data.ctx}
+                                reason={reason}
+                              />
+                            ))}
+                          </p>
+                        }
+                        forDisabled
                       >
-                        <PenIcon className="h-4 w-4" />
-                        <span>Edit Project details</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
-                      <YesNoActionTrigger
-                        trigger={
+                        <DropdownMenuItem
+                          className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive"
+                          disabled
+                        >
                           <button className="flex items-center gap-2">
                             <Trash2Icon className="h-4 w-4" />
                             <span>Delete Project</span>
                           </button>
-                        }
-                      />
-                    </DropdownMenuItem>
-                  </AccessControl>
+                        </DropdownMenuItem>
+                      </WithTooltip>
+                    )}
+                  />
                 </DropdownMenuContent>
               </YesNoActionContainer>
             </DropdownMenu>
