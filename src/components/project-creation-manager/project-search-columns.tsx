@@ -1,21 +1,20 @@
 import { useMemo } from "react";
 
 import { type ColumnDef } from "@tanstack/react-table";
-import { Copy } from "lucide-react";
+import { CopyPlusIcon } from "lucide-react";
 import { z } from "zod";
 
 import { spacesLabels } from "@/config/spaces";
 
 import { flagDtoSchema, tagDtoSchema } from "@/dto";
 
+import { useInstanceParams } from "@/components/params-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 
 import { isSameInstance } from "@/lib/utils/general/instance-params";
-
-import { useInstanceParams } from "../params-context";
-import { WithTooltip } from "../ui/tooltip-wrapper";
 
 import { hasSome } from "./utils";
 
@@ -147,7 +146,7 @@ export function useProjectSearchColumns({
                 onClick={() => onProjectSelect(row.original)}
                 className="my-auto flex items-center gap-2"
               >
-                <Copy className="h-4 w-4" />
+                <CopyPlusIcon className="h-4 w-4" />
               </Button>
             </WithTooltip>
           </div>
