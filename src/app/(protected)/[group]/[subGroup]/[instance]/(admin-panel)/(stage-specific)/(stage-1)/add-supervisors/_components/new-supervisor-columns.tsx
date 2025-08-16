@@ -17,7 +17,7 @@ import { type SupervisorDTO } from "@/dto";
 import { Stage } from "@/db/types";
 
 import { ConditionalRender } from "@/components/access-control";
-import { FormatDenial } from "@/components/access-control/format-denial";
+import { FormatDenials } from "@/components/access-control/format-denial";
 import {
   useInstanceStage,
   usePathInInstance,
@@ -40,7 +40,7 @@ import {
   YesNoActionTrigger,
 } from "@/components/yes-no-action";
 
-import { previousStages } from "@/lib/utils/permissions/stage-check";
+import { previousStages, stageLte } from "@/lib/utils/permissions/stage-check";
 
 export function useNewSupervisorColumns({
   deleteSupervisor,
@@ -129,7 +129,7 @@ export function useNewSupervisorColumns({
           .getSelectedRowModel()
           .rows.map((e) => e.original.id);
 
-        if (someSelected && stage === Stage.SETUP)
+        if (someSelected && stageLte(stage, Stage.STUDENT_BIDDING))
           return (
             <div className="flex w-14 items-center justify-center">
               <DropdownMenu>
@@ -169,6 +169,22 @@ export function useNewSupervisorColumns({
                           />
                         </DropdownMenuItem>
                       }
+                      denied={({ ctx, reasons }) => (
+                        <WithTooltip
+                          forDisabled
+                          tip={<FormatDenials ctx={ctx} reasons={reasons} />}
+                        >
+                          <DropdownMenuItem
+                            className="text-destructive focus:bg-red-100/40 focus:text-destructive"
+                            disabled
+                          >
+                            <button className="flex items-center gap-2 text-sm">
+                              <Trash2Icon className="h-4 w-4" />
+                              <span>Remove selected Supervisors</span>
+                            </button>
+                          </DropdownMenuItem>
+                        </WithTooltip>
+                      )}
                     />
                   </DropdownMenuContent>
                 </YesNoActionContainer>
@@ -238,19 +254,9 @@ export function useNewSupervisorColumns({
                       />
                     </DropdownMenuItem>
                   }
-                  denied={(data) => (
+                  denied={({ ctx, reasons }) => (
                     <WithTooltip
-                      tip={
-                        <p className="max-w-xl">
-                          {data.reasons.map((reason, i) => (
-                            <FormatDenial
-                              key={i}
-                              ctx={data.ctx}
-                              reason={reason}
-                            />
-                          ))}
-                        </p>
-                      }
+                      tip={<FormatDenials ctx={ctx} reasons={reasons} />}
                       forDisabled
                     >
                       <DropdownMenuItem
