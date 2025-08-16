@@ -1,10 +1,16 @@
 import { Role } from "@/db/types";
 
+import {
+  type GroupParams,
+  type SubGroupParams,
+} from "@/lib/validations/params";
+
 type PageLevel = 1 | 2 | 3 | 4 | 5;
 
 export interface PageConfig {
   title: string;
-  href: string; //todo add mkURL Function
+  href: string;
+  mkUrl: (_: never) => string;
   icon?: string;
   level: PageLevel;
   allowedRoles: Role[];
@@ -15,6 +21,7 @@ export const PAGES = {
   home: {
     title: "Home",
     href: "",
+    mkUrl: () => "/",
     level: 1,
     allowedRoles: [Role.ADMIN, Role.READER, Role.STUDENT, Role.SUPERVISOR],
     hasSubRoute: false,
@@ -22,6 +29,7 @@ export const PAGES = {
   me: {
     title: "Me",
     href: "me",
+    mkUrl: () => "/me",
     level: 1,
     allowedRoles: [Role.ADMIN, Role.READER, Role.STUDENT, Role.SUPERVISOR],
     hasSubRoute: false,
@@ -29,6 +37,7 @@ export const PAGES = {
   superAdminPanel: {
     title: "Admin Panel",
     href: "admin",
+    mkUrl: () => "/admin",
     level: 1,
     allowedRoles: [Role.ADMIN],
     hasSubRoute: true,
@@ -36,6 +45,7 @@ export const PAGES = {
   userManagement: {
     title: "User Management",
     href: "all-users",
+    mkUrl: () => "/all-users",
     level: 2,
     allowedRoles: [Role.ADMIN],
     hasSubRoute: false,
@@ -43,6 +53,7 @@ export const PAGES = {
   newGroup: {
     title: "New Group",
     href: "create-group",
+    mkUrl: () => "/create-group",
     level: 2,
     allowedRoles: [Role.ADMIN],
     hasSubRoute: false,
@@ -50,6 +61,7 @@ export const PAGES = {
   newSubGroup: {
     title: "New Sub-Group",
     href: "create-sub-group",
+    mkUrl: ({ group }: GroupParams) => `/${group}/create-sub-group`,
     level: 2,
     allowedRoles: [Role.ADMIN],
     hasSubRoute: false,
@@ -57,6 +69,8 @@ export const PAGES = {
   newInstance: {
     title: "New Instance",
     href: "create-instance",
+    mkUrl: ({ group, subGroup }: SubGroupParams) =>
+      `/${group}/${subGroup}/create-instance`,
     level: 3,
     allowedRoles: [Role.ADMIN],
     hasSubRoute: false,
@@ -397,3 +411,5 @@ export const PAGES = {
     hasSubRoute: false,
   },
 } satisfies Record<string, PageConfig>;
+
+export type PageName = keyof typeof PAGES;
