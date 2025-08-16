@@ -26,7 +26,11 @@ export function SupervisorResultsSection() {
   if (status !== "success") return <Skeleton className="h-60 w-full" />;
 
   return (
-    <Tabs defaultValue={data.firstNonEmpty}>
+    <Tabs
+      searchParamName="supervisor-tab"
+      options={data.results.map((x) => x.algorithm.id)}
+      defaultValue={data.firstNonEmpty ?? ""}
+    >
       <Carousel className="mx-14">
         <TabsList className="w-full">
           <CarouselContent className="-ml-4">

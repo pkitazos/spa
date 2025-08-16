@@ -28,36 +28,37 @@ export function StudentsDataTable({
   const params = useInstanceParams();
   const router = useRouter();
 
-  const { mutateAsync: deleteAsync } = api.user.student.delete.useMutation();
-  const { mutateAsync: deleteSelectedAsync } =
-    api.user.student.deleteSelected.useMutation();
+  const { mutateAsync: api_deleteStudent } =
+    api.institution.instance.deleteStudent.useMutation();
+  const { mutateAsync: api_deleteManyStudents } =
+    api.institution.instance.deleteManyStudents.useMutation();
 
-  async function handleDelete(studentId: string) {
-    void toast.promise(
-      deleteAsync({ params, studentId }).then(() => router.refresh()),
-      {
+  async function deleteStudent(studentId: string) {
+    void toast
+      .promise(api_deleteStudent({ params, studentId }), {
         loading: `Removing Student from this ${spacesLabels.instance.short}...`,
-        error: "Something went wrong",
         success: `Student ${studentId} deleted successfully`,
-      },
-    );
+        error: `Failed to remove student from ${spacesLabels.instance.short}`,
+      })
+      .unwrap()
+      .then(() => router.refresh());
   }
 
-  async function handleDeleteSelected(studentIds: string[]) {
-    void toast.promise(
-      deleteSelectedAsync({ params, studentIds }).then(() => router.refresh()),
-      {
+  async function deleteManyStudents(studentIds: string[]) {
+    void toast
+      .promise(api_deleteManyStudents({ params, studentIds }), {
         loading: `Removing Students from this ${spacesLabels.instance.short}...`,
-        error: "Something went wrong",
         success: `Successfully removed ${studentIds.length} students`,
-      },
-    );
+        error: `Failed to remove students from ${spacesLabels.instance.short}`,
+      })
+      .unwrap()
+      .then(() => router.refresh());
   }
 
   const columns = useAllStudentsColumns({
     roles,
-    deleteStudent: handleDelete,
-    deleteSelectedStudents: handleDeleteSelected,
+    deleteStudent: deleteStudent,
+    deleteSelectedStudents: deleteManyStudents,
   });
 
   const filters = [
@@ -66,7 +67,7 @@ export function StudentsDataTable({
       columnId: "Flag",
       options: projectDescriptors.flags.map((flag) => ({
         id: flag.displayName,
-        title: flag.displayName,
+        displayName: flag.displayName,
       })),
     },
   ];

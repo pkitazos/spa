@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { ScrollArea } from "@radix-ui/react-scroll-area";
 import {
   type ColumnFiltersState,
   type SortingState,
@@ -27,6 +26,7 @@ import { CircleCheckIcon } from "@/components/icons/circle-check";
 import { CircleXIcon } from "@/components/icons/circle-x";
 import { DataTablePagination } from "@/components/ui/data-table/data-table-pagination";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,

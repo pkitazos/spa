@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import { Command as CommandPrimitive } from "cmdk";
-import { X } from "lucide-react";
+import { XIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -77,7 +77,7 @@ export function MultiSelect({
             <Badge key={option.id} variant="secondary">
               {option.title}
               <button
-                className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                className="pl-1 rounded-full outline-hidden ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     handleUnselect(option);
@@ -89,7 +89,7 @@ export function MultiSelect({
                 }}
                 onClick={() => handleUnselect(option)}
               >
-                <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                <XIcon className="h-3 w-3 text-secondary-foreground hover:cursor-pointer" />
               </button>
             </Badge>
           ))}
@@ -100,14 +100,14 @@ export function MultiSelect({
             onBlur={() => setOpen(false)}
             onFocus={() => setOpen(true)}
             placeholder={placeholder}
-            className="ml-2 flex-1 bg-transparent outline-none placeholder:text-muted-foreground"
+            className="ml-2 flex-1 bg-transparent outline-hidden placeholder:text-muted-foreground"
           />
         </div>
       </div>
       <div className="relative mt-2">
         <CommandList>
           {open && filteredSelectables.length > 0 ? (
-            <div className="absolute top-0 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-none animate-in">
+            <div className="absolute top-0 z-10 w-full rounded-md border bg-popover text-popover-foreground shadow-md outline-hidden animate-in">
               <CommandGroup className="max-h-60 overflow-y-auto">
                 {filteredSelectables.map((option) => (
                   <CommandItem

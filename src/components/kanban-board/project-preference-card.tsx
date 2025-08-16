@@ -9,7 +9,7 @@ import Link from "next/link";
 
 import { PreferenceType, Stage } from "@/db/types";
 
-import { AccessControl } from "@/components/access-control";
+import { ConditionalRender } from "@/components/access-control";
 import { useInstancePath, useInstanceStage } from "@/components/params-context";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,7 +61,7 @@ export function ProjectPreferenceCard({
       <div
         ref={setNodeRef}
         style={style}
-        className={cn("h-[7.5rem] rounded-md bg-muted-foreground/20")}
+        className={cn("h-30 rounded-md bg-muted-foreground/20")}
       />
     );
   }
@@ -74,20 +74,24 @@ export function ProjectPreferenceCard({
       style={style}
       className={cn(
         "group flex items-center",
-        isOver && "outline outline-4 outline-muted-foreground/50",
+        isOver && "outline-solid outline-4 outline-muted-foreground/50",
       )}
     >
-      <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
-        <Button
-          {...attributes}
-          {...listeners}
-          variant="ghost"
-          className="ml-2 flex h-20 w-8 flex-col"
-        >
-          <GripVerticalIcon className="-mb-1 h-8 w-8 cursor-move text-gray-400/50" />
-          <GripVerticalIcon className="h-8 w-8 cursor-move text-gray-400/50" />
-        </Button>
-      </AccessControl>
+      <ConditionalRender
+        allowedStages={[Stage.STUDENT_BIDDING]}
+        allowed={
+          <Button
+            {...attributes}
+            {...listeners}
+            variant="ghost"
+            className="ml-2 flex h-20 w-8 flex-col"
+          >
+            <GripVerticalIcon className="-mb-1 h-8 w-8 cursor-move text-gray-400/50" />
+            <GripVerticalIcon className="h-8 w-8 cursor-move text-gray-400/50" />
+          </Button>
+        }
+      />
+
       <div>
         <CardHeader className="flex w-full flex-row items-center justify-between space-y-0 p-4 pb-2">
           {project.columnId === PreferenceType.PREFERENCE && rank && (
@@ -111,16 +115,19 @@ export function ProjectPreferenceCard({
               </Link>
             </Comp>
           </CardTitle>
-          <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="invisible items-center justify-center group-hover:visible group-hover:flex"
-              onClick={() => deletePreference(project.id)}
-            >
-              <XIcon className="h-4 w-4 font-bold" />
-            </Button>
-          </AccessControl>
+          <ConditionalRender
+            allowedStages={[Stage.STUDENT_BIDDING]}
+            allowed={
+              <Button
+                variant="ghost"
+                size="icon"
+                className="invisible items-center justify-center group-hover:visible group-hover:flex"
+                onClick={() => deletePreference(project.id)}
+              >
+                <XIcon className="h-4 w-4 font-bold" />
+              </Button>
+            }
+          />
         </CardHeader>
         <CardContent className="pl-8">
           <div className="flex items-center">

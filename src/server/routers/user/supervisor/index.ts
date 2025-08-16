@@ -3,6 +3,7 @@ import { z } from "zod";
 import { computeProjectSubmissionTarget } from "@/config/submission-target";
 
 import {
+  instanceDtoSchema,
   type ProjectDTO,
   projectDtoSchema,
   type StudentDTO,
@@ -10,13 +11,11 @@ import {
   supervisorDtoSchema,
 } from "@/dto";
 
-import { Stage } from "@/db/types";
+import { Role } from "@/db/types";
 
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
 
-import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
-import { subsequentStages } from "@/lib/utils/permissions/stage-check";
 import { instanceParamsSchema } from "@/lib/validations/params";
 import { supervisorCapacitiesSchema } from "@/lib/validations/supervisor-project-submission-details";
 
@@ -48,10 +47,10 @@ export const supervisorRouter = createTRPCRouter({
   setAllocationAccess: procedure.instance.subGroupAdmin
     .input(z.object({ access: z.boolean() }))
     .output(z.boolean())
-    .mutation(
-      async ({ ctx: { instance }, input: { access } }) =>
-        await instance.setSupervisorPublicationAccess(access),
-    ),
+    .mutation(async ({ ctx: { instance, audit }, input: { access } }) => {
+      audit("Set supervisor allocation access", { access });
+      return await instance.setSupervisorPublicationAccess(access);
+    }),
 
   // TODO split to e.g. displayname and DeadlineDetails
   // TODO rename
@@ -62,18 +61,13 @@ export const supervisorRouter = createTRPCRouter({
       z.object({
         displayName: z.string(),
         // TODO make DTO for below
-        deadlineTimeZoneOffset: z.string(),
         projectSubmissionDeadline: z.date(),
       }),
     )
     .query(async ({ ctx: { instance } }) => {
       const { displayName, projectSubmissionDeadline } = await instance.get();
 
-      return {
-        displayName,
-        deadlineTimeZoneOffset: getGMTOffset(projectSubmissionDeadline),
-        projectSubmissionDeadline: getGMTZoned(projectSubmissionDeadline),
-      };
+      return { displayName, projectSubmissionDeadline };
     }),
 
   instanceProjects: procedure.instance.subGroupAdmin
@@ -99,7 +93,7 @@ export const supervisorRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx: { user } }) => {
-      const allProjects = await user.getProjects();
+      const allProjects = await user.getProjectsInInstance();
       const { projectTarget: target } = await user.getCapacityDetails();
 
       const totalCount = await user
@@ -123,7 +117,7 @@ export const supervisorRouter = createTRPCRouter({
     )
     .query(async ({ ctx: { user } }) => {
       type Ret = { project: ProjectDTO; student: StudentDTO | undefined }[];
-      const supervisorProjects = await user.getProjects();
+      const supervisorProjects = await user.getProjectsInInstance();
 
       return supervisorProjects.flatMap((p) => {
         if (p.allocatedStudents.length === 0) {
@@ -146,28 +140,14 @@ export const supervisorRouter = createTRPCRouter({
     )
     .output(supervisorCapacitiesSchema)
     .mutation(
-      async ({ ctx: { instance }, input: { supervisorId, capacities } }) => {
+      async ({
+        ctx: { instance, audit },
+        input: { supervisorId, capacities },
+      }) => {
+        audit("Updated supervisor capacities", { supervisorId, capacities });
         const supervisor = await instance.getSupervisor(supervisorId);
         return supervisor.setCapacityDetails(capacities);
       },
-    ),
-
-  delete: procedure.instance
-    .inStage(subsequentStages(Stage.PROJECT_ALLOCATION))
-    .subGroupAdmin.input(z.object({ supervisorId: z.string() }))
-    .output(z.void())
-    .mutation(
-      async ({ ctx: { instance }, input: { supervisorId } }) =>
-        await instance.deleteSupervisor(supervisorId),
-    ),
-
-  deleteMany: procedure.instance
-    .inStage(subsequentStages(Stage.PROJECT_ALLOCATION))
-    .subGroupAdmin.input(z.object({ supervisorIds: z.array(z.string()) }))
-    .output(z.void())
-    .mutation(
-      async ({ ctx: { instance }, input: { supervisorIds } }) =>
-        await instance.deleteSupervisors(supervisorIds),
     ),
 
   // TODO: change rank to studentRanking
@@ -182,4 +162,28 @@ export const supervisorRouter = createTRPCRouter({
       ),
     )
     .query(async ({ ctx: { user } }) => user.getSupervisionAllocations()),
+
+  getPreviousProjects: procedure.instance
+    .withRoles([Role.SUPERVISOR, Role.ADMIN])
+    .input(z.object({ params: instanceParamsSchema, supervisorId: z.string() }))
+    .output(
+      z.array(
+        z.object({
+          instanceData: instanceDtoSchema,
+          project: projectDtoSchema,
+          supervisor: supervisorDtoSchema,
+        }),
+      ),
+    )
+    .query(async ({ ctx: { instance }, input: { supervisorId } }) => {
+      const supervisor = await instance.getSupervisor(supervisorId);
+      const projects = await supervisor.getProjectsInGroup();
+      const supervisorData = await supervisor.toDTO();
+
+      return projects.map(({ project, instanceData }) => ({
+        project,
+        supervisor: supervisorData,
+        instanceData,
+      }));
+    }),
 });

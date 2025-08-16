@@ -29,9 +29,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
     <PanelWrapper className="gap-10">
       <Heading className="mb-4">{PAGES.manageUserAccess.title}</Heading>
       <section className="flex w-full flex-col gap-6">
-        <SectionHeading className="mb-2 flex items-center">
-          <Users2Icon className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>Supervisors access</span>
+        <SectionHeading icon={Users2Icon} className="mb-2">
+          Supervisors access
         </SectionHeading>
         <Card className="w-full">
           <CardContent className="flex items-center justify-between gap-5 pt-6">
@@ -44,9 +43,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
         </Card>
       </section>
       <section className="flex w-full flex-col gap-6">
-        <SectionHeading className="mb-2 flex items-center">
-          <GraduationCap className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>Students access</span>
+        <SectionHeading icon={GraduationCap} className="mb-2">
+          Students access
         </SectionHeading>
         <Card className="w-full">
           <CardContent className="flex items-center justify-between gap-5 pt-6">

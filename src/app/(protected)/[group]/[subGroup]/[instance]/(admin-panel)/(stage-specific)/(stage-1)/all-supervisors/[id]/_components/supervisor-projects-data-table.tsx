@@ -59,18 +59,35 @@ export function SupervisorProjectsDataTable({
 
   const filters = [
     {
+      title: "Flags",
       columnId: "Flags",
       options: projectDescriptors.flags.map((flag) => ({
         id: flag.id,
-        title: flag.displayName,
+        displayName: flag.displayName,
       })),
     },
     {
+      title: "Keywords",
       columnId: "Keywords",
       options: projectDescriptors.tags.map((tag) => ({
         id: tag.id,
-        title: tag.title,
+        displayName: tag.title,
       })),
+    },
+    {
+      title: "Allocation Status",
+      columnId: "Student",
+      options: [
+        {
+          id: ProjectAllocationStatus.ALGORITHMIC,
+          displayName: "Algorithm Allocated",
+        },
+        {
+          id: ProjectAllocationStatus.PRE_ALLOCATED,
+          displayName: "Pre-allocated",
+        },
+        { id: ProjectAllocationStatus.UNALLOCATED, displayName: "Unallocated" },
+      ],
     },
   ];
 
@@ -83,24 +100,7 @@ export function SupervisorProjectsDataTable({
     <DataTable
       className="w-full"
       columns={columns}
-      filters={[
-        ...filters,
-        {
-          columnId: "Student",
-          title: "Allocation Status",
-          options: [
-            {
-              id: ProjectAllocationStatus.ALGORITHMIC,
-              title: "Algorithm Allocated",
-            },
-            {
-              id: ProjectAllocationStatus.PRE_ALLOCATED,
-              title: "Pre-allocated",
-            },
-            { id: ProjectAllocationStatus.UNALLOCATED, title: "Unallocated" },
-          ],
-        },
-      ]}
+      filters={filters}
       data={data}
     />
   );

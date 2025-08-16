@@ -11,7 +11,7 @@ export default async function UserPage() {
   const allUsers = await api.institution.getAllUsers();
 
   return (
-    <PanelWrapper>
+    <PanelWrapper className="mt-5">
       <Heading>User Management</Heading>
       <UserDataTable users={allUsers} />
     </PanelWrapper>

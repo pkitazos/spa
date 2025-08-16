@@ -1,4 +1,11 @@
-import { type SubGroupDTO, type GroupDTO, type UserDTO } from "@/dto";
+import {
+  type SubGroupDTO,
+  type GroupDTO,
+  type UserDTO,
+  type InstanceDTO,
+  type ProjectDTO,
+  type SupervisorDTO,
+} from "@/dto";
 
 import { Transformers as T } from "@/db/transformers";
 import { type DB } from "@/db/types";
@@ -56,7 +63,7 @@ export class AllocationGroup extends DataObject {
   }
 
   public async exists(): Promise<boolean> {
-    return !!(await this.db.allocationGroup.findFirst({
+    return !!(await this.db.allocationGroup.findUnique({
       where: { id: this.params.group },
     }));
   }
@@ -105,5 +112,31 @@ export class AllocationGroup extends DataObject {
   get institution() {
     this._institution ??= new Institution(this.db);
     return this._institution;
+  }
+
+  public async getAllProjects(): Promise<
+    {
+      project: ProjectDTO;
+      supervisor: SupervisorDTO;
+      instanceData: InstanceDTO;
+    }[]
+  > {
+    const projectData = await this.db.project.findMany({
+      where: { allocationGroupId: this.params.group },
+      include: {
+        allocationInstance: true,
+        tagsOnProject: { include: { tag: true } },
+        flagsOnProject: { include: { flag: true } },
+        supervisor: {
+          include: { userInInstance: { include: { user: true } } },
+        },
+      },
+    });
+
+    return projectData.map((x) => ({
+      instanceData: T.toAllocationInstanceDTO(x.allocationInstance),
+      project: T.toProjectDTO(x),
+      supervisor: T.toSupervisorDTO(x.supervisor),
+    }));
   }
 }

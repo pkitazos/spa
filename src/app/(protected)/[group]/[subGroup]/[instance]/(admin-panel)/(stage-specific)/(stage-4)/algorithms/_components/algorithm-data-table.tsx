@@ -21,7 +21,7 @@ export function AlgorithmSection({ takenNames }: { takenNames: Set<string> }) {
 
   return (
     <>
-      <DataTable columns={columns} data={data} />
+      <DataTable searchParamPrefix="run" columns={columns} data={data} />
       <NewAlgorithmSection takenNames={takenNames} />
     </>
   );

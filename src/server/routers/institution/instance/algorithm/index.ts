@@ -30,9 +30,9 @@ export const algorithmRouter = createTRPCRouter({
   // BREAKING input/output type changed
   // pin
   run: procedure.algorithm.subGroupAdmin
-    .input(z.object({ algId: z.string() }))
     .output(z.object({ total: z.number(), matched: z.number() }))
-    .mutation(async ({ ctx: { alg, instance } }) => {
+    .mutation(async ({ ctx: { alg, instance, audit } }) => {
+      audit("Running algorithm", { algId: alg.params.algConfigId });
       const matchingData = await instance.getMatchingData(alg);
 
       if (!matchingData) {
@@ -70,14 +70,18 @@ export const algorithmRouter = createTRPCRouter({
   create: procedure.instance.subGroupAdmin
     .input(z.object({ data: algorithmDtoSchema.omit({ id: true }) }))
     .output(algorithmDtoSchema)
-    .mutation(
-      async ({ ctx: { instance }, input: { data } }) =>
-        await instance.createAlgorithm(data),
-    ),
+    .mutation(async ({ ctx: { instance, audit }, input: { data } }) => {
+      audit("Created new algorithm");
+      return await instance.createAlgorithm(data);
+    }),
 
   delete: procedure.algorithm.subGroupAdmin
     .output(z.void())
-    .mutation(async ({ ctx: { alg } }) => await alg.delete()),
+    .mutation(async ({ ctx: { alg, audit } }) => {
+      audit("Deleting algorithm", { algId: alg.params.algConfigId });
+
+      return await alg.delete();
+    }),
 
   // BREAKING output type changed
   getAll: procedure.instance.subGroupAdmin

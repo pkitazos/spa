@@ -1,22 +1,25 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { type UseFormReturn } from "react-hook-form";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, ChevronsUpDown } from "lucide-react";
+import {
+  Check,
+  ChevronsUpDown,
+  SquareCheckBigIcon,
+  SquareIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import {
-  projectForm,
   type ProjectFormSubmissionDTO,
-  type ProjectFormInitialisationDTO,
   type ProjectFormInternalStateDTO,
+  type ProjectCreationContext,
 } from "@/dto/project";
 
 import { Role } from "@/db/types";
 
+import { MarkdownEditor } from "@/components/markdown-editor";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Command,
   CommandEmpty,
@@ -35,6 +38,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MultiSelect } from "@/components/ui/multi-select";
 import {
   Popover,
   PopoverContent,
@@ -45,55 +49,33 @@ import { Switch } from "@/components/ui/switch";
 
 import { cn } from "@/lib/utils";
 
-import { MarkdownEditor } from "../markdown-editor";
-import { MultiSelect } from "../ui/multi-select";
-
 interface ProjectFormProps {
-  formInitialisationData: ProjectFormInitialisationDTO;
-  defaultValues?: Partial<ProjectFormInternalStateDTO>;
+  projectCreationContext: ProjectCreationContext;
   onSubmit: (data: ProjectFormSubmissionDTO) => void;
   submissionButtonLabel: string;
   userRole: typeof Role.ADMIN | typeof Role.SUPERVISOR;
   children?: React.ReactNode;
   isSubmitting?: boolean;
+  form: UseFormReturn<ProjectFormInternalStateDTO>;
+  showSupervisorSelector: boolean;
 }
 
 export function ProjectForm({
-  formInitialisationData,
-  defaultValues,
+  projectCreationContext,
   onSubmit,
   submissionButtonLabel,
   userRole,
   children,
+  form,
   isSubmitting = false,
+  showSupervisorSelector = false,
 }: ProjectFormProps) {
-  const { takenTitles, flags, tags, students, supervisors } =
-    formInitialisationData;
-
-  const projectFormInternalStateSchema =
-    projectForm.buildInternalStateSchema(takenTitles);
-
-  const form = useForm({
-    resolver: zodResolver(projectFormInternalStateSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      flags: [],
-      tags: [],
-      capacityUpperBound: 1,
-      isPreAllocated: false,
-      preAllocatedStudentId: "",
-      supervisorId: "",
-      ...defaultValues,
-    },
-  });
+  const { flags, tags, students, supervisors } = projectCreationContext;
 
   const isPreAllocated = form.watch("isPreAllocated");
 
   const handlePreAllocatedToggle = () => {
-    const newState = !isPreAllocated;
-
-    if (newState) {
+    if (!isPreAllocated) {
       form.setValue("capacityUpperBound", 1);
       form.setValue("isPreAllocated", true);
     } else {
@@ -135,7 +117,7 @@ export function ProjectForm({
         className="flex w-full flex-col gap-6"
       >
         {/* Supervisor Selection (Admin only) */}
-        {isAdmin && (
+        {isAdmin && showSupervisorSelector && (
           <FormField
             control={form.control}
             name="supervisorId"
@@ -275,54 +257,67 @@ export function ProjectForm({
             name="flags"
             render={() => (
               <FormItem className={cn(flags.length === 0 && "hidden")}>
-                <div className="mb-3">
-                  <FormLabel className="text-2xl">Flags</FormLabel>
-                  <FormDescription>
+                <div className="mb-6">
+                  <FormLabel className="text-2xl font-semibold">
+                    Flags
+                  </FormLabel>
+                  <FormDescription className="text-base mt-2">
                     Select which students this project is suitable for. You must
                     select at least one flag.
                   </FormDescription>
                 </div>
-                {flags.map((flag) => (
-                  <FormField
-                    key={flag.id}
-                    control={form.control}
-                    name="flags"
-                    render={({ field }) => {
-                      return (
-                        <FormItem
-                          key={flag.id}
-                          className="flex flex-row items-center space-x-3 space-y-0"
-                        >
-                          <FormControl>
-                            <Checkbox
-                              disabled={isSubmitting}
-                              checked={field.value?.some(
-                                (f) => f.id === flag.id,
-                              )}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([...field.value, flag])
-                                  : field.onChange(
-                                      field.value?.filter(
-                                        (f) => f.id !== flag.id,
-                                      ),
-                                    );
-                              }}
-                            />
-                          </FormControl>
-                          <div>
-                            <FormLabel className="text-base font-normal">
-                              {flag.displayName}
-                            </FormLabel>
-                            <FormDescription className="text-sm">
-                              {flag.description}
-                            </FormDescription>
-                          </div>
-                        </FormItem>
-                      );
-                    }}
-                  />
-                ))}
+                <div className="space-y-4">
+                  {flags
+                    .sort((a, b) => a.displayName.localeCompare(b.displayName))
+                    .map((flag) => (
+                      <FormField
+                        key={flag.id}
+                        control={form.control}
+                        name="flags"
+                        render={({ field }) => {
+                          const isChecked = field.value?.some(
+                            (f) => f.id === flag.id,
+                          );
+                          return (
+                            <FormItem key={flag.id}>
+                              <FormControl>
+                                <div className="space-y-2">
+                                  <div
+                                    className={cn(
+                                      "group/checkbox inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 cursor-pointer transition-all text-sm font-medium",
+                                      isChecked
+                                        ? "bg-secondary border-secondary text-white shadow-md"
+                                        : "bg-white border-gray-300 text-gray-700 hover:border-blue-400 hover:bg-blue-50",
+                                    )}
+                                    onClick={() => {
+                                      const checked = !isChecked;
+                                      return checked
+                                        ? field.onChange([...field.value, flag])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (f) => f.id !== flag.id,
+                                            ),
+                                          );
+                                    }}
+                                  >
+                                    {isChecked ? (
+                                      <SquareCheckBigIcon className="h-4 w-4" />
+                                    ) : (
+                                      <SquareIcon className="h-4 w-4 group-hover/checkbox:text-blue-400 hover:text-blue-400" />
+                                    )}
+                                    <span>{flag.displayName}</span>
+                                  </div>
+                                  <FormDescription className="text-sm ml-4">
+                                    {flag.description}
+                                  </FormDescription>
+                                </div>
+                              </FormControl>
+                            </FormItem>
+                          );
+                        }}
+                      />
+                    ))}
+                </div>
                 <FormMessage />
               </FormItem>
             )}
@@ -541,3 +536,5 @@ export function ProjectForm({
     </Form>
   );
 }
+
+export { useProjectForm } from "./use-project-form";

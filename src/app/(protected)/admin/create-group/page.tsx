@@ -21,7 +21,7 @@ export default async function Page() {
   const takenGroupNames = await api.institution.takenGroupNames();
 
   return (
-    <PanelWrapper className="gap-10">
+    <PanelWrapper className="mt-5 gap-10">
       <Heading className="text-4xl">
         Create new {spacesLabels.group.full}
       </Heading>

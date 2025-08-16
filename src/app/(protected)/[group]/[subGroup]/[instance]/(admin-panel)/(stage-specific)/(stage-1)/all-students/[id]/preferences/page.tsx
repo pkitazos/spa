@@ -5,7 +5,6 @@ import { PAGES } from "@/config/pages";
 
 import { Stage } from "@/db/types";
 
-import { AccessControl } from "@/components/access-control";
 import { Heading } from "@/components/heading";
 import { LatestSubmissionDataTable } from "@/components/pages/student-preferences/latest-submission-data-table";
 import { SubmissionArea } from "@/components/pages/student-preferences/submission-area";
@@ -69,18 +68,23 @@ export default async function Page({ params }: { params: PageParams }) {
         <p>{PAGES.studentPreferences.title}</p>
         <p className="text-3xl text-muted-foreground">for {student.name}</p>
       </Heading>
-      <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
-        <section className="flex flex-col gap-3">
-          <SubmissionArea
-            title="Submit student preference list"
-            studentId={studentId}
-            initialProjects={initialProjects}
-            latestSubmissionDateTime={latestSubmissionDateTime}
-            restrictions={restrictions}
-          />
-        </section>
-      </AccessControl>
-      <Tabs defaultValue="current-board-state" className="w-full">
+
+      <section className="flex flex-col gap-3">
+        <SubmissionArea
+          title="Submit student preference list"
+          studentId={studentId}
+          initialProjects={initialProjects}
+          latestSubmissionDateTime={latestSubmissionDateTime}
+          restrictions={restrictions}
+        />
+      </section>
+
+      <Tabs
+        searchParamName="tab"
+        options={["current-board-state", "last-submission"]}
+        defaultValue="current-board-state"
+        className="w-full"
+      >
         <TabsList className="w-full">
           <TabsTrigger
             className="w-full data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground"

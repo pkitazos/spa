@@ -18,6 +18,7 @@ export function MarkdownEditor(props: JSX.IntrinsicAttributes & MDEditorProps) {
         {...props}
         commands={[]}
         previewOptions={{
+          className: "prose prose-ol:list-decimal",
           remarkPlugins: [[remarkMath]],
           rehypePlugins: [[rehypeSanitize], [rehypeKatex]],
         }}
@@ -34,6 +35,7 @@ export function MarkdownRenderer({ source }: { source: string }) {
         href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css"
       />
       <MDEditor.Markdown
+        className="prose prose-ol:list-decimal"
         source={source}
         remarkPlugins={[[remarkMath]]}
         rehypePlugins={[[rehypeSanitize], [rehypeKatex]]}

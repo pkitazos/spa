@@ -111,31 +111,22 @@ const editApiInputSchema = createApiInputSchema.extend({ id: z.string() });
 
 type ProjectFormEditApiInputDTO = z.infer<typeof editApiInputSchema>;
 
-const initialisationSchema = z.object({
-  flags: z.array(
-    z.object({
-      id: z.string(),
-      displayName: z.string(),
-      description: z.string(),
-    }),
-  ),
-  tags: z.array(z.object({ id: z.string(), title: z.string() })),
+const projectCreationContextSchema = z.object({
+  flags: z.array(flagDtoSchema),
+  tags: z.array(tagDtoSchema),
   students: z.array(studentDtoSchema),
   supervisors: z.array(supervisorDtoSchema),
-
   takenTitles: z.set(z.string()),
-
-  currentProject: editApiInputSchema.optional(),
 });
 
-type ProjectFormInitialisationDTO = z.infer<typeof initialisationSchema>;
+type ProjectCreationContext = z.infer<typeof projectCreationContextSchema>;
 
 export const projectForm = {
   buildInternalStateSchema,
   submissionSchema,
   createApiInputSchema,
   editApiInputSchema,
-  initialisationSchema,
+  initialisationSchema: projectCreationContextSchema,
 };
 
 export type {
@@ -143,7 +134,7 @@ export type {
   ProjectFormSubmissionDTO,
   ProjectFormCreateApiInputDTO,
   ProjectFormEditApiInputDTO,
-  ProjectFormInitialisationDTO,
+  ProjectCreationContext,
 };
 
 export const formToApiTransformations = {
@@ -170,29 +161,4 @@ export const formToApiTransformations = {
     ...formToApiTransformations.submissionToCreateApi(data, currentUserId),
     id: projectId,
   }),
-
-  initialisationToDefaultValues: (
-    initialisationData: ProjectFormInitialisationDTO,
-  ): Partial<ProjectFormInternalStateDTO> | undefined => {
-    const { currentProject } = initialisationData;
-    if (!currentProject) return undefined;
-
-    return {
-      title: currentProject.title,
-      description: currentProject.description,
-      supervisorId: currentProject.supervisorId,
-
-      flags: initialisationData.flags.filter((flag) =>
-        currentProject.flagIds.includes(flag.id),
-      ),
-      tags: initialisationData.tags.filter((tag) =>
-        currentProject.tagIds.includes(tag.id),
-      ),
-
-      isPreAllocated: !!currentProject.preAllocatedStudentId,
-      preAllocatedStudentId: currentProject.preAllocatedStudentId,
-
-      capacityUpperBound: currentProject.capacityUpperBound,
-    };
-  },
 };

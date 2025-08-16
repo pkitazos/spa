@@ -6,6 +6,7 @@ import React, {
   useMemo,
   useRef,
   useState,
+  type JSX,
 } from "react";
 
 import { Check, Pen } from "lucide-react";
@@ -75,7 +76,7 @@ export function EditableText({
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
             className={cn(
-              "bg-transparent focus:outline-none",
+              "bg-transparent focus:outline-hidden",
               className,
               inputClassName,
             )}

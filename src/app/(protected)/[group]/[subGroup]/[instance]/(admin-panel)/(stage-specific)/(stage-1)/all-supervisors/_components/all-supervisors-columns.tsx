@@ -15,8 +15,12 @@ import { type SupervisorDTO } from "@/dto";
 
 import { Role, Stage } from "@/db/types";
 
-import { AccessControl } from "@/components/access-control";
-import { useInstanceStage } from "@/components/params-context";
+import { ConditionalRender } from "@/components/access-control";
+import { FormatDenials } from "@/components/access-control/format-denial";
+import {
+  useInstanceStage,
+  usePathInInstance,
+} from "@/components/params-context";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionColumnLabel } from "@/components/ui/data-table/action-column-label";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
@@ -51,6 +55,7 @@ export function useAllSupervisorsColumns({
   deleteSelectedSupervisors: (ids: string[]) => Promise<void>;
 }): ColumnDef<SupervisorDTO>[] {
   const stage = useInstanceStage();
+  const { getInstancePath } = usePathInInstance();
 
   const selectCol = getSelectColumn<SupervisorDTO>();
 
@@ -76,16 +81,12 @@ export function useAllSupervisorsColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
       ),
-      cell: ({
-        row: {
-          original: { id, name },
-        },
-      }) => (
+      cell: ({ row: { original: supervisor } }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`./${PAGES.allSupervisors.href}/${id}`}
+          href={getInstancePath([PAGES.allSupervisors.href, supervisor.id])}
         >
-          {name}
+          {supervisor.name}
         </Link>
       ),
     },
@@ -137,12 +138,6 @@ export function useAllSupervisorsColumns({
         .getSelectedRowModel()
         .rows.map((e) => e.original.id);
 
-      function handleRemoveSelectedSupervisors() {
-        void deleteSelectedSupervisors(selectedSupervisorIds).then(() =>
-          table.toggleAllRowsSelected(false),
-        );
-      }
-
       if (
         someSelected &&
         roles.has(Role.ADMIN) &&
@@ -158,7 +153,11 @@ export function useAllSupervisorsColumns({
                 </Button>
               </DropdownMenuTrigger>
               <YesNoActionContainer
-                action={handleRemoveSelectedSupervisors}
+                action={async () =>
+                  void deleteSelectedSupervisors(selectedSupervisorIds).then(
+                    () => table.toggleAllRowsSelected(false),
+                  )
+                }
                 title="Remove Supervisors?"
                 description={
                   selectedSupervisorIds.length === 1
@@ -212,7 +211,10 @@ export function useAllSupervisorsColumns({
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./${PAGES.allSupervisors.href}/${supervisor.id}`}
+                  href={getInstancePath([
+                    PAGES.allSupervisors.href,
+                    supervisor.id,
+                  ])}
                 >
                   <CornerDownRightIcon className="h-4 w-4" />
                   <span>View supervisor details</span>
@@ -221,40 +223,90 @@ export function useAllSupervisorsColumns({
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./${PAGES.allSupervisors.href}/${supervisor.id}?edit=true`}
+                  href={getInstancePath(
+                    [PAGES.allSupervisors.href, supervisor.id],
+                    "edit=true",
+                  )}
                 >
                   <PenIcon className="h-4 w-4" />
                   <span>Edit supervisor details</span>
                 </Link>
               </DropdownMenuItem>
-              <AccessControl
+              <ConditionalRender
                 allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-              >
-                <DropdownMenuItem className="group/item">
-                  <Link
-                    className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                    href={`./${PAGES.allSupervisors.href}/${supervisor.id}/new-project`}
+                allowed={
+                  <DropdownMenuItem className="group/item">
+                    <Link
+                      className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
+                      href={getInstancePath([
+                        PAGES.allSupervisors.href,
+                        supervisor.id,
+                        PAGES.newProject.href,
+                      ])}
+                    >
+                      <FilePlus2 className="h-4 w-4" />
+                      <span>Create new project</span>
+                    </Link>
+                  </DropdownMenuItem>
+                }
+                denied={(denialData) => (
+                  <WithTooltip
+                    tip={
+                      <FormatDenials
+                        {...denialData}
+                        action="Creating projects"
+                      />
+                    }
+                    forDisabled
                   >
-                    <FilePlus2 className="h-4 w-4" />
-                    <span>Create new project</span>
-                  </Link>
-                </DropdownMenuItem>
-              </AccessControl>
-              <AccessControl
-                allowedRoles={[Role.ADMIN]}
+                    <DropdownMenuItem
+                      className="group/item2 focus:bg-red-100/40 "
+                      disabled
+                    >
+                      <button className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline">
+                        <FilePlus2 className="h-4 w-4" />
+                        <span>Create new project</span>
+                      </button>
+                    </DropdownMenuItem>
+                  </WithTooltip>
+                )}
+              />
+              <ConditionalRender
                 allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-              >
-                <DropdownMenuItem className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive">
-                  <YesNoActionTrigger
-                    trigger={
+                allowed={
+                  <DropdownMenuItem className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive">
+                    <YesNoActionTrigger
+                      trigger={
+                        <button className="flex items-center gap-2">
+                          <Trash2Icon className="h-4 w-4" />
+                          <span>Remove from Instance</span>
+                        </button>
+                      }
+                    />
+                  </DropdownMenuItem>
+                }
+                denied={(denialData) => (
+                  <WithTooltip
+                    tip={
+                      <FormatDenials
+                        {...denialData}
+                        action="Removing supervisors"
+                      />
+                    }
+                    forDisabled
+                  >
+                    <DropdownMenuItem
+                      className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive"
+                      disabled
+                    >
                       <button className="flex items-center gap-2">
                         <Trash2Icon className="h-4 w-4" />
                         <span>Remove from Instance</span>
                       </button>
-                    }
-                  />
-                </DropdownMenuItem>
-              </AccessControl>
+                    </DropdownMenuItem>
+                  </WithTooltip>
+                )}
+              />
             </DropdownMenuContent>
           </YesNoActionContainer>
         </DropdownMenu>

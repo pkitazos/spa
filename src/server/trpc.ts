@@ -10,13 +10,13 @@ import { sendMail } from "@/emails";
 import { Mailer } from "@/emails/mailer";
 import { initTRPC } from "@trpc/server";
 import superjson from "superjson";
-import { ZodError } from "zod";
+import z, { ZodError } from "zod";
 
 import { db } from "@/db";
 
 import { auth } from "@/lib/auth";
 import { type Session } from "@/lib/auth/types";
-import { logger, LogLevels } from "@/lib/logging/logger";
+import { type AuditFn, logger, LogLevels } from "@/lib/logging/logger";
 
 const trpcLogger = logger.child({ service: "trpc" });
 
@@ -36,7 +36,7 @@ export const createTRPCContext = async (opts: {
   headers: Headers;
   session: Session | null;
 }) => {
-  const { mask: user } = await auth();
+  const { real, mask: user } = await auth();
 
   if (!user) console.error("Failed to get user from auth()");
   const session = opts.session ?? { user };
@@ -44,13 +44,14 @@ export const createTRPCContext = async (opts: {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
   trpcLogger.log(LogLevels.TRIVIAL, "tRPC Request", { source });
 
-  function audit(message: string, ...meta: Record<string, unknown>[]) {
+  const audit: AuditFn = function audit(message, ...meta) {
     const data = meta.reduce((acc, val) => ({ ...acc, ...val }), {
-      authorizer: user,
+      authorizer: real,
+      mask: user,
     });
 
     trpcLogger.log(LogLevels.AUDIT, message, data);
-  }
+  };
 
   return {
     session,
@@ -76,7 +77,7 @@ export const t = initTRPC.context<typeof createTRPCContext>().create({
       data: {
         ...shape.data,
         zodError:
-          error.cause instanceof ZodError ? error.cause.flatten() : null,
+          error.cause instanceof ZodError ? z.treeifyError(error.cause) : null,
       },
     };
   },

@@ -56,7 +56,7 @@ async function getRealUser(): Promise<UserDTO> {
  * @returns The current auth mask
  *  */
 async function getMaskUser() {
-  if (env.AUTH_MASKING === "OFF") return await getRealUser();
+  if (env.AUTH_MASKING_ENABLED === "OFF") return await getRealUser();
   return (await getCurrentDevUser()) ?? (await getRealUser());
 }
 

@@ -22,10 +22,8 @@ export async function SupervisorInstanceHome({
 }) {
   const stage = await api.institution.instance.currentStage({ params });
 
-  const {
-    projectSubmissionDeadline: deadline,
-    deadlineTimeZoneOffset: timeZoneOffset,
-  } = await api.user.supervisor.instancePage({ params });
+  const { projectSubmissionDeadline: deadline } =
+    await api.user.supervisor.instancePage({ params });
 
   const { currentSubmissionCount, submissionTarget } =
     await api.user.supervisor.projectStats({ params });
@@ -35,19 +33,19 @@ export async function SupervisorInstanceHome({
       <div className="mt-9 flex justify-between">
         <div className="flex flex-col justify-start">
           <div className="flex flex-col gap-4">
-            <SectionHeading className="mb-2 flex items-center">
-              <Clock10Icon className="mr-2 h-6 w-6 text-indigo-500" />
-              <span>Project Upload Deadline</span>
+            <SectionHeading icon={Clock10Icon} className="mb-2">
+              Project Upload Deadline
             </SectionHeading>
             <p className="flex gap-2 text-xl">
               {format(deadline, "dd MMM yyyy - HH:mm")}
-              <span className="text-muted-foreground">{timeZoneOffset}</span>
+              <span className="text-muted-foreground">
+                {format(deadline, "OOOO")}
+              </span>
             </p>
           </div>
           <div className="mt-16 flex flex-col gap-4">
-            <SectionHeading className="mb-2 flex items-center">
-              <ListTodoIcon className="mr-2 h-6 w-6 text-indigo-500" />
-              <span>Task List</span>
+            <SectionHeading icon={ListTodoIcon} className="mb-2">
+              Task List
             </SectionHeading>
             <ul className="ml-6 list-disc [&>li]:mt-2">
               {submissionTarget > 0 && (
@@ -84,9 +82,8 @@ export async function SupervisorInstanceHome({
   ) {
     return (
       <div className="mt-9 flex flex-col gap-4">
-        <SectionHeading className="mb-2 flex items-center">
-          <ListTodoIcon className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>Task List</span>
+        <SectionHeading icon={ListTodoIcon} className="mb-2">
+          Task List
         </SectionHeading>
         <p>Nothing to do at this stage</p>
       </div>
@@ -96,9 +93,8 @@ export async function SupervisorInstanceHome({
   if (stage === Stage.ALLOCATION_PUBLICATION && allocationAccess) {
     return (
       <div className="mt-9 flex flex-col gap-4">
-        <SectionHeading className="mb-2 flex items-center">
-          <ListCheckIcon className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>Allocations Released</span>
+        <SectionHeading icon={ListCheckIcon} className="mb-2">
+          Allocations Released
         </SectionHeading>
         <p className="text-lg">
           Check the{" "}
@@ -114,9 +110,8 @@ export async function SupervisorInstanceHome({
   if (stageGte(stage, Stage.READER_BIDDING)) {
     return (
       <div className="mt-9 flex flex-col gap-4">
-        <SectionHeading className="mb-2 flex items-center">
-          <ListCheckIcon className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>Marking Allocations Released</span>
+        <SectionHeading icon={ListCheckIcon} className="mb-2 flex items-center">
+          Marking Allocations Released
         </SectionHeading>
         <p className="text-lg">
           Check the{" "}

@@ -58,9 +58,8 @@ export function FormSection({
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex w-full flex-col items-start gap-3"
       >
-        <SectionHeading className="mb-2 flex items-center">
-          <TextCursorInputIcon className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>Manually create Student</span>
+        <SectionHeading icon={TextCursorInputIcon} className="mb-2">
+          Manually create Student
         </SectionHeading>
         <div className="flex w-full items-center justify-start gap-5">
           {/* // TODO: don't allow special characters */}
@@ -127,7 +126,7 @@ export function FormSection({
             )}
           />
           <Button size="icon" variant="secondary">
-            <Plus className="h-4 w-4 stroke-white stroke-[3]" />
+            <Plus className="h-4 w-4 stroke-white stroke-3" />
           </Button>
         </div>
       </form>

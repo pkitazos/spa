@@ -23,40 +23,29 @@ export function Heading({
   );
 }
 
-export function SubHeading({
-  children: text,
-  className,
-}: {
-  className?: ClassValue;
-  children: ReactNode;
-}) {
-  return (
-    <h2
-      className={cn(
-        "text-3xl font-medium leading-none tracking-tight underline decoration-secondary underline-offset-4",
-        className,
-      )}
-    >
-      {text}
-    </h2>
-  );
-}
-
 export function SectionHeading({
   children: text,
   className,
+  icon: Icon,
+  iconClassName,
 }: {
   className?: ClassValue;
   children: ReactNode;
+  icon?: React.ComponentType<{ className?: string }>;
+  iconClassName?: ClassValue;
 }) {
   return (
     <h3
       className={cn(
         "text-2xl font-medium leading-none tracking-tight",
+        Icon && "flex items-center",
         className,
       )}
     >
-      {text}
+      {Icon && (
+        <Icon className={cn("mr-2 h-6 w-6 text-indigo-500", iconClassName)} />
+      )}
+      {typeof text === "string" ? <span>{text}</span> : text}
     </h3>
   );
 }

@@ -28,7 +28,7 @@ export const unitOfAssessmentDtoSchema = z.object({
   isOpen: z.boolean(),
   components: z.array(assessmentCriterionDtoSchema),
   flag: flagDtoSchema,
-  allowedMarkerTypes: z.array(z.nativeEnum(MarkerType)),
+  allowedMarkerTypes: z.array(z.enum(MarkerType)),
 });
 
 export type UnitOfAssessmentDTO = z.infer<typeof unitOfAssessmentDtoSchema>;

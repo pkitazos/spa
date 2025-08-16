@@ -37,6 +37,7 @@ import { createTRPCRouter } from "@/server/trpc";
 
 import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import { expand } from "@/lib/utils/general/instance-params";
+import { previousStages } from "@/lib/utils/permissions/stage-check";
 import { newReaderAllocationSchema } from "@/lib/validations/allocate-readers/new-reader-allocation";
 import { instanceParamsSchema } from "@/lib/validations/params";
 import { tabGroupSchema } from "@/lib/validations/tabs";
@@ -83,10 +84,10 @@ export const instanceRouter = createTRPCRouter({
   setStage: procedure.instance.subGroupAdmin
     .input(z.object({ stage: stageSchema }))
     .output(z.void())
-    .mutation(
-      async ({ ctx: { instance }, input: { stage } }) =>
-        await instance.setStage(stage),
-    ),
+    .mutation(async ({ ctx: { instance, audit }, input: { stage } }) => {
+      audit("Changed instance stage", { setTo: stage });
+      return await instance.setStage(stage);
+    }),
 
   // BREAKING returns undefined, and ID instead of alg name
   /**
@@ -195,8 +196,15 @@ export const instanceRouter = createTRPCRouter({
     .input(z.object({ newSupervisor: supervisorDtoSchema }))
     .output(LinkUserResultSchema)
     .mutation(
-      async ({ ctx: { instance, institution }, input: { newSupervisor } }) => {
+      async ({
+        ctx: { instance, institution, audit },
+        input: { newSupervisor },
+      }) => {
         if (await instance.isSupervisor(newSupervisor.id)) {
+          audit("Added supervisor", {
+            supervisorId: newSupervisor.id,
+            result: LinkUserResult.PRE_EXISTING,
+          });
           return LinkUserResult.PRE_EXISTING;
         }
 
@@ -207,8 +215,19 @@ export const instanceRouter = createTRPCRouter({
         await instance.linkUser(newSupervisor);
         await instance.linkSupervisor(newSupervisor);
 
-        if (!userExists) return LinkUserResult.CREATED_NEW;
-        else return LinkUserResult.OK;
+        if (!userExists) {
+          audit("Added supervisor", {
+            supervisorId: newSupervisor.id,
+            result: LinkUserResult.CREATED_NEW,
+          });
+          return LinkUserResult.CREATED_NEW;
+        } else {
+          audit("Added supervisor", {
+            supervisorId: newSupervisor.id,
+            result: LinkUserResult.OK,
+          });
+          return LinkUserResult.OK;
+        }
       },
     ),
 
@@ -217,7 +236,10 @@ export const instanceRouter = createTRPCRouter({
     .input(z.object({ newSupervisors: z.array(supervisorDtoSchema) }))
     .output(z.array(LinkUserResultSchema))
     .mutation(
-      async ({ ctx: { instance, institution }, input: { newSupervisors } }) => {
+      async ({
+        ctx: { instance, institution, audit },
+        input: { newSupervisors },
+      }) => {
         const existingSupervisorIds = await instance
           .getSupervisors()
           .then((data) => data.map(({ id }) => id));
@@ -238,7 +260,7 @@ export const instanceRouter = createTRPCRouter({
 
         await instance.linkSupervisors(newSupervisors);
 
-        return newSupervisors.map((s) => {
+        const res = newSupervisors.map((s) => {
           if (existingSupervisorIds.includes(s.id)) {
             return LinkUserResult.PRE_EXISTING;
           }
@@ -247,23 +269,51 @@ export const instanceRouter = createTRPCRouter({
           }
           return LinkUserResult.OK;
         });
+
+        audit("Added new supervisors", { data: res });
+
+        return res;
       },
     ),
 
-  // TODO: rename to e.g. Delete user in instance
-  removeSupervisor: procedure.instance.subGroupAdmin
-    .input(z.object({ supervisorId: z.string() }))
+  deleteSupervisor: procedure.instance
+    .inStage(previousStages(Stage.STUDENT_BIDDING))
+    .subGroupAdmin.input(z.object({ supervisorId: z.string() }))
+    .output(z.void())
+    .mutation(async ({ ctx: { instance, audit }, input: { supervisorId } }) => {
+      audit("Deleted supervisor", { supervisorId });
+      return await instance.deleteSupervisor(supervisorId);
+    }),
+
+  deleteManySupervisors: procedure.instance
+    .inStage(previousStages(Stage.STUDENT_BIDDING))
+    .subGroupAdmin.input(z.object({ supervisorIds: z.array(z.string()) }))
     .output(z.void())
     .mutation(
-      async ({ ctx: { instance }, input: { supervisorId } }) =>
-        await instance.unlinkUser(supervisorId),
+      async ({ ctx: { instance, audit }, input: { supervisorIds } }) => {
+        audit("Deleted supervisors", { supervisorIds });
+        return await instance.deleteManySupervisors(supervisorIds);
+      },
     ),
 
-  removeSupervisors: procedure.instance.subGroupAdmin
-    .input(z.object({ supervisorIds: z.array(z.string()) }))
+  deleteUserInInstance: procedure.instance
+    .inStage(previousStages(Stage.STUDENT_BIDDING))
+    .subGroupAdmin.input(z.object({ supervisorId: z.string() }))
     .output(z.void())
-    .mutation(async ({ ctx: { instance }, input: { supervisorIds } }) =>
-      instance.unlinkUsers(supervisorIds),
+    .mutation(async ({ ctx: { instance, audit }, input: { supervisorId } }) => {
+      audit("Deleted UserInInstance", { supervisorId });
+      return await instance.unlinkUser(supervisorId);
+    }),
+
+  deleteManyUsersInInstance: procedure.instance
+    .inStage(previousStages(Stage.STUDENT_BIDDING))
+    .subGroupAdmin.input(z.object({ supervisorIds: z.array(z.string()) }))
+    .output(z.void())
+    .mutation(
+      async ({ ctx: { instance, audit }, input: { supervisorIds } }) => {
+        audit("Deleted UserInInstance", { data: supervisorIds });
+        return instance.unlinkUsers(supervisorIds);
+      },
     ),
 
   invitedSupervisors: procedure.instance.subGroupAdmin
@@ -317,8 +367,15 @@ export const instanceRouter = createTRPCRouter({
     .input(z.object({ newStudent: studentDtoSchema }))
     .output(LinkUserResultSchema)
     .mutation(
-      async ({ ctx: { instance, institution }, input: { newStudent } }) => {
+      async ({
+        ctx: { instance, institution, audit },
+        input: { newStudent },
+      }) => {
         if (await instance.isStudent(newStudent.id)) {
+          audit("Added new student", {
+            studentId: newStudent.id,
+            result: LinkUserResult.PRE_EXISTING,
+          });
           return LinkUserResult.PRE_EXISTING;
         }
 
@@ -329,8 +386,19 @@ export const instanceRouter = createTRPCRouter({
         await instance.linkUser(newStudent);
         await instance.linkStudents([newStudent]);
 
-        if (!userExists) return LinkUserResult.CREATED_NEW;
-        else return LinkUserResult.OK;
+        if (!userExists) {
+          audit("Added new student", {
+            studentId: newStudent.id,
+            result: LinkUserResult.CREATED_NEW,
+          });
+          return LinkUserResult.CREATED_NEW;
+        } else {
+          audit("Added new student", {
+            studentId: newStudent.id,
+            result: LinkUserResult.OK,
+          });
+          return LinkUserResult.OK;
+        }
       },
     ),
 
@@ -338,7 +406,10 @@ export const instanceRouter = createTRPCRouter({
     .input(z.object({ newStudents: z.array(studentDtoSchema) }))
     .output(z.array(LinkUserResultSchema))
     .mutation(
-      async ({ ctx: { instance, institution }, input: { newStudents } }) => {
+      async ({
+        ctx: { instance, institution, audit },
+        input: { newStudents },
+      }) => {
         const existingStudentIds = await instance
           .getStudents()
           .then((data) => data.map(({ id }) => id));
@@ -355,7 +426,7 @@ export const instanceRouter = createTRPCRouter({
 
         await instance.linkStudents(newStudents);
 
-        return newStudents.map((s) => {
+        const res = newStudents.map((s) => {
           if (existingStudentIds.includes(s.id)) {
             return LinkUserResult.PRE_EXISTING;
           }
@@ -364,21 +435,31 @@ export const instanceRouter = createTRPCRouter({
           }
           return LinkUserResult.OK;
         });
+
+        audit("Added new students", { data: res });
+
+        return res;
       },
     ),
 
-  removeStudent: procedure.instance.subGroupAdmin
-    .input(z.object({ studentId: z.string() }))
+  deleteStudent: procedure.instance
+    .inStage(previousStages(Stage.STUDENT_BIDDING))
+    .subGroupAdmin.input(z.object({ studentId: z.string() }))
     .output(z.void())
-    .mutation(async ({ ctx: { instance }, input: { studentId } }) => {
-      await instance.unlinkStudent(studentId);
+    .mutation(async ({ ctx: { instance, audit }, input: { studentId } }) => {
+      {
+        audit("Deleting student", { studentId });
+        return await instance.deleteStudent(studentId);
+      }
     }),
 
-  removeStudents: procedure.instance.subGroupAdmin
-    .input(z.object({ studentIds: z.array(z.string()) }))
+  deleteManyStudents: procedure.instance
+    .inStage(previousStages(Stage.STUDENT_BIDDING))
+    .subGroupAdmin.input(z.object({ studentIds: z.array(z.string()) }))
     .output(z.void())
-    .mutation(async ({ ctx: { instance }, input: { studentIds } }) => {
-      await instance.unlinkStudents(studentIds);
+    .mutation(async ({ ctx: { instance, audit }, input: { studentIds } }) => {
+      audit("Deleting students", { data: studentIds });
+      await instance.deleteManyStudents(studentIds);
     }),
 
   invitedStudents: procedure.instance.subGroupAdmin
@@ -418,10 +499,13 @@ export const instanceRouter = createTRPCRouter({
   updateStudentFlag: procedure.instance.subGroupAdmin
     .input(z.object({ studentId: z.string(), flagId: z.string() }))
     .output(studentDtoSchema)
-    .mutation(async ({ ctx: { instance }, input: { studentId, flagId } }) => {
-      const student = await instance.getStudent(studentId);
-      return student.setStudentFlag(flagId);
-    }),
+    .mutation(
+      async ({ ctx: { instance, audit }, input: { studentId, flagId } }) => {
+        audit("Changing student flag", { studentId, flagId });
+        const student = await instance.getStudent(studentId);
+        return student.setStudentFlag(flagId);
+      },
+    ),
 
   edit: procedure.instance.subGroupAdmin
     .input(
@@ -437,8 +521,13 @@ export const instanceRouter = createTRPCRouter({
     )
     .output(z.void())
     .mutation(
-      async ({ ctx: { instance }, input: { updatedInstance, flags, tags } }) =>
-        await instance.edit({ flags, tags, instance: updatedInstance }),
+      async ({
+        ctx: { instance, audit },
+        input: { updatedInstance, flags, tags },
+      }) => {
+        audit("Instance Updated", { data: { updatedInstance, flags, tags } });
+        return await instance.edit({ flags, tags, instance: updatedInstance });
+      },
     ),
 
   getHeaderTabs: procedure.user
@@ -690,6 +779,7 @@ export const instanceRouter = createTRPCRouter({
     )
     .output(z.array(z.object({ studentId: z.string(), success: z.boolean() })))
     .mutation(async ({ ctx: { instance }, input: { allocations } }) => {
+      // TODO: Emit audit for this
       const results = [];
 
       for (const allocation of allocations) {
@@ -870,6 +960,7 @@ export const instanceRouter = createTRPCRouter({
     )
     .output(z.array(readerAssignmentResultSchema))
     .mutation(
+      // TODO emit audit
       async ({ ctx: { db, instance }, input: { newReaderAllocations } }) => {
         const projectAllocationData =
           await instance.getStudentAllocationDetails();
@@ -948,9 +1039,23 @@ export const instanceRouter = createTRPCRouter({
     )
     .output(z.string())
     .mutation(
-      async ({ ctx: { db }, input: { unitOfAssessmentId, open } }) =>
-        await db.unitOfAssessment
+      async ({ ctx: { db, audit }, input: { unitOfAssessmentId, open } }) => {
+        audit("Set unit of assessment access", { unitOfAssessmentId, open });
+        return await db.unitOfAssessment
           .update({ where: { id: unitOfAssessmentId }, data: { open } })
-          .then((u) => u.title),
+          .then((u) => u.title);
+      },
     ),
+
+  getAllPreviousProjects: procedure.instance.subGroupAdmin
+    .output(
+      z.array(
+        z.object({
+          project: projectDtoSchema,
+          supervisor: supervisorDtoSchema,
+          instanceData: instanceDtoSchema,
+        }),
+      ),
+    )
+    .query(async ({ ctx: { group } }) => await group.getAllProjects()),
 });

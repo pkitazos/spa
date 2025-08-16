@@ -38,7 +38,7 @@ export function AssessmentCriterionCard({
       <div
         ref={setNodeRef}
         style={style}
-        className={cn("h-[7.5rem] rounded-md bg-muted-foreground/20")}
+        className={cn("h-30 rounded-md bg-muted-foreground/20")}
       />
     );
   }
@@ -50,7 +50,7 @@ export function AssessmentCriterionCard({
         style={style}
         className={cn(
           "group flex items-center pt-5",
-          isOver && "outline outline-4 outline-muted-foreground/50",
+          isOver && "outline-solid outline-4 outline-muted-foreground/50",
         )}
       >
         <Button

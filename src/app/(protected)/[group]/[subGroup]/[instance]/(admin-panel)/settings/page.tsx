@@ -1,4 +1,4 @@
-import { List, PenIcon } from "lucide-react";
+import { ListIcon, PenIcon } from "lucide-react";
 import Link from "next/link";
 
 import { app, metadataTitle } from "@/config/meta";
@@ -30,9 +30,8 @@ export default async function Page({ params }: { params: InstanceParams }) {
     <PanelWrapper>
       <Heading className="mb-4">{PAGES.settings.title}</Heading>
       <section className="flex w-full flex-col gap-6 mb-6">
-        <SectionHeading className="mb-2 flex items-center">
-          <List className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>{spacesLabels.instance.short} Details</span>
+        <SectionHeading icon={ListIcon} className="mb-2">
+          {spacesLabels.instance.short} Details
         </SectionHeading>
         <Card className="w-full">
           <CardContent className="flex items-center justify-between gap-5 pt-6">

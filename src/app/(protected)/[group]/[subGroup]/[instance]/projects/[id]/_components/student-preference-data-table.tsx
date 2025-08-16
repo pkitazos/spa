@@ -25,7 +25,7 @@ export function StudentPreferenceDataTable({
     columnId: "Flag",
     options: projectDescriptors.flags.map((flag) => ({
       id: flag.displayName,
-      title: flag.displayName,
+      displayName: flag.displayName,
     })),
   };
 

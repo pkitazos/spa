@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { PAGES } from "@/config/pages";
+
 import {
   type TagDTO,
   type FlagDTO,
@@ -99,13 +101,13 @@ export function AllProjectsDataTable({
             message="Successfully updated project preference"
             action={
               <Link
-                href={getPath("my-preferences")}
+                href={getPath(PAGES.myPreferences.href)}
                 className={cn(
                   buttonVariants({ variant: "outline" }),
-                  "flex h-full w-max items-center gap-2 self-end py-3 text-xs",
+                  "flex h-full w-34 text-nowrap items-center gap-2 self-end py-3 text-xs",
                 )}
               >
-                view &quot;My Preferences&quot;
+                {PAGES.myPreferences.title}
               </Link>
             }
           />
@@ -132,13 +134,13 @@ export function AllProjectsDataTable({
             message={`Successfully updated ${projectIds.length} project preferences`}
             action={
               <Link
-                href={getPath("my-preferences")}
+                href={getPath(PAGES.myPreferences.href)}
                 className={cn(
                   buttonVariants({ variant: "outline" }),
                   "flex h-full w-max items-center gap-2 self-end py-3 text-xs",
                 )}
               >
-                view &quot;My Preferences&quot;
+                {PAGES.myPreferences.title}
               </Link>
             }
           />
@@ -149,17 +151,19 @@ export function AllProjectsDataTable({
 
   const filters = [
     {
+      title: "Flags",
       columnId: "Flags",
       options: projectDescriptors.flags.map((flag) => ({
         id: flag.id,
-        title: flag.displayName,
+        displayName: flag.displayName,
       })),
     },
     {
+      title: "Keywords",
       columnId: "Keywords",
       options: projectDescriptors.tags.map((tag) => ({
         id: tag.id,
-        title: tag.title,
+        displayName: tag.title,
       })),
     },
   ];

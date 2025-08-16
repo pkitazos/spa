@@ -13,7 +13,7 @@ import { db } from "@/db";
 const DEV_USER_COOKIE_KEY = "dev-selected-user-id";
 
 export async function switchDevUser(userId: string): Promise<void> {
-  if (env.AUTH_MASKING === "OFF") {
+  if (env.AUTH_MASKING_ENABLED === "OFF") {
     throw new Error("User switching is only available in development");
   }
 
@@ -40,7 +40,7 @@ export async function switchDevUser(userId: string): Promise<void> {
  * @returns Current mask (if one exists)
  */
 export async function getCurrentDevUser(): Promise<UserDTO | undefined> {
-  if (env.AUTH_MASKING === "OFF") {
+  if (env.AUTH_MASKING_ENABLED === "OFF") {
     return undefined;
   }
 
@@ -59,7 +59,7 @@ export async function getCurrentDevUser(): Promise<UserDTO | undefined> {
  * Log out the dev user
  * */
 export async function clearDevUser() {
-  if (env.AUTH_MASKING === "OFF") {
+  if (env.AUTH_MASKING_ENABLED === "OFF") {
     throw new Error("User switching is only available in development");
   }
 

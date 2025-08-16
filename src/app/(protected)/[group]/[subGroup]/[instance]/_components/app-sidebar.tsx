@@ -46,7 +46,7 @@ export function AppSidebar({
   const { basePath } = usePathInInstance();
   return (
     <Sidebar
-      className="top-[calc(var(--header-height)-1px)] !h-[calc(100svh-var(--header-height))] fixed"
+      className="top-[calc(var(--header-height)-1px)] h-[calc(100svh-var(--header-height))]! fixed"
       {...props}
     >
       <SidebarHeader>

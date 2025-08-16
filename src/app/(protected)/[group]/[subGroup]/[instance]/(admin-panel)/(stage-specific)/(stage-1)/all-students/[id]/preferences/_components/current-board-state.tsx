@@ -4,9 +4,6 @@ import { useParams } from "next/navigation";
 
 import { type ProjectDTO } from "@/dto";
 
-import { Stage } from "@/db/types";
-
-import { AccessControl } from "@/components/access-control";
 import { BoardDetailsProvider } from "@/components/kanban-board/store";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -24,19 +21,18 @@ export function CurrentBoardState({
   initialProjects: PreferenceBoard;
 }) {
   const params = useParams<PageParams>();
+
   return (
     <BoardDetailsProvider projects={initialProjects}>
       <section className="flex w-full max-w-7xl flex-col">
-        <AccessControl allowedStages={[Stage.STUDENT_BIDDING]}>
-          <Card className="my-4">
-            <CardContent className="flex items-center justify-between pt-6">
-              <p className="font-medium">
-                Add new project to student preferences
-              </p>
-              <NewPreferenceButton availableProjects={availableProjects} />
-            </CardContent>
-          </Card>
-        </AccessControl>
+        <Card className="my-4">
+          <CardContent className="flex items-center justify-between pt-6">
+            <p className="font-medium">
+              Add new project to student preferences
+            </p>
+            <NewPreferenceButton availableProjects={availableProjects} />
+          </CardContent>
+        </Card>
         <KanbanBoardSection studentId={params.id} />
       </section>
     </BoardDetailsProvider>

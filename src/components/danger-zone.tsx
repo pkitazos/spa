@@ -39,9 +39,12 @@ export function DangerZone({
 }) {
   return (
     <section className="flex w-full flex-col gap-6">
-      <SectionHeading className="mb-2 flex items-center">
-        <Trash2Icon className="mr-2 h-6 w-6 text-destructive" />
-        <span>Danger Zone</span>
+      <SectionHeading
+        icon={Trash2Icon}
+        iconClassName="text-destructive"
+        className="mb-2"
+      >
+        Danger Zone
       </SectionHeading>
       <Card className={cn("w-full", className)}>
         <CardContent className="flex items-center justify-between gap-5 pt-6">

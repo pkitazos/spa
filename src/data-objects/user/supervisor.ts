@@ -3,6 +3,7 @@ import {
   type UserDTO,
   type ProjectDTO,
   type StudentDTO,
+  type InstanceDTO,
 } from "@/dto";
 
 import { Transformers as T } from "@/db/transformers";
@@ -83,7 +84,7 @@ export class Supervisor extends Marker {
       }));
   }
 
-  public async getProjects(): Promise<
+  public async getProjectsInInstance(): Promise<
     { project: ProjectDTO; allocatedStudents: StudentDTO[] }[]
   > {
     const projectData = await this.db.project.findMany({
@@ -105,6 +106,77 @@ export class Supervisor extends Marker {
     });
 
     return projectData.map((x) => ({
+      project: T.toProjectDTO(x),
+      allocatedStudents: x.studentAllocations.map((s) =>
+        T.toStudentDTO(s.student),
+      ),
+    }));
+  }
+
+  public async getProjectsInSubGroup(): Promise<
+    { project: ProjectDTO; allocatedStudents: StudentDTO[] }[]
+  > {
+    const projectData = await this.db.project.findMany({
+      where: {
+        supervisorId: this.id,
+        allocationGroupId: this.instance.params.group,
+        allocationSubGroupId: this.instance.params.subGroup,
+      },
+      include: {
+        tagsOnProject: { include: { tag: true } },
+        flagsOnProject: { include: { flag: true } },
+        studentAllocations: {
+          include: {
+            student: {
+              include: {
+                studentFlag: true,
+                userInInstance: { include: { user: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return projectData.map((x) => ({
+      project: T.toProjectDTO(x),
+      allocatedStudents: x.studentAllocations.map((s) =>
+        T.toStudentDTO(s.student),
+      ),
+    }));
+  }
+
+  public async getProjectsInGroup(): Promise<
+    {
+      instanceData: InstanceDTO;
+      project: ProjectDTO;
+      allocatedStudents: StudentDTO[];
+    }[]
+  > {
+    const projectData = await this.db.project.findMany({
+      where: {
+        supervisorId: this.id,
+        allocationGroupId: this.instance.params.group,
+      },
+      include: {
+        allocationInstance: true,
+        tagsOnProject: { include: { tag: true } },
+        flagsOnProject: { include: { flag: true } },
+        studentAllocations: {
+          include: {
+            student: {
+              include: {
+                studentFlag: true,
+                userInInstance: { include: { user: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return projectData.map((x) => ({
+      instanceData: T.toAllocationInstanceDTO(x.allocationInstance),
       project: T.toProjectDTO(x),
       allocatedStudents: x.studentAllocations.map((s) =>
         T.toStudentDTO(s.student),

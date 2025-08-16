@@ -30,10 +30,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
     <PanelWrapper className="gap-10">
       <Heading className="mb-4">{PAGES.exportToCSV.title}</Heading>
       <section className="flex w-full flex-col gap-5">
-        <SectionHeading className="flex items-center">
-          <ZapIcon className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>Quick Actions</span>
-        </SectionHeading>
+        <SectionHeading icon={ZapIcon}>Quick Actions</SectionHeading>
         <Card>
           <CardContent className="mt-6 flex items-center justify-between gap-10">
             <p>This will export all columns even if they are not in view</p>
@@ -42,10 +39,7 @@ export default async function Page({ params }: { params: InstanceParams }) {
         </Card>
       </section>
       <section className="flex w-full flex-col gap-5">
-        <SectionHeading className="flex items-center">
-          <DatabaseIcon className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>All data</span>
-        </SectionHeading>
+        <SectionHeading icon={DatabaseIcon}>All data</SectionHeading>
         <AllocationDataTable data={data} />
       </section>
     </PanelWrapper>

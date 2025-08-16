@@ -13,31 +13,22 @@ export const env = createEnv({
     /** URL for the frontend (this site) */
     FRONTEND_SERVER_URL: z.string(),
 
-    // pin - this doesn't seem to be used anywhere
-    DEV_ENV: z.string().optional(),
-
-    /** Fallback user ID for when AUTH_FROM_HEADERSis off (usually used for local testing) */
-    DEV_ID: z.string().optional(),
-    /** Fallback user name for when AUTH_FROM_HEADERSis off (usually used for local testing) */
-    DEV_NAME: z.string().optional(),
-    /** Fallback user email for when AUTH_FROM_HEADERSis off (usually used for local testing) */
-    DEV_EMAIL: z.string().optional(),
-
     /** SMTP server host */
     MAIL_HOST: z.string(),
     /** SMTP server port */
     MAIL_PORT: z.coerce.number(),
     /** SMTP user */
-    MAIL_USER: z.string(),
-    // ? ^ Should we use z.email() ?
+    MAIL_USER: z.email(),
     /** SMTP password (if applicable) */
     MAIL_PASSWORD: z.string().optional(),
 
-    AMPS_MODE: z.enum(["prod", "testing", "dev"]).default("prod"),
+    /** Fallback user ID for when AUTH_FROM_HEADERS is off (usually used for local testing) */
+    DEV_ID: z.string().optional(),
+    /** Fallback user name for when AUTH_FROM_HEADERS is off (usually used for local testing) */
+    DEV_NAME: z.string().optional(),
+    /** Fallback user email for when AUTH_FROM_HEADERS is off (usually used for local testing) */
+    DEV_EMAIL: z.string().optional(),
 
-    /** Allow users to masquerade as other users.
-     * Useful for testing, not to be used in prod. */
-    AUTH_MASKING: switchSchema.default("OFF"),
     /** Extract authentication information from headers. */
     AUTH_FROM_HEADERS: switchSchema.default("OFF"),
     /** Enable whitelist - only specified users will be able to access the site */
@@ -48,8 +39,12 @@ export const env = createEnv({
       .default("")
       .transform((x) => x.split(",")),
 
+    /** Allow users to masquerade as other users.
+     * Useful for testing, not to be used in prod. */
+    AUTH_MASKING_ENABLED: switchSchema.default("OFF"),
+
     /** Comma-separated list of test user emails */
-    TEST_USER_EMAILS: z
+    AUTH_MASKING_EMAILS: z
       .string()
       .default("")
       .transform((x) =>

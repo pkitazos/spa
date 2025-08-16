@@ -1,0 +1,44 @@
+name: "Notify Reviewer on Discord"
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  notify_jacob:
+    name: Notify Jake
+    if: github.event.review.user.login == 'pkitazos'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord Notification to Jake
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{
+            \"content\": \"Hey <@${{ secrets.DEV_DISCORD_ID__JAKE }}>! A review has been submitted.\",
+            \"embeds\": [{
+              \"title\": \"Pull request review: ${{ github.event.pull_request.title }}\",
+              \"url\": \"${{ github.event.pull_request.html_url }}\",
+              \"description\": \"Repository: \`${{ github.event.repository.full_name }}\`\\nRequested by: \`${{ github.event.sender.login }}\`\",
+              \"color\": 15258703
+            }]
+          }" \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+  notify_me:
+    name: Notify Petros
+    if: github.event.review.user.login == 'JakeTrevor'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord Notification to Petros
+        run: |
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{
+            \"content\": \"Hey <@${{ secrets.DEV_DISCORD_ID__PETROS }}>! A review has been submitted.\",
+            \"embeds\": [{
+              \"title\": \"Pull request review: ${{ github.event.pull_request.title }}\",
+              \"url\": \"${{ github.event.pull_request.html_url }}\",
+              \"description\": \"Repository: \`${{ github.event.repository.full_name }}\`\\nRequested by: \`${{ github.event.sender.login }}\`\",
+              \"color\": 15258703
+            }]
+          }" \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}

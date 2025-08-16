@@ -1,10 +1,16 @@
-import { AwardIcon, MailIcon, User2Icon } from "lucide-react";
+import {
+  AwardIcon,
+  FolderCheckIcon,
+  FolderXIcon,
+  MailIcon,
+  User2Icon,
+} from "lucide-react";
 
 import { app, metadataTitle } from "@/config/meta";
 import { PAGES } from "@/config/pages";
 
 import { CopyEmailLink } from "@/components/copy-email-link";
-import { Heading, SectionHeading, SubHeading } from "@/components/heading";
+import { Heading, SectionHeading } from "@/components/heading";
 import { MarkdownRenderer } from "@/components/markdown-editor";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,15 +53,14 @@ export default async function Page({ params }: { params: InstanceParams }) {
       <Heading>{PAGES.myAllocation.title}</Heading>
       {!allocatedProject ? (
         <div className="mt-9 flex flex-col gap-4">
-          <SubHeading>Allocation</SubHeading>
+          <SectionHeading icon={FolderXIcon}>Allocation</SectionHeading>
           <p>You have not been allocated a project</p>
         </div>
       ) : (
         <div className="flex flex-col gap-8">
           <Card className="mb-8">
             <CardContent className="pt-6">
-              <SectionHeading className="flex items-center text-2xl no-underline">
-                <AwardIcon className="mr-2 h-6 w-6 text-indigo-500" />
+              <SectionHeading icon={AwardIcon}>
                 <span>
                   You got your{" "}
                   <span className="font-semibold text-indigo-600">
@@ -66,7 +71,9 @@ export default async function Page({ params }: { params: InstanceParams }) {
               </SectionHeading>
             </CardContent>
           </Card>
-          <SectionHeading>{allocatedProject.title}</SectionHeading>
+          <SectionHeading icon={FolderCheckIcon}>
+            {allocatedProject.title}
+          </SectionHeading>
           <div className="flex flex-col items-start">
             <div className="flex items-center gap-2 text-lg">
               <div className="text-muted-foreground">

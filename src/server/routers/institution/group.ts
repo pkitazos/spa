@@ -51,14 +51,14 @@ export const groupRouter = createTRPCRouter({
     .input(z.object({ name: z.string() }))
     .output(subGroupDtoSchema)
     .mutation(async ({ ctx: { group, audit }, input: { name } }) => {
-      audit("Created subgroup", group.params, { subgroup: name });
+      audit("Created subgroup", { subgroup: name });
       return group.createSubGroup(name);
     }),
 
   deleteSubGroup: procedure.subgroup.groupAdmin
     .output(z.void())
     .mutation(async ({ ctx: { subGroup, audit } }) => {
-      audit("Deleted subgroup", subGroup.params);
+      audit("Deleted subgroup");
       await subGroup.delete();
     }),
 
@@ -66,21 +66,40 @@ export const groupRouter = createTRPCRouter({
   addAdmin: procedure.group.superAdmin
     .input(z.object({ newAdmin: userDtoSchema }))
     .output(LinkUserResultSchema)
-    .mutation(async ({ ctx: { group, institution }, input: { newAdmin } }) => {
-      const { id } = newAdmin;
-      const userIsGroupAdmin = await group.isGroupAdmin(id);
+    .mutation(
+      async ({ ctx: { group, institution, audit }, input: { newAdmin } }) => {
+        const { id } = newAdmin;
+        const userIsGroupAdmin = await group.isGroupAdmin(id);
 
-      if (userIsGroupAdmin) return LinkUserResult.PRE_EXISTING;
+        if (userIsGroupAdmin) {
+          audit("Added new group admin", {
+            adminId: id,
+            result: LinkUserResult.PRE_EXISTING,
+          });
+          return LinkUserResult.PRE_EXISTING;
+        }
 
-      const userExists = await institution.userExists(id);
-      if (!userExists) await institution.createUser(newAdmin);
+        const userExists = await institution.userExists(id);
+        if (!userExists) await institution.createUser(newAdmin);
 
-      await group.linkAdmin(id);
+        await group.linkAdmin(id);
 
-      if (!userExists) return LinkUserResult.CREATED_NEW;
+        if (!userExists) {
+          audit("Added new group admin", {
+            adminId: id,
+            result: LinkUserResult.CREATED_NEW,
+          });
 
-      return LinkUserResult.OK;
-    }),
+          return LinkUserResult.CREATED_NEW;
+        }
+
+        audit("Added new group admin", {
+          adminId: id,
+          result: LinkUserResult.OK,
+        });
+        return LinkUserResult.OK;
+      },
+    ),
 
   removeAdmin: procedure.group.superAdmin
     .input(z.object({ userId: z.string() }))

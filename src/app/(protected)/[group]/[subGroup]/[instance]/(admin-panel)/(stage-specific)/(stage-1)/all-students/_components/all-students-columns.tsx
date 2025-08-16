@@ -16,8 +16,12 @@ import { type ProjectDTO, type StudentDTO } from "@/dto";
 
 import { Role, Stage } from "@/db/types";
 
-import { AccessControl } from "@/components/access-control";
-import { useInstanceStage } from "@/components/params-context";
+import { ConditionalRender } from "@/components/access-control";
+import { FormatDenials } from "@/components/access-control/format-denial";
+import {
+  useInstanceStage,
+  usePathInInstance,
+} from "@/components/params-context";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionColumnLabel } from "@/components/ui/data-table/action-column-label";
@@ -56,6 +60,7 @@ export function useAllStudentsColumns({
   deleteSelectedStudents: (ids: string[]) => Promise<void>;
 }): ColumnDef<StudentWithAllocation>[] {
   const stage = useInstanceStage();
+  const { getInstancePath } = usePathInInstance();
 
   const selectCol = getSelectColumn<StudentWithAllocation>();
 
@@ -92,7 +97,7 @@ export function useAllStudentsColumns({
       }) => (
         <Link
           className={buttonVariants({ variant: "link" })}
-          href={`./${PAGES.allStudents.href}/${student.id}`}
+          href={getInstancePath([PAGES.allStudents.href, student.id])}
         >
           {student.name}
         </Link>
@@ -146,7 +151,7 @@ export function useAllStudentsColumns({
                   buttonVariants({ variant: "link" }),
                   "inline-block w-40 truncate px-0 text-start",
                 )}
-                href={`./projects/${allocation.id}`}
+                href={getInstancePath([PAGES.allProjects.href, allocation.id])}
               >
                 {allocation.title}
               </Link>
@@ -168,12 +173,6 @@ export function useAllStudentsColumns({
         .getSelectedRowModel()
         .rows.map((e) => e.original.student.id);
 
-      function handleRemoveSelectedStudents() {
-        void deleteSelectedStudents(selectedStudentIds).then(() =>
-          table.toggleAllRowsSelected(false),
-        );
-      }
-
       if (
         someSelected &&
         roles.has(Role.ADMIN) &&
@@ -189,7 +188,11 @@ export function useAllStudentsColumns({
                 </Button>
               </DropdownMenuTrigger>
               <YesNoActionContainer
-                action={handleRemoveSelectedStudents}
+                action={async () =>
+                  void deleteSelectedStudents(selectedStudentIds).then(() =>
+                    table.toggleAllRowsSelected(false),
+                  )
+                }
                 title="Remove Students?"
                 description={
                   selectedStudentIds.length === 1
@@ -200,16 +203,21 @@ export function useAllStudentsColumns({
                 <DropdownMenuContent align="center" side="bottom">
                   <DropdownMenuLabel>Actions</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
-                    <YesNoActionTrigger
-                      trigger={
-                        <button className="flex items-center gap-2">
-                          <Trash2Icon className="h-4 w-4" />
-                          <span>Remove selected Students</span>
-                        </button>
-                      }
-                    />
-                  </DropdownMenuItem>
+                  <ConditionalRender
+                    allowedStages={previousStages(Stage.STUDENT_BIDDING)}
+                    allowed={
+                      <DropdownMenuItem className="text-destructive focus:bg-red-100/40 focus:text-destructive">
+                        <YesNoActionTrigger
+                          trigger={
+                            <button className="flex items-center gap-2">
+                              <Trash2Icon className="h-4 w-4" />
+                              <span>Remove selected Students</span>
+                            </button>
+                          }
+                        />
+                      </DropdownMenuItem>
+                    }
+                  />
                 </DropdownMenuContent>
               </YesNoActionContainer>
             </DropdownMenu>
@@ -247,27 +255,40 @@ export function useAllStudentsColumns({
               <DropdownMenuItem className="group/item">
                 <Link
                   className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
-                  href={`./${PAGES.allStudents.href}/${student.id}`}
+                  href={getInstancePath([PAGES.allStudents.href, student.id])}
                 >
                   <CornerDownRightIcon className="h-4 w-4" />
                   <span>View Student Details</span>
                 </Link>
               </DropdownMenuItem>
-              <AccessControl
-                allowedRoles={[Role.ADMIN]}
+              <ConditionalRender
                 allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-              >
-                <DropdownMenuItem className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive">
-                  <YesNoActionTrigger
-                    trigger={
+                allowed={
+                  <DropdownMenuItem className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive">
+                    <YesNoActionTrigger
+                      trigger={
+                        <button className="flex items-center gap-2">
+                          <Trash2Icon className="h-4 w-4" />
+                          <span>Remove Student {student.name}</span>
+                        </button>
+                      }
+                    />
+                  </DropdownMenuItem>
+                }
+                denied={(data) => (
+                  <WithTooltip tip={<FormatDenials {...data} />} forDisabled>
+                    <DropdownMenuItem
+                      className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive"
+                      disabled
+                    >
                       <button className="flex items-center gap-2">
                         <Trash2Icon className="h-4 w-4" />
                         <span>Remove Student {student.name}</span>
                       </button>
-                    }
-                  />
-                </DropdownMenuItem>
-              </AccessControl>
+                    </DropdownMenuItem>
+                  </WithTooltip>
+                )}
+              />
             </DropdownMenuContent>
           </YesNoActionContainer>
         </DropdownMenu>

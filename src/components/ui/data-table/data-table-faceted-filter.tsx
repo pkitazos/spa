@@ -72,7 +72,7 @@ export function DataTableFacetedFilter<TData, TValue>({
                         key={option.id}
                         className="rounded-sm px-1 font-normal"
                       >
-                        {option.title}
+                        {option.displayName}
                       </Badge>
                     ))
                 )}
@@ -108,13 +108,13 @@ export function DataTableFacetedFilter<TData, TValue>({
                       className={cn(
                         "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                         isSelected
-                          ? "bg-primary text-primary-foreground"
+                          ? "bg-primary"
                           : "opacity-50 [&_svg]:invisible",
                       )}
                     >
-                      <CheckIcon className={cn("h-4 w-4")} />
+                      <CheckIcon className="stroke-primary-foreground h-4 w-4" />
                     </div>
-                    <span>{option.title}</span>
+                    <span>{option.displayName}</span>
                     {facets?.get(option.id) && (
                       <span className="ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs">
                         {facets.get(option.id)}

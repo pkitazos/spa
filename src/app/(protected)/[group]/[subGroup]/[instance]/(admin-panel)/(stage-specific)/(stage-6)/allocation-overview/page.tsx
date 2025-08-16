@@ -31,7 +31,12 @@ export default async function Page({ params }: { params: InstanceParams }) {
   return (
     <PanelWrapper className="gap-10">
       <Heading className="mb-6">{PAGES.allocationOverview.title}</Heading>
-      <Tabs defaultValue="student" className="w-full">
+      <Tabs
+        searchParamName="tab"
+        options={["student", "project", "supervisor"]}
+        defaultValue="student"
+        className="w-full"
+      >
         <TabsList className="w-full">
           <TabsTrigger
             className="w-full data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground"

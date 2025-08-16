@@ -18,7 +18,7 @@ It returns an object with two properties.
 `real` contains the 'real' user - the one authenticated
 by normal means like headers.
 
-When masquerading is disabled (i.e. by setting the `AUTH_MASKING` env var
+When masquerading is disabled (i.e. by setting the `AUTH_MASKING_ENABLED` env var
 to its' default value of `OFF`), `mask` contains only a copy of `real`.
 
 When masquerading is `ON` however, `mask` contains

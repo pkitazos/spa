@@ -15,25 +15,23 @@ export function StudentInvitesDataTable({
 }) {
   const columns = useStudentInvitesColumns();
 
-  const studentFlagFilter = {
-    title: "filter by Flag",
-    columnId: "Flag",
-    options: projectDescriptors.flags.map((flag) => ({
-      id: flag.displayName,
-      title: flag.displayName,
-    })),
-  };
-
   const filters = [
     {
-      columnId: "Status",
       title: "Joined Status",
+      columnId: "Status",
       options: [
-        { title: "Joined", id: "joined" },
-        { title: "Invited", id: "invited" },
+        { displayName: "Joined", id: "joined" },
+        { displayName: "Invited", id: "invited" },
       ],
     },
-    studentFlagFilter,
+    {
+      title: "filter by Flag",
+      columnId: "Flag",
+      options: projectDescriptors.flags.map((flag) => ({
+        id: flag.displayName,
+        displayName: flag.displayName,
+      })),
+    },
   ];
 
   return (

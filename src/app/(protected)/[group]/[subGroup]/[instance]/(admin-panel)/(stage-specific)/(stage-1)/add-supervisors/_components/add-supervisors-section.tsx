@@ -48,17 +48,17 @@ export function AddSupervisorsSection() {
   const { data, isLoading, refetch } =
     api.institution.instance.getSupervisors.useQuery({ params });
 
-  const { mutateAsync: addSupervisorAsync } =
+  const { mutateAsync: api_addSupervisor } =
     api.institution.instance.addSupervisor.useMutation();
 
-  const { mutateAsync: addSupervisorsAsync } =
+  const { mutateAsync: api_addManySupervisors } =
     api.institution.instance.addSupervisors.useMutation();
 
-  const { mutateAsync: removeSupervisorAsync } =
-    api.institution.instance.removeSupervisor.useMutation();
+  const { mutateAsync: api_deleteSupervisor } =
+    api.institution.instance.deleteSupervisor.useMutation();
 
-  const { mutateAsync: removeSupervisorsAsync } =
-    api.institution.instance.removeSupervisors.useMutation();
+  const { mutateAsync: api_deleteManySupervisors } =
+    api.institution.instance.deleteManySupervisors.useMutation();
 
   async function handleAddSupervisor(data: NewSupervisor) {
     const newSupervisor: SupervisorDTO = {
@@ -71,67 +71,72 @@ export function AddSupervisorsSection() {
       allocationUpperBound: data.projectUpperQuota,
     };
 
-    void toast.promise(
-      addSupervisorAsync({ params, newSupervisor }).then(async () => {
-        router.refresh();
-        await refetch();
-      }),
-      {
+    void toast
+      .promise(api_addSupervisor({ params, newSupervisor }), {
         loading: "Adding supervisor...",
+        success: `Successfully added supervisor ${newSupervisor.id} to ${spacesLabels.instance.short}`,
+        // todo: revisit error reporting method
         error: (err) =>
           err instanceof TRPCClientError
             ? err.message
             : `Failed to add supervisor to ${spacesLabels.instance.short}`,
-        success: `Successfully added supervisor ${newSupervisor.id} to ${spacesLabels.instance.short}`,
-      },
-    );
+      })
+      .unwrap()
+      .then(async () => {
+        router.refresh();
+        await refetch();
+      });
   }
 
   async function handleAddSupervisors(
     supervisors: SupervisorDTO[],
   ): Promise<LinkUserResult[]> {
-    try {
-      const results = await addSupervisorsAsync({
-        params,
-        newSupervisors: supervisors,
-      });
-
-      router.refresh();
-      await refetch();
-
-      return results;
-    } catch (err) {
-      console.error("Error adding supervisors:", err);
-      throw err;
-    }
-  }
-
-  async function handleSupervisorRemoval(supervisorId: string) {
-    void toast.promise(
-      removeSupervisorAsync({ params, supervisorId }).then(async () => {
+    return await toast
+      .promise(
+        api_addManySupervisors({ params, newSupervisors: supervisors }),
+        {
+          loading: `Adding ${supervisors.length} supervisors to ${spacesLabels.instance.short}...`,
+          success: `Successfully added ${supervisors.length} supervisors to ${spacesLabels.instance.short}`,
+          error: (err) =>
+            err instanceof TRPCClientError
+              ? err.message
+              : `Failed to add supervisors to ${spacesLabels.instance.short}`,
+        },
+      )
+      .unwrap()
+      .then(async (results) => {
         router.refresh();
         await refetch();
-      }),
-      {
+        return results;
+      });
+  }
+
+  async function deleteSupervisor(supervisorId: string) {
+    void toast
+      .promise(api_deleteSupervisor({ params, supervisorId }), {
         loading: "Removing supervisor...",
         success: `Successfully removed supervisor ${supervisorId} from ${spacesLabels.instance.short}`,
         error: `Failed to remove supervisor from ${spacesLabels.instance.short}`,
-      },
-    );
-  }
-
-  async function handleSupervisorsRemoval(supervisorIds: string[]) {
-    void toast.promise(
-      removeSupervisorsAsync({ params, supervisorIds }).then(async () => {
+      })
+      .unwrap()
+      .then(async () => {
         router.refresh();
         await refetch();
-      }),
-      {
+      });
+  }
+
+  async function deleteManySupervisors(supervisorIds: string[]) {
+    void toast
+      .promise(api_deleteManySupervisors({ params, supervisorIds }), {
         loading: "Removing supervisors...",
         success: `Successfully removed ${supervisorIds.length} supervisors from ${spacesLabels.instance.short}`,
         error: `Failed to remove supervisors from ${spacesLabels.instance.short}`,
-      },
-    );
+      })
+      .unwrap()
+      .then(async () => {
+        router.refresh();
+        await refetch();
+      });
   }
 
   function handleClearResults() {
@@ -148,15 +153,15 @@ export function AddSupervisorsSection() {
   }
 
   const columns = useNewSupervisorColumns({
-    removeSupervisor: handleSupervisorRemoval,
-    removeSelectedSupervisors: handleSupervisorsRemoval,
+    deleteSupervisor,
+    deleteManySupervisors,
   });
+
   return (
     <>
       <div className="mt-6 flex flex-col gap-6">
-        <SectionHeading className="mb-2 flex items-center">
-          <FileSpreadsheetIcon className="mr-2 h-6 w-6 text-indigo-500" />
-          <span>Upload using CSV</span>
+        <SectionHeading icon={FileSpreadsheetIcon} className="mb-2">
+          Upload using CSV
         </SectionHeading>
         <div className="flex items-center gap-6">
           <CSVUploadButton

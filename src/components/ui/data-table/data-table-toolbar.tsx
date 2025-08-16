@@ -9,12 +9,12 @@ import { Input } from "../input";
 import { DataTableFacetedFilter } from "./data-table-faceted-filter";
 import { DataTableViewOptions } from "./data-table-view-options";
 
-export type TableFilterOption = { id: string; title: string };
+export type TableFilterOption = { id: string; displayName: string };
 
 export type TableFilter = {
   columnId: string;
-  title?: string;
-  options?: TableFilterOption[];
+  title: string;
+  options: TableFilterOption[];
 };
 
 interface DataTableToolbarProps<TData> {
@@ -50,7 +50,9 @@ export function DataTableToolbar<TData>({
               .getCoreRowModel()
               .rows.map((row) => ({
                 id: row.id,
-                title: row.original[filter.columnId as keyof TData] as string,
+                displayName: row.original[
+                  filter.columnId as keyof TData
+                ] as string,
               }));
 
           return (

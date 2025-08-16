@@ -5,13 +5,8 @@ import { projectDtoSchema, supervisorDtoSchema } from "@/dto";
 
 import { Supervisor } from "@/data-objects";
 
-import { Stage } from "@/db/types";
-
 import { procedure } from "@/server/middleware";
 import { createTRPCRouter } from "@/server/trpc";
-
-import { getGMTOffset, getGMTZoned } from "@/lib/utils/date/timezone";
-import { stageGte } from "@/lib/utils/permissions/stage-check";
 
 import { preferenceRouter } from "./preference";
 
@@ -88,23 +83,27 @@ export const studentRouter = createTRPCRouter({
   setAllocationAccess: procedure.instance.subGroupAdmin
     .input(z.object({ access: z.boolean() }))
     .output(z.boolean())
-    .mutation(async ({ ctx: { instance }, input: { access } }) =>
-      instance.setStudentPublicationAccess(access),
-    ),
+    .mutation(async ({ ctx: { instance, audit }, input: { access } }) => {
+      audit("Set student allocation access", { setTo: access });
+      return instance.setStudentPublicationAccess(access);
+    }),
 
   // TODO rename + split
-  overviewData: procedure.instance.student.query(
-    async ({ ctx: { instance } }) => {
-      const { displayName, studentPreferenceSubmissionDeadline: deadline } =
-        await instance.get();
-
-      return {
+  overviewData: procedure.instance.student
+    .output(
+      z.object({
+        displayName: z.string(),
+        preferenceSubmissionDeadline: z.date(),
+      }),
+    )
+    .query(async ({ ctx: { instance } }) => {
+      const {
         displayName,
-        preferenceSubmissionDeadline: getGMTZoned(deadline),
-        deadlineTimeZoneOffset: getGMTOffset(deadline),
-      };
-    },
-  ),
+        studentPreferenceSubmissionDeadline: preferenceSubmissionDeadline,
+      } = await instance.get();
+
+      return { displayName, preferenceSubmissionDeadline };
+    }),
 
   // Can anyone see this?
   latestSubmission: procedure.instance.user
@@ -193,29 +192,6 @@ export const studentRouter = createTRPCRouter({
         studentRanking,
         supervisor: await supervisor.get(),
       };
-    }),
-
-  delete: procedure.instance.subGroupAdmin
-    .input(z.object({ studentId: z.string() }))
-    .mutation(async ({ ctx: { instance }, input: { studentId } }) => {
-      const { stage } = await instance.get();
-      if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
-        throw new Error("Cannot delete student at this stage");
-      }
-
-      await instance.unlinkStudent(studentId);
-    }),
-
-  // TODO naming inconsistency (see supervisor deleteMany)
-  deleteSelected: procedure.instance.subGroupAdmin
-    .input(z.object({ studentIds: z.array(z.string()) }))
-    .mutation(async ({ ctx: { instance }, input: { studentIds } }) => {
-      const { stage } = await instance.get();
-      if (stageGte(stage, Stage.PROJECT_ALLOCATION)) {
-        throw new Error("Cannot delete students at this stage");
-      }
-
-      await instance.unlinkStudents(studentIds);
     }),
 
   getSuitableProjects: procedure.instance.subGroupAdmin

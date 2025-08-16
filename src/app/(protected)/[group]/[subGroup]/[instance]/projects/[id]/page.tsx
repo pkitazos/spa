@@ -1,4 +1,13 @@
-import { FlagIcon, TagIcon, UserIcon } from "lucide-react";
+import { Fragment } from "react";
+
+import {
+  BookmarkIcon,
+  FlagIcon,
+  FolderCheckIcon,
+  TagIcon,
+  TextIcon,
+  UserIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -9,8 +18,8 @@ import { type ProjectDTO, type StudentDTO, type SupervisorDTO } from "@/dto";
 
 import { Role, Stage } from "@/db/types";
 
-import { AccessControl } from "@/components/access-control";
-import { Heading, SubHeading } from "@/components/heading";
+import { ConditionalRender } from "@/components/access-control";
+import { Heading, SectionHeading } from "@/components/heading";
 import { MarkdownRenderer } from "@/components/markdown-editor";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { Badge } from "@/components/ui/badge";
@@ -21,19 +30,21 @@ import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
 import { cn } from "@/lib/utils";
-import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import { toPP1 } from "@/lib/utils/general/instance-params";
 import { toPositional } from "@/lib/utils/general/to-positional";
-import { previousStages } from "@/lib/utils/permissions/stage-check";
 import { type InstanceParams } from "@/lib/validations/params";
 import { type StudentPreferenceType } from "@/lib/validations/student-preference";
 
+import { EditButton } from "./_components/edit-button";
 import { StudentPreferenceButton } from "./_components/student-preference-button";
 import { StudentPreferenceDataTable } from "./_components/student-preference-data-table";
 
 type PageParams = InstanceParams & { id: string };
 
 export async function generateMetadata({ params }: { params: PageParams }) {
+  const exists = await api.project.exists({ params: toPP1(params) });
+  if (!exists) notFound();
+
   const { displayName } = await api.institution.instance.get({ params });
   const { title } = await api.project.getById({
     params: { ...params, projectId: params.id },
@@ -55,8 +66,6 @@ export default async function Project({ params }: { params: PageParams }) {
   const projectId = params.id;
   const exists = await api.project.exists({ params: toPP1(params) });
   if (!exists) notFound();
-
-  const instancePath = formatParamsAsPath(params);
 
   const userAccess = await api.ac.projectAccess({ params: toPP1(params) });
 
@@ -105,34 +114,29 @@ export default async function Project({ params }: { params: PageParams }) {
         )}
       >
         {project.title}
-        <AccessControl
+        {/* // TODO add denied below */}
+        <ConditionalRender
           allowedRoles={[Role.STUDENT]}
           allowedStages={[Stage.STUDENT_BIDDING]}
-          extraConditions={{ RBAC: { AND: !preAllocated } }}
-        >
-          <StudentPreferenceButton
-            projectId={projectId}
-            defaultStatus={preferenceStatus}
-          />
-        </AccessControl>
-        <AccessControl
-          allowedRoles={[Role.ADMIN]}
-          allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-          extraConditions={{ RBAC: { OR: project.supervisorId === user.id } }}
-        >
-          <Link
-            className={cn(buttonVariants(), "min-w-32 text-nowrap")}
-            href={`${instancePath}/projects/${projectId}/edit`}
-          >
-            Edit or Delete
-          </Link>
-        </AccessControl>
+          overrides={{ roles: { AND: !preAllocated } }}
+          allowed={
+            <StudentPreferenceButton
+              projectId={projectId}
+              defaultStatus={preferenceStatus}
+            />
+          }
+        />
+
+        <EditButton project={project} user={user} />
       </Heading>
 
       <div className="mt-6 flex gap-6">
         <div className="flex w-3/4 flex-col gap-16">
           <section className="flex flex-col">
-            <SubHeading>Description</SubHeading>
+            <SectionHeading className="mb-2 flex items-center">
+              <TextIcon className="mr-2 h-6 w-6 text-indigo-500" />
+              <span>Description</span>
+            </SectionHeading>
             <div className="mt-6">
               <MarkdownRenderer source={project.description} />
             </div>
@@ -146,38 +150,46 @@ export default async function Project({ params }: { params: PageParams }) {
         </div>
       </div>
 
-      <AccessControl
+      <ConditionalRender
         allowedRoles={[Role.ADMIN]}
-        extraConditions={{
-          RBAC: {
+        overrides={{
+          roles: {
             OR: project.supervisorId === user.id,
             AND: !!allocatedStudent,
           },
         }}
-      >
-        {allocatedStudent && (
-          <section className={cn("mt-16 flex flex-col gap-8")}>
-            <SubHeading>Allocation</SubHeading>
-            <AllocatedStudentCard
-              studentAllocation={allocatedStudent}
-              preAllocated={!!project.preAllocatedStudentId}
+        allowed={
+          <Fragment>
+            {allocatedStudent && (
+              <section className={cn("mt-16 flex flex-col gap-8")}>
+                <SectionHeading icon={FolderCheckIcon}>
+                  Allocation
+                </SectionHeading>
+                <AllocatedStudentCard
+                  studentAllocation={allocatedStudent}
+                  preAllocated={!!project.preAllocatedStudentId}
+                />
+              </section>
+            )}
+            <Separator />
+          </Fragment>
+        }
+      />
+      <ConditionalRender
+        allowedRoles={[Role.ADMIN]}
+        overrides={{ roles: { AND: !project.preAllocatedStudentId } }}
+        allowed={
+          <section className="mt-16 flex flex-col gap-8">
+            <SectionHeading icon={BookmarkIcon}>
+              Student Preferences
+            </SectionHeading>
+            <StudentPreferenceDataTable
+              data={studentPreferences}
+              projectDescriptors={projectDescriptors}
             />
           </section>
-        )}
-        <Separator />
-      </AccessControl>
-      <AccessControl
-        allowedRoles={[Role.ADMIN]}
-        extraConditions={{ RBAC: { AND: !project.preAllocatedStudentId } }}
-      >
-        <section className="mt-16 flex flex-col gap-8">
-          <SubHeading>Student Preferences</SubHeading>
-          <StudentPreferenceDataTable
-            data={studentPreferences}
-            projectDescriptors={projectDescriptors}
-          />
-        </section>
-      </AccessControl>
+        }
+      />
     </PanelWrapper>
   );
 }
@@ -193,36 +205,36 @@ async function ProjectDetailsCard({
   return (
     <Card className="w-full max-w-sm">
       <CardContent className="flex flex-col gap-10 pt-5">
-        <AccessControl
+        <ConditionalRender
           allowedRoles={[Role.ADMIN, Role.STUDENT]}
-          extraConditions={{
-            RBAC: { OR: projectData.supervisor.id === user.id },
-          }}
-        >
-          <div className="flex items-center space-x-4">
-            <UserIcon className="h-6 w-6 text-blue-500" />
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">
-                Supervisor
-              </h3>
-              {roles.has(Role.ADMIN) ? (
-                <Link
-                  className={cn(
-                    buttonVariants({ variant: "link" }),
-                    "p-0 text-lg",
-                  )}
-                  href={`../${PAGES.allSupervisors.href}/${projectData.supervisor.id}`}
-                >
-                  {projectData.supervisor.name}
-                </Link>
-              ) : (
-                <p className="text-lg font-semibold">
-                  {projectData.supervisor.name}
-                </p>
-              )}
+          overrides={{ roles: { OR: projectData.supervisor.id === user.id } }}
+          allowed={
+            <div className="flex items-center space-x-4">
+              <UserIcon className="h-6 w-6 text-blue-500" />
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">
+                  Supervisor
+                </h3>
+                {/* // ! this is so dumb */}
+                {roles.has(Role.ADMIN) ? (
+                  <Link
+                    className={cn(
+                      buttonVariants({ variant: "link" }),
+                      "p-0 text-lg",
+                    )}
+                    href={`../${PAGES.allSupervisors.href}/${projectData.supervisor.id}`}
+                  >
+                    {projectData.supervisor.name}
+                  </Link>
+                ) : (
+                  <p className="text-lg font-semibold">
+                    {projectData.supervisor.name}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        </AccessControl>
+          }
+        />
         <div className={cn(projectData.project.flags.length === 0 && "hidden")}>
           <div className="mb-2 flex items-center space-x-4">
             <FlagIcon className="h-6 w-6 text-fuchsia-500" />

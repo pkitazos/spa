@@ -71,8 +71,7 @@ export const subGroupRouter = createTRPCRouter({
         input: { newInstance, flags, tags },
       }) => {
         await subGroup.createInstance({ newInstance, flags, tags });
-        audit("created instance", {
-          ...subGroup.params,
+        audit("Created instance", {
           instance: slugify(newInstance.displayName),
         });
       },
@@ -82,7 +81,7 @@ export const subGroupRouter = createTRPCRouter({
     .output(z.void())
     .mutation(async ({ ctx: { instance, audit } }) => {
       await instance.delete();
-      audit("deleted instance", instance.params);
+      audit("Deleted instance");
     }),
 
   // BREAKING input and output types changed
@@ -99,6 +98,7 @@ export const subGroupRouter = createTRPCRouter({
 
         if (userIsGroupAdmin) {
           audit("Added subgroup admin", {
+            adminId: id,
             result: LinkUserResult.PRE_EXISTING,
           });
           return LinkUserResult.PRE_EXISTING;
@@ -110,11 +110,17 @@ export const subGroupRouter = createTRPCRouter({
         await subGroup.linkAdmin(id);
 
         if (!userExists) {
-          audit("Added subgroup admin", { result: LinkUserResult.CREATED_NEW });
+          audit("Added subgroup admin", {
+            adminId: id,
+            result: LinkUserResult.CREATED_NEW,
+          });
           return LinkUserResult.CREATED_NEW;
         }
 
-        audit("Added subgroup admin", { result: LinkUserResult.OK });
+        audit("Added subgroup admin", {
+          adminId: id,
+          result: LinkUserResult.OK,
+        });
         return LinkUserResult.OK;
       },
     ),

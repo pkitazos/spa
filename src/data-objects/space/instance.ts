@@ -27,6 +27,7 @@ import {
   type PreferenceType,
 } from "@/db/types";
 
+import { HttpMatchingService } from "@/lib/services/matching";
 import { expand, toInstanceId } from "@/lib/utils/general/instance-params";
 import { setDiff } from "@/lib/utils/general/set-difference";
 import { nubsById } from "@/lib/utils/list-unique";
@@ -35,7 +36,6 @@ import { type TabType } from "@/lib/validations/tabs";
 
 import { DataObject } from "../data-object";
 import { MatchingAlgorithm } from "../matching-algorithm";
-import { HttpMatchingService } from "@/lib/services/matching";
 import {
   StudentProjectAllocationData,
   type StudentProjectAllocationDTO,
@@ -184,7 +184,11 @@ export class AllocationInstance extends DataObject {
 
   public getAlgorithm(algConfigId: string): MatchingAlgorithm {
     const matchingService = new HttpMatchingService();
-    return new MatchingAlgorithm(this.db, { algConfigId, ...this.params }, matchingService);
+    return new MatchingAlgorithm(
+      this.db,
+      { algConfigId, ...this.params },
+      matchingService,
+    );
   }
 
   // TODO review the nullish behaviour here
@@ -193,7 +197,11 @@ export class AllocationInstance extends DataObject {
 
     if (!algConfigId) return undefined;
     const matchingService = new HttpMatchingService();
-    return new MatchingAlgorithm(this.db, { algConfigId, ...this.params }, matchingService);
+    return new MatchingAlgorithm(
+      this.db,
+      { algConfigId, ...this.params },
+      matchingService,
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -1190,13 +1198,25 @@ export class AllocationInstance extends DataObject {
     ]);
   }
 
+  public async deleteStudent(userId: string): Promise<void> {
+    await this.db.studentDetails.delete({
+      where: { studentDetailsId: { userId, ...expand(this.params) } },
+    });
+  }
+
+  public async deleteManyStudents(userIds: string[]): Promise<void> {
+    await this.db.studentDetails.deleteMany({
+      where: { userId: { in: userIds }, ...expand(this.params) },
+    });
+  }
+
   public async deleteSupervisor(userId: string): Promise<void> {
     await this.db.supervisorDetails.delete({
       where: { supervisorDetailsId: { userId, ...expand(this.params) } },
     });
   }
 
-  public async deleteSupervisors(userIds: string[]): Promise<void> {
+  public async deleteManySupervisors(userIds: string[]): Promise<void> {
     await this.db.supervisorDetails.deleteMany({
       where: { userId: { in: userIds }, ...expand(this.params) },
     });

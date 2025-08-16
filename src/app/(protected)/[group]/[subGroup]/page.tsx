@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, SquareLibraryIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -8,7 +8,7 @@ import { spacesLabels } from "@/config/spaces";
 import { AdminLevel } from "@/db/types";
 
 import { AdminLevelAC } from "@/components/access-control/admin-level-ac";
-import { Heading, SubHeading } from "@/components/heading";
+import { Heading, SectionHeading } from "@/components/heading";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +23,9 @@ import { DeleteConfirmation } from "./_components/delete-confirmation";
 import { FormButton } from "./_components/form-button";
 
 export async function generateMetadata({ params }: { params: SubGroupParams }) {
+  const allocationSubGroup = await api.institution.subGroup.exists({ params });
+  if (!allocationSubGroup) notFound();
+
   const { displayName } = await api.institution.subGroup.get({ params });
 
   return { title: metadataTitle([displayName, app.name]) };
@@ -46,7 +49,7 @@ export default async function Page({ params }: { params: SubGroupParams }) {
   const { group, subGroup } = params;
 
   return (
-    <PanelWrapper className="gap-10">
+    <PanelWrapper className="mt-5 gap-10">
       <Heading>{displayName}</Heading>
       <Card className="my-10 flex flex-col gap-2">
         <CardHeader className="-mb-3 mt-3">
@@ -75,7 +78,9 @@ export default async function Page({ params }: { params: SubGroupParams }) {
           </AdminLevelAC>
         </CardContent>
       </Card>
-      <SubHeading>Manage {spacesLabels.instance.full}s</SubHeading>
+      <SectionHeading icon={SquareLibraryIcon}>
+        Manage {spacesLabels.instance.full}s
+      </SectionHeading>
       <div className="flex w-full flex-col gap-6">
         <Button
           size="lg"

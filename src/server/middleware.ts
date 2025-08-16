@@ -13,6 +13,7 @@ import {
 
 import { Role, type Stage } from "@/db/types";
 
+import { type AuditFn } from "@/lib/logging/logger";
 import { HttpMatchingService } from "@/lib/services/matching";
 import {
   groupParamsSchema,
@@ -31,20 +32,32 @@ const institutionMiddleware = t.middleware(async ({ ctx: { db }, next }) => {
 /**
  * @requires a preceding `.input(z.object({ params: groupParamsSchema }))` or better
  */
-const groupMiddleware = t.middleware(async ({ ctx: { db }, input, next }) => {
-  const { params } = z.object({ params: groupParamsSchema }).parse(input);
-  const group = new AllocationGroup(db, params);
-  return next({ ctx: { group } });
-});
+const groupMiddleware = t.middleware(
+  async ({ ctx: { db, audit }, input, next }) => {
+    const { params } = z.object({ params: groupParamsSchema }).parse(input);
+    const group = new AllocationGroup(db, params);
+
+    const auditNew: AuditFn = function auditNew(msg, ...vals) {
+      audit(msg, ...vals, { group: params.group });
+    };
+
+    return next({ ctx: { group, audit: auditNew } });
+  },
+);
 
 /**
  * @requires a preceding `.input(z.object({ params: subGroupParamsSchema }))` or better
  */
 const subGroupMiddleware = t.middleware(
-  async ({ ctx: { db }, input, next }) => {
+  async ({ ctx: { db, audit }, input, next }) => {
     const { params } = z.object({ params: subGroupParamsSchema }).parse(input);
     const subGroup = new AllocationSubGroup(db, params);
-    return next({ ctx: { subGroup } });
+
+    const auditNew: AuditFn = function auditNew(msg, ...vals) {
+      audit(msg, ...vals, { subGroup: params.subGroup });
+    };
+
+    return next({ ctx: { subGroup, audit: auditNew } });
   },
 );
 
@@ -52,10 +65,15 @@ const subGroupMiddleware = t.middleware(
  * @requires a preceding `.input(z.object({ params: instanceParamsSchema }))`
  */
 const instanceMiddleware = t.middleware(
-  async ({ ctx: { db }, input, next }) => {
+  async ({ ctx: { db, audit }, input, next }) => {
     const { params } = z.object({ params: instanceParamsSchema }).parse(input);
     const instance = new AllocationInstance(db, params);
-    return next({ ctx: { instance } });
+
+    const auditNew: AuditFn = function auditNew(msg, ...vals) {
+      audit(msg, ...vals, { subGroup: params.subGroup });
+    };
+
+    return next({ ctx: { instance, audit: auditNew } });
   },
 );
 
@@ -70,6 +88,7 @@ const stageMiddleware = (allowedStages: Stage[]) =>
     const instanceData = await instance.get();
 
     if (!allowedStages.includes(instanceData.stage)) {
+      // ? maybe this error should also be logged using the Error Logger?
       throw new TRPCError({
         code: "FORBIDDEN",
         message: "Instance is not in correct stage",
@@ -82,11 +101,18 @@ const stageMiddleware = (allowedStages: Stage[]) =>
 /**
  * @requires a preceding `.input(z.object({ params: projectParamsSchema }))`
  */
-const projectMiddleware = t.middleware(async ({ ctx: { db }, input, next }) => {
-  const { params } = z.object({ params: projectParamsSchema }).parse(input);
-  const project = new Project(db, params);
-  return next({ ctx: { project } });
-});
+const projectMiddleware = t.middleware(
+  async ({ ctx: { db, audit }, input, next }) => {
+    const { params } = z.object({ params: projectParamsSchema }).parse(input);
+    const project = new Project(db, params);
+
+    const auditNew: AuditFn = function auditNew(msg, ...vals) {
+      audit(msg, ...vals, { projectId: params.projectId });
+    };
+
+    return next({ ctx: { project, audit: auditNew } });
+  },
+);
 
 /**
  * @requires a preceding `.input(z.object({ params: instanceParamsSchema, algId: z.string() }))`
