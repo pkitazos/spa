@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+
+import { CopyPlusIcon, LayoutTemplateIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -18,12 +21,18 @@ import {
   useInstanceParams,
   usePathInInstance,
 } from "@/components/params-context";
+import { ProjectForm, useProjectForm } from "@/components/project-form";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 import { api } from "@/lib/trpc/client";
-
-import { ProjectForm } from "../project-form";
-import { useProjectForm } from "../project-form/use-project-form";
 
 import { ProjectTemplateSelector } from "./project-template-selector";
 
@@ -94,7 +103,7 @@ export function ProjectCreationManager({
 
   return (
     <div className="space-y-10">
-      <ProjectTemplateSelector
+      <TemplateSection
         previousProjectData={previousProjectData}
         showSupervisorCol={showSupervisorCol}
         requiresConfirm={form.formState.isDirty}
@@ -103,6 +112,7 @@ export function ProjectCreationManager({
           toast.success(`Copied project into form (${project.title})`);
         }}
       />
+
       <ProjectForm
         form={form}
         showSupervisorSelector={showSupervisorSelector}
@@ -122,6 +132,62 @@ export function ProjectCreationManager({
           Cancel
         </Button>
       </ProjectForm>
+    </div>
+  );
+}
+
+export function TemplateSection({
+  previousProjectData,
+  showSupervisorCol,
+  requiresConfirm,
+  handleSelect,
+}: {
+  previousProjectData: ProjectSearchData[];
+  showSupervisorCol: boolean;
+  requiresConfirm: boolean;
+  handleSelect: (data: ProjectSearchData) => void;
+}) {
+  const [open, setOpen] = useState<boolean | undefined>(undefined);
+  return (
+    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mt-6 mb-10">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-100 rounded-md">
+            <LayoutTemplateIcon className="h-4 w-4 text-indigo-600" />
+          </div>
+          <div>
+            <h3 className="font-medium">Start from template</h3>
+            <p className="text-sm text-muted-foreground">
+              Use a previous project as your starting point
+            </p>
+          </div>
+        </div>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm">
+              <CopyPlusIcon className="h-4 w-4 mr-2" />
+              Browse Previous Projects
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-5xl">
+            <DialogHeader className="mx-2">
+              <DialogTitle>Previous Projects</DialogTitle>
+              <DialogDescription>
+                Select a previous project to use as a template.
+              </DialogDescription>
+            </DialogHeader>
+            <ProjectTemplateSelector
+              previousProjectData={previousProjectData}
+              showSupervisorCol={showSupervisorCol}
+              requiresConfirm={requiresConfirm}
+              handleSelect={(data) => {
+                setOpen(false);
+                handleSelect(data);
+              }}
+            />
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }

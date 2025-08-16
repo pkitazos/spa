@@ -1,7 +1,10 @@
+"use client";
+
 import { useState, useMemo, useCallback } from "react";
 
 import { useInstanceParams } from "@/components/params-context";
 import { Button } from "@/components/ui/button";
+import DataTable from "@/components/ui/data-table/data-table";
 import {
   Dialog,
   DialogContent,
@@ -10,8 +13,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
-
-import DataTable from "../ui/data-table/data-table";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { useProjectSearchColumns } from "./project-search-columns";
 import { makeFilters } from "./utils";
@@ -68,14 +70,17 @@ export function ProjectTemplateSelector({
 
   return (
     <div className="space-y-4">
-      <DataTable
-        searchParamPrefix="prev-projects"
-        columns={columns}
-        data={previousProjectData}
-        filters={filters}
-      />
+      <ScrollArea className="max-h-[60vh] overflow-x-visible">
+        <DataTable
+          className="max-h-[60vh] px-2"
+          searchParamPrefix="prev-projects"
+          columns={columns}
+          data={previousProjectData}
+          filters={filters}
+        />
+      </ScrollArea>
       {previousProjectData.length > 0 && (
-        <div className="text-sm text-muted-foreground">
+        <div className="mx-2 text-sm text-muted-foreground">
           <strong>Note:</strong> Flags and tags will only be copied from
           projects within the same instance.
         </div>
