@@ -33,7 +33,7 @@ export default async function Page({ params }: { params: SubGroupParams }) {
   });
 
   return (
-    <PanelWrapper className="gap-10">
+    <PanelWrapper className="mt-5 gap-10">
       <Heading className="text-4xl">
         Create new {spacesLabels.instance.full}
       </Heading>
