@@ -17,7 +17,7 @@ export default async function Page({ params }: { params: { userId: string } }) {
   });
 
   return (
-    <PanelWrapper className="pt-4 gap-10">
+    <PanelWrapper className="mt-5 gap-10">
       <Heading>
         <span className="text-muted-foreground text-4xl">User: </span>
         {user.name}{" "}

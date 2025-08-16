@@ -49,7 +49,7 @@ export default async function Page({ params }: { params: SubGroupParams }) {
   const { group, subGroup } = params;
 
   return (
-    <PanelWrapper className="gap-10">
+    <PanelWrapper className="mt-5 gap-10">
       <Heading>{displayName}</Heading>
       <Card className="my-10 flex flex-col gap-2">
         <CardHeader className="-mb-3 mt-3">

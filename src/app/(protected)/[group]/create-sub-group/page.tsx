@@ -31,7 +31,7 @@ export default async function Page({ params }: { params: GroupParams }) {
   const takenNames = await api.institution.group.takenSubGroupNames({ params });
 
   return (
-    <PanelWrapper className="gap-10">
+    <PanelWrapper className="mt-5 gap-10">
       <Heading className="text-4xl">
         Create new {spacesLabels.subGroup.full}
       </Heading>

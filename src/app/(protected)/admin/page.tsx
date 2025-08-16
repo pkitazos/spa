@@ -26,7 +26,7 @@ export default async function Page() {
   const groups = await api.institution.groups();
 
   return (
-    <PanelWrapper className="gap-10">
+    <PanelWrapper className="mt-5 gap-10">
       <Heading>{app.institution.name}</Heading>
       <Card className="my-10 flex flex-col gap-2 ">
         <CardHeader className="-mb-3 mt-3">
