@@ -77,4 +77,31 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    ignores: ["src/lib/routing/*.ts", "src/lib/routing/*.tsx"],
+    rules: {
+      "no-restricted-imports": [
+        "warn",
+        {
+          paths: [
+            {
+              name: "next/navigation",
+              message:
+                "Do not cal next builtins directly; instead use the new routing tools from @/lib/routing",
+            },
+            {
+              name: "next/router",
+              message:
+                "Do not cal next builtins directly; instead use the new routing tools from @/lib/routing",
+            },
+            {
+              name: "next/link",
+              message:
+                "Do not cal next builtins directly; instead use the new routing tools from @/lib/routing",
+            },
+          ],
+        },
+      ],
+    },
+  },
 );
