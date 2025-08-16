@@ -20,7 +20,7 @@ import {
 import { Stage } from "@/db/types";
 
 import { ConditionalRender } from "@/components/access-control";
-import { FormatDenial } from "@/components/access-control/format-denial";
+import { FormatDenials } from "@/components/access-control/format-denial";
 import { CircleCheckSolidIcon } from "@/components/icons/circle-check";
 import { useInstancePath, useInstanceStage } from "@/components/params-context";
 import { tagTypeSchema } from "@/components/tag/tag-input";
@@ -396,18 +396,13 @@ export function useSupervisorProjectsColumns({
                       </Link>
                     </DropdownMenuItem>
                   }
-                  denied={(data) => (
+                  denied={(denialData) => (
                     <WithTooltip
                       tip={
-                        <p className="max-w-xl">
-                          {data.reasons.map((reason, i) => (
-                            <FormatDenial
-                              key={i}
-                              ctx={data.ctx}
-                              reason={reason}
-                            />
-                          ))}
-                        </p>
+                        <FormatDenials
+                          {...denialData}
+                          action="Editing project details"
+                        />
                       }
                       forDisabled
                     >
@@ -437,18 +432,13 @@ export function useSupervisorProjectsColumns({
                       />
                     </DropdownMenuItem>
                   }
-                  denied={(data) => (
+                  denied={(denialData) => (
                     <WithTooltip
                       tip={
-                        <p className="max-w-xl">
-                          {data.reasons.map((reason, i) => (
-                            <FormatDenial
-                              key={i}
-                              ctx={data.ctx}
-                              reason={reason}
-                            />
-                          ))}
-                        </p>
+                        <FormatDenials
+                          {...denialData}
+                          action="Deleting projects"
+                        />
                       }
                       forDisabled
                     >

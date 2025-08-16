@@ -19,9 +19,7 @@ import { type ProjectDTO, type StudentDTO, type SupervisorDTO } from "@/dto";
 import { Role, Stage } from "@/db/types";
 
 import { ConditionalRender } from "@/components/access-control";
-import { ConditionalDisable } from "@/components/access-control/conditional-render";
 import { Heading, SectionHeading } from "@/components/heading";
-import { InstanceLink } from "@/components/instance-link";
 import { MarkdownRenderer } from "@/components/markdown-editor";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { Badge } from "@/components/ui/badge";
@@ -32,13 +30,12 @@ import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
 import { cn } from "@/lib/utils";
-import { formatParamsAsPath } from "@/lib/utils/general/get-instance-path";
 import { toPP1 } from "@/lib/utils/general/instance-params";
 import { toPositional } from "@/lib/utils/general/to-positional";
-import { previousStages } from "@/lib/utils/permissions/stage-check";
 import { type InstanceParams } from "@/lib/validations/params";
 import { type StudentPreferenceType } from "@/lib/validations/student-preference";
 
+import { EditButton } from "./_components/edit-button";
 import { StudentPreferenceButton } from "./_components/student-preference-button";
 import { StudentPreferenceDataTable } from "./_components/student-preference-data-table";
 
@@ -69,8 +66,6 @@ export default async function Project({ params }: { params: PageParams }) {
   const projectId = params.id;
   const exists = await api.project.exists({ params: toPP1(params) });
   if (!exists) notFound();
-
-  const instancePath = formatParamsAsPath(params);
 
   const userAccess = await api.ac.projectAccess({ params: toPP1(params) });
 
@@ -119,6 +114,7 @@ export default async function Project({ params }: { params: PageParams }) {
         )}
       >
         {project.title}
+        {/* // TODO add denied below */}
         <ConditionalRender
           allowedRoles={[Role.STUDENT]}
           allowedStages={[Stage.STUDENT_BIDDING]}
@@ -131,29 +127,7 @@ export default async function Project({ params }: { params: PageParams }) {
           }
         />
 
-        <ConditionalDisable
-          allowedRoles={[Role.ADMIN]}
-          allowedStages={previousStages(Stage.STUDENT_BIDDING)}
-          overrides={{ roles: { OR: project.supervisorId === user.id } }}
-        >
-          <InstanceLink
-            className={cn(buttonVariants(), "min-w-32 text-nowrap")}
-            href={`projects/${projectId}?edit=true`}
-          >
-            Edit or Delete
-          </InstanceLink>
-        </ConditionalDisable>
-        {/* allowed={
-            // pin - broken link
-          }
-          denied={(denialData) => (
-            <WithTooltip tip={<FormatDenials {...denialData} />}>
-              <Button className="min-w-32 text-nowrap" disabled>
-                Edit or Delete
-              </Button>
-            </WithTooltip>
-          )}
-        /> */}
+        <EditButton project={project} user={user} />
       </Heading>
 
       <div className="mt-6 flex gap-6">

@@ -4,9 +4,6 @@ import { useParams } from "next/navigation";
 
 import { type ProjectDTO } from "@/dto";
 
-import { Stage } from "@/db/types";
-
-import { ConditionalRender } from "@/components/access-control/conditional-render";
 import { BoardDetailsProvider } from "@/components/kanban-board/store";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -28,19 +25,14 @@ export function CurrentBoardState({
   return (
     <BoardDetailsProvider projects={initialProjects}>
       <section className="flex w-full max-w-7xl flex-col">
-        <ConditionalRender
-          allowedStages={[Stage.STUDENT_BIDDING]}
-          allowed={
-            <Card className="my-4">
-              <CardContent className="flex items-center justify-between pt-6">
-                <p className="font-medium">
-                  Add new project to student preferences
-                </p>
-                <NewPreferenceButton availableProjects={availableProjects} />
-              </CardContent>
-            </Card>
-          }
-        />
+        <Card className="my-4">
+          <CardContent className="flex items-center justify-between pt-6">
+            <p className="font-medium">
+              Add new project to student preferences
+            </p>
+            <NewPreferenceButton availableProjects={availableProjects} />
+          </CardContent>
+        </Card>
         <KanbanBoardSection studentId={params.id} />
       </section>
     </BoardDetailsProvider>

@@ -32,14 +32,15 @@ export function FormatDenial({
     case DenialReason.BAD_ROLE:
       return (
         <p>
-          Access restricted to roles:{" "}
+          Restricted to roles:{" "}
           {reason.allowedRoles.map((role, i, arr) => (
             <>
               <FancyRole role={role} key={i} />
               {i === arr.length - 1 ? "" : ", "}
             </>
           ))}
-          . Your roles:{" "}
+          .<br />
+          Your roles:{" "}
           {ctx.userRoles.map((role, i, arr) => (
             <>
               <FancyRole role={role} key={i} />
@@ -52,14 +53,15 @@ export function FormatDenial({
     case DenialReason.BAD_STAGE:
       return (
         <p>
-          Access not available in current stage:{" "}
-          <FancyStage stage={ctx.currentStage} />. Available in:{" "}
+          Restricted to stages:{" "}
           {reason.allowedStages.map((stage, i, arr) => (
             <>
               <FancyStage stage={stage} key={i} />
               {i === arr.length - 1 ? "" : ", "}
             </>
           ))}
+          <br />
+          Current stage: <FancyStage stage={ctx.currentStage} />.
         </p>
       );
 
@@ -71,12 +73,20 @@ export function FormatDenial({
 export function FormatDenials({
   ctx,
   reasons,
+  action,
 }: {
   ctx: AccessControlContext;
   reasons: DenialReason[];
+  action?: string;
 }) {
   return (
     <p className="max-w-xl">
+      {action && (
+        <>
+          <b className="font-medium">{action}</b> is currently disallowed.
+          <br />
+        </>
+      )}
       {reasons.map((reason, i) => (
         <FormatDenial key={i} ctx={ctx} reason={reason} />
       ))}

@@ -40,7 +40,7 @@ export function StudentPreferenceActionSubMenu({
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger className="flex items-center gap-2 text-primary">
-        <BookmarkIcon className="h-4 w-4" />
+        <BookmarkIcon className="size-4" />
         <span>Change preference type to</span>
       </DropdownMenuSubTrigger>
       <DropdownMenuPortal>
