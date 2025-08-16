@@ -19,15 +19,15 @@ import { type ProjectDTO, type StudentDTO, type SupervisorDTO } from "@/dto";
 import { Role, Stage } from "@/db/types";
 
 import { ConditionalRender } from "@/components/access-control";
-import { FormatDenial } from "@/components/access-control/format-denial";
+import { ConditionalDisable } from "@/components/access-control/conditional-render";
 import { Heading, SectionHeading } from "@/components/heading";
+import { InstanceLink } from "@/components/instance-link";
 import { MarkdownRenderer } from "@/components/markdown-editor";
 import { PanelWrapper } from "@/components/panel-wrapper";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { WithTooltip } from "@/components/ui/tooltip-wrapper";
 import { Unauthorised } from "@/components/unauthorised";
 
 import { api } from "@/lib/trpc/server";
@@ -131,35 +131,29 @@ export default async function Project({ params }: { params: PageParams }) {
           }
         />
 
-        <ConditionalRender
+        <ConditionalDisable
           allowedRoles={[Role.ADMIN]}
           allowedStages={previousStages(Stage.STUDENT_BIDDING)}
           overrides={{ roles: { OR: project.supervisorId === user.id } }}
-          allowed={
+        >
+          <InstanceLink
+            className={cn(buttonVariants(), "min-w-32 text-nowrap")}
+            href={`projects/${projectId}?edit=true`}
+          >
+            Edit or Delete
+          </InstanceLink>
+        </ConditionalDisable>
+        {/* allowed={
             // pin - broken link
-            <Link
-              className={cn(buttonVariants(), "min-w-32 text-nowrap")}
-              href={`${instancePath}/projects/${projectId}/edit`}
-            >
-              Edit or Delete
-            </Link>
           }
-          denied={(data) => (
-            <WithTooltip
-              tip={
-                <p className="max-w-xl">
-                  {data.reasons.map((reason, i) => (
-                    <FormatDenial key={i} ctx={data.ctx} reason={reason} />
-                  ))}
-                </p>
-              }
-            >
+          denied={(denialData) => (
+            <WithTooltip tip={<FormatDenials {...denialData} />}>
               <Button className="min-w-32 text-nowrap" disabled>
                 Edit or Delete
               </Button>
             </WithTooltip>
           )}
-        />
+        /> */}
       </Heading>
 
       <div className="mt-6 flex gap-6">

@@ -2,6 +2,11 @@
 
 import { type ReactNode } from "react";
 
+import { Slot } from "@radix-ui/react-slot";
+
+import { WithTooltip } from "../ui/tooltip-wrapper";
+
+import { FormatDenials } from "./format-denial";
 import {
   type AccessCondition,
   type AccessControlContext,
@@ -43,5 +48,39 @@ export function ConditionalRender({
           ? denied(accessState)
           : null}
     </>
+  );
+}
+
+interface ConditionalDisableProps extends AccessCondition {
+  children: ReactNode;
+}
+
+export function ConditionalDisable({
+  children,
+  ...conditions
+}: ConditionalDisableProps) {
+  return (
+    <ConditionalRender
+      {...conditions}
+      allowed={children}
+      denied={(denialData) => (
+        <WithTooltip tip={<FormatDenials {...denialData} />}>
+          {/* @ts-expect-error trust me bro*/}
+          <Slot disabled>{children}</Slot>
+        </WithTooltip>
+      )}
+      loading={
+        <WithTooltip tip="Checking Access Control...">
+          {/* @ts-expect-error trust me bro*/}
+          <Slot disabled>{children}</Slot>
+        </WithTooltip>
+      }
+      error={
+        <WithTooltip tip={"Access Control Error"}>
+          {/* @ts-expect-error trust me bro*/}
+          <Slot disabled>{children}</Slot>
+        </WithTooltip>
+      }
+    />
   );
 }
