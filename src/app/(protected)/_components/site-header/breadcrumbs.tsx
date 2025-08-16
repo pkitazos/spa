@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import { Fragment } from "react";
 
+import { MoreHorizontalIcon as MoreIcon } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 
 import {
   Breadcrumb,
@@ -13,85 +13,91 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-import { api } from "@/lib/trpc/client";
-import { unSlugify } from "@/lib/utils/general/slugify";
+import { useBreadcrumbData } from "./use-breadcrumb-data";
 
 export function Breadcrumbs() {
-  const pathname = usePathname();
-  const segments = pathname.split("/").filter((segment) => segment !== "");
+  const { hasItems, middleItems, lastItem } = useBreadcrumbData();
 
-  const { status, data } = api.ac.breadcrumbs.useQuery({ segments });
+  if (!hasItems) return <Fragment />;
 
-  if (segments.length === 0) return <></>;
-
-  if (status !== "success") {
-    return (
-      <Breadcrumb className="w-full flex-nowrap">
+  return (
+    <div className="@container w-full">
+      <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
               <Link
                 href="/"
-                prefetch={false}
-                className="hover:text-secondary hover:underline"
+                className="text-primary px-3 py-1 rounded-md hover:text-secondary hover:bg-muted"
               >
                 Home
               </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          {segments.map((segment) => (
-            <React.Fragment key={segment}>
+
+          {hasItems && (
+            <>
+              <BreadcrumbSeparator className="block @md:hidden" />
+              <BreadcrumbItem className="@md:hidden">
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex h-7 w-7 items-center justify-center rounded-md hover:bg-muted">
+                    <MoreIcon className="h-4 w-4" />
+                    <span className="sr-only">Show hidden breadcrumbs</span>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {middleItems.map(({ segment, access, path }) => (
+                      <DropdownMenuItem key={path} asChild>
+                        {access ? (
+                          <Link
+                            href={path}
+                            className="text-primary px-3 py-1 rounded-md hover:text-secondary hover:bg-muted"
+                          >
+                            {segment}
+                          </Link>
+                        ) : (
+                          <span className="text-primary px-3 py-1">
+                            {segment}
+                          </span>
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </BreadcrumbItem>
+
+              {middleItems.map(({ path, segment }) => (
+                <Fragment key={path}>
+                  <BreadcrumbSeparator className="hidden @md:block" />
+                  <BreadcrumbItem className="hidden @md:block">
+                    <BreadcrumbLink asChild>
+                      <Link
+                        href={path}
+                        className="text-primary px-3 py-1 rounded-md hover:text-secondary hover:bg-muted"
+                      >
+                        {segment}
+                      </Link>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                </Fragment>
+              ))}
+
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 <BreadcrumbPage className="text-muted-foreground">
-                  {unSlugify(segment)}
+                  {lastItem.segment}
                 </BreadcrumbPage>
               </BreadcrumbItem>
-            </React.Fragment>
-          ))}
+            </>
+          )}
         </BreadcrumbList>
       </Breadcrumb>
-    );
-  }
-
-  return (
-    <Breadcrumb className="w-full flex-nowrap">
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link
-              href="/"
-              prefetch={false}
-              className="hover:text-secondary hover:underline"
-            >
-              Home
-            </Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        {data.map(({ segment, access }, index) => (
-          <React.Fragment key={segment}>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              {index < segments.length - 1 && access ? (
-                <BreadcrumbLink asChild>
-                  <Link
-                    href={`/${segments.slice(0, index + 1).join("/")}`}
-                    className="hover:text-secondary hover:underline"
-                    prefetch={false}
-                  >
-                    {segment}
-                  </Link>
-                </BreadcrumbLink>
-              ) : (
-                <BreadcrumbPage className="text-muted-foreground">
-                  {segment}
-                </BreadcrumbPage>
-              )}
-            </BreadcrumbItem>
-          </React.Fragment>
-        ))}
-      </BreadcrumbList>
-    </Breadcrumb>
+    </div>
   );
 }

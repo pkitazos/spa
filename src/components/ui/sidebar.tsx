@@ -746,7 +746,7 @@ function ToggleSidebarButton() {
 
   return (
     <Button
-      className="h-8 w-12"
+      className="p-1 h-max w-max"
       variant="ghost"
       size="icon"
       onClick={toggleSidebar}
