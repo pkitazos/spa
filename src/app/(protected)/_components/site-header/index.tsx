@@ -18,8 +18,6 @@ export async function SiteHeader() {
           <p className="text-2xl">{app.name}</p>
         </Link>
         <ToggleSidebarButton />
-        {/* <Separator orientation="vertical" className="mr-2 h-4" />
-        <PageTitle /> */}
         <Separator orientation="vertical" className="mr-2 h-4" />
         <Breadcrumbs />
         <div className="ml-auto flex basis-1/4 items-center justify-end gap-4">

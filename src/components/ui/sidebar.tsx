@@ -744,14 +744,13 @@ function ToggleSidebarButton() {
 
   const { data } = api.institution.inInstance_safe.useQuery({ path });
 
-  if (!data) return <div className="h-8 w-8" />;
-
   return (
     <Button
-      className="h-8 w-8"
+      className="h-8 w-12"
       variant="ghost"
       size="icon"
       onClick={toggleSidebar}
+      disabled={!data}
     >
       <SidebarIcon />
     </Button>
