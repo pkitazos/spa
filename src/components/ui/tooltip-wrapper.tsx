@@ -14,6 +14,7 @@ export function WithTooltip({
   align = "center",
   side = "top",
   forDisabled = false,
+  disabled = false,
 }: {
   tip: ReactNode;
   children: ReactNode;
@@ -21,15 +22,15 @@ export function WithTooltip({
   align?: "start" | "center" | "end";
   side?: "top" | "right" | "bottom" | "left";
   forDisabled?: boolean;
+  disabled?: boolean;
 }) {
-  const triggerContent = forDisabled ? (
-    <div className="w-full">{children}</div>
-  ) : (
-    children
-  );
+  const triggerContent = forDisabled ? <div>{children}</div> : children;
 
   return (
-    <TooltipProvider delayDuration={duration}>
+    <TooltipProvider
+      delayDuration={duration}
+      disableHoverableContent={disabled}
+    >
       <Tooltip>
         <TooltipTrigger asChild>{triggerContent}</TooltipTrigger>
         <TooltipContent align={align} side={side}>

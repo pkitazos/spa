@@ -2,6 +2,7 @@
 
 import { type ColumnDef } from "@tanstack/react-table";
 import {
+  BookmarkIcon,
   CornerDownRightIcon,
   LucideMoreHorizontal as MoreIcon,
   PenIcon,
@@ -18,7 +19,10 @@ import { flagDtoSchema, type ProjectDTO, type SupervisorDTO } from "@/dto";
 import { type PreferenceType, Role, Stage } from "@/db/types";
 
 import { ConditionalRender } from "@/components/access-control";
-import { FormatDenial } from "@/components/access-control/format-denial";
+import {
+  FormatDenial,
+  FormatDenials,
+} from "@/components/access-control/format-denial";
 import { ExportCSVButton } from "@/components/export-csv";
 import {
   useInstanceStage,
@@ -339,6 +343,27 @@ export function useAllProjectsColumns({
                           />
                         </DropdownMenuItem>
                       }
+                      denied={(denialData) => (
+                        <WithTooltip
+                          tip={
+                            <FormatDenials
+                              {...denialData}
+                              action="Deleting projects"
+                            />
+                          }
+                          forDisabled
+                        >
+                          <DropdownMenuItem
+                            className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive"
+                            disabled
+                          >
+                            <button className="flex items-center gap-2">
+                              <Trash2Icon className="h-4 w-4" />
+                              <span>Delete Project</span>
+                            </button>
+                          </DropdownMenuItem>
+                        </WithTooltip>
+                      )}
                     />
                   </DropdownMenuContent>
                 </YesNoActionContainer>
@@ -401,6 +426,24 @@ export function useAllProjectsColumns({
                         }
                       />
                     }
+                    denied={(data) => (
+                      <WithTooltip
+                        tip={
+                          <FormatDenials
+                            action="Changing student preferences"
+                            {...data}
+                          />
+                        }
+                        forDisabled
+                      >
+                        <DropdownMenuItem disabled>
+                          <button className="flex items-center gap-2 text-primary">
+                            <BookmarkIcon className="size-4" />
+                            <span>Change preference type to</span>
+                          </button>
+                        </DropdownMenuItem>
+                      </WithTooltip>
+                    )}
                   />
 
                   <ConditionalRender

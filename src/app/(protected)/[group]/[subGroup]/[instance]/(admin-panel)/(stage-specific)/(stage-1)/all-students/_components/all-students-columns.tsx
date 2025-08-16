@@ -17,7 +17,7 @@ import { type ProjectDTO, type StudentDTO } from "@/dto";
 import { Role, Stage } from "@/db/types";
 
 import { ConditionalRender } from "@/components/access-control";
-import { FormatDenial } from "@/components/access-control/format-denial";
+import { FormatDenials } from "@/components/access-control/format-denial";
 import {
   useInstanceStage,
   usePathInInstance,
@@ -276,20 +276,7 @@ export function useAllStudentsColumns({
                   </DropdownMenuItem>
                 }
                 denied={(data) => (
-                  <WithTooltip
-                    tip={
-                      <p className="max-w-xl">
-                        {data.reasons.map((reason, i) => (
-                          <FormatDenial
-                            key={i}
-                            ctx={data.ctx}
-                            reason={reason}
-                          />
-                        ))}
-                      </p>
-                    }
-                    forDisabled
-                  >
+                  <WithTooltip tip={<FormatDenials {...data} />} forDisabled>
                     <DropdownMenuItem
                       className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive"
                       disabled

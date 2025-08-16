@@ -2,6 +2,7 @@
 
 import { type ColumnDef } from "@tanstack/react-table";
 import {
+  BookmarkIcon,
   CornerDownRightIcon,
   MoreHorizontalIcon as MoreIcon,
 } from "lucide-react";
@@ -12,6 +13,7 @@ import { PAGES } from "@/config/pages";
 import { PreferenceType, Stage } from "@/db/types";
 
 import { ConditionalRender } from "@/components/access-control";
+import { FormatDenials } from "@/components/access-control/format-denial";
 import { useInstanceStage } from "@/components/params-context";
 import { StudentPreferenceActionSubMenu } from "@/components/student-preference-action-menu";
 import { Badge } from "@/components/ui/badge";
@@ -245,9 +247,26 @@ export function useStudentPreferencesColumns({
                   changePreference={async (newPreferenceType) =>
                     void changePreference(newPreferenceType, project.id)
                   }
-                  // TODO: add denied state
                 />
               }
+              denied={(data) => (
+                <WithTooltip
+                  tip={
+                    <FormatDenials
+                      action="Changing student preferences"
+                      {...data}
+                    />
+                  }
+                  forDisabled
+                >
+                  <DropdownMenuItem disabled>
+                    <button className="flex items-center gap-2 text-primary">
+                      <BookmarkIcon className="size-4" />
+                      <span>Change preference type to</span>
+                    </button>
+                  </DropdownMenuItem>
+                </WithTooltip>
+              )}
             />
           </DropdownMenuContent>
         </DropdownMenu>

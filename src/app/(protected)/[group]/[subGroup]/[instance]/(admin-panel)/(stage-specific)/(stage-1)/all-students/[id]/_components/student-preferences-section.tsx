@@ -1,19 +1,14 @@
-import { BookmarkIcon, PenIcon } from "lucide-react";
-import Link from "next/link";
+import { BookmarkIcon } from "lucide-react";
 
-import { Stage } from "@/db/types";
-
-import { ConditionalRender } from "@/components/access-control";
 import { SectionHeading } from "@/components/heading";
 import { StudentSavedPreferenceDataTable } from "@/components/student-saved-preferences/data-table";
-import { buttonVariants } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { api } from "@/lib/trpc/server";
-import { cn } from "@/lib/utils";
 import { type PageParams } from "@/lib/validations/params";
 
+import { EditButton } from "./edit-button";
 import { StudentPreferenceDataTable } from "./student-preference-data-table";
 
 export async function StudentPreferencesSection({
@@ -39,22 +34,7 @@ export async function StudentPreferencesSection({
         <SectionHeading icon={BookmarkIcon} className="mb-2">
           Preferences
         </SectionHeading>
-        <ConditionalRender
-          allowedStages={[Stage.STUDENT_BIDDING]}
-          allowed={
-            // pin - broken link
-            <Link
-              className={cn(
-                buttonVariants({ variant: "outline" }),
-                "flex items-center justify-center gap-2 text-nowrap",
-              )}
-              href={`./${studentId}/preferences`}
-            >
-              <PenIcon className="h-4 w-4" />
-              <p>Edit Student Preferences</p>
-            </Link>
-          }
-        />
+        <EditButton studentId={studentId} />
       </div>
 
       <Tabs

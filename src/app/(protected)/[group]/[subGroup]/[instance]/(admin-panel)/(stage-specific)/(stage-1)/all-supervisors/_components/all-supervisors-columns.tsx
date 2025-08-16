@@ -16,7 +16,7 @@ import { type SupervisorDTO } from "@/dto";
 import { Role, Stage } from "@/db/types";
 
 import { ConditionalRender } from "@/components/access-control";
-import { FormatDenial } from "@/components/access-control/format-denial";
+import { FormatDenials } from "@/components/access-control/format-denial";
 import {
   useInstanceStage,
   usePathInInstance,
@@ -249,6 +249,27 @@ export function useAllSupervisorsColumns({
                     </Link>
                   </DropdownMenuItem>
                 }
+                denied={(denialData) => (
+                  <WithTooltip
+                    tip={
+                      <FormatDenials
+                        {...denialData}
+                        action="Creating projects"
+                      />
+                    }
+                    forDisabled
+                  >
+                    <DropdownMenuItem
+                      className="group/item2 focus:bg-red-100/40 "
+                      disabled
+                    >
+                      <button className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline">
+                        <FilePlus2 className="h-4 w-4" />
+                        <span>Create new project</span>
+                      </button>
+                    </DropdownMenuItem>
+                  </WithTooltip>
+                )}
               />
               <ConditionalRender
                 allowedStages={previousStages(Stage.STUDENT_BIDDING)}
@@ -264,18 +285,13 @@ export function useAllSupervisorsColumns({
                     />
                   </DropdownMenuItem>
                 }
-                denied={(data) => (
+                denied={(denialData) => (
                   <WithTooltip
                     tip={
-                      <p className="max-w-xl">
-                        {data.reasons.map((reason, i) => (
-                          <FormatDenial
-                            key={i}
-                            ctx={data.ctx}
-                            reason={reason}
-                          />
-                        ))}
-                      </p>
+                      <FormatDenials
+                        {...denialData}
+                        action="Removing supervisors"
+                      />
                     }
                     forDisabled
                   >
