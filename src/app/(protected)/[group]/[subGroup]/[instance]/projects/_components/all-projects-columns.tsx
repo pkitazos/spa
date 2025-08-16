@@ -19,10 +19,7 @@ import { flagDtoSchema, type ProjectDTO, type SupervisorDTO } from "@/dto";
 import { type PreferenceType, Role, Stage } from "@/db/types";
 
 import { ConditionalRender } from "@/components/access-control";
-import {
-  FormatDenial,
-  FormatDenials,
-} from "@/components/access-control/format-denial";
+import { FormatDenials } from "@/components/access-control/format-denial";
 import { ExportCSVButton } from "@/components/export-csv";
 import {
   useInstanceStage,
@@ -428,13 +425,13 @@ export function useAllProjectsColumns({
                     }
                     denied={(data) => (
                       <WithTooltip
+                        forDisabled
                         tip={
                           <FormatDenials
                             action="Changing student preferences"
                             {...data}
                           />
                         }
-                        forDisabled
                       >
                         <DropdownMenuItem disabled>
                           <button className="flex items-center gap-2 text-primary">
@@ -454,7 +451,6 @@ export function useAllProjectsColumns({
                     ]}
                     overrides={{ roles: { OR: supervisor.id === user.id } }}
                     allowed={
-                      // pin - broken link
                       <DropdownMenuItem className="group/item">
                         <Link
                           className="flex items-center gap-2 text-primary underline-offset-4 group-hover/item:underline hover:underline"
@@ -465,6 +461,24 @@ export function useAllProjectsColumns({
                         </Link>
                       </DropdownMenuItem>
                     }
+                    denied={(data) => (
+                      <WithTooltip
+                        forDisabled
+                        tip={
+                          <FormatDenials
+                            action="Editing Project Details"
+                            {...data}
+                          />
+                        }
+                      >
+                        <DropdownMenuItem disabled>
+                          <button className="flex items-center gap-2 text-primary">
+                            <PenIcon className="h-4 w-4" />
+                            <span>Edit Project details</span>
+                          </button>
+                        </DropdownMenuItem>
+                      </WithTooltip>
+                    )}
                   />
 
                   <ConditionalRender
@@ -486,20 +500,15 @@ export function useAllProjectsColumns({
                         />
                       </DropdownMenuItem>
                     }
-                    denied={(data) => (
+                    denied={(denialData) => (
                       <WithTooltip
-                        tip={
-                          <p className="max-w-xl">
-                            {data.reasons.map((reason, i) => (
-                              <FormatDenial
-                                key={i}
-                                ctx={data.ctx}
-                                reason={reason}
-                              />
-                            ))}
-                          </p>
-                        }
                         forDisabled
+                        tip={
+                          <FormatDenials
+                            action="Deleting a project"
+                            {...denialData}
+                          />
+                        }
                       >
                         <DropdownMenuItem
                           className="group/item2 text-destructive focus:bg-red-100/40 focus:text-destructive"
