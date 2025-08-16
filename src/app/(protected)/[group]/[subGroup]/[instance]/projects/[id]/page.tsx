@@ -45,6 +45,9 @@ import { StudentPreferenceDataTable } from "./_components/student-preference-dat
 type PageParams = InstanceParams & { id: string };
 
 export async function generateMetadata({ params }: { params: PageParams }) {
+  const exists = await api.project.exists({ params: toPP1(params) });
+  if (!exists) notFound();
+
   const { displayName } = await api.institution.instance.get({ params });
   const { title } = await api.project.getById({
     params: { ...params, projectId: params.id },
