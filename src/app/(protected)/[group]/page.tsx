@@ -23,6 +23,9 @@ import { DeleteConfirmation } from "./_components/delete-confirmation";
 import { FormButton } from "./_components/form-button";
 
 export async function generateMetadata({ params }: { params: GroupParams }) {
+  const allocationGroup = await api.institution.group.exists({ params });
+  if (!allocationGroup) notFound();
+
   const { displayName } = await api.institution.group.get({ params });
 
   return { title: metadataTitle([displayName, app.name]) };

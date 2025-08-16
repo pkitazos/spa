@@ -63,7 +63,7 @@ export class AllocationGroup extends DataObject {
   }
 
   public async exists(): Promise<boolean> {
-    return !!(await this.db.allocationGroup.findFirst({
+    return !!(await this.db.allocationGroup.findUnique({
       where: { id: this.params.group },
     }));
   }
